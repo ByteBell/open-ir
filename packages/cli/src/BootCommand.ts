@@ -4,19 +4,19 @@ import { homedir } from "node:os";
 import { Command } from "commander";
 import React from "react";
 import { render } from "ink";
-import { Config, DbProviderType, GraphProviderType } from "@bb/types";
-import { HINTS, getBytebellHome, getConfigValue, isDevMode } from "@bb/config";
+import { Config, GraphProviderType } from "@bb/types";
+import { HINTS, getPlumblineHome, getConfigValue, isDevMode } from "@bb/config";
 import { applyInfraDefaults, checkPreflight } from "./bootConfig.ts";
 import { SetupForm } from "./SetupForm.tsx";
 import { error, info, success } from "./output.ts";
-import { bringInfraUp, usingHonker } from "./bootInfra.ts";
+import { bringInfraUp } from "./bootInfra.ts";
 import { isEmbedded } from "./infraMode.ts";
 
 export function buildBootCommand(): Command {
   const cmd = new Command("boot");
   cmd
     .description(
-      "Start the bytebell-server. Non-embedded providers (mongo/neo4j/bullmq) bring up Docker infra first; embedded providers (sqlite/ladybug/honker) need no Docker.",
+      "Start the plumbline-server. A Neo4j graph provider brings up Docker infra first; the embedded provider (ladybug) needs no Docker.",
     )
     .action(runBoot);
   return cmd;
@@ -51,7 +51,6 @@ async function runBoot(): Promise<void> {
     }
   }
 
-  const dbProvider = getConfigValue(Config.DbProvider);
   const graphProvider = getConfigValue(Config.GraphProvider);
 
   // Embedded mode (sqlite + ladybug + honker) needs no Docker — report the
@@ -59,11 +58,11 @@ async function runBoot(): Promise<void> {
   if (isEmbedded()) {
     info("embedded mode — no Docker required.");
     const queueDbPath = getConfigValue(Config.QueueDbPath);
-    const resolvedQueue = queueDbPath.length > 0 ? expandTilde(queueDbPath) : path.join(getBytebellHome(), "queue.db");
+    const resolvedQueue = queueDbPath.length > 0 ? expandTilde(queueDbPath) : path.join(getPlumblineHome(), "queue.db");
     success(`queue  → honker (sqlite: ${resolvedQueue})`);
     success(`doc    → sqlite`);
     success(`graph  → ladybug`);
-    process.stdout.write("\nNext: bytebell index <git-url>  or  bytebell ingest [path]\n");
+    process.stdout.write("\nNext: plumbline index <git-url>  or  plumbline ingest [path]\n");
     return;
   }
 
@@ -79,21 +78,14 @@ async function runBoot(): Promise<void> {
     return;
   }
 
-  if (usingHonker()) {
-    const queueDbPath = getConfigValue(Config.QueueDbPath);
-    const resolved = queueDbPath.length > 0 ? expandTilde(queueDbPath) : path.join(getBytebellHome(), "queue.db");
-    success(`queue  → honker (sqlite: ${resolved})`);
-  } else {
-    success(`redis  → ${upResult.services.redis}`);
-  }
-  if (dbProvider === DbProviderType.Mongo) {
-    success(`mongo  → ${upResult.services.mongo}`);
-  }
+  const queueDbPath = getConfigValue(Config.QueueDbPath);
+  const resolvedQueueDb = queueDbPath.length > 0 ? expandTilde(queueDbPath) : path.join(getPlumblineHome(), "queue.db");
+  success(`queue  → honker (sqlite: ${resolvedQueueDb})`);
   if (graphProvider === GraphProviderType.Neo4j) {
     success(`neo4j  → ${upResult.services.neo4j}`);
   }
 
-  process.stdout.write("\nNext: bytebell index <git-url>  or  bytebell ingest [path]\n");
+  process.stdout.write("\nNext: plumbline index <git-url>  or  plumbline ingest [path]\n");
 }
 
 async function ensurePreflight(): Promise<boolean> {
@@ -105,7 +97,7 @@ async function ensurePreflight(): Promise<boolean> {
     reportMissing(initial.missing);
     return false;
   }
-  info("Bytebell needs a few settings before first boot — opening setup form…");
+  info("Plumbline needs a few settings before first boot — opening setup form…");
   const saved = await renderSetupForm();
   if (!saved) {
     return false;

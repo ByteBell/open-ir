@@ -11,7 +11,7 @@ Strategy. Registers itself with `@bb/queue` via side-effect import as the `"honk
 - Implements `IQueueProvider` by wrapping `@russellthehippo/honker-node` (Honker SQLite extension).
 - Owns the queue.db lifecycle: `connect()` opens the file and constructs `Queue` handles per `JobType`; `close()` aborts worker loops and closes the database.
 - Maps `JobPriority` (Low / Normal / High) to Honker's higher-number-wins ordering (1 / 100 / 1000).
-- Emulates BullMQ's stable-jobId dedupe by querying `_honker_live` for an existing row whose payload's `knowledgeId` matches.
+- Provides stable-jobId dedupe by querying `_honker_live` for an existing row whose payload's `knowledgeId` matches.
 - Cancels knowledge jobs by deleting matching rows from `_honker_live` in a transaction.
 - Runs a 30 s sweeper that calls `queue.sweepExpired()` per `JobType` to move retry-exhausted jobs into `_honker_dead`.
 
@@ -24,7 +24,7 @@ import "@bb/queue-honker";
 
 ## Configuration
 
-- `Config.QueueDbPath` — path to the SQLite file. Defaults to `path.join(getBytebellHome(), "queue.db")` at boot. Set with `bytebell set queue-db <path>`.
+- `Config.QueueDbPath` — path to the SQLite file. Defaults to `path.join(getPlumblineHome(), "queue.db")` at boot. Set with `plumbline set queue-db <path>`.
 - `Config.ConcurrencyGithub` (shared with all providers) — number of parallel worker loops per `JobType`.
 
 ## Worker loop
@@ -50,6 +50,6 @@ import "@bb/queue-honker";
 
 ## What is intentionally out of scope
 
-- Cross-provider job migration. Switching `Config.QueueProvider` between `bullmq` and `honker` requires a cold cutover. The `@bb/queue` Orphan Resumer (planned, not yet implemented) handles `state === QUEUED` knowledge docs at boot.
+- Cross-provider job migration. Switching `Config.QueueProvider` requires a cold cutover; the `@bb/queue` Orphan Resumer re-enqueues `state === QUEUED` knowledge docs at boot.
 - Explicit `_honker_dead` purge — exposed via the facade's `listFailedJobs()` for inspection only.
 - AbortSignal threading through handlers — see _lease-loss policy_ above.

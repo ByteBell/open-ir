@@ -2,17 +2,15 @@
 import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { Config, DbProviderType, GraphProviderType, QueueProviderType } from "@bb/types";
-import { getBytebellHome, getConfigValue, requiredKeysFor } from "@bb/config";
+import { getPlumblineHome, getConfigValue, requiredKeysFor } from "@bb/config";
 import { bringInfraUp } from "./dockerBoot.ts";
 import { KEY_MAP } from "./keyMap.ts";
 import { success, error, info } from "./output.ts";
 import { isEmbedded } from "./infraMode.ts";
 import { startServer } from "./serverLifecycle.ts";
 
-const DEFAULT_MONGO_URI = "mongodb://127.0.0.1:27017/bytebell";
 const DEFAULT_NEO4J_URI = "bolt://127.0.0.1:7687";
 const DEFAULT_NEO4J_USER = "neo4j";
-const DEFAULT_REDIS_URL = "redis://127.0.0.1:6379";
 
 interface DefaultEntry {
   cliKey: string;
@@ -22,50 +20,39 @@ interface DefaultEntry {
   needed: () => boolean;
 }
 
-function usingMongo(): boolean {
-  return getConfigValue(Config.DbProvider) === DbProviderType.Mongo;
-}
-
 function usingNeo4j(): boolean {
   return getConfigValue(Config.GraphProvider) === GraphProviderType.Neo4j;
 }
 
 const DEFAULTS: readonly DefaultEntry[] = [
-  { cliKey: "mongo", configKey: Config.MongoUri, computeDefault: () => DEFAULT_MONGO_URI, needed: usingMongo },
   { cliKey: "neo4j", configKey: Config.Neo4jUri, computeDefault: () => DEFAULT_NEO4J_URI, needed: usingNeo4j },
   { cliKey: "neo4j-user", configKey: Config.Neo4jUser, computeDefault: () => DEFAULT_NEO4J_USER, needed: usingNeo4j },
-  {
-    cliKey: "redis",
-    configKey: Config.RedisUrl,
-    computeDefault: () => DEFAULT_REDIS_URL,
-    needed: () => getConfigValue(Config.QueueProvider) === QueueProviderType.Bullmq,
-  },
   {
     cliKey: "neo4j-password",
     configKey: Config.Neo4jPassword,
     computeDefault: generateNeo4jPassword,
     needed: usingNeo4j,
   },
-  // Embedded stores live under ~/.bytebell. These are auto-filled (and required
-  // by the server preflight) because the providers don't all default to a
-  // persistent path on their own — notably Ladybug treats an empty path as
+  // File-backed stores live under ~/.plumbline. These are auto-filled (and
+  // required by the server preflight) because the providers don't all default
+  // to a persistent path on their own — notably Ladybug treats an empty path as
   // in-memory, which would silently lose the graph on restart.
   {
     cliKey: "sqlite-path",
     configKey: Config.SqlitePath,
-    computeDefault: () => path.join(getBytebellHome(), "data.sqlite"),
+    computeDefault: () => path.join(getPlumblineHome(), "data.sqlite"),
     needed: () => getConfigValue(Config.DbProvider) === DbProviderType.Sqlite,
   },
   {
     cliKey: "ladybug-path",
     configKey: Config.LadybugPath,
-    computeDefault: () => path.join(getBytebellHome(), "ladybug.lbug"),
+    computeDefault: () => path.join(getPlumblineHome(), "ladybug.lbug"),
     needed: () => getConfigValue(Config.GraphProvider) === GraphProviderType.Ladybug,
   },
   {
     cliKey: "queue-db-path",
     configKey: Config.QueueDbPath,
-    computeDefault: () => path.join(getBytebellHome(), "queue.db"),
+    computeDefault: () => path.join(getPlumblineHome(), "queue.db"),
     needed: () => getConfigValue(Config.QueueProvider) === QueueProviderType.Honker,
   },
 ];
@@ -151,14 +138,8 @@ export async function runBootSequence(): Promise<boolean> {
     if (upResult === null) {
       return false;
     }
-    if (getConfigValue(Config.DbProvider) === DbProviderType.Mongo) {
-      success(`mongo  → ${upResult.services.mongo}`);
-    }
     if (getConfigValue(Config.GraphProvider) === GraphProviderType.Neo4j) {
       success(`neo4j  → ${upResult.services.neo4j}`);
-    }
-    if (getConfigValue(Config.QueueProvider) === QueueProviderType.Bullmq) {
-      success(`redis  → ${upResult.services.redis}`);
     }
   }
 

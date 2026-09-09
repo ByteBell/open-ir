@@ -19,7 +19,7 @@ export function buildIndexCommand(): Command {
     .option("--token <pat>", "GitHub PAT for private repos")
     .option(
       "--verbose",
-      "stream the server log file to the terminal during the run (set log level via `bytebell set log-level debug` for finer-grained output)",
+      "stream the server log file to the terminal during the run (set log level via `plumbline set log-level debug` for finer-grained output)",
     )
     .action(runIndex);
   return cmd;

@@ -1,7 +1,7 @@
 // Provider registry — the facade core. Mirrors the `@bb/db` / `@bb/graph-db`
-// pattern: side-effect imports of provider packages (`@bb/queue-bullmq`,
-// `@bb/queue-honker`) call `registerQueueProvider(name, factory)` at module
-// load. The server then picks one with `connectQueue(Config.QueueProvider)`.
+// pattern: a side-effect import of a provider package (`@bb/queue-honker`)
+// calls `registerQueueProvider(name, factory)` at module load. The server then
+// picks one with `connectQueue(Config.QueueProvider)`.
 //
 // Switching providers is a cold cutover — only one is active at a time;
 // `closeQueue()` must be called before re-connecting under a different name.

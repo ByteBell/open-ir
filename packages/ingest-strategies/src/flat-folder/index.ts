@@ -58,7 +58,7 @@ export function createFlatFolderStrategy(deps: FlatFolderStrategyDeps): IngestSt
       const { manifest } = await scanAndClassify(scanInput);
 
       // Persist the canonical eligible-files list BEFORE any small- or
-      // big-file LLM call runs. Read back by `@bytebell/knowledge-validation`
+      // big-file LLM call runs. Read back by `@plumbline/knowledge-validation`
       // to verify every file the analyzer was asked to process landed in
       // Neo4j. Must be the last step before analysis dispatch — if this
       // fails, the knowledge is not validatable post-hoc and we'd rather

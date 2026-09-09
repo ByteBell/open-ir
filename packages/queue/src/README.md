@@ -6,66 +6,66 @@ package-level contract; this file documents how the source tree is split.
 ## Files
 
 - **[index.ts](index.ts)** — public re-exports. The only entry point other
-  packages may import. Exposes `connectQueue` / `closeQueue`,
-  `enqueueGithubIndex` / `enqueueGithubPull`, `registerWorker`, and the
-  associated types. Anything not re-exported here is internal.
-- **[manager.ts](manager.ts)** — module-scoped `Map<JobType, Queue>` plus
-  the registered `Worker[]` and the `connecting` promise. Owns the queue
-  lifecycle (`connectQueue`, `closeQueue`), the queue prefix (`"bb"`), the
-  default job options (`attempts: 3`, fixed 5s backoff, removeOnComplete),
-  and the internal accessors (`_getQueue`, `_registerWorker`,
-  `_isConnected`). Throws `QueueNotConnectedError` when accessed before
-  connect; `QueueConnectError` if BullMQ construction fails.
-- **[envelope.ts](envelope.ts)** — pure helpers: `buildJobMessage(type,
+  packages may import. Anything not re-exported here is internal.
+- **[registry.ts](registry.ts)** — the provider registry and facade core.
+  `registerQueueProvider(name, factory)` (called by a provider package at
+  import time), `connectQueue(name)` / `closeQueue()` / `pingQueue()`, and
+  the internal `getQueue()` accessor, which throws
+  `QueueNotConnectedError` before connect.
+- **[envelope.ts](envelope.ts)** — pure helper: `buildJobMessage(type,
 priority, payload)` constructs the `JobMessage<P>` envelope (UUID v4 id,
-  `attempt: 0`, ISO timestamp); `mapPriority(JobPriority)` returns the
-  BullMQ numeric priority; `dedupeKey(type, knowledgeId)` returns the
-  `${type}-${knowledgeId}` BullMQ jobId.
+  `attempt: 0`, ISO timestamp).
+- **[concurrency.ts](concurrency.ts)** — `defaultConcurrencyFor(type)`,
+  reading `Config.ConcurrencyGithub` for GitHub job types.
 - **[github-index.ts](github-index.ts)** — `enqueueGithubIndex` publisher.
-  Mongo write first (`setKnowledgeState(_, QUEUED)`), then BullMQ publish.
-  Also exports `EnqueueOptions` (shared with `github-pull.ts`).
+  Document-store write first (`setKnowledgeState(_, QUEUED)`), then the
+  provider enqueue. Also exports `EnqueueOptions` (shared with the others).
 - **[github-pull.ts](github-pull.ts)** — `enqueueGithubPull` publisher.
   Same ordering and structure as the index publisher.
-- **[workers.ts](workers.ts)** — `registerWorker(type, handler, opts?)`
-  constructs a BullMQ `Worker` with the same connection options
-  (`getRedisConnection()`) and the same prefix as queues. Default
-  concurrency falls back to `getConfigValue(Config.ConcurrencyGithub)` for
-  GitHub job types.
+- **[local-ingest.ts](local-ingest.ts)** — `enqueueLocalIngest` publisher.
+- **[workers.ts](workers.ts)** — `registerWorker(type, handler, opts?)`,
+  delegated to the active provider.
+- **[cancel.ts](cancel.ts)** — `removeKnowledgeJobs(knowledgeId)`.
+- **[failed.ts](failed.ts)** — `listFailedJobs()` over the dead-letter set.
+- **[resumer.ts](resumer.ts)** — `resumeOrphans()`, re-enqueuing knowledge
+  docs left in `QUEUED` at boot.
 
 ## Module dependency graph
 
 ```
-manager.ts    → bullmq, @bb/types, @bb/errors, @bb/redis (getRedisConnection)
-envelope.ts   → @bb/types
-github-index.ts → manager.ts, envelope.ts, @bb/types, @bb/mongo
-github-pull.ts  → manager.ts, envelope.ts, github-index.ts (EnqueueOptions),
-                  @bb/types, @bb/mongo
-workers.ts    → bullmq, manager.ts, @bb/types, @bb/errors, @bb/config, @bb/redis
-index.ts      → re-exports the public surface
+registry.ts     → @bb/errors, @bb/queue-core
+envelope.ts     → @bb/types
+concurrency.ts  → @bb/types, @bb/config
+github-index.ts → registry.ts, envelope.ts, @bb/types, @bb/db
+github-pull.ts  → registry.ts, envelope.ts, github-index.ts (EnqueueOptions),
+                  @bb/types, @bb/db
+local-ingest.ts → registry.ts, envelope.ts, github-index.ts (EnqueueOptions), @bb/types
+workers.ts      → registry.ts, @bb/types, @bb/queue-core
+cancel.ts       → registry.ts, @bb/queue-core
+failed.ts       → registry.ts, @bb/queue-core
+resumer.ts      → github-index.ts, @bb/types, @bb/db, @bb/logger
+index.ts        → re-exports the public surface
 ```
 
-No cycles. `manager.ts` and `envelope.ts` are leaves within the package
-(no intra-package imports). Publishers depend on both. `workers.ts`
-depends only on `manager.ts`.
+No cycles. `registry.ts`, `envelope.ts` and `concurrency.ts` are leaves
+within the package (no intra-package imports). Publishers depend on
+`registry.ts` + `envelope.ts`; `workers.ts`, `cancel.ts` and `failed.ts`
+depend only on `registry.ts`.
 
 ## Invariants enforced here
 
-- **Connect is idempotent and concurrent-safe.** `connectQueue()` short-
-  circuits if `queues.size > 0`; concurrent callers await the same
-  in-flight `connecting` promise.
-- **Close is graceful and ordered.** `closeQueue()` awaits worker
-  `close()` first (so handlers finish), then awaits queue `close()`
-  (which closes BullMQ's internal redis connections).
-- **Mongo before BullMQ on enqueue.** Both publishers do
-  `setKnowledgeState(_, QUEUED)` then `queue.add(...)`. The ordering is
+- **One provider active at a time.** `connectQueue()` is a cold cutover;
+  `closeQueue()` must run before re-connecting under another name.
+- **Close is graceful and ordered.** The provider's `close()` finishes
+  in-flight handlers before releasing its queue handles.
+- **Document-store write before the enqueue.** Every publisher does
+  `setKnowledgeState(_, QUEUED)` then enqueues. The ordering is
   load-bearing — see [../README.md](../README.md) _Invariants_.
-- **No raw `Queue` leak.** `_getQueue` is not in `index.ts`. Future
-  publishers live in this folder and use the internal accessor; consumers
-  in higher tiers see only the typed publisher signatures.
-- **No env reads.** The redis URL is sourced via
-  `@bb/redis.getRedisConnection()` (which itself reads
-  `getConfigValue(Config.RedisUrl)`). Repo-wide ESLint rule blocks
-  `process.env`.
+- **No raw provider leak.** Consumers in higher tiers see only the typed
+  publisher signatures; new publishers live in this folder and use
+  `getQueue()`.
+- **No env reads.** All settings come from `@bb/config`. A repo-wide
+  ESLint rule blocks `process.env`.
 - **Errors carry typed metadata.** Construction sites use the catalog in
   `@bb/errors` — never inline `new Error(string)`. `QueueConnectError`
   carries the underlying `cause`; `QueueNotConnectedError` is a marker.

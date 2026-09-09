@@ -8,20 +8,20 @@ package-level contract; this file documents how the source tree is split.
 - **[index.ts](index.ts)** — public re-exports. The only entry point other
   packages may import. Anything not re-exported here is internal.
 - **[config.ts](config.ts)** — the `Config` enum: every key under
-  `~/.bytebell/config.json`. The string values match the on-disk JSON keys
-  (`server_port`, `mongo_uri`, …). Lives here — not in `@bb/config` — so that
-  consumers like `@bb/logger` and `@bb/mongo` can refer to a config key
+  `~/.plumbline/config.json`. The string values match the on-disk JSON keys
+  (`server_port`, `sqlite_path`, …). Lives here — not in `@bb/config` — so that
+  consumers like `@bb/logger` and `@bb/sqlite` can refer to a config key
   without taking a dependency on `@bb/config`'s schema/loader/writer
   implementation.
 - **[job.ts](job.ts)** — the queue vocabulary: `JobType` (today: GitHub
   index + pull, local ingest), `JobPriority`, the per-type payload
   interfaces (`GithubIndexPayload`, `GithubPullPayload`,
   `LocalIngestPayload`), the `PayloadLlmOverrides` mixin, the
-  `JobMessage<P>` envelope wrapping payloads as BullMQ `job.data`, and
+  `JobMessage<P>` envelope wrapping payloads as the queue's job data, and
   the `PayloadFor<T>` type-level dispatcher. Shared between `@bb/queue`
   (publisher) and `@bb/ingest-*` packages (worker handlers). Ingest
   payloads carry an optional `orgId?: string` override; OSS callers omit
-  it and the pipeline reads `Config.OrgId` from `~/.bytebell/config.json`
+  it and the pipeline reads `Config.OrgId` from `~/.plumbline/config.json`
   (locked to `"local"` in OSS builds; downstream consumers may set
   `orgId` per-job). Both GitHub payloads also extend `PayloadLlmOverrides`
   which adds optional `llmApiKey?`, `llmProvider?: string`, `llmModel?`,
@@ -34,7 +34,7 @@ package-level contract; this file documents how the source tree is split.
   standalone leaves all four fields unset and the pipeline falls back to
   `Config.OpenrouterApiKey` + `Config.LlmProvider`. `GithubPullPayload`
   also carries an optional `orgId?` so downstream multi-tenant workers
-  can scope Mongo/Neo4j lookups by org.
+  can scope document-store/Neo4j lookups by org.
 - **[knowledge.ts](knowledge.ts)** — the `KnowledgeState` enum modeling
   the lifecycle in [CLAUDE.md](../../../CLAUDE.md), plus the
   `KnowledgeDoc` document interface and its substructures:
@@ -84,7 +84,7 @@ lastAttemptAt }`) plus `EnrichmentFailureReason` (`"cap-exceeded" |
   (implementation).
 - **[path-layout.ts](path-layout.ts)** — pure on-disk path resolver.
   Defines the `RepoLocation` union (github / local) and pure functions
-  (`bytebellPathsFor`, `commitBaseDirFor`, `repositoryDirFor`,
+  (`plumblinePathsFor`, `commitBaseDirFor`, `repositoryDirFor`,
   `metaOutputRootFor`, `orgsRootFor`) that take a `home` string and
   return the kube-style layout
   `<home>/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/`.
@@ -102,7 +102,7 @@ lastAttemptAt }`) plus `EnrichmentFailureReason` (`"cap-exceeded" |
   `repo="project"`) — matching `deriveOwnerRepo` in the GitLab
   `SourceFactory`, so the ingest-write and business-context-read disk
   paths agree for nested projects. The `MetaPathsLayout` interface
-  documents the leaf-path shape returned by `bytebellPathsFor`. Lives
+  documents the leaf-path shape returned by `plumblinePathsFor`. Lives
   here so `@bb/ingest-github` (writer) and `@bb/mcp` (reader) can
   agree on the layout without one importing the other.
 
@@ -124,8 +124,8 @@ Pure declarations, no cycles possible.
 - **No imports.** Source files import nothing — not from this package, not
   from siblings, not from Node built-ins. If an entry needs to import, it
   belongs in a higher tier.
-- **Enum string values are the on-disk JSON keys.** `Config.MongoUri =
-"mongo_uri"` is the contract `@bb/config`'s Zod schema relies on; renaming
+- **Enum string values are the on-disk JSON keys.** `Config.SqlitePath =
+"sqlite_path"` is the contract `@bb/config`'s Zod schema relies on; renaming
   a value is a breaking change for both the file format and every consumer.
 - **One file per logical group.** `config.ts` holds config keys, `job.ts`
   holds queue vocabulary, `knowledge.ts` holds knowledge-document

@@ -40,7 +40,7 @@ async function tcpReachable(host: string, port: number): Promise<boolean> {
 function parseHostPort(uri: string): { host: string; port: number } | null {
   try {
     const u = new URL(uri);
-    const defaultPort = u.protocol === "bolt:" ? 7687 : u.protocol === "redis:" ? 6379 : 27017;
+    const defaultPort = u.protocol === "bolt:" ? 7687 : 0;
     const port = u.port !== "" ? Number.parseInt(u.port, 10) : defaultPort;
     return { host: u.hostname || "127.0.0.1", port };
   } catch {
@@ -50,14 +50,10 @@ function parseHostPort(uri: string): { host: string; port: number } | null {
 
 async function checkInfraReachable(): Promise<void> {
   // Only probe the services the active provider combo actually uses. Embedded
-  // mode (sqlite + ladybug + honker) needs none — composeServicesNeeded() is
-  // empty, so we skip the probe entirely.
+  // mode (ladybug) needs none — composeServicesNeeded() is empty, so
+  // we skip the probe entirely.
   const needed = composeServicesNeeded();
-  const checks: { name: ComposeService; uri: string }[] = [
-    { name: "mongo", uri: getConfigValue(Config.MongoUri) },
-    { name: "redis", uri: getConfigValue(Config.RedisUrl) },
-    { name: "neo4j", uri: getConfigValue(Config.Neo4jUri) },
-  ];
+  const checks: { name: ComposeService; uri: string }[] = [{ name: "neo4j", uri: getConfigValue(Config.Neo4jUri) }];
   const down: { name: string; uri: string }[] = [];
   for (const check of checks) {
     if (!needed.has(check.name)) {
@@ -88,7 +84,7 @@ export async function ensureServerRunning(onProgress?: (line: string) => void): 
   if (await isHealthy()) {
     // The running server was spawned in whatever env existed at boot. We
     // can't introspect its environment from here, but if the CURRENT process
-    // has BYTEBELL_DEV=1 set we surface a mismatch hint — without it, users
+    // has PLUMBLINE_DEV=1 set we surface a mismatch hint — without it, users
     // assume the running server picked up the toggle when it hasn't.
     return { alreadyRunning: true, devModeMismatch: isDevMode() };
   }

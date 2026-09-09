@@ -1,4 +1,4 @@
-import type { FileAnalysis } from "@bb/mongo";
+import type { FileAnalysis } from "@bb/db-core";
 
 // Maps a FileAnalysis into the 14 channels the legacy reader expects to find
 // materialized as (:OrgKeyword {keyword, type, org_id, content_type:'code'})

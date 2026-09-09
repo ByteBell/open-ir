@@ -32,7 +32,7 @@ export function classifyFailure(cause: unknown): ClassifiedFailure {
   }
   if (cause instanceof LlmConfigError) {
     // The hint (carried via `cause.hint`) is the actionable bit — it spells
-    // out the exact `bytebell set …` / env-var the operator must populate.
+    // out the exact `plumbline set …` / env-var the operator must populate.
     // The flattened "set the API key" wording masked enrichment-model
     // failures from concept-graph; surfacing the hint makes the two cases
     // distinguishable in logs.

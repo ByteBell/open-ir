@@ -1,22 +1,18 @@
-import type { BytebellConfig } from "./schema.ts";
+import type { PlumblineConfig } from "./schema.ts";
 import { Config } from "@bb/types";
 import type { ConfigValue } from "./schema.ts";
 import type { LogLevel, LlmProvider, IngestionStrategy } from "./schema.ts";
 
-export function readField<K extends Config>(cfg: BytebellConfig, key: K): ConfigValue<K> {
+export function readField<K extends Config>(cfg: PlumblineConfig, key: K): ConfigValue<K> {
   switch (key) {
     case Config.ServerPort:
       return cfg.server_port as ConfigValue<K>;
-    case Config.MongoUri:
-      return cfg.mongo_uri as ConfigValue<K>;
     case Config.Neo4jUri:
       return cfg.neo4j_uri as ConfigValue<K>;
     case Config.Neo4jUser:
       return cfg.neo4j_user as ConfigValue<K>;
     case Config.Neo4jPassword:
       return cfg.neo4j_password as ConfigValue<K>;
-    case Config.RedisUrl:
-      return cfg.redis_url as ConfigValue<K>;
     case Config.OpenrouterApiKey:
       return cfg.openrouter_api_key as ConfigValue<K>;
     case Config.OpenrouterModel:
@@ -114,20 +110,16 @@ export function readField<K extends Config>(cfg: BytebellConfig, key: K): Config
   }
 }
 
-export function writeField<K extends Config>(cfg: BytebellConfig, key: K, value: ConfigValue<K>): BytebellConfig {
+export function writeField<K extends Config>(cfg: PlumblineConfig, key: K, value: ConfigValue<K>): PlumblineConfig {
   switch (key) {
     case Config.ServerPort:
       return { ...cfg, server_port: value as number };
-    case Config.MongoUri:
-      return { ...cfg, mongo_uri: value as string };
     case Config.Neo4jUri:
       return { ...cfg, neo4j_uri: value as string };
     case Config.Neo4jUser:
       return { ...cfg, neo4j_user: value as string };
     case Config.Neo4jPassword:
       return { ...cfg, neo4j_password: value as string };
-    case Config.RedisUrl:
-      return { ...cfg, redis_url: value as string };
     case Config.OpenrouterApiKey:
       return { ...cfg, openrouter_api_key: value as string };
     case Config.OpenrouterModel:

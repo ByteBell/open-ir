@@ -3,8 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ResourceTemplate, type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-const SKILLS_INDEX_URI = "bytebell://skills/index";
-const SKILL_FILE_URI_TEMPLATE = "bytebell://skills/{skillName}/{filename}";
+const SKILLS_INDEX_URI = "plumbline://skills/index";
+const SKILL_FILE_URI_TEMPLATE = "plumbline://skills/{skillName}/{filename}";
 
 interface SkillFile {
   filename: string;
@@ -32,12 +32,12 @@ export function registerSkillResources(server: McpServer): void {
   }
 
   server.registerResource(
-    "bytebell-skills-index",
+    "plumbline-skills-index",
     SKILLS_INDEX_URI,
     {
-      title: "Bytebell Skills Index",
+      title: "Plumbline Skills Index",
       description:
-        "Lists every skill bundled with this server. Each entry includes name, description, target install path, and constituent files. Fetch each file via bytebell://skills/{name}/{filename} and write it to {install_path}/{filename}.",
+        "Lists every skill bundled with this server. Each entry includes name, description, target install path, and constituent files. Fetch each file via plumbline://skills/{name}/{filename} and write it to {install_path}/{filename}.",
       mimeType: "application/json",
     },
     async (uri) => {
@@ -55,7 +55,7 @@ export function registerSkillResources(server: McpServer): void {
       for (const skill of index.skills) {
         for (const file of skill.files) {
           resources.push({
-            uri: `bytebell://skills/${skill.name}/${file.filename}`,
+            uri: `plumbline://skills/${skill.name}/${file.filename}`,
             name: `${skill.name}/${file.filename}`,
             mimeType: "text/markdown",
             description: `${skill.name} skill — ${file.filename} (${file.bytes} bytes)`,
@@ -67,12 +67,12 @@ export function registerSkillResources(server: McpServer): void {
   });
 
   server.registerResource(
-    "bytebell-skill-file",
+    "plumbline-skill-file",
     template,
     {
-      title: "Bytebell Skill File",
+      title: "Plumbline Skill File",
       description:
-        "Markdown content for a single bundled skill file. URI pattern: bytebell://skills/{skillName}/{filename}. Write to ~/.claude/skills/{skillName}/{filename} during bootstrap.",
+        "Markdown content for a single bundled skill file. URI pattern: plumbline://skills/{skillName}/{filename}. Write to ~/.claude/skills/{skillName}/{filename} during bootstrap.",
       mimeType: "text/markdown",
     },
     async (uri, variables) => {

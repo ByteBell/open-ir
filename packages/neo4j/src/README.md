@@ -205,10 +205,10 @@ repo.ts                    → client.ts, knowledge.ts (repoNameFromGithubUrl)
 folder.ts                  → client.ts, pathUtils.ts (folderLevel, parentFolderPath), repo.ts (NodeScope type)
 files.ts                   → client.ts, pathUtils.ts (basename, parentFolderPath),
                              legacyOrgKeywordMirror.ts (mirrorFileOrgKeywords,
-                             buildOrgKeywordMirrorSteps), @bb/mongo (FileAnalysis type)
+                             buildOrgKeywordMirrorSteps), @bb/db-core (FileAnalysis type)
 fileVersions.ts            → client.ts
-legacyKeywordChannels.ts   → @bb/mongo (FileAnalysis type)
-legacyOrgKeywordMirror.ts  → client.ts, legacyKeywordChannels.ts, @bb/mongo (FileAnalysis type)
+legacyKeywordChannels.ts   → @bb/db-core (FileAnalysis type)
+legacyOrgKeywordMirror.ts  → client.ts, legacyKeywordChannels.ts, @bb/db-core (FileAnalysis type)
 index.ts                   → re-exports the public surface from client.ts + indexes.ts +
                              flatFolderIndexes.ts + knowledge.ts + files.ts + repo.ts +
                              folder.ts + fileVersions.ts + concepts.ts + contracts.ts +

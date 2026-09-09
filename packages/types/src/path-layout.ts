@@ -6,7 +6,7 @@ import path from "node:path";
 // or write knowledge artifacts. No I/O, no FS calls — every helper returns
 // strings derived from the inputs (a sha256 of a branch name is such a
 // derivation; `node:crypto` is a runtime builtin, not a package dependency).
-// Callers compose with their own `getBytebellHome()` (the package boundary
+// Callers compose with their own `getPlumblineHome()` (the package boundary
 // that holds the home-dir state).
 //
 // Layout (per knowledge + provider + branch + commit):
@@ -20,9 +20,9 @@ import path from "node:path";
 // self-contained subtree (see `branchIdFor` for why it is hashed, not raw).
 //
 // `<home>` is the per-tenant base directory:
-//   • OSS standalone: `~/.bytebell/` (single-tenant; no org segment)
+//   • OSS standalone: `~/.plumbline/` (single-tenant; no org segment)
 //   • Enterprise: `<KNOWLEDGE_BASE_PATH>/orgs/<orgName>/` (via the
-//     `setBytebellHomeResolver` override in `seed-oss-config.ts`)
+//     `setPlumblineHomeResolver` override in `seed-oss-config.ts`)
 //
 // The resolver deliberately stays org-agnostic. The org segment lives in
 // `<home>` when the host requires per-tenant isolation — adding it again
@@ -72,7 +72,7 @@ export interface MetaPathsLayout {
  * Deprecated. Kept as a back-compat shim for the migration tool, which
  * describes the legacy layout `<home>/orgs/<orgId>/…`. The active layout
  * no longer adds an `orgs/` segment here — that responsibility moved into
- * `<home>` itself (enterprise's `getBytebellHome` resolver returns a
+ * `<home>` itself (enterprise's `getPlumblineHome` resolver returns a
  * per-tenant `<base>/orgs/<orgName>/`).
  */
 export function orgsRootFor(home: string): string {
@@ -87,7 +87,7 @@ const BRANCH_BACKSLASH_RE = /\\/gu;
  * branch-scoped graph nodes. A single 64-hex SHA-256 component sidesteps every
  * branch-name hazard at once: embedded slashes (`feat/x`), length caps, and
  * case-insensitive filesystems (`Feature` vs `feature` hash differently, so no
- * collision). The human-readable name is kept on Mongo `knowledge.info.branch`
+ * collision). The human-readable name is kept on `knowledge.info.branch`
  * and the `:Branch` node, never on disk. Mirrors the hashing of
  * `@bb/ingest-core`'s `metaId`; kept here in the kernel so every tier can
  * derive a branch id without importing upward (same rationale as the
@@ -115,7 +115,7 @@ export function metaOutputRootFor(home: string, loc: RepoLocation): string {
   return path.join(commitBaseDirFor(home, loc), "meta-output");
 }
 
-export function bytebellPathsFor(home: string, loc: RepoLocation): MetaPathsLayout {
+export function plumblinePathsFor(home: string, loc: RepoLocation): MetaPathsLayout {
   const meta = metaOutputRootFor(home, loc);
   return {
     repositoryDir: repositoryDirFor(home, loc),
@@ -172,7 +172,7 @@ export function parseGithubOwnerRepo(repoUrl: string): { owner: string; repo: st
  * hosts or paths with fewer than two segments.
  *
  * This MUST stay consistent with `deriveOwnerRepo` in
- * `@bytebell/.../ingest-gitlab/src/source-factory.ts`, which is what the GitLab
+ * `@plumbline/.../ingest-gitlab/src/source-factory.ts`, which is what the GitLab
  * ingester uses to choose the on-disk `<owner>/<repo>` directory segments. The
  * business-context reader resolves the same path via `repoLocationFor`, so the
  * two derivations must agree or enrichment reads miss the directory.

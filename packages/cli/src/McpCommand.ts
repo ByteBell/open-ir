@@ -26,7 +26,7 @@ export function buildMcpCommand(): Command {
 
   mcp
     .command("install")
-    .description("Detect installed coding tools and register the bytebell MCP endpoint in their config.")
+    .description("Detect installed coding tools and register the plumbline MCP endpoint in their config.")
     .action(async () => {
       await runMcpInstall();
     });

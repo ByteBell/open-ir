@@ -2,7 +2,7 @@
 
 Source root for the public, provider-agnostic ingestion strategies. A strategy
 turns a cloned source tree (exposed through a `SourceReader` from
-`@bb/ingest-core`) into Mongo rows + Neo4j nodes. Nothing here knows whether the
+`@bb/ingest-core`) into SQLite rows + Neo4j nodes. Nothing here knows whether the
 source came from GitHub, GitLab, or anywhere else — strategies depend only on
 `@bb/ingest-core` and infrastructure packages.
 
@@ -46,8 +46,8 @@ Both factories accept `{ fileAnalyzer, progressContextFactory }` and return an
 ## Dependencies
 
 `@bb/ingest-core` (contracts, shared phases, primitives) plus infrastructure
-packages (`@bb/llm`, `@bb/graph-db`, `@bb/mongo`, `@bb/mcp`, …). **No** provider
-package (`@bb/ingest-github`, `@bytebell/ingest-gitlab`) is imported — providers
+packages (`@bb/llm`, `@bb/graph-db`, `@bb/db`, `@bb/mcp`, …). **No** provider
+package (`@bb/ingest-github`, `@plumbline/ingest-gitlab`) is imported — providers
 and the composition roots depend on this package, never the reverse.
 
 ## Invariants

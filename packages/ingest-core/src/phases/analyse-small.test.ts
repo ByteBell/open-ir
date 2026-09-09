@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { analyseSmallFiles } from "./analyse-small.ts";
 import { emptyFileAnalysis } from "#src/types/file-analysis.ts";
-import { encodeMetaPath } from "#src/pipeline/paths.ts";
+import { metaId } from "#src/pipeline/paths.ts";
 import type { MetaPaths } from "#src/types/meta-paths.ts";
 import type { FileAnalyzer, SourceReader } from "#src/types/pipeline.ts";
 import type { ConcurrencyLimiter } from "#src/pipeline/concurrency.ts";
@@ -115,7 +115,7 @@ test("resume tolerates a condensed file with no tokenUsage (oversized-stub guard
     const { analyzer, calls } = countingAnalyzer();
     // Pre-seed a condensed JSON WITHOUT a tokenUsage field (e.g. an oversized stub).
     const rel = "src/huge.ts";
-    const condensedPath = path.join(metaPaths.fileAnalysisDir, `${encodeMetaPath(rel)}.json`);
+    const condensedPath = path.join(metaPaths.fileAnalysisDir, `${metaId(rel)}.json`);
     await writeFile(condensedPath, JSON.stringify({ relativePath: rel, analysis: emptyFileAnalysis() }), "utf8");
 
     const result = await analyseSmallFiles({

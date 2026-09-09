@@ -70,7 +70,7 @@ export async function promptRepoSelector(opts: RepoSelectorPromptOptions): Promi
   const filtered = filterByKind(repos, opts.filterKind ?? "all");
 
   if (filtered.length === 0) {
-    process.stdout.write(`${opts.emptyMessage ?? "No matching repos. Run `bytebell index <url>` to add one."}\n`);
+    process.stdout.write(`${opts.emptyMessage ?? "No matching repos. Run `plumbline index <url>` to add one."}\n`);
     return null;
   }
 

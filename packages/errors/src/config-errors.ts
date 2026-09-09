@@ -6,7 +6,7 @@ export class ConfigIncompleteError extends Error {
   readonly hints: readonly string[];
 
   constructor(missing: readonly Config[], hints: readonly string[]) {
-    super(`Bytebell config is missing required fields: ${missing.join(", ")}.\n` + `Run:\n  ${hints.join("\n  ")}`);
+    super(`Plumbline config is missing required fields: ${missing.join(", ")}.\n` + `Run:\n  ${hints.join("\n  ")}`);
     this.missing = missing;
     this.hints = hints;
   }

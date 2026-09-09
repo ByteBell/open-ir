@@ -3,34 +3,34 @@
 ## Tier
 
 Binary (deployable). Sibling to `@bb/cli`. Imports everything below the
-binary tier — `@bb/types`, `@bb/errors`, `@bb/config`, `@bb/mongo`,
-`@bb/redis`, `@bb/neo4j`, `@bb/queue`, `@bb/ingest-github`. Never
+binary tier — `@bb/types`, `@bb/errors`, `@bb/config`, `@bb/db`, `@bb/sqlite`,
+`@bb/neo4j`, `@bb/queue`, `@bb/ingest-github`. Never
 imports `@bb/cli`.
 
 ## Responsibility
 
-Single-process Express daemon backing the `bytebell` TUI. Per
+Single-process Express daemon backing the `plumbline` TUI. Per
 [docs/arch.md:53-62](../../docs/arch.md#L53-L62): boots all infra in
-order, registers BullMQ workers in-process, exposes a small JSON HTTP
+order, registers queue workers in-process, exposes a small JSON HTTP
 surface on `127.0.0.1`, single-tenant, no auth.
 
 The package owns:
 
-- Boot sequence — `loadConfig` validation → `connectMongo` →
-  `connectRedis` → `connectNeo4j` → `ensureKnowledgeIndexes` →
+- Boot sequence — `loadConfig` validation → `connectDb` →
+  `connectGraph` → `ensureKnowledgeIndexes` →
   `connectQueue` → `registerGithubWorkers` →
   `registerLocalIngestWorker` → `app.listen` → write
-  `~/.bytebell/pid`.
-- HTTP routes: `GET /health` (pings Mongo + Redis + Neo4j),
+  `~/.plumbline/pid`.
+- HTTP routes: `GET /health` (pings the document store + queue + graph),
   `POST /api/v1/github/index`, `POST /api/v1/local/index`,
   `GET /api/v1/repos`, plus the MCP routes (`POST|GET|DELETE /mcp`,
   `GET /sse`, `POST /sse/messages`) registered by `@bb/mcp`'s
   `mountMcp(app)` after the JSON routes.
-- Knowledge-doc creation in **both** Mongo and Neo4j on each ingest
+- Knowledge-doc creation in **both** SQLite and Neo4j on each ingest
   request — `upsertKnowledge` + `upsertKnowledgeNode` run before the
   publisher transitions state to `QUEUED`.
 - Filtered recursive copy for local ingest (`copyRepo.ts`) — files end
-  up at `~/.bytebell/local-snapshots/<knowledgeId>/` (separate from the
+  up at `~/.plumbline/local-snapshots/<knowledgeId>/` (separate from the
   commit-scoped `orgs/` tree where analysed artifacts live). The
   snapshot freezes the user-supplied directory at submission time so
   edits made during the worker run don't bleed into ingestion. MCP
@@ -45,15 +45,15 @@ The package owns:
   dirs remain that back a live knowledge but can't be migrated (missing
   `commitId` / `repoUrl`) — those carry data the server won't silently destroy.
 - Graceful shutdown — SIGTERM/SIGINT → drain MCP sessions
-  (`closeAllMcpSessions`) → close queue → close redis → close neo4j →
-  close mongo → unlink `~/.bytebell/pid` → exit. MCP sessions drain
+  (`closeAllMcpSessions`) → close queue → close graph → close the
+  document store → unlink `~/.plumbline/pid` → exit. MCP sessions drain
   first so in-flight Streamable HTTP / SSE transports release before
-  the BullMQ worker shuts down its Redis connection.
+  the queue worker shuts down.
 
 The package does **not** own:
 
 - Worker handler bodies (those live in `@bb/ingest-github`)
-- Knowledge / Raw schema (lives in `@bb/types` + `@bb/mongo`)
+- Knowledge / Raw schema (lives in `@bb/types` + `@bb/db-core`)
 - Auth / rate-limit / CORS — single-tenant, localhost-only
 
 ## Public exports
@@ -62,7 +62,7 @@ The package does **not** own:
 entry in `package.json`:
 
 ```jsonc
-{ "bin": { "bytebell-server": "./src/index.ts" } }
+{ "bin": { "plumbline-server": "./src/index.ts" } }
 ```
 
 The TypeScript exports (route builders, shutdown installer) are
@@ -71,7 +71,7 @@ The TypeScript exports (route builders, shutdown installer) are
 ## Routes
 
 ```
-GET  /health                  → 200 { status: "ok", mongo, redis, neo4j }
+GET  /health                  → 200 { status: "ok", db, queue, graph }
                               → 503 { status: "down", … }
 
 POST /api/v1/github/index     body: { repoUrl, branch?, gitToken? }
@@ -96,9 +96,9 @@ POST /sse/messages?sessionId=…             legacy SSE messages — owned by @b
 
 ## Data ownership
 
-- `~/.bytebell/pid` — written at boot (mode `0644`), removed on graceful
+- `~/.plumbline/pid` — written at boot (mode `0644`), removed on graceful
   shutdown. Stale PID file is the signal that an earlier run crashed.
-- `~/.bytebell/local-snapshots/<knowledgeId>/` — populated by the
+- `~/.plumbline/local-snapshots/<knowledgeId>/` — populated by the
   local-ingest route's `copyRepo`. Frozen snapshot of the user's
   uploaded directory at submission time. Persisted across job retries;
   never auto-deleted. GitHub ingestion does not use this dir — it
@@ -110,12 +110,12 @@ POST /sse/messages?sessionId=…             legacy SSE messages — owned by @b
 1. **Bind localhost only.** `app.listen(port, "127.0.0.1")`. v0 OSS is
    single-tenant local — no remote connections.
 2. **Boot fails fast on missing config.** Required keys are
-   `Config.MongoUri`, `Config.RedisUrl`, `Config.Neo4jUri`,
+   `Config.SqlitePath`, `Config.QueueDbPath`, `Config.Neo4jUri`,
    `Config.Neo4jUser`, `Config.Neo4jPassword`,
    `Config.OpenrouterApiKey`. Missing → `ServerConfigError` with the
-   matching `bytebell set …` hints, exit 1.
+   matching `plumbline set …` hints, exit 1.
 3. **Knowledge doc creation precedes enqueue and is dual-written.** Each
-   ingest route calls `upsertKnowledge` (Mongo) + `upsertKnowledgeNode`
+   ingest route calls `upsertKnowledge` (SQLite) + `upsertKnowledgeNode`
    (Neo4j) with `state: CREATED` before the publisher
    (`enqueueGithubIndex` / `enqueueLocalIngest`). The publisher's
    `setKnowledgeState(_, QUEUED)` then transitions the doc.
@@ -124,7 +124,7 @@ POST /sse/messages?sessionId=…             legacy SSE messages — owned by @b
 :Class / :Function / :Module`; tolerant of existing indexes.
 4. **Local ingest copies into `local-snapshots/`, not in-place.** The
    user's `sourcePath` is read-only; the snapshot at
-   `~/.bytebell/local-snapshots/<knowledgeId>/` freezes the tree the
+   `~/.plumbline/local-snapshots/<knowledgeId>/` freezes the tree the
    worker sees. MCP retrieval for local knowledges reads from
    `KnowledgeDoc.source.sourcePath` (the original, unfrozen path) —
    the snapshot exists purely to give the worker a stable input.
@@ -134,7 +134,7 @@ POST /sse/messages?sessionId=…             legacy SSE messages — owned by @b
    commit-scoped `orgs/` tree; dirs with no DB record are deleted and logged as
    abandoned. Boot only throws `LayoutMigrationRequiredError` (non-zero exit)
    when legacy dirs remain that back a live knowledge but can't be migrated
-   (missing `commitId` / `repoUrl`); `bytebell migrate paths` runs the same
+   (missing `commitId` / `repoUrl`); `plumbline migrate paths` runs the same
    reconciliation ahead of time or with `--dry-run`.
 5. **Filtered copy uses the same SKIP lists as `scan.ts`.** Lists are
    duplicated (small, stable) rather than imported across the
@@ -147,8 +147,8 @@ POST /sse/messages?sessionId=…             legacy SSE messages — owned by @b
 
 - `express@5` — HTTP server
 - `@types/express` (dev)
-- Workspace deps: `@bb/config`, `@bb/errors`, `@bb/types`, `@bb/mongo`,
-  `@bb/redis`, `@bb/neo4j`, `@bb/queue`, `@bb/ingest-github`
+- Workspace deps: `@bb/config`, `@bb/errors`, `@bb/types`, `@bb/db`, `@bb/sqlite`,
+  `@bb/neo4j`, `@bb/queue`, `@bb/ingest-github`
 
 ## What is intentionally out of scope (v0)
 
@@ -156,10 +156,10 @@ POST /sse/messages?sessionId=…             legacy SSE messages — owned by @b
 - OpenAPI schemas per [CLAUDE.md _Rule of API Logging & Documentation_](../../CLAUDE.md) — defer
 - Tar-streaming for `/api/v1/local/index` — JSON `{ sourcePath }` is
   enough for local CLI/server co-location
-- Streaming progress responses — caller polls Mongo / `/api/v1/repos`
-- `bytebell server stop | status | logs` — defer; user can
-  `kill $(cat ~/.bytebell/pid)`
-- `DELETE /api/v1/repos/:knowledgeId` (powers `bytebell clean`) — defer
+- Streaming progress responses — caller polls `/api/v1/repos`
+- `plumbline server stop | status | logs` — defer; user can
+  `kill $(cat ~/.plumbline/pid)`
+- `DELETE /api/v1/repos/:knowledgeId` (powers `plumbline clean`) — defer
 - `GET /api/v1/repos/:knowledgeId` (single-doc read with file list) — defer
 
 ## How to extend
@@ -175,8 +175,8 @@ Adding a new route:
 Adding boot infra:
 
 1. Add the `connect*` call to `src/index.ts`'s `main()` in correct order
-   (config → mongo → redis → neo4j → schema bootstrap → queue → workers
+   (config → db → graph → schema bootstrap → queue → workers
    → listen → pid).
 2. Add the matching `close*` call to `src/shutdown.ts` in reverse
-   order, before the `unlink ~/.bytebell/pid`.
+   order, before the `unlink ~/.plumbline/pid`.
 3. Update _Invariants_ if the new infra changes the boot contract.

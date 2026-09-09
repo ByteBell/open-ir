@@ -1,6 +1,6 @@
 # Code search workflow
 
-Use this workflow whenever the user asks you to find, explain, or trace code in a repository indexed by bytebell-server.
+Use this workflow whenever the user asks you to find, explain, or trace code in a repository indexed by plumbline-server.
 
 ## The default loop
 

@@ -95,7 +95,7 @@ async function runPull(
       tailer = await startLogTailer("server");
     }
 
-    // Enqueue all pulls upfront — BullMQ runs workers concurrently in the
+    // Enqueue all pulls upfront — the queue runs workers concurrently in the
     // server process, so there's no benefit to serialising the HTTP submits.
     const enqueueResults = await Promise.all(
       picks.map(async ({ knowledgeId: targetId }) => {
@@ -146,7 +146,7 @@ async function pickRepos(): Promise<RepoPick[]> {
   const result = await promptRepoSelector({
     title: "Select repos to pull",
     filterKind: "github",
-    emptyMessage: "No indexed GitHub repos. Run `bytebell index <url>` first.",
+    emptyMessage: "No indexed GitHub repos. Run `plumbline index <url>` first.",
   });
   if (result === null) {
     return [];

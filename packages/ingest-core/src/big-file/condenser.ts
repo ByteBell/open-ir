@@ -3,7 +3,7 @@ import { LlmConfigError, LlmError } from "@bb/errors";
 import { logger } from "@bb/logger";
 import { Config } from "@bb/types";
 import { getConfigValue } from "@bb/config";
-import type { FileAnalysis, FileAnalysisSection } from "@bb/mongo";
+import type { FileAnalysis, FileAnalysisSection } from "@bb/db-core";
 import type { ChunkAnalysisResult } from "@bb/ingest-core";
 import type { AnalyzedFileResult } from "@bb/ingest-core";
 import { FALLBACK_LANGUAGE, emptyFileAnalysis } from "@bb/ingest-core";

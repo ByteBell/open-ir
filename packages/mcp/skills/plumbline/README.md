@@ -1,21 +1,21 @@
-# `@bb/mcp/skills/bytebell` — context
+# `@bb/mcp/skills/plumbline` — context
 
 ## Purpose
 
-The single skill bundled with `bytebell-public`. Teaches an MCP-capable
+The single skill bundled with `plumbline-public`. Teaches an MCP-capable
 LLM client how to use the three retrieval tools (`smart_search`,
 `keyword_lookup`, `retrieve_file`) against the public knowledge graph.
 
 ## Files
 
 - **[SKILL.md](SKILL.md)** — entry document. YAML frontmatter sets
-  `name: bytebell`, `description`, `user-invocable: true`,
+  `name: plumbline`, `description`, `user-invocable: true`,
   `argument-hint`. Body is a one-paragraph description of the public
   graph, a tool quick-reference, and the always-on guardrails distilled
   from the private repo's empirical analysis (UUID-not-name,
   `metadata` before `content`, max 3 consecutive `retrieve_file`
   calls, prefer `bulk_search` over loops, no cross-repo cap).
-- **[bytebell-code-search.md](bytebell-code-search.md)** — the
+- **[plumbline-code-search.md](plumbline-code-search.md)** — the
   default code-search workflow. Walks the LLM through the loop:
   `smart_search → keyword_lookup → retrieve_file metadata →
 retrieve_file content`. Includes common patterns (where-is-X-defined,
@@ -25,8 +25,8 @@ retrieve_file content`. Includes common patterns (where-is-X-defined,
 
 These files are read from disk by
 [`../../src/resourcesSkills.ts`](../../src/resourcesSkills.ts) on every
-`bytebell://skills/index` and `bytebell://skills/bytebell/<filename>`
-fetch. The MCP client writes them to `~/.claude/skills/bytebell/` during
+`plumbline://skills/index` and `plumbline://skills/plumbline/<filename>`
+fetch. The MCP client writes them to `~/.claude/skills/plumbline/` during
 session bootstrap.
 
 ## Editing
@@ -34,10 +34,10 @@ session bootstrap.
 - Keep each file ≤ 300 lines (CLAUDE.md _Rule of File Size_ applies to
   docs too).
 - Update both files together when behaviour changes — `SKILL.md` is
-  the table of contents and guardrails; `bytebell-code-search.md` is
+  the table of contents and guardrails; `plumbline-code-search.md` is
   the per-task workflow that links back to the guardrails.
 - The `description` field in `SKILL.md` frontmatter is what the LLM
-  sees as the skill's one-line summary in `bytebell://skills/index` —
+  sees as the skill's one-line summary in `plumbline://skills/index` —
   keep it punchy.
 
 ## What deliberately is NOT here

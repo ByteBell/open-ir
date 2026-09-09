@@ -1,17 +1,17 @@
 import fs from "node:fs";
 import {
-  configSchema,
+  parseConfig,
   Config,
-  type BytebellConfig,
+  type PlumblineConfig,
   type ConfigValue,
   HINTS,
   readField,
   requiredKeysFor,
 } from "./schema.ts";
 import { __registerCacheInvalidator, getConfigPath, resolveUnderHome } from "./paths.ts";
-import { ensureBytebellHome } from "./writer.ts";
+import { ensurePlumblineHome } from "./writer.ts";
 
-let cached: BytebellConfig | null = null;
+let cached: PlumblineConfig | null = null;
 let seeded = false;
 
 __registerCacheInvalidator(() => {
@@ -21,8 +21,8 @@ __registerCacheInvalidator(() => {
   cached = null;
 });
 
-export function seedConfig(value: unknown): BytebellConfig {
-  cached = configSchema.parse(value);
+export function seedConfig(value: unknown): PlumblineConfig {
+  cached = parseConfig(value);
   seeded = true;
   return cached;
 }
@@ -36,14 +36,14 @@ export function __resetSeedForTests(): void {
   seeded = false;
 }
 
-export function loadConfig(): BytebellConfig {
+export function loadConfig(): PlumblineConfig {
   if (cached !== null) {
     return cached;
   }
-  ensureBytebellHome();
+  ensurePlumblineHome();
   const raw = fs.readFileSync(getConfigPath(), "utf8");
   const parsed: unknown = JSON.parse(raw);
-  cached = configSchema.parse(parsed);
+  cached = parseConfig(parsed);
   return cached;
 }
 

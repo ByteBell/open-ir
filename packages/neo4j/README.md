@@ -14,7 +14,7 @@ nodes, indexes). The arch.md tier diagram reserves a separate `@bb/graph`
 for the typed query layer; we collapsed for v1 to keep boilerplate low.
 When `@bb/mcp` retrieval lands and needs to read the same graph, the
 helpers will graduate into a dedicated `@bb/graph` package and `@bb/neo4j`
-shrinks to driver-only — mirroring the `@bb/redis` + `@bb/queue` split.
+shrinks to driver-only — mirroring the `@bb/queue-core` + `@bb/queue` split.
 
 ## Responsibility
 
@@ -271,7 +271,7 @@ Neo4jPassword`). Repo-wide ESLint rule blocks `process.env`.
    awaiting `driver.close()` so a subsequent `connectNeo4j()` cleanly
    re-establishes.
 4. **Errors are typed, not strings.** `Neo4jConfigError` carries the
-   exact `bytebell set …` hint; `Neo4jConnectError` redacts userinfo
+   exact `plumbline set …` hint; `Neo4jConnectError` redacts userinfo
    in the URI; `Neo4jNotConnectedError` is a marker.
 5. **Schema bootstrap is tolerant.** `ensureKnowledgeIndexes()` swallows
    "already exists" errors (Neo4j refuses constraints when a matching

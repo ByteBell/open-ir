@@ -1,6 +1,5 @@
 // Pure-interface package: defines the contract every queue substrate must
-// satisfy (BullMQ-over-Redis today, Honker-over-SQLite today; anything else
-// tomorrow). No implementation lives here — `@bb/queue` is the facade that
+// satisfy (Honker-over-SQLite today; anything else tomorrow). No implementation lives here — `@bb/queue` is the facade that
 // holds the registry; the actual providers are sibling packages that register
 // themselves at module load via `registerQueueProvider`.
 
@@ -44,7 +43,7 @@ export interface RemoveKnowledgeJobsResult {
  * Lifecycle: `connect()` → … work … → `close()`. The facade owns the
  * single-active-provider state; providers stay stateless across reconnects.
  *
- * Semantics every provider must preserve (per `docs/redis-and-queue.md` §9):
+ * Semantics every provider must preserve:
  *  - At-least-once delivery.
  *  - Idempotent re-publish for the same `knowledgeId` — `enqueueRaw` returns
  *    the existing job's id if one is already live.

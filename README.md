@@ -1,29 +1,58 @@
-# Bytebell [bytebell.ai]
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset=".github/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset=".github/banner-light.svg">
+  <img alt="Plumbline — local-first code intelligence" src=".github/banner-light.svg">
+</picture>
+
+# Plumbline
+
+**Local-first code intelligence.** Plumbline reads every file in your repository, extracts
+what each one is _for_, and stores the result as a queryable knowledge graph your coding
+agent searches over MCP — running entirely on your machine, bound to `127.0.0.1`.
+
+[![License](https://img.shields.io/badge/license-AGPL--3.0%20%2B%20non--commercial-A8762B)](LICENSE)
+[![MCP](https://img.shields.io/badge/MCP-streamable%20http%20%2B%20sse-1A211E)](#connect-an-mcp-client)
+[![Binds](https://img.shields.io/badge/binds-127.0.0.1%20only-55605B)](#who-this-is-for)
+
+> **On the name:** Plumbline is the project; `plumbline` is the command it installs.
+> Every CLI invocation, container name, and config path below uses `plumbline` — that is
+> the real binary, not a typo.
+
+## The problem
+
+Coding agents read whole files into the context window. On a real repository that is both
+expensive and lossy — the agent spends its budget on files it did not need and still misses
+the one that mattered, because nothing told it where to look.
+
+Plumbline gives it somewhere to look. Every file is analyzed once for its purpose, summary,
+business context, classes, functions and keywords. That metadata becomes a Neo4j graph; the
+raw content sits in a local SQLite database beside it. Retrieval fuses both — semantic meaning _and_
+structural relationships — so the agent asks a question instead of reading a directory.
 
 ## Quickstart
 
-> Looking for the full CLI reference? Every `bytebell` subcommand, flag, and option lives in **[commands.md](commands.md)**. The Quickstart below is the minimum sequence from zero to a queryable graph.
+> Looking for the full CLI reference? Every `plumbline` subcommand, flag, and option lives in **[commands.md](commands.md)**. The Quickstart below is the minimum sequence from zero to a queryable graph.
 
 ### Prerequisites
 
 - [Bun](https://bun.sh) ≥ 1.1 — runtime + workspace manager.
-- [Docker](https://www.docker.com/) — for the local Mongo + Neo4j + Redis stack `bytebell boot` brings up.
+- [Docker](https://www.docker.com/) — for the local Neo4j container `plumbline boot` brings up. The document store and job queue are both SQLite and need no container.
 - An LLM backend — either an [OpenRouter](https://openrouter.ai) API key (default) or a local [Ollama](https://ollama.com) model. Every per-file analysis call goes through the one you pick.
 
 ### Install
 
-One command — checks prerequisites, clones the repo, installs dependencies, and links the `bytebell` binary:
+One command — checks prerequisites, clones the repo, installs dependencies, and links the `plumbline` binary:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ByteBell/open-ir/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ByteBell/Plumbline/main/install.sh | bash
 ```
 
-Verify with `bytebell --help`. (Manual install steps are in [commands.md](commands.md).)
+Verify with `plumbline --help`. (Manual install steps are in [commands.md](commands.md).)
 
-### Fastest path: `bytebell setup`
+### Fastest path: `plumbline setup`
 
 ```bash
-bytebell setup
+plumbline setup
 ```
 
 One interactive command does everything the manual steps below automate: picks your LLM provider, auto-fills and boots the local stack, optionally indexes a repo (handling private-repo tokens and branch selection), and **auto-wires the MCP endpoint into your editor**. See [SETUP.md](SETUP.md) for the full walkthrough.
@@ -32,51 +61,51 @@ The sections below are the manual, step-by-step equivalent — useful if you wan
 
 ### Configure
 
-Two values Bytebell needs — your OpenRouter API key and model. Set them headlessly:
+Two values Plumbline needs — your OpenRouter API key and model. Set them headlessly:
 
 ```bash
-bytebell set openrouter-api-key sk-or-…
-bytebell set openrouter-model anthropic/claude-sonnet-4.6
+plumbline set openrouter-api-key sk-or-…
+plumbline set openrouter-model anthropic/claude-sonnet-4.6
 ```
 
-Or skip this step and run `bytebell boot` straight away — on an interactive terminal it opens a setup form to collect these on first run. Running `bytebell set` with no arguments opens the same form at any time.
+Or skip this step and run `plumbline boot` straight away — on an interactive terminal it opens a setup form to collect these on first run. Running `plumbline set` with no arguments opens the same form at any time.
 
-There is no `.env` file anywhere. `~/.bytebell/config.json` (mode `0600`) is the single source of truth, and `bytebell set` is the only sanctioned way to write to it. If you already run Mongo / Neo4j / Redis and don't want the Docker stack, see [Bring your own infrastructure](#bring-your-own-infrastructure) below.
+There is no `.env` file anywhere. `~/.plumbline/config.json` (mode `0600`) is the single source of truth, and `plumbline set` is the only sanctioned way to write to it. If you already run Neo4j and don't want the Docker stack, see [Bring your own infrastructure](#bring-your-own-infrastructure) below.
 
 ### Boot
 
 ```bash
-bytebell boot
+plumbline boot
 ```
 
 What happens, in order:
 
-1. **Pre-flight check** — verifies both OpenRouter keys are set. If either is blank and you're in an interactive terminal, Bytebell opens a setup form so you can enter them on the spot, then continues. In a non-interactive context (CI, piped input) it prints the exact `bytebell set …` commands and exits.
+1. **Pre-flight check** — verifies both OpenRouter keys are set. If either is blank and you're in an interactive terminal, Plumbline opens a setup form so you can enter them on the spot, then continues. In a non-interactive context (CI, piped input) it prints the exact `plumbline set …` commands and exits.
 2. **Auto-fill** — fills any missing infra config keys with local-Docker defaults; generates a Neo4j password if one isn't set.
-3. **Stack up** — `docker compose up -d` brings up `bytebell-mongo`, `bytebell-neo4j`, `bytebell-redis` (named volumes — data persists across reboots).
+3. **Stack up** — `docker compose up -d` brings up `plumbline-neo4j` (a named volume — data persists across reboots). SQLite needs no container; the documents live at `~/.plumbline/data.sqlite` and the queue at `~/.plumbline/queue.db`.
 4. **Health gate** — polls `docker compose ps` until all three services report `healthy`.
-5. **Server up** — spawns `bytebell-server` (HTTP on `127.0.0.1:8080`, MCP at `/mcp`).
+5. **Server up** — spawns `plumbline-server` (HTTP on `127.0.0.1:8080`, MCP at `/mcp`).
 
 First boot pulls images and can take a couple of minutes. Subsequent boots are fast.
 
 ### Index a repo
 
 ```bash
-bytebell index https://github.com/anthropics/claude-code
+plumbline index https://github.com/anthropics/claude-code
 # private repo: add --token <github-pat>; never paste the PAT positionally
-bytebell ls   # watch state: CREATED → QUEUED → INGESTED → PROCESSING → PROCESSED
+plumbline ls   # watch state: CREATED → QUEUED → INGESTED → PROCESSING → PROCESSED
 ```
 
-When the row reads `PROCESSED`, the graph is fully populated and the MCP tools will return results for that repo. Local directories work too: `bytebell ingest /path/to/source-tree`.
+When the row reads `PROCESSED`, the graph is fully populated and the MCP tools will return results for that repo. Local directories work too: `plumbline ingest /path/to/source-tree`.
 
 ### Connect an MCP client
 
-Easiest: **`bytebell mcp install`** auto-detects your installed tools — Claude Code, Cursor, Claude Desktop, Windsurf, VS Code — and writes the correct MCP entry into each one's config (the JSON shape differs per tool; the command handles that and backs up the file first). `bytebell setup` runs this for you on first boot.
+Easiest: **`plumbline mcp install`** auto-detects your installed tools — Claude Code, Cursor, Claude Desktop, Windsurf, VS Code — and writes the correct MCP entry into each one's config (the JSON shape differs per tool; the command handles that and backs up the file first). `plumbline setup` runs this for you on first boot.
 
 To wire Claude Code by hand:
 
 ```bash
-claude mcp add --transport http bytebell http://127.0.0.1:8080/mcp
+claude mcp add --transport http plumbline http://127.0.0.1:8080/mcp
 ```
 
 Or add this under the `mcpServers` key of Claude Desktop's config (or Cursor's `~/.cursor/mcp.json`):
@@ -84,7 +113,7 @@ Or add this under the `mcpServers` key of Claude Desktop's config (or Cursor's `
 ```json
 {
   "mcpServers": {
-    "bytebell": {
+    "plumbline": {
       "type": "http",
       "url": "http://127.0.0.1:8080/mcp"
     }
@@ -92,29 +121,29 @@ Or add this under the `mcpServers` key of Claude Desktop's config (or Cursor's `
 }
 ```
 
-The server registers `smart_search`, `keyword_lookup`, and `retrieve_file`, plus a bundled skill at `bytebell://skills/index` that the client can fetch and install once per session for the recommended workflow.
+The server registers `smart_search`, `keyword_lookup`, and `retrieve_file`, plus a bundled skill at `plumbline://skills/index` that the client can fetch and install once per session for the recommended workflow.
 
-## What Bytebell does
+## What Plumbline does
 
-You point `bytebell` at a repo. It clones the source, walks every file, and for each file calls an LLM (via OpenRouter) to extract a structured `FileAnalysis`: a one-paragraph **purpose**, a longer **summary** of what the file does and how it fits the architecture, a **business context** line tying it to the product domain, plus the file's classes, functions, keywords, and imports.
+You point `plumbline` at a repo. It clones the source, walks every file, and for each file calls an LLM (via OpenRouter) to extract a structured `FileAnalysis`: a one-paragraph **purpose**, a longer **summary** of what the file does and how it fits the architecture, a **business context** line tying it to the product domain, plus the file's classes, functions, keywords, and imports.
 
 Those outputs are persisted into two stores:
 
 - **Neo4j** receives a `:File` node enriched with `purpose`, `summary`, `businessContext`, `language`, `sha`, and `sizeBytes`, linked via `:HAS_CLASS`, `:HAS_FUNCTION`, `:HAS_KEYWORD`, `:HAS_IMPORT_INTERNAL`, and `:HAS_IMPORT_EXTERNAL` to deduplicated child nodes shared across the whole graph. Fulltext indexes cover purpose+summary, business context, keyword names, and class/function signatures.
-- **MongoDB** receives the raw file content, language, SHA256, and the full `FileAnalysis` JSON for cite-back and exact retrieval.
+- **SQLite** receives the raw file content, language, SHA256, and the full `FileAnalysis` JSON for cite-back and exact retrieval. It is a single file at `~/.plumbline/data.sqlite` — no server, no container.
 
 LLM clients then query that graph through three MCP tools — `smart_search`, `keyword_lookup`, `retrieve_file` — which together cover fused semantic + structural search, reverse entity-to-file lookup, and targeted content reads. They let an agent answer questions like _"Which files implement our retry/backoff policy and where is it configured?"_ without reading the entire repo into context.
 
 ```mermaid
 flowchart LR
-    CLI["bytebell CLI / TUI"] -- HTTP --> Server["bytebell-server<br/>(Express)"]
+    CLI["plumbline CLI / TUI"] -- HTTP --> Server["plumbline-server<br/>(Express)"]
     Client["MCP-capable LLM client<br/>Claude Code, Cursor, …"] -- MCP --> Server
-    Server -- enqueues --> Q["BullMQ in-process worker"]
+    Server -- enqueues --> Q["SQLite-backed in-process worker"]
     Q --> Strategy["IngestionStrategy<br/>per-file LLM"]
     Strategy -- LLM call --> OR["OpenRouter"]
-    Strategy -- raw + analysis --> Mongo[("MongoDB")]
+    Strategy -- raw + analysis --> Sqlite[("SQLite")]
     Strategy -- enriched node --> Neo[("Neo4j")]
-    Server -. retrieval .-> Mongo
+    Server -. retrieval .-> Sqlite
     Server -. retrieval .-> Neo
 ```
 
@@ -130,7 +159,7 @@ It is **not** a hosted product, not a chat UI, and not a multi-tenant platform. 
 
 ### Ingest
 
-`bytebell index <url>` (or `bytebell ingest <path>`) submits a job to an in-process BullMQ queue. The worker dispatches to an `IngestionStrategy` — today, `BasicFileAnalysisStrategy` ([packages/ingest-github/src/BasicFileAnalysisStrategy.ts](packages/ingest-github/src/BasicFileAnalysisStrategy.ts)). It clones the repo to `~/.bytebell/repos/<knowledgeId>/`, walks every file, runs a per-file OpenRouter call, and persists raw content to Mongo + the enriched node to Neo4j.
+`plumbline index <url>` (or `plumbline ingest <path>`) submits a job to an in-process SQLite-backed queue. The worker dispatches to an `IngestionStrategy` — today, `BasicFileAnalysisStrategy` ([packages/ingest-github/src/BasicFileAnalysisStrategy.ts](packages/ingest-github/src/BasicFileAnalysisStrategy.ts)). It clones the repo to `~/.plumbline/repos/<knowledgeId>/`, walks every file, runs a per-file OpenRouter call, and persists raw content to SQLite + the enriched node to Neo4j.
 
 The per-file LLM call returns a single JSON object with this shape:
 
@@ -147,7 +176,7 @@ The per-file LLM call returns a single JSON object with this shape:
 }
 ```
 
-`classes` and `functions` carry approximate line ranges so `retrieve_file` can later pull the right slice without re-reading the whole file. **Re-indexing is diff-aware**: on `bytebell pull`, the strategy compares each file's SHA256 to the prior `:File.sha` and only re-analyses files whose hash changed. LLM cost is proportional to actual code churn, not to repo size.
+`classes` and `functions` carry approximate line ranges so `retrieve_file` can later pull the right slice without re-reading the whole file. **Re-indexing is diff-aware**: on `plumbline pull`, the strategy compares each file's SHA256 to the prior `:File.sha` and only re-analyses files whose hash changed. LLM cost is proportional to actual code churn, not to repo size.
 
 ### Graph shape
 
@@ -193,66 +222,64 @@ Most well-formed code questions resolve in 2–4 tool calls. No re-clone, no ful
 
 ## Day-to-day commands
 
-| Command                                                       | Purpose                                                                            |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `bytebell setup`                                              | Interactive first-run wizard: provider, boot, optional index, MCP auto-install.    |
-| `bytebell ls`                                                 | List indexed knowledge entries with state.                                         |
-| `bytebell stats`                                              | Ingestion totals, per-repo breakdown, per-commit token usage.                      |
-| `bytebell mcp install`                                        | Auto-detect installed editors and register the MCP endpoint in their config.       |
-| `bytebell mcp stats`                                          | MCP usage: input/output tokens, monthly breakdown.                                 |
-| `bytebell pull`                                               | Re-index a previously-added GitHub repo at branch HEAD (diff-aware).               |
-| `bytebell delete`                                             | Picker; cancels jobs, drops the Knowledge subgraph from Neo4j, removes Mongo rows. |
-| `bytebell shutdown`                                           | Stop the server. Docker keeps running.                                             |
-| `bytebell boot`                                               | Warm restart.                                                                      |
-| `docker compose -f infra/docker/docker-compose.yml down [-v]` | Stop containers (and optionally drop volumes — destroys all indexed data).         |
+| Command                                                       | Purpose                                                                             |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `plumbline setup`                                             | Interactive first-run wizard: provider, boot, optional index, MCP auto-install.     |
+| `plumbline ls`                                                | List indexed knowledge entries with state.                                          |
+| `plumbline stats`                                             | Ingestion totals, per-repo breakdown, per-commit token usage.                       |
+| `plumbline mcp install`                                       | Auto-detect installed editors and register the MCP endpoint in their config.        |
+| `plumbline mcp stats`                                         | MCP usage: input/output tokens, monthly breakdown.                                  |
+| `plumbline pull`                                              | Re-index a previously-added GitHub repo at branch HEAD (diff-aware).                |
+| `plumbline delete`                                            | Picker; cancels jobs, drops the Knowledge subgraph from Neo4j, removes SQLite rows. |
+| `plumbline shutdown`                                          | Stop the server. Docker keeps running.                                              |
+| `plumbline boot`                                              | Warm restart.                                                                       |
+| `docker compose -f infra/docker/docker-compose.yml down [-v]` | Stop containers (and optionally drop volumes — destroys all indexed data).          |
 
 Full reference, including every flag and option: [commands.md](commands.md).
 
 ## Bring your own infrastructure
 
-By default, `bytebell boot` provisions a local Docker stack (`bytebell-mongo`, `bytebell-neo4j`, `bytebell-redis`) with auto-generated credentials. If you already run Mongo, Neo4j, and Redis (or want to use a managed service), set the connection details before booting and the Docker step is skipped:
+By default, `plumbline boot` provisions a local Docker stack (`plumbline-neo4j`) with auto-generated credentials. The document store and the queue are SQLite — local files, never containers. If you already run Neo4j (or want to use a managed service), set the connection details before booting and the Docker step is skipped:
 
 ```bash
-bytebell set mongo-uri      mongodb://user:pass@host:27017/bytebell
-bytebell set neo4j-uri      bolt://host:7687
-bytebell set neo4j-user     neo4j
-bytebell set neo4j-password <your-password>
-bytebell set redis-url      redis://host:6379
+plumbline set neo4j-uri      bolt://host:7687
+plumbline set neo4j-user     neo4j
+plumbline set neo4j-password <your-password>
 ```
 
 Docker is not required on the host in this mode. See the [Configuration reference](#configuration-reference) for the full key list.
 
 ## Architecture at a glance
 
-A single Bun-built Express daemon, `bytebell-server`, hosts the ingestion HTTP routes, the MCP transport (Streamable HTTP + SSE), and the BullMQ workers all in-process. The CLI is a thin Ink/React TUI that only ever talks HTTP to that daemon — it never touches Mongo, Neo4j, or Redis directly. Workers run in the server's lifecycle; there is no separate worker fleet.
+A single Bun-built Express daemon, `plumbline-server`, hosts the ingestion HTTP routes, the MCP transport (Streamable HTTP + SSE), and the queue workers all in-process. The CLI is a thin Ink/React TUI that only ever talks HTTP to that daemon — it never touches SQLite or Neo4j directly. Workers run in the server's lifecycle; there is no separate worker fleet.
 
 For the full PRD — package tiers, state machine, HTTP route catalogue, verification checklist, distribution strategy — see [docs/arch.md](docs/arch.md).
 
 ## Configuration reference
 
-Settings live in `~/.bytebell/config.json` and are written exclusively by `bytebell set <key> <value>` (or by first-run auto-fill on `bytebell boot`). Keys:
+Settings live in `~/.plumbline/config.json` and are written exclusively by `plumbline set <key> <value>` (or by first-run auto-fill on `plumbline boot`). Keys:
 
-| Key                  | Purpose                                  | Default                              |
-| -------------------- | ---------------------------------------- | ------------------------------------ |
-| `openrouter-api-key` | API key for per-file LLM analysis        | _(required, blank by default)_       |
-| `openrouter-model`   | OpenRouter model slug used for analysis  | _(required)_                         |
-| `mongo-uri`          | MongoDB connection string                | `mongodb://localhost:27017/bytebell` |
-| `neo4j-uri`          | Neo4j Bolt URI                           | `bolt://localhost:7687`              |
-| `neo4j-user`         | Neo4j auth user                          | `neo4j`                              |
-| `neo4j-password`     | Neo4j auth password                      | _(generated on first boot)_          |
-| `redis-url`          | Redis URL for BullMQ                     | `redis://localhost:6379`             |
-| `server-port`        | Local HTTP/MCP port                      | `8080`                               |
-| `concurrency-github` | Concurrent files analysed per GitHub job | tuned per box                        |
-| `log-level`          | Winston log level                        | `info`                               |
-| `log-retention-days` | Daily log retention                      | `14`                                 |
+| Key                  | Purpose                                  | Default                        |
+| -------------------- | ---------------------------------------- | ------------------------------ |
+| `openrouter-api-key` | API key for per-file LLM analysis        | _(required, blank by default)_ |
+| `openrouter-model`   | OpenRouter model slug used for analysis  | _(required)_                   |
+| `sqlite-path`        | Path to the SQLite document store        | `~/.plumbline/data.sqlite`     |
+| `neo4j-uri`          | Neo4j Bolt URI                           | `bolt://localhost:7687`        |
+| `neo4j-user`         | Neo4j auth user                          | `neo4j`                        |
+| `neo4j-password`     | Neo4j auth password                      | _(generated on first boot)_    |
+| `queue-db-path`      | Path to the SQLite job queue             | `~/.plumbline/queue.db`        |
+| `server-port`        | Local HTTP/MCP port                      | `8080`                         |
+| `concurrency-github` | Concurrent files analysed per GitHub job | tuned per box                  |
+| `log-level`          | Winston log level                        | `info`                         |
+| `log-retention-days` | Daily log retention                      | `14`                           |
 
-If a required setting is missing, Bytebell either opens the setup form (interactive terminal) or prints the exact `bytebell set …` command and refuses to boot (non-interactive). It never silently reads `process.env`.
+If a required setting is missing, Plumbline either opens the setup form (interactive terminal) or prints the exact `plumbline set …` command and refuses to boot (non-interactive). It never silently reads `process.env`.
 
 ## Why this design — research grounding
 
-> Comparing Bytebell to PageIndex, GitNexus, GraphRAG, Sourcegraph, or Augment Code? See **[comparison.md](comparison.md)** for a side-by-side feature table and pros / cons of each.
+> Comparing Plumbline to PageIndex, GitNexus, GraphRAG, Sourcegraph, or Augment Code? See **[comparison.md](comparison.md)** for a side-by-side feature table and pros / cons of each.
 
-Bytebell's shape — _build a code graph at ingest time, enrich every node with LLM-derived structured semantics, then serve retrieval against the joined surface_ — tracks a converging body of recent work showing that purely structural retrieval (AST / call-graph) and purely semantic retrieval (embeddings) each leave large performance on the table, and that combining them at indexing time unlocks the gains.
+Plumbline's shape — _build a code graph at ingest time, enrich every node with LLM-derived structured semantics, then serve retrieval against the joined surface_ — tracks a converging body of recent work showing that purely structural retrieval (AST / call-graph) and purely semantic retrieval (embeddings) each leave large performance on the table, and that combining them at indexing time unlocks the gains.
 
 **Graphs beat flat retrieval for code.** Repository-level graphs from AST + imports + call structure consistently outperform flat embedding retrieval on real engineering tasks.
 
@@ -266,9 +293,9 @@ Bytebell's shape — _build a code graph at ingest time, enrich every node with 
 - Tram ([2305.11074](https://arxiv.org/abs/2305.11074), ACL 2023) — semantic enrichment beats flat sentence-level retrieval.
 - LLM Agents Improve Semantic Code Search ([2408.11058](https://arxiv.org/abs/2408.11058)) — LLM-injected metadata improves embedding-based retrieval.
 - Knowledge-Graph-Based Repo-Level Code Generation ([2505.14394](https://arxiv.org/abs/2505.14394)) — graph captures structure; LLM context fills semantic gaps.
-- Sense and Sensitivity ([2505.13353](https://arxiv.org/abs/2505.13353)) — lexical and semantic recall are different capabilities; supports the `summary` (semantic) vs Mongo raw (lexical) split.
+- Sense and Sensitivity ([2505.13353](https://arxiv.org/abs/2505.13353)) — lexical and semantic recall are different capabilities; supports the `summary` (semantic) vs SQLite raw (lexical) split.
 
-**Structured summaries and hierarchy beat blob summarization.** Explicit fields — purpose, inputs, outputs, business context — aggregated bottom-up let retrieval match at the right level of abstraction. This maps directly onto Bytebell's `purpose` / `summary` / `businessContext` schema.
+**Structured summaries and hierarchy beat blob summarization.** Explicit fields — purpose, inputs, outputs, business context — aggregated bottom-up let retrieval match at the right level of abstraction. This maps directly onto Plumbline's `purpose` / `summary` / `businessContext` schema.
 
 - Hierarchical Repo-Level Code Summarization for Business Applications ([2501.07857](https://arxiv.org/abs/2501.07857), ICSE LLM4Code 2025) — closest motivational match: structured per-unit summaries aggregated to file/package level, grounded in business context.
 - Beyond Function Level ([2502.16704](https://arxiv.org/abs/2502.16704)) — class/repo context in summaries beats function-only.
@@ -283,7 +310,7 @@ The design choices follow directly: each `:File` node carries LLM-generated sema
 
 ## Enterprise
 
-Bytebell-public is the OSS edition. ByteBell also offers a separately-licensed **Enterprise** edition for organizations that need a commercial-use grant, hardening, and direct support. Enterprise typically includes:
+Plumbline — `Plumbline-public` in the [LICENSE](LICENSE) text — is the OSS edition. ByteBell also offers a separately-licensed **Enterprise** edition for organizations that need a commercial-use grant, hardening, and direct support. Enterprise typically includes:
 
 - A commercial-use grant covering use by or on behalf of for-profit entities, including SaaS deployments and revenue-generating applications.
 - Hardened multi-tenant deployment patterns, SSO / SCIM, audit logging, and data-isolation guarantees.
@@ -299,4 +326,4 @@ Hooks, commit conventions, and pre-push gates are documented in [contributing.md
 
 ## License
 
-Bytebell is released under **AGPL-3.0 with an additional non-commercial use clause** — see [LICENSE](LICENSE) for the authoritative text. Personal, academic, research, and non-profit use are unrestricted under AGPL-3.0 (network-copyleft applies). **Commercial use** is governed by license terms and is covered by the [Enterprise edition](#enterprise) (`team@bytebell.ai`). The running server itself does **not** verify a license; governance is by license terms, not by code. The server is meant for local single-tenant use — no remote network surface; everything binds to `127.0.0.1`.
+Plumbline is released under **AGPL-3.0 with an additional non-commercial use clause** — see [LICENSE](LICENSE) for the authoritative text. Personal, academic, research, and non-profit use are unrestricted under AGPL-3.0 (network-copyleft applies). **Commercial use** is governed by license terms and is covered by the [Enterprise edition](#enterprise) (`team@bytebell.ai`). The running server itself does **not** verify a license; governance is by license terms, not by code. The server is meant for local single-tenant use — no remote network surface; everything binds to `127.0.0.1`.

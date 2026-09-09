@@ -23,7 +23,7 @@ export function buildSetupCommand(): Command {
 
 async function runSetup(): Promise<void> {
   if (process.stdin.isTTY !== true) {
-    error("bytebell setup requires an interactive terminal. Run it directly, not piped.");
+    error("plumbline setup requires an interactive terminal. Run it directly, not piped.");
     process.exitCode = 1;
     return;
   }
@@ -55,7 +55,7 @@ async function connectMcp(): Promise<void> {
     return;
   }
   const port = getConfigValue(Config.ServerPort);
-  success(`Connect Claude Code:\n  claude mcp add --transport http bytebell http://127.0.0.1:${port}/mcp`);
+  success(`Connect Claude Code:\n  claude mcp add --transport http plumbline http://127.0.0.1:${port}/mcp`);
 }
 
 function runWizard(): Promise<InstallWizardResult | null> {

@@ -4,7 +4,7 @@ Provider-agnostic interfaces for the document database layer.
 
 ## Responsibilities
 
-Defines the contract that every document database backend (Mongo, SQLite, etc.) must implement. Contains no I/O — pure TypeScript interfaces and shared types.
+Defines the contract that every document database backend must implement. `@bb/sqlite` is the only implementation shipped today. Contains no I/O — pure TypeScript interfaces and shared types.
 
 ## Public Interfaces
 
@@ -14,8 +14,9 @@ Defines the contract that every document database backend (Mongo, SQLite, etc.) 
 - `IAggregateStatsRepository` — `aggregateStats()`
 - `IActivityRepository` — `recordActivity()`
 - `IUsageRepository` — `incrementUsage`, `getMonthlyUsage`, `getGlobalUsage`
+- `IEnrichmentRepository` — per-file enrichment ledger for the concept-graph strategy: `startEnrichmentRun`, `getCompletedEnrichmentFiles`, `markFileEnriched`, `recordEnrichmentFailure`, `completeEnrichmentRun`, `failEnrichmentRun`. State lives on the knowledge document; it is the resume cursor a queue retry reads so finished files are skipped.
 - `DbPingResult` — health probe result shape
-- `FileAnalysis`, `RawFileDoc` — shared raw-file types (previously duplicated in `@bb/mongo`)
+- `FileAnalysis`, `RawFileDoc` — shared raw-file types
 
 ## Data Ownership
 
@@ -23,4 +24,4 @@ None. This package owns no data — it only describes shapes.
 
 ## Tier
 
-Strategy (interfaces consumed by `@bb/db` and implemented by `@bb/mongo`, `@bb/sqlite`)
+Strategy (interfaces consumed by `@bb/db` and implemented by `@bb/sqlite`)

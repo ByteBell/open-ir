@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * One-shot probe: does the configured ENRICHMENT_MODEL emit `tool_calls`
- * when `tool_choice: "required"` is set? Bypasses Mongo / Neo4j entirely
+ * when `tool_choice: "required"` is set? Bypasses the document store / Neo4j entirely
  * — just exercises the OpenRouter request shape so we can confirm the
  * model actually honors the constraint before running a full enrichment.
  *
@@ -28,11 +28,9 @@ if (model === undefined || model.length === 0) {
 // rejects unknown keys, so we provide a full-shaped object.
 seedConfig({
   server_port: 8080,
-  mongo_uri: "mongodb://placeholder/local",
   neo4j_uri: "bolt://placeholder:7687",
   neo4j_user: "placeholder",
   neo4j_password: "placeholder",
-  redis_url: "redis://placeholder:6379",
   openrouter_api_key: apiKey,
   openrouter_model: model,
   openrouter_fallback_model_1: "",
@@ -62,7 +60,7 @@ seedConfig({
   "skip.decision.enabled": false,
   "skip.decision.max.chars.for.llm": 4000,
   "skip.decision.cache.path": "",
-  db_provider: "mongo",
+  db_provider: "sqlite",
   graph_provider: "neo4j",
   sqlite_path: "",
   concurrency: { github: 2 },

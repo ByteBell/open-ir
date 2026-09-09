@@ -45,7 +45,7 @@ export function StopInfraPrompt(props: StopInfraPromptProps): ReactElement {
 
   return (
     <Box flexDirection="column" borderStyle="round" paddingX={1} paddingY={0}>
-      <Text bold>Also stop Docker infra (mongo + neo4j + redis)?</Text>
+      <Text bold>Also stop Docker infra (neo4j)?</Text>
       {CHOICES.map((choice, i) => {
         const selected = i === index;
         return (

@@ -236,7 +236,7 @@ export async function analyseBigFiles(input: AnalyseBigFilesInput): Promise<Proc
             // Transient LLM/network failure after MAX_LLM_ATTEMPTS — flag the
             // file as fatal so the still-pending chunks don't trigger a
             // condense that would be missing inputs. Disk cache + scan
-            // manifest let the next BullMQ attempt resume only the missing
+            // manifest let the next queue attempt resume only the missing
             // chunks for this file.
             state.fatal = true;
             failed += 1;

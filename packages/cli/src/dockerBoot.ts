@@ -25,7 +25,7 @@ import { composeServicesNeeded } from "./infraMode.ts";
 const MAX_CONFLICT_ROUNDS = 4;
 
 export async function bringInfraUp(neo4jPassword: string): Promise<UpResult | null> {
-  const skipServices = new Set<"mongo" | "neo4j" | "redis">();
+  const skipServices = new Set<"neo4j">();
   for (let round = 0; round < MAX_CONFLICT_ROUNDS; round += 1) {
     const ports = readInfraPorts();
     const watched = composeServicesToStart(skipServices);
@@ -39,7 +39,7 @@ export async function bringInfraUp(neo4jPassword: string): Promise<UpResult | nu
       });
       spinner.stop(true, `Docker infra is up (${composeFilePath()})`);
       for (const svc of skipServices) {
-        info(`reusing existing service on port ${portFor(svc, ports)} for ${svc} (not managed by bytebell)`);
+        info(`reusing existing service on port ${portFor(svc, ports)} for ${svc} (not managed by plumbline)`);
       }
       return result;
     } catch (cause: unknown) {
@@ -64,11 +64,11 @@ export async function bringInfraUp(neo4jPassword: string): Promise<UpResult | nu
 async function handlePortConflict(
   cause: DockerPortConflictError,
   ports: InfraPorts,
-  skipServices: Set<"mongo" | "neo4j" | "redis">,
+  skipServices: Set<"neo4j">,
 ): Promise<boolean> {
   const infraService = serviceForPort(cause.port, ports);
   if (infraService === null) {
-    error(`Port ${cause.port} conflict, but it doesn't match a known bytebell service. Aborting.`);
+    error(`Port ${cause.port} conflict, but it doesn't match a known plumbline service. Aborting.`);
     info(cause.stderr.trim());
     return false;
   }
@@ -118,7 +118,7 @@ async function handlePortConflict(
       return false;
     }
     setInfraPort(infraService, newPort);
-    success(`updated bytebell ${serviceLabel} → port ${newPort}.`);
+    success(`updated plumbline ${serviceLabel} → port ${newPort}.`);
     skipServices.delete(composeService);
     return true;
   }
@@ -133,28 +133,16 @@ async function safeComposeDown(): Promise<void> {
   }
 }
 
-function composeServicesToStart(skip: Set<"mongo" | "neo4j" | "redis">): readonly ("mongo" | "neo4j" | "redis")[] {
+function composeServicesToStart(skip: Set<"neo4j">): readonly "neo4j"[] {
   const needed = composeServicesNeeded();
-  return (["mongo", "neo4j", "redis"] as const).filter((s) => needed.has(s) && !skip.has(s));
+  return (["neo4j"] as const).filter((s) => needed.has(s) && !skip.has(s));
 }
 
-function composeServiceFor(service: InfraService): "mongo" | "neo4j" | "redis" {
-  if (service === "mongo") {
-    return "mongo";
-  }
-  if (service === "redis") {
-    return "redis";
-  }
+function composeServiceFor(_service: InfraService): "neo4j" {
   return "neo4j";
 }
 
-function portFor(service: "mongo" | "neo4j" | "redis", ports: InfraPorts): number {
-  if (service === "mongo") {
-    return ports.mongo;
-  }
-  if (service === "redis") {
-    return ports.redis;
-  }
+function portFor(_service: "neo4j", ports: InfraPorts): number {
   return ports.neo4jBolt;
 }
 

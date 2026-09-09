@@ -32,7 +32,7 @@ function resolveOrgId(payload: BusinessContextProcessingPayload): string {
 }
 
 /**
- * BullMQ job handler for `JobType.BusinessContextProcessing`. Runs the disk
+ * Queue job handler for `JobType.BusinessContextProcessing`. Runs the disk
  * strategy then the graph store. Re-reads the persisted analysis from disk
  * before the graph step so a deferred / split execution path produces the same
  * result as the inline path.

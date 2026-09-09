@@ -1,6 +1,6 @@
 import { _runCypher, type CypherStep } from "./client.ts";
 import { expandLegacyOrgKeywordEdges, type LegacyOrgKeywordEdge } from "./legacyKeywordChannels.ts";
-import type { FileAnalysis } from "@bb/mongo";
+import type { FileAnalysis } from "@bb/db-core";
 
 // :OrgKeyword + [:APPEARS_IN_FILE]->:FileNode materialization for the
 // legacy snake_case search graph used by chat-mcp smart_search /

@@ -7,7 +7,7 @@ package-level contract.
 
 - **[index.ts](index.ts)** — public re-exports.
 - **[dirs.ts](dirs.ts)** — `getLogsDir`, `ensureLogsDir`. Wraps
-  `@bb/config.getBytebellHome()` with a `logs/` suffix; creates the dir at
+  `@bb/config.getPlumblineHome()` with a `logs/` suffix; creates the dir at
   mode `0700`.
 - **[caller.ts](caller.ts)** — `getCallerInfo()` and `toProjectRelative()`.
   Walks `Error.captureStackTrace` to find the first frame outside winston,

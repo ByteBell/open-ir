@@ -64,7 +64,7 @@ mutation into `FileAnalysisCache`.
 
 ## External dependencies
 
-`@bb/llm` (`askJsonLLM`), `@bb/logger`, `@bb/mongo` (types only —
+`@bb/llm` (`askJsonLLM`), `@bb/logger`, `@bb/db-core` (types only —
 `FileAnalysis`, `FileAnalysisSection`), the sibling
 `flat-folder/file-analysis-cache.ts`, and the prompts under
 `flat-folder/prompts/backfill.ts`.

@@ -3,7 +3,7 @@
 //
 // If the server crashes (kill -9, OOM, SIGKILL) between those two steps,
 // the knowledge doc is left in `QUEUED` state with no corresponding live
-// job. Workers never claim it; the user sees a stuck row in `bytebell ls`.
+// job. Workers never claim it; the user sees a stuck row in `plumbline ls`.
 //
 // On boot we scan `@bb/db` for any knowledge doc in `state === QUEUED` and
 // re-publish it via the appropriate `enqueue*` publisher. The provider's

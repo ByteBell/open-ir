@@ -1,4 +1,4 @@
-# Contributing to Bytebell-public
+# Contributing to Plumbline-public
 
 Thanks for contributing. This document describes the automated checks that run on every commit and push, what each check enforces, and how to recover when one fails.
 
@@ -144,7 +144,7 @@ Multi-line example with body and footer (note the blank lines required by `body-
 ```
 fix(queue): dedupe retries by job-level idempotency key
 
-Without a dedupe key, BullMQ retries were re-running the parse phase
+Without a dedupe key, queue retries were re-running the parse phase
 and double-writing nodes whenever a worker crashed mid-job.
 
 Refs: BB-142
@@ -196,13 +196,13 @@ brew install gitleaks
 
 ## Local development (hot reload)
 
-Two root scripts run the binaries directly from source with `BYTEBELL_DEV=1` (logs go to `./logs/` instead of `~/.bytebell/logs/`):
+Two root scripts run the binaries directly from source with `PLUMBLINE_DEV=1` (logs go to `./logs/` instead of `~/.plumbline/logs/`):
 
 ```bash
-bun run dev:server   # BYTEBELL_DEV=1 bun --watch packages/server/src/index.ts
-bun run dev:cli      # BYTEBELL_DEV=1 bun packages/cli/src/index.ts
+bun run dev:server   # PLUMBLINE_DEV=1 bun --watch packages/server/src/index.ts
+bun run dev:cli      # PLUMBLINE_DEV=1 bun packages/cli/src/index.ts
 ```
 
 `dev:server` uses `bun --watch`, which restarts the process automatically on any file change in the dependency graph — no `shutdown` / `boot` cycle needed between edits.
 
-**Before running `dev:server`, run `bytebell shutdown`** to stop any server started via `bytebell boot`. Otherwise the watched process can't bind the configured server port (8080 by default) and exits with `EADDRINUSE`. `dev:server` does not manage Docker infra — bring up Mongo/Neo4j/Redis with `bytebell boot` (then `bytebell shutdown` to free the port) or `docker compose -f infra/docker/docker-compose.yml up -d`.
+**Before running `dev:server`, run `plumbline shutdown`** to stop any server started via `plumbline boot`. Otherwise the watched process can't bind the configured server port (8080 by default) and exits with `EADDRINUSE`. `dev:server` does not manage Docker infra — bring up Neo4j with `plumbline boot` (then `plumbline shutdown` to free the port) or `docker compose -f infra/docker/docker-compose.yml up -d`.

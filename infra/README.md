@@ -4,7 +4,7 @@
 
 Operational artefacts that are not TypeScript workspace packages.
 Today this dir holds the local Docker compose stack used by
-`bytebell boot`. Future additions might include a Helm chart, a
+`plumbline boot`. Future additions might include a Helm chart, a
 production Compose file, or platform-specific service files —
 each in its own subdirectory with its own `README.md`.
 
@@ -15,10 +15,10 @@ boundary.
 
 ## Subdirectories
 
-- [`docker/`](docker/README.md) — three-service `docker-compose.yml`
-  (Mongo + Neo4j + Redis) plus the gitignored `.env` file the CLI
-  generates on first boot. Versions pinned at the major level
-  (`mongo:7`, `neo4j:5`, `redis:7-alpine`).
+- [`docker/`](docker/README.md) — single-service `docker-compose.yml`
+  (Neo4j) plus the gitignored `.env` file the CLI generates on first
+  boot. Version pinned at the major level (`neo4j:5`). The document
+  store and the job queue are SQLite and have no container.
 
 ## Adding a new infra artefact
 

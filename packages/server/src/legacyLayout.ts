@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Config } from "@bb/types";
-import { getBytebellHome, getConfigValue } from "@bb/config";
+import { getPlumblineHome, getConfigValue } from "@bb/config";
 import { knowledgeDb } from "@bb/db";
 import { LayoutMigrationRequiredError } from "@bb/errors";
 import { hasLegacyLayout, migrateLegacyPaths } from "@bb/path-migration";
@@ -18,7 +18,7 @@ import { hasLegacyLayout, migrateLegacyPaths } from "@bb/path-migration";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function reconcileLegacyLayout(): Promise<void> {
-  const home = getBytebellHome();
+  const home = getPlumblineHome();
   if (!(await hasLegacyLayout(home))) {
     return;
   }

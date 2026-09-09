@@ -6,9 +6,9 @@ import { error } from "./output.ts";
 
 export function buildServerCommand(): Command {
   const cmd = new Command("server");
-  cmd.description("Manage the bytebell-server daemon.");
+  cmd.description("Manage the plumbline-server daemon.");
   const start = new Command("start");
-  start.description("Start the bytebell-server in the foreground (Ctrl+C to stop).");
+  start.description("Start the plumbline-server in the foreground (Ctrl+C to stop).");
   start.action(runStart);
   cmd.addCommand(start);
   return cmd;

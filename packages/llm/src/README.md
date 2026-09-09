@@ -92,7 +92,7 @@ pricing).
   `clearTimeout` call lives in a `finally` so the timer is always
   cleared regardless of fetch outcome.
 - **Errors carry typed metadata.** `LlmConfigError` carries the
-  `bytebell keys set` hint; `LlmError` accepts an optional `cause` and
+  `plumbline keys set` hint; `LlmError` accepts an optional `cause` and
   composes a single-line message capped at 500 chars of any HTTP error
   body (so the logger doesn't blow up on multi-MB error responses).
 - **No env reads.** Secrets come from `opts.apiKey` first, then

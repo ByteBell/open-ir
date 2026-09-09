@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { getBytebellHome, getConfigValue } from "@bb/config";
+import { getPlumblineHome, getConfigValue } from "@bb/config";
 import {
-  bytebellPathsFor,
+  plumblinePathsFor,
   commitBaseDirFor,
   Config,
   metaOutputRootFor,
@@ -13,7 +13,7 @@ import {
   repositoryDirFor,
   type RepoLocation as KernelRepoLocation,
 } from "@bb/types";
-import { getKnowledge } from "@bb/mongo";
+import { knowledgeDb } from "@bb/db";
 import { KnowledgeNotFoundError } from "@bb/errors";
 import type { MetaPaths } from "#src/types/meta-paths.ts";
 
@@ -26,13 +26,13 @@ export type RepoLocation = KernelRepoLocation;
 // Commit-scoped on-disk layout. Every artifact for a single (orgId,
 // knowledge, repo, commit) tuple lives under one tree:
 //
-//   ~/.bytebell/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/repository/
-//   ~/.bytebell/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/meta-output/...
+//   ~/.plumbline/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/repository/
+//   ~/.plumbline/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/meta-output/...
 //
 // For local sources (no owner/repo) the branch collapses to:
 //
-//   ~/.bytebell/orgs/<orgId>/local/<knowledgeId>/<syntheticCommit>/repository/
-//   ~/.bytebell/orgs/<orgId>/local/<knowledgeId>/<syntheticCommit>/meta-output/...
+//   ~/.plumbline/orgs/<orgId>/local/<knowledgeId>/<syntheticCommit>/repository/
+//   ~/.plumbline/orgs/<orgId>/local/<knowledgeId>/<syntheticCommit>/meta-output/...
 //
 // Every commit gets its own self-contained snapshot — repository + analysis
 // + summaries together — rather than scattering meta-output across a
@@ -41,7 +41,7 @@ export type RepoLocation = KernelRepoLocation;
 
 /** Root of the orgs tree. Single tenant in OSS, but the path still carries orgId. */
 export function orgsRoot(): string {
-  return orgsRootFor(getBytebellHome());
+  return orgsRootFor(getPlumblineHome());
 }
 
 /**
@@ -49,17 +49,17 @@ export function orgsRoot(): string {
  * knowledgeId, owner?, repo?, commitHash)` tuple lives under this path.
  */
 export function commitBaseDir(loc: RepoLocation): string {
-  return commitBaseDirFor(getBytebellHome(), loc);
+  return commitBaseDirFor(getPlumblineHome(), loc);
 }
 
 /** Clone destination — the cloned source tree for this commit. */
 export function repositoryDir(loc: RepoLocation): string {
-  return repositoryDirFor(getBytebellHome(), loc);
+  return repositoryDirFor(getPlumblineHome(), loc);
 }
 
 /** Meta-output root — all analysis artifacts for this commit. */
 export function metaOutputRoot(loc: RepoLocation): string {
-  return metaOutputRootFor(getBytebellHome(), loc);
+  return metaOutputRootFor(getPlumblineHome(), loc);
 }
 
 /**
@@ -75,7 +75,7 @@ export function orgRegistryDirV2(loc: RepoLocation): string {
  * source of truth for every per-commit meta artifact path.
  */
 export function pathsFor(loc: RepoLocation): MetaPaths {
-  return bytebellPathsFor(getBytebellHome(), loc);
+  return plumblinePathsFor(getPlumblineHome(), loc);
 }
 
 /** Business-context directory for a specific titled context, under this commit's meta-output. */
@@ -93,7 +93,7 @@ export async function ensureCommitDirs(loc: RepoLocation): Promise<void> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// knowledgeId-keyed resolvers. Now Mongo-aware: they look up `KnowledgeDoc`
+// knowledgeId-keyed resolvers. Now store-aware: they look up `KnowledgeDoc`
 // to derive `(orgId, owner, repo, commitHash)` and delegate to the pure
 // `pathsFor` resolver above. Used by callers that hold only a knowledgeId
 // handle — primarily `@bb/ingest-business-context` and the migration
@@ -107,7 +107,7 @@ export async function ensureCommitDirs(loc: RepoLocation): Promise<void> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function repoLocationFor(knowledgeId: string, commitHash?: string): Promise<RepoLocation> {
-  const kDoc = await getKnowledge(knowledgeId);
+  const kDoc = await knowledgeDb.getKnowledge(knowledgeId);
   if (kDoc === null) {
     throw new KnowledgeNotFoundError(knowledgeId);
   }
@@ -149,7 +149,7 @@ async function repoLocationFor(knowledgeId: string, commitHash?: string): Promis
 }
 
 /**
- * Per-knowledge meta-output root, resolved through Mongo to the
+ * Per-knowledge meta-output root, resolved through the document store to the
  * commit-scoped kube-v2 directory for the current head commit.
  */
 export async function metaRootFor(knowledgeId: string): Promise<string> {

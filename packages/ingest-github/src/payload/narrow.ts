@@ -35,7 +35,7 @@ function narrowPatch(value: unknown): IgnoreOverridePatch | undefined {
 }
 
 /**
- * Copy per-job ignore overrides off the BullMQ payload, if present and
+ * Copy per-job ignore overrides off the queue payload, if present and
  * well-formed. The enqueue boundary (enterprise gateway) stamps this from the
  * org's stored ignore config; OSS standalone never sets it.
  */
@@ -60,7 +60,7 @@ function attachIgnoreOverrides(rec: Record<string, unknown>, target: { ignoreOve
 /**
  * Copies optional LLM credential / model overrides from a payload record onto
  * a typed payload. Enterprise wrappers resolve per-org credentials at the
- * enqueue boundary and stamp them on the BullMQ payload; without this passthrough
+ * enqueue boundary and stamp them on the queue payload; without this passthrough
  * the worker would always fall back to global config (and the resolver work is
  * wasted). OSS standalone leaves all four unset, so nothing happens here.
  */

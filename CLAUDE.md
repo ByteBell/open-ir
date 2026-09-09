@@ -1,17 +1,17 @@
-# CLAUDE.md — Bytebell-public
+# CLAUDE.md — Plumbline-public
 
 ---
 
 ## Project Summary
 
-**Bytebell-public** is an open-source, single-tenant local knowledge engine. It ingests GitHub repo into a durable knowledge graph and serves them through an MCP retrieval surface — all from a single Bun-based process running on the user's machine.
+**Plumbline-public** is an open-source, single-tenant local knowledge engine. It ingests GitHub repo into a durable knowledge graph and serves them through an MCP retrieval surface — all from a single Bun-based process running on the user's machine.
 
 It ships two binaries from a single workspace:
 
-- **`bytebell-server`** — a single Express daemon hosting ingestion routes (`/api/v1/...`), the MCP transport (`/mcp`, HTTP + SSE), and BullMQ workers in-process.
-- **`bytebell`** — an Ink/React TUI driven by commander subcommands (`boot`, `index`, `ingest`, `ls`, `delete`, `set`, `server`, `shutdown`, `stats`). Interactive only — no `-p` / headless mode.
+- **`plumbline-server`** — a single Express daemon hosting ingestion routes (`/api/v1/...`), the MCP transport (`/mcp`, HTTP + SSE), and SQLite-backed queue workers in-process.
+- **`plumbline`** — an Ink/React TUI driven by commander subcommands (`boot`, `index`, `ingest`, `ls`, `delete`, `set`, `server`, `shutdown`, `stats`). Interactive only — no `-p` / headless mode.
 
-The system is **BYO-infra** (the user runs Mongo, Neo4j, Redis). Everything is single-tenant with a hardcoded `orgId="local"`. There is no auth, no users, no orgs, and the local server makes no outbound calls except to the user-selected LLM backend (OpenRouter or a user-supplied Ollama URL).
+The system is **BYO-infra** (the user runs Neo4j; the document store and job queue are local SQLite files). Everything is single-tenant with a hardcoded `orgId="local"`. There is no auth, no users, no orgs, and the local server makes no outbound calls except to the user-selected LLM backend (OpenRouter or a user-supplied Ollama URL).
 
 The repository is licensed under **AGPL-3.0 with an additional non-commercial use clause** — see [LICENSE](LICENSE) at the repo root. Commercial use requires a separate license; there is no in-process license-gating.
 
@@ -22,14 +22,14 @@ Architecturally, it is a **package-first Bun workspace** under `packages/*` with
 ## High-Level Flow
 
 ```
-TUI / HTTP client → Express (bytebell-server) → BullMQ (in-process) → IngestionStrategy → Graph + Storage
-                                              ↘ MCP tools → Neo4j / Mongo retrieval
+TUI / HTTP client → Express (plumbline-server) → Queue (in-process) → IngestionStrategy → Graph + Storage
+                                              ↘ MCP tools → Neo4j / SQLite retrieval
 ```
 
-- The CLI never touches Mongo / Neo4j / Redis directly — it only talks HTTP to `bytebell-server`.
-- Ingestion is asynchronous via BullMQ. Workers run **inside** the server process; there is no separate worker fleet.
-- A worker (e.g. `handleGithubIndex`) clones the repo, runs the active `IngestionStrategy` (today: `BasicFileAnalysisStrategy` — file-walk + per-file LLM analysis), upserts file rows to Mongo + file nodes to Neo4j, and transitions `KnowledgeState`.
-- MCP requests dispatch to the same Mongo + Neo4j the ingestion side wrote.
+- The CLI never touches SQLite or Neo4j directly — it only talks HTTP to `plumbline-server`.
+- Ingestion is asynchronous via the queue. Workers run **inside** the server process; there is no separate worker fleet.
+- A worker (e.g. `handleGithubIndex`) clones the repo, runs the active `IngestionStrategy` (today: `BasicFileAnalysisStrategy` — file-walk + per-file LLM analysis), upserts file rows to SQLite + file nodes to Neo4j, and transitions `KnowledgeState`.
+- MCP requests dispatch to the same SQLite + Neo4j the ingestion side wrote.
 
 ---
 
@@ -39,13 +39,12 @@ TUI / HTTP client → Express (bytebell-server) → BullMQ (in-process) → Inge
 - **Language**: TypeScript (strict, all flags on — see [tsconfig.base.json](tsconfig.base.json))
 - **HTTP server**: Express 5
 - **TUI**: Ink (React for terminals) + commander
-- **Databases**: MongoDB, Neo4j (BYO — user-supplied URIs)
-- **Queue**: BullMQ (Redis-backed, in-process workers)
-- **Cache + State**: Redis (BYO)
-- **Local persistence**: `~/.bytebell/` (config, logs)
+- **Databases**: SQLite (embedded, `~/.plumbline/data.sqlite`), Neo4j (BYO — user-supplied URI)
+- **Queue**: Honker (SQLite-backed, in-process workers)
+- **Local persistence**: `~/.plumbline/` (config, logs)
 - **LLM Provider**: OpenRouter (default) or local Ollama, selected via `Config.LlmProvider`
 - **Logging**: Winston (file + stdout)
-- **Secret storage**: plaintext in `~/.bytebell/config.json` (mode `0600`). OS-keychain integration is not implemented.
+- **Secret storage**: plaintext in `~/.plumbline/config.json` (mode `0600`). OS-keychain integration is not implemented.
 - **Package manager**: Bun (workspaces)
 
 ---
@@ -63,7 +62,7 @@ Strategy          queue
         ↑
 Cross-cutting     llm
         ↑
-Infrastructure    config, logger, mongo, neo4j, redis
+Infrastructure    config, logger, db, sqlite, neo4j
         ↑
 Kernel            types, errors
 ```
@@ -78,7 +77,7 @@ Kernel            types, errors
 
 ### 1. Local-First, Single-Tenant
 
-There is exactly one tenant: `orgId="local"`. A single shim in `@bb/mongo` injects this on every read/write; Neo4j queries always filter on it. Do not add per-tenant logic. Do not add auth middleware. Do not introduce user/org concepts.
+There is exactly one tenant: `orgId="local"`. A single shim in the document-store adapter injects this on every read/write; Neo4j queries always filter on it. Do not add per-tenant logic. Do not add auth middleware. Do not introduce user/org concepts.
 
 ### 2. One Package, One Responsibility
 
@@ -92,9 +91,9 @@ Each package owns exactly one concern. If a package needs a second name to descr
 
 - **Routes** → HTTP shape only (parse + validate + delegate)
 - **Services** → Business logic + queue submission
-- **Workers** → Async job execution (in-process, BullMQ); each worker dispatches to an `IngestionStrategy`
-- **Strategies** → How a cloned repo is turned into Mongo rows + Neo4j nodes
-- **Adapters** (`@bb/mongo`, `@bb/neo4j`, `@bb/redis`) → External system I/O
+- **Workers** → Async job execution (in-process, SQLite-backed queue); each worker dispatches to an `IngestionStrategy`
+- **Strategies** → How a cloned repo is turned into SQLite rows + Neo4j nodes
+- **Adapters** (`@bb/sqlite`, `@bb/neo4j`) → External system I/O
 
 No layer skips another. The TUI is a special case: it is a thin HTTP client over the same routes; it does not reach into adapters.
 
@@ -119,20 +118,20 @@ Ingestion is dispatched through `IngestionStrategy` (`@bb/ingest-github/Strategy
 
 ### 8. Observability
 
-- Structured logging via `@bb/logger` (file + stdout, written to `~/.bytebell/logs/`)
+- Structured logging via `@bb/logger` (file + stdout, written to `~/.plumbline/logs/`)
 - Request and job IDs propagate across pipelines
-- Health checks for every external system (Mongo / Neo4j / Redis probes)
-- Token usage is persisted in Mongo (`mcp_activity`, `usage_summary`) for the `bytebell stats` command
+- Health checks for every external system (SQLite / Neo4j probes)
+- Token usage is persisted in SQLite (`mcp_activity`, `usage_summary`) for the `plumbline stats` command
 
 There is **no outbound telemetry**. The server does not phone home; logs stay on the user's machine.
 
 ### 9. Identifiers
 
 - Public IDs are UUID v4
-- MongoDB `_id` is internal only
+- Row/document primary keys are internal only
 - UUID fields are indexed and unique
 - Job IDs are globally traceable
-- `install_id` (UUID, generated locally on first run, stored at `~/.bytebell/install_id`) is a stable local identifier used by the CLI dashboard. It is never transmitted off the machine.
+- `install_id` (UUID, generated locally on first run, stored at `~/.plumbline/install_id`) is a stable local identifier used by the CLI dashboard. It is never transmitted off the machine.
 
 ---
 
@@ -143,20 +142,24 @@ CREATED → QUEUED → INGESTED → PROCESSING → PROCESSED
                                          ↘ FAILED
 ```
 
-States are explicit, never inferred. Transitions are persisted before the next phase begins. Surfaced via `bytebell ls` and the dashboard's Repos pane.
+States are explicit, never inferred. Transitions are persisted before the next phase begins. Surfaced via `plumbline ls` and the dashboard's Repos pane.
 
 ---
 
 ## Local Config Layout
 
-The `~/.bytebell/` directory is the **single source of truth** for runtime configuration. There is no `.env` file (see Rule of Env Vars).
+The `~/.plumbline/` directory is the **single source of truth** for runtime configuration. There is no `.env` file (see Rule of Env Vars).
 
 ```
-~/.bytebell/
-  config.json           server_port, mongo_uri, neo4j_uri/user/password,
-                        redis_url, openrouter_api_key, openrouter_model,
-                        concurrency.github, log_level, log_retention_days
+~/.plumbline/
+  config.json           server_port, sqlite_path, queue_db_path,
+                        neo4j_uri/user/password, openrouter_api_key,
+                        openrouter_model, concurrency.github, log_level,
+                        log_retention_days
                         (mode 0600; openrouter_api_key stored in plaintext)
+  data.sqlite           document store — knowledge docs, raw file rows,
+                        activity, usage, enrichment ledger
+  queue.db              Honker job queue (SQLite)
   install_id            UUID generated on first run (local-only, never transmitted)
   repos/<knowledgeId>/  cloned source trees for every indexed repo
   logs/
@@ -167,7 +170,7 @@ The `~/.bytebell/` directory is the **single source of truth** for runtime confi
 
 There is no OS-keychain integration; `openrouter_api_key` lives in plaintext in `config.json` (mode `0600`).
 
-- `bytebell set <key> <value>` is the only sanctioned write path to `config.json`. Manual edits work but are not advertised.
+- `plumbline set <key> <value>` is the only sanctioned write path to `config.json`. Manual edits work but are not advertised.
 
 ---
 
@@ -258,25 +261,25 @@ The codebase is pure ESM.
 
 **No `.env` file. Anywhere. Ever.**
 
-- Every setting lives in `~/.bytebell/config.json` and is written exclusively by `bytebell set …` (or the first-run setup form)
-- The server reads `config.json` directly via `@bb/config` and **must refuse to read `process.env.MONGODB_URI`** or any equivalent
+- Every setting lives in `~/.plumbline/config.json` and is written exclusively by `plumbline set …` (or the first-run setup form)
+- The server reads `config.json` directly via `@bb/config` and **must refuse to read `process.env.NEO4J_URI`** or any equivalent
 - No `.env.example`, no `dotenv` package as a dependency, no `-env-file` flag
 
 ```ts
 import { getConfigValue, Config } from "@bb/config";
-const url = getConfigValue(Config.MongoUri);
+const uri = getConfigValue(Config.Neo4jUri);
 ```
 
-If a piece of infra is missing from `config.json`, the server prints the exact `bytebell set …` command and refuses to boot.
+If a piece of infra is missing from `config.json`, the server prints the exact `plumbline set …` command and refuses to boot.
 
 ---
 
 ## Rule of LLM Provider
 
-**OpenRouter or local Ollama. No direct vendor SDKs.** No Anthropic / OpenAI / Gemini / Bedrock keys or SDK imports. The active backend is selected by `Config.LlmProvider` (`"openrouter"` default | `"ollama"`) and switched via `bytebell set llm-provider <openrouter|ollama>`. Ollama mode reads `Config.OllamaUrl` (default `http://localhost:11434`) and `Config.OllamaModel` (free-form — any locally-pulled model) and reports `$0` cost. All LLM calls flow through `@bb/llm`, which:
+**OpenRouter or local Ollama. No direct vendor SDKs.** No Anthropic / OpenAI / Gemini / Bedrock keys or SDK imports. The active backend is selected by `Config.LlmProvider` (`"openrouter"` default | `"ollama"`) and switched via `plumbline set llm-provider <openrouter|ollama>`. Ollama mode reads `Config.OllamaUrl` (default `http://localhost:11434`) and `Config.OllamaModel` (free-form — any locally-pulled model) and reports `$0` cost. All LLM calls flow through `@bb/llm`, which:
 
 - Wraps every OpenRouter / Ollama call behind a single `askLLM` surface
-- Computes per-call cost via `estimateCostUsd()` against live OpenRouter pricing for the `bytebell stats` view (short-circuits to `0` when provider is Ollama)
+- Computes per-call cost via `estimateCostUsd()` against live OpenRouter pricing for the `plumbline stats` view (short-circuits to `0` when provider is Ollama)
 
 LLM outputs are probabilistic. They must be:
 
@@ -284,7 +287,7 @@ LLM outputs are probabilistic. They must be:
 - Normalized before persistence
 - Never written directly to a domain store
 
-The user-facing model list is curated (5–10 top models). `bytebell models set` validates against OpenRouter on the fly.
+The user-facing model list is curated (5–10 top models). `plumbline models set` validates against OpenRouter on the fly.
 
 ---
 
@@ -407,7 +410,7 @@ Every package and every major subfolder MUST contain a `README.md`.
 
 ## Architecture Philosophy
 
-Bytebell-public is **a local research instrument**, not a hosted service.
+Plumbline-public is **a local research instrument**, not a hosted service.
 
 It exists so a single developer, an OSS community, or a research team can run a durable knowledge engine on their own infrastructure — turning raw repos into a queryable graph and exposing them through MCP. Everything stays on the user's machine; the engine does not phone home.
 
@@ -418,7 +421,7 @@ Design for:
 - **Local-first** — no hidden cloud dependencies; the only outbound call is to the user-selected LLM backend (OpenRouter or Ollama)
 - **Deterministic pipelines** over heuristics
 - **Recoverability** over performance shortcuts
-- **Auditability** — every LLM-derived fact is traceable to its source via structured logs and token-usage records in Mongo
+- **Auditability** — every LLM-derived fact is traceable to its source via structured logs and token-usage records in SQLite
 - **Long-term maintainability** over rapid hacks
 
 Prefer:

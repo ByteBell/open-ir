@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you believe you have found a security issue in Bytebell, please report it privately. **Do not open a public GitHub issue for security problems.**
+If you believe you have found a security issue in Plumbline, please report it privately. **Do not open a public GitHub issue for security problems.**
 
 - **Email**: `team@bytebell.ai`
 - **Subject line**: `[security] <short description>`
@@ -13,7 +13,7 @@ If you believe you have found a security issue in Bytebell, please report it pri
 - A description of the issue and its impact.
 - Steps to reproduce (a minimal proof of concept is ideal).
 - The version / commit SHA you tested against.
-- Your environment (OS, Bun version, `bytebell --version`).
+- Your environment (OS, Bun version, `plumbline --version`).
 - Whether you have already disclosed this to anyone else.
 
 ## Response timeline
@@ -27,10 +27,10 @@ If you believe you have found a security issue in Bytebell, please report it pri
 
 In scope:
 
-- The local `bytebell-server` HTTP daemon (Express routes, MCP transport, BullMQ workers).
-- The `bytebell` CLI (Ink TUI + commander subcommands).
+- The local `plumbline-server` HTTP daemon (Express routes, MCP transport, queue workers).
+- The `plumbline` CLI (Ink TUI + commander subcommands).
 - The `@bb/*` workspace packages under `packages/*`.
-- Credential handling (`~/.bytebell/config.json`, mode `0600`; logs under `~/.bytebell/logs/`).
+- Credential handling (`~/.plumbline/config.json`, mode `0600`; logs under `~/.plumbline/logs/`).
 - Shell-injection in CLI argument parsing.
 - Prompt-injection in indexed repository content that could cause unsafe outputs from the LLM pipeline.
 
@@ -38,11 +38,11 @@ The OSS edition binds the server to `127.0.0.1` and has no remote attack surface
 
 ## Out of scope
 
-- Third-party services the user runs (MongoDB, Neo4j, Redis, Docker, OpenRouter). Report those upstream.
+- Third-party services the user runs (Neo4j, Docker, OpenRouter). Report those upstream.
 - The user's own environment (their OS, their LLM provider account, their network).
-- Theoretical issues without a reproducible impact on Bytebell.
+- Theoretical issues without a reproducible impact on Plumbline.
 - DDoS or volumetric reports against `bytebell.ai` web properties (this policy covers the OSS code only).
 
 ## Recognition
 
-Bytebell is licensed under **AGPL-3.0-only with an additional non-commercial clause**. We do not run a paid bug bounty programme. With your permission, we will credit you in [CHANGELOG.md](CHANGELOG.md) and the release notes when a reported issue is fixed.
+Plumbline is licensed under **AGPL-3.0-only with an additional non-commercial clause**. We do not run a paid bug bounty programme. With your permission, we will credit you in [CHANGELOG.md](CHANGELOG.md) and the release notes when a reported issue is fixed.

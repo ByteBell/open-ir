@@ -54,7 +54,7 @@ llmCallContext? }`; `llmCallContext` is the optional `AskLlmOptions`
   `targetCommit`, which index doesn't.
 - `meta-paths.ts` — `MetaPaths` shape — the per-commit `repositoryDir` +
   `metaOutputRoot` siblings under
-  `~/.bytebell/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/`,
+  `~/.plumbline/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/`,
   plus the named leaf paths (`fileAnalysisDir`, `folderSummariesDir`, …)
   computed under `metaOutputRoot`. `metaRoot` is preserved as a
   back-compat alias for `metaOutputRoot`.

@@ -87,7 +87,7 @@ enrichFiles
 
 ## Data ownership
 
-- `enrichFiles` owns the Mongo enrichment-run ledger transitions
+- `enrichFiles` owns the enrichment-run ledger transitions
   (`startEnrichmentRun`, `markFileEnriched`, `recordEnrichmentFailure`,
   `completeEnrichmentRun`, `failEnrichmentRun`).
 - `persistEnrichment` owns the Neo4j writes for `:Concept`,
@@ -95,7 +95,7 @@ enrichFiles
   this folder writes to Neo4j.
 - `enrich-one-file.ts` owns the audit JSON written by
   `writeEnrichmentArtifact` (one file per enriched source file under
-  `~/.bytebell/repos/{knowledgeId}/{commitId}/enrichment/`).
+  `~/.plumbline/repos/{knowledgeId}/{commitId}/enrichment/`).
 - `EnrichmentRegistry` is in-memory only; it lives for the duration
   of one `enrichFiles` call and is never persisted.
 
@@ -129,7 +129,7 @@ enrichFiles
 (`getConfigValue`), `@bb/logger`, `@bb/errors` (`LlmConfigError`,
 `LlmError`), `@bb/types` (`Config`, `ConceptKind`, `ContractKind`,
 `GuidepostKind`, `EnrichmentFailure`, `EnrichmentFailureReason`,
-`NodeScope`, upsert input shapes, edge-kind unions), `@bb/mongo`
+`NodeScope`, upsert input shapes, edge-kind unions), `@bb/db`
 (enrichment-run ledger), `@bb/graph-db` (`conceptsGraph`,
 `contractsGraph`, `guidepostsGraph`), sibling modules
 `enrichment-schema.ts`, `enrichment-artifact.ts`, `mcp-tool-executor.ts`,

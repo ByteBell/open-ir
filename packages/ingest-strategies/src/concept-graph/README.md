@@ -64,10 +64,10 @@ a strategy-neutral `#src/pipeline/phases/` location because:
 If a third strategy ever needs the same phases, the lift is still a
 mechanical change at that point.
 
-## Mongo ledger
+## Enrichment ledger
 
-ConceptGraphStrategy uses the enrichment ledger functions in
-`@bb/mongo` (`startEnrichmentRun`, `markFileEnriched`,
+ConceptGraphStrategy uses the enrichment ledger on `@bb/db`'s
+`enrichmentDb` facade (`startEnrichmentRun`, `markFileEnriched`,
 `recordEnrichmentFailure`, `completeEnrichmentRun`, `failEnrichmentRun`)
 to track per-file resume state across retries. `KnowledgeDoc.state`
 stays `PROCESSING` until enrichment reports `Completed`; then the
@@ -76,7 +76,7 @@ worker transitions to `PROCESSED`.
 ## Disk artifacts
 
 Enrichment outputs land at
-`~/.bytebell/repos/{knowledgeId}/{commitId}/enrichment/{file-slug}.json`
+`~/.plumbline/repos/{knowledgeId}/{commitId}/enrichment/{file-slug}.json`
 (one file per enriched file, written when the file's LLM call returns a
 schema-valid result). Disk is the audit trail; the canonical graph
 state is Neo4j.

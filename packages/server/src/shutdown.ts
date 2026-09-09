@@ -4,7 +4,7 @@ import { closeDb } from "@bb/db";
 import { closeGraph } from "@bb/graph-db";
 import { closeQueue } from "@bb/queue";
 import { closeAllMcpSessions } from "@bb/mcp";
-import { getBytebellHome } from "@bb/config";
+import { getPlumblineHome } from "@bb/config";
 
 const SHUTDOWN_TIMEOUT_MS = 30_000;
 
@@ -29,7 +29,7 @@ async function shutdown(signal: string): Promise<void> {
     await closeQueue();
     await closeGraph();
     await closeDb();
-    await unlink(path.join(getBytebellHome(), "pid")).catch(() => undefined);
+    await unlink(path.join(getPlumblineHome(), "pid")).catch(() => undefined);
   } catch (cause: unknown) {
     process.stderr.write(`Shutdown error: ${cause instanceof Error ? cause.message : String(cause)}\n`);
     process.exit(1);

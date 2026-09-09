@@ -43,7 +43,7 @@ export interface PayloadLlmOverrides {
  * A copy-on-write delta against one category of built-in ignore defaults.
  * `add` adds patterns to the effective ignore set; `remove` un-ignores a
  * built-in default (its strings are matched verbatim against the seed lists).
- * Both are plain string arrays so the patch serializes cleanly into a BullMQ
+ * Both are plain string arrays so the patch serializes cleanly into a queue
  * payload.
  */
 export interface IgnoreOverridePatch {

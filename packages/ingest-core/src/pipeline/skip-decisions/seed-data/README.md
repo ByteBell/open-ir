@@ -35,7 +35,7 @@ at module-init time by [../seed.ts](../seed.ts) via
   `{ directories|extensions|filenames|filename_globs: Record<name, { ignore: boolean, source: "hardcoded" }> }`.
   Currently **not consumed** by the public runtime. Kept here for reference
   and as the seed source for a future enhancement that would copy these
-  entries into `~/.bytebell/llmDecisions.json` on first install (so users
+  entries into `~/.plumbline/llmDecisions.json` on first install (so users
   start with kube's curated reject list pre-loaded rather than discovering
   it one LLM call at a time).
 

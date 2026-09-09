@@ -51,7 +51,7 @@ export async function promptPortConflict(ctx: PortConflictContext): Promise<Port
 
 function describeOccupant(ctx: PortConflictContext): string {
   if (ctx.container !== null) {
-    const flag = ctx.container.isBytebell ? " [bytebell]" : "";
+    const flag = ctx.container.isPlumbline ? " [plumbline]" : "";
     return `container ${ctx.container.name} (${ctx.container.image})${flag}`;
   }
   if (ctx.hostProcess !== null) {

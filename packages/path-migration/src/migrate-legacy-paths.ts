@@ -9,7 +9,7 @@ import type { MigrateLegacyPathsInput, MigrationSummary } from "./types.ts";
  * deleted and reported as `abandoned`.
  *
  * Pure disk work — the caller owns the DB connection and supplies the docs, so
- * both the CLI (`bytebell migrate paths`) and the server boot path can share
+ * both the CLI (`plumbline migrate paths`) and the server boot path can share
  * this without either reaching into the other.
  */
 export async function migrateLegacyPaths(input: MigrateLegacyPathsInput): Promise<MigrationSummary> {

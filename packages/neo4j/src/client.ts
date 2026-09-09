@@ -29,10 +29,10 @@ async function doConnect(): Promise<void> {
   const user = getConfigValue(Config.Neo4jUser);
   const password = getConfigValue(Config.Neo4jPassword);
   if (uri.length === 0) {
-    throw new Neo4jConfigError("bytebell set neo4j <uri>");
+    throw new Neo4jConfigError("plumbline set neo4j <uri>");
   }
   if (user.length === 0 || password.length === 0) {
-    throw new Neo4jConfigError("bytebell set neo4j-user <user> && bytebell set neo4j-password <pwd>");
+    throw new Neo4jConfigError("plumbline set neo4j-user <user> && plumbline set neo4j-password <pwd>");
   }
   const next = createDriver(uri, auth.basic(user, password));
   try {

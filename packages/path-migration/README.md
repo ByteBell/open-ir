@@ -2,7 +2,7 @@
 
 ## Tier
 
-Utility. Depends only on Kernel (`@bb/types` for the path-layout helpers and `KnowledgeDoc`). Imported by Binaries (`@bb/cli` for `bytebell migrate paths`, `@bb/server` for boot-time reconciliation). Holds no DB connection and performs no I/O beyond the local filesystem.
+Utility. Depends only on Kernel (`@bb/types` for the path-layout helpers and `KnowledgeDoc`). Imported by Binaries (`@bb/cli` for `plumbline migrate paths`, `@bb/server` for boot-time reconciliation). Holds no DB connection and performs no I/O beyond the local filesystem.
 
 ## Responsibility
 
@@ -16,7 +16,7 @@ Given the set of knowledge known to the DB, it:
 1. **Migrates** every knowledge with a derivable target (commit + repo url, or a synthetic commit for local sources) by moving its clone + meta-output under the commit-scoped tree.
 2. **Abandons** legacy directories with no backing DB record — they can never be migrated (no doc to derive a target), so they are deleted and reported. This is what lets boot self-heal after a DB reset leaves orphaned dirs behind.
 
-The package never opens a DB connection: the caller lists knowledge and passes the docs in. This keeps it usable from both the CLI (connects Mongo directly) and the server boot path (uses the active `@bb/db` provider) without either deployable importing the other.
+The package never opens a DB connection: the caller lists knowledge and passes the docs in. This keeps it usable from both the CLI and the server boot path — each connects the active `@bb/db` provider itself — without either deployable importing the other.
 
 ## Invariants
 
@@ -28,4 +28,4 @@ The package never opens a DB connection: the caller lists knowledge and passes t
 ## External dependencies
 
 - `node:fs/promises`, `node:path` — filesystem moves.
-- `@bb/types` — `bytebellPathsFor`, `repositoryDirFor`, `parseGithubOwnerRepo`, `RepoLocation`, `KnowledgeDoc`.
+- `@bb/types` — `plumblinePathsFor`, `repositoryDirFor`, `parseGithubOwnerRepo`, `RepoLocation`, `KnowledgeDoc`.

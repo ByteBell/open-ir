@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import path from "node:path";
 import fs from "node:fs";
-import { getConfigValue, getBytebellHome } from "@bb/config";
+import { getConfigValue, getPlumblineHome } from "@bb/config";
 import { Config } from "@bb/types";
 
 let db: Database | null = null;
@@ -14,7 +14,7 @@ export async function connectSqlite(): Promise<void> {
 
   let sqlitePath = getConfigValue(Config.SqlitePath);
   if (!sqlitePath || sqlitePath.length === 0) {
-    sqlitePath = path.join(getBytebellHome(), "data.sqlite");
+    sqlitePath = path.join(getPlumblineHome(), "data.sqlite");
   }
 
   dbPath = sqlitePath;

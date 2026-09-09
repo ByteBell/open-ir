@@ -29,7 +29,7 @@ import { normalizeFailed } from "./failed.ts";
 const VISIBILITY_S = 300;
 const HEARTBEAT_EXTEND_S = 300;
 const HEARTBEAT_MS = 60_000;
-// Match BullMQ's fixed-5s backoff. Without an explicit retry delay, a failed
+// Fixed 5s backoff. Without an explicit retry delay, a failed
 // job would wait the full VISIBILITY_S (300s) before being re-claimed.
 const RETRY_DELAY_S = 5;
 const MAX_ATTEMPTS = 3;
@@ -119,7 +119,7 @@ class HonkerQueueProvider implements IQueueProvider {
   ): Promise<string> {
     const db = this.requireDb();
     const queue = this.requireQueue(type);
-    // Honker has no native stable-jobId concept (BullMQ's dedupe primitive),
+    // Honker has no native stable-jobId concept to dedupe on,
     // so we emulate it by querying `_honker_live` for an existing row with
     // matching knowledgeId. If found, return its id — re-publishing the
     // same logical job is a no-op (per the IQueueProvider contract).
@@ -141,7 +141,7 @@ class HonkerQueueProvider implements IQueueProvider {
     const queue = this.requireQueue(type);
     const concurrency = opts.concurrency ?? defaultConcurrencyFor(type);
     // N independent loops with batch_size=1 each — prevents head-of-line
-    // blocking from a slow job in the same claim batch. Matches BullMQ's
+    // blocking from a slow job in the same claim batch. Gives the usual
     // `concurrency` semantics (N jobs in flight per type).
     for (let i = 0; i < concurrency; i++) {
       const workerId = `${type}-${i}-${process.pid}`;
@@ -203,7 +203,7 @@ class HonkerQueueProvider implements IQueueProvider {
       const reason = describeError(err);
       logger.error(`queue-honker: job=${job.id} handler threw: ${reason}; scheduling retry`);
       // `retry(delayS, error)` increments `attempts` and re-queues with a
-      // 5s delay (matches BullMQ parity). After MAX_ATTEMPTS exhaustions,
+      // 5s delay. After MAX_ATTEMPTS exhaustions,
       // the next `sweepExpired()` tick moves the row to `_honker_dead`.
       if (ownsLease) {
         job.retry(RETRY_DELAY_S, reason);

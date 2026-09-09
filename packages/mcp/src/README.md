@@ -100,7 +100,7 @@ state, fileCount, createdAt, updatedAt}` ordered by
   `matchOnly: true` skips the context-line rendering.
 - **[repoFs.ts](repoFs.ts)** — local-clone resolution helpers.
   `resolveCloneDir(knowledgeId)` returns
-  `<bytebellHome>/repos/{knowledgeId}`. `resolveFilePath` rejects
+  `<plumblineHome>/repos/{knowledgeId}`. `resolveFilePath` rejects
   absolute paths, `..` components, and any resolved target outside the
   clone root — a single anti-traversal guard reused by every disk-
   reading helper. `readFileLines` returns the splitted lines;
@@ -109,8 +109,8 @@ state, fileCount, createdAt, updatedAt}` ordered by
 ### Resources
 
 - **[resourcesSkills.ts](resourcesSkills.ts)** — registers
-  `bytebell://skills/index` and the
-  `bytebell://skills/{skillName}/{filename}` template. The bundled
+  `plumbline://skills/index` and the
+  `plumbline://skills/{skillName}/{filename}` template. The bundled
   `<package>/skills/` directory is located via `import.meta.url`.
   `readSkillsIndex` rebuilds the index from disk on each request so
   edits to bundled skill files take effect without a server restart.
@@ -150,7 +150,7 @@ retrieveFileTool.ts          → zod, @modelcontextprotocol/sdk/server/mcp.js,
 retrieveFileMetadata.ts      → @bb/neo4j (runCypher)
 retrieveFileContent.ts       → repoFs
 retrieveFileBulk.ts          → repoFs
-repoFs.ts                    → node:fs/promises, node:path, @bb/config (getBytebellHome)
+repoFs.ts                    → node:fs/promises, node:path, @bb/config (getPlumblineHome)
 
 resourcesSkills.ts           → node:fs, node:path, node:url,
                                @modelcontextprotocol/sdk/server/mcp.js

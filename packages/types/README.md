@@ -10,9 +10,9 @@ dependencies and no runtime dependencies — pure type / enum surface.
 
 Single home for shared types and enums that cross package boundaries:
 
-- `Config` — the enumeration of every key under `~/.bytebell/config.json`.
+- `Config` — the enumeration of every key under `~/.plumbline/config.json`.
   Lives here (not in `@bb/config`) because consumers in higher tiers — e.g.
-  `@bb/logger`, `@bb/mongo` — refer to it without wanting an implementation
+  `@bb/logger`, `@bb/sqlite` — refer to it without wanting an implementation
   dependency on `@bb/config`'s schema/loader/writer.
 - `JobType`, `JobPriority`, `JobMessage<P>`, `GithubIndexPayload`,
   `GithubPullPayload`, `LocalIngestPayload`, `PayloadFor<T>`,
@@ -32,10 +32,10 @@ llmModel?, llmKeyId? }` mixin that lets downstream consumers carry per-job
 QUEUED → INGESTED → PROCESSING → PROCESSED ↘ FAILED`, plus the terminal
   `CORRUPTED` for a source repo that is gone/inaccessible — indexed data stays
   queryable but the auto-pull sweep drops it) referenced by `@bb/queue` (writes
-  `QUEUED`), `@bb/mongo` (`setKnowledgeState`), and future ingest workers.
+  `QUEUED`), `@bb/sqlite` (`setKnowledgeState`), and future ingest workers.
 - `KnowledgeDoc`, `KnowledgeSource`, `GithubKnowledgeSource`,
   `LocalKnowledgeSource`, `KnowledgeInfo` — the cross-package shape of the
-  Mongo `knowledge` document. Split into two substructures with
+  `knowledge` document. Split into two substructures with
   non-overlapping responsibilities: `KnowledgeSource` discriminates the
   upstream type (github vs local) and carries per-kind ingestion state —
   for github, the current head commit and the full commit history; for

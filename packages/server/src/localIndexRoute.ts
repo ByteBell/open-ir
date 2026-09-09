@@ -3,7 +3,7 @@ import express from "express";
 import { stat, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { KnowledgeState, type KnowledgeDoc } from "@bb/types";
-import { getBytebellHome } from "@bb/config";
+import { getPlumblineHome } from "@bb/config";
 import { knowledgeDb } from "@bb/db";
 import { knowledgeGraph } from "@bb/graph-db";
 import { enqueueLocalIngest } from "@bb/queue";
@@ -43,7 +43,7 @@ export function buildLocalIndexRoute(): Router {
     // analysed knowledges live. The worker reads from this snapshot rather
     // than the original `sourcePath` so a user moving / mutating their dir
     // after submission doesn't affect the in-flight ingestion.
-    const snapshotsRoot = path.join(getBytebellHome(), "local-snapshots");
+    const snapshotsRoot = path.join(getPlumblineHome(), "local-snapshots");
     await mkdir(snapshotsRoot, { recursive: true, mode: 0o700 });
     const destDir = path.join(snapshotsRoot, knowledgeId);
 

@@ -39,7 +39,7 @@ async function runLs(options: { interactive?: boolean }): Promise<void> {
     const { repos } = await getJson<ListResponse>("/api/v1/repos");
     if (repos.length === 0) {
       process.stdout.write(
-        "No indexed knowledge yet. Run `bytebell index <url>` or `bytebell ingest [path]` to add one.\n",
+        "No indexed knowledge yet. Run `plumbline index <url>` or `plumbline ingest [path]` to add one.\n",
       );
       return;
     }

@@ -8,9 +8,9 @@ export class LayoutMigrationRequiredError extends Error {
         "On-disk layout is the legacy `repos/.meta/<knowledgeId>/` shape;",
         "this build expects the commit-scoped layout under `orgs/<orgId>/<provider>/`.",
         `Detected legacy path: ${detectedLegacyPath}`,
-        "Run: bytebell migrate paths",
+        "Run: plumbline migrate paths",
       ].join("\n  "),
     );
-    this.hint = "bytebell migrate paths";
+    this.hint = "plumbline migrate paths";
   }
 }

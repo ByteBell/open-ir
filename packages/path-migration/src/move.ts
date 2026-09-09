@@ -1,7 +1,7 @@
 import path from "node:path";
 import { stat, rename, mkdir, readdir, rm, cp } from "node:fs/promises";
 import {
-  bytebellPathsFor,
+  plumblinePathsFor,
   parseGithubOwnerRepo,
   repositoryDirFor,
   type KnowledgeDoc,
@@ -59,7 +59,7 @@ async function moveMetaIfPresent(ctx: MoveCtx, legacyMetaRoot: string, newLoc: R
   if (!(await pathExists(legacyMetaRoot))) {
     return;
   }
-  const newMetaOutput = bytebellPathsFor(ctx.home, newLoc).metaOutputRoot;
+  const newMetaOutput = plumblinePathsFor(ctx.home, newLoc).metaOutputRoot;
   if (await pathExists(newMetaOutput)) {
     ctx.summary.skippedAlready.push(`${ctx.knowledgeId} (meta-output)`);
     return;
