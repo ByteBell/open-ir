@@ -1,6 +1,6 @@
 # `worker/` — context
 
-BullMQ worker registration.
+Queue worker registration.
 
 | File          | Responsibility                                                         |
 | ------------- | ---------------------------------------------------------------------- |

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { getBytebellHome, getConfigValue } from "@bb/config";
+import { getPlumblineHome, getConfigValue } from "@bb/config";
 import { Config } from "@bb/types";
 import type { AskLlmUsage } from "./client.ts";
 
@@ -45,7 +45,7 @@ export function computeCacheKey(input: CacheKeyInput): string {
 }
 
 function cacheDir(): string {
-  return path.join(getBytebellHome(), CACHE_DIR_NAME);
+  return path.join(getPlumblineHome(), CACHE_DIR_NAME);
 }
 
 function entryPath(key: string): string {

@@ -5,6 +5,7 @@ import type {
   IAggregateStatsRepository,
   IActivityRepository,
   IUsageRepository,
+  IEnrichmentRepository,
   DbPingResult,
 } from "@bb/db-core";
 
@@ -72,6 +73,15 @@ export const usageDb: IUsageRepository = {
   incrementUsage: (...args) => getDb().usage.incrementUsage(...args),
   getMonthlyUsage: (...args) => getDb().usage.getMonthlyUsage(...args),
   getGlobalUsage: (...args) => getDb().usage.getGlobalUsage(...args),
+};
+
+export const enrichmentDb: IEnrichmentRepository = {
+  startEnrichmentRun: (...args) => getDb().enrichment.startEnrichmentRun(...args),
+  getCompletedEnrichmentFiles: (...args) => getDb().enrichment.getCompletedEnrichmentFiles(...args),
+  markFileEnriched: (...args) => getDb().enrichment.markFileEnriched(...args),
+  recordEnrichmentFailure: (...args) => getDb().enrichment.recordEnrichmentFailure(...args),
+  completeEnrichmentRun: (...args) => getDb().enrichment.completeEnrichmentRun(...args),
+  failEnrichmentRun: (...args) => getDb().enrichment.failEnrichmentRun(...args),
 };
 
 export async function pingDb(): Promise<DbPingResult> {

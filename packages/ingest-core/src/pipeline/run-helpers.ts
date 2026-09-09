@@ -8,7 +8,7 @@ import { knowledgeDb } from "@bb/db";
 import { knowledgeGraph } from "@bb/graph-db";
 
 /**
- * Persists the FAILED state + structured failure reason to Mongo, then
+ * Persists the FAILED state + structured failure reason to the document store, then
  * mirrors the state into Neo4j on a best-effort basis. Errors from both
  * sides are swallowed so the throw path is preserved.
  *
@@ -26,7 +26,7 @@ export async function persistFailure(
 }
 
 /**
- * Persists the non-terminal HALTED state + structured failure reason to Mongo,
+ * Persists the non-terminal HALTED state + structured failure reason to the store,
  * then mirrors the state into Neo4j (best-effort). Used by the pipeline catch
  * paths for *transient* failures, where the queue retry mechanism will retry
  * the job and — only on exhaustion — promote HALTED → FAILED. Mirrors
@@ -43,7 +43,7 @@ export async function persistHalted(
 }
 
 /**
- * Persists the terminal CORRUPTED state + structured failure reason to Mongo,
+ * Persists the terminal CORRUPTED state + structured failure reason to the store,
  * then mirrors it into Neo4j (best-effort). Used for the `repo_unavailable`
  * category: the source repo is gone/inaccessible, so the row leaves PROCESSED
  * and the auto-pull sweep stops re-pulling it. Mirrors `persistFailure` so the
@@ -61,8 +61,8 @@ export async function persistCorrupted(
 
 /**
  * Stamps `retryable = false` on a thrown error. Property contract read by the
- * queue worker wrappers (`@bytebell/queue` BullMQManager and OSS `queue-bullmq`)
- * to convert the failure into a BullMQ `UnrecoverableError` — stopping further
+ * queue worker wrappers to convert the failure into an unrecoverable error —
+ * stopping further
  * automatic attempts. Used for non-retryable failures the pipeline has already
  * moved to terminal FAILED. Duck-typed (no cross-tier import) by the queue.
  */

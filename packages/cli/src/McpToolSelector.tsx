@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { ReactElement } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 
-// Multi-select for `bytebell mcp install`. Mirrors RepoSelector's multi-mode
+// Multi-select for `plumbline mcp install`. Mirrors RepoSelector's multi-mode
 // (space-toggle, enter-submit, esc-cancel) but defaults every row to selected
 // — the common case is "configure all detected tools" and the user deselects
 // the ones they don't want. `a` toggles all/none.
@@ -79,7 +79,7 @@ export function McpToolSelector({ items, onDone }: McpToolSelectorProps): ReactE
     <Box flexDirection="column" borderStyle="round" paddingX={1} paddingY={0}>
       <Box marginBottom={1}>
         <Text bold>
-          Register bytebell MCP in:
+          Register plumbline MCP in:
           <Text dimColor>{`  (${selected.size} selected)`}</Text>
         </Text>
       </Box>

@@ -14,7 +14,7 @@ import * as guidepostsRepo from "./guideposts.ts";
 
 import { registerGraphProvider } from "@bb/graph-db";
 import type { IGraphDatabaseProvider } from "@bb/graph-core";
-import type { LbugValue } from "./coreStub.ts";
+import type { LbugValue } from "@ladybugdb/core";
 
 class LadybugGraphProvider implements IGraphDatabaseProvider {
   knowledge = {

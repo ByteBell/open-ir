@@ -157,7 +157,7 @@ export type SourceFactory = (input: SourceFactoryInput) => Promise<SourceFactory
 export interface PullFactoryInput {
   knowledgeId: string;
   payload: GithubPullPayload;
-  /** The commit currently anchored on the knowledge in Mongo. The factory diffs from here to `targetCommit`. */
+  /** The commit currently anchored on the knowledge document. The factory diffs from here to `targetCommit`. */
   currentCommit: string;
   /** Branch the knowledge tracks. The factory resolves the target commit relative to this branch. */
   branch: string;

@@ -4,6 +4,7 @@ import * as rawRepo from "./raw.ts";
 import * as statsRepo from "./aggregateStats.ts";
 import * as activityRepo from "./activity.ts";
 import * as usageRepo from "./usage.ts";
+import * as enrichmentRepo from "./enrichment.ts";
 
 import { registerDbProvider } from "@bb/db";
 import type { IDocumentDatabaseProvider } from "@bb/db-core";
@@ -43,6 +44,15 @@ class SqliteDatabaseProvider implements IDocumentDatabaseProvider {
     incrementUsage: usageRepo.incrementUsage,
     getMonthlyUsage: usageRepo.getMonthlyUsage,
     getGlobalUsage: usageRepo.getGlobalUsage,
+  };
+
+  enrichment = {
+    startEnrichmentRun: enrichmentRepo.startEnrichmentRun,
+    getCompletedEnrichmentFiles: enrichmentRepo.getCompletedEnrichmentFiles,
+    markFileEnriched: enrichmentRepo.markFileEnriched,
+    recordEnrichmentFailure: enrichmentRepo.recordEnrichmentFailure,
+    completeEnrichmentRun: enrichmentRepo.completeEnrichmentRun,
+    failEnrichmentRun: enrichmentRepo.failEnrichmentRun,
   };
 
   async connect(): Promise<void> {

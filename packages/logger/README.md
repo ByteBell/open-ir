@@ -10,7 +10,7 @@ Domain, Binaries).
 
 Single logging surface for the workspace. Two sinks:
 
-- **File** — daily-rotated `~/.bytebell/logs/<scope>-YYYY-MM-DD.log`, gzipped
+- **File** — daily-rotated `~/.plumbline/logs/<scope>-YYYY-MM-DD.log`, gzipped
   on rotation, retained for `log_retention_days`.
 - **Console** — always on; verbosity from `log_level`. Colorized when stdout
   is a TTY.
@@ -57,7 +57,7 @@ handled gracefully.
 
 ## File layout
 
-- `src/dirs.ts` — log dir resolution (under `getBytebellHome()/logs`)
+- `src/dirs.ts` — log dir resolution (under `getPlumblineHome()/logs`)
 - `src/caller.ts` — stack-walk `file:line` helper
 - `src/formats.ts` — sugar splat format + caller format + printf
 - `src/transports.ts` — daily-rotate file + console transport factories
@@ -76,9 +76,9 @@ handled gracefully.
 
 ## Data ownership
 
-- `~/.bytebell/logs/` directory creation (mode `0700`)
-- `~/.bytebell/logs/<scope>-*.log` rotated files (mode `0600`)
-- `~/.bytebell/logs/<scope>-*.log.gz` compressed rotated files
+- `~/.plumbline/logs/` directory creation (mode `0700`)
+- `~/.plumbline/logs/<scope>-*.log` rotated files (mode `0600`)
+- `~/.plumbline/logs/<scope>-*.log.gz` compressed rotated files
 
 ## What is intentionally out of scope
 

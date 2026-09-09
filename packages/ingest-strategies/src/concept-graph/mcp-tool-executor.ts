@@ -12,7 +12,7 @@ import type { ToolDefinition } from "@bb/llm";
 // Bridges the LLM tool-use loop to the same MCP tool runners the public
 // transport calls. Stays in-process: no HTTP loopback, no SSE, no SDK
 // transport — just direct function calls to the @bb/mcp runners. Justified
-// because workers run inside `bytebell-server`'s process (see CLAUDE.md
+// because workers run inside `plumbline-server`'s process (see CLAUDE.md
 // "Rule of Queue Safety"). The strategy code is the only in-process consumer
 // of these runners today; if a second one appears, lift this module to a
 // shared location.

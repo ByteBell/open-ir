@@ -3,9 +3,9 @@ import { seedLoggerFactory, type LoggerFactory } from "@bb/logger";
 import { Config } from "@bb/types";
 import { connectDb } from "@bb/db";
 import { connectGraph, indexesGraph } from "@bb/graph-db";
-import "@bb/mongo";
+import "@bb/sqlite";
 import "@bb/neo4j";
-// NOTE: provider packages (`@bb/mongo`, `@bb/sqlite`, `@bb/neo4j`, `@bb/ladybug`)
+// NOTE: provider packages (`@bb/sqlite`, `@bb/neo4j`, `@bb/ladybug`)
 // are deliberately NOT imported here. Importing them is a side-effect that
 // registers the provider AND loads its driver/native binding (e.g. `@bb/ladybug`
 // pulls in the `@ladybugdb/core` native addon). Pulling them in from this shared

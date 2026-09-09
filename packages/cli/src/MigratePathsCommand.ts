@@ -1,12 +1,13 @@
 import { Command } from "commander";
 import { Config } from "@bb/types";
-import { getBytebellHome, getConfigValue } from "@bb/config";
-import { connectMongo, closeMongo, listKnowledge } from "@bb/mongo";
+import { getPlumblineHome, getConfigValue } from "@bb/config";
+import { connectDb, closeDb, knowledgeDb } from "@bb/db";
+import "@bb/sqlite";
 import { migrateLegacyPaths, type MigrationSummary } from "@bb/path-migration";
 import { error, success } from "./output.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// `bytebell migrate paths`
+// `plumbline migrate paths`
 //
 // One-shot reconciliation of the legacy on-disk layout
 // (`<home>/repos/<knowledgeId>/` for clones, `<home>/repos/.meta/<knowledgeId>/...`
@@ -14,7 +15,8 @@ import { error, success } from "./output.ts";
 // (`<home>/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/...`).
 //
 // The disk work lives in `@bb/path-migration` so the server boot path shares
-// it. This command just supplies the knowledge list (from Mongo) and renders
+// it. This command just supplies the knowledge list (from the document
+// store) and renders
 // the summary. Knowledge with a DB record migrates; legacy dirs with no record
 // are abandoned (deleted). The same reconciliation runs automatically at server
 // boot — this command is for running it ahead of time or with `--dry-run`.
@@ -45,15 +47,15 @@ export function buildMigrateCommand(): Command {
 }
 
 async function runPathsMigration(opts: { dryRun: boolean }): Promise<void> {
-  await connectMongo();
+  await connectDb(getConfigValue(Config.DbProvider));
   try {
-    const home = getBytebellHome();
+    const home = getPlumblineHome();
     const orgId = getConfigValue(Config.OrgId);
-    const knowledgeDocs = await listKnowledge({ limit: 10_000 });
+    const knowledgeDocs = await knowledgeDb.listKnowledge({ limit: 10_000 });
     const summary = await migrateLegacyPaths({ home, orgId, knowledgeDocs, dryRun: opts.dryRun });
     printSummary(summary, opts.dryRun);
   } finally {
-    await closeMongo();
+    await closeDb();
   }
 }
 

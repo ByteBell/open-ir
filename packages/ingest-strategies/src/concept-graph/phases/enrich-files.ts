@@ -5,14 +5,7 @@ import { getConfigValue } from "@bb/config";
 import { logger } from "@bb/logger";
 import { LlmConfigError, LlmError } from "@bb/errors";
 import type { EnrichmentFailure, EnrichmentFailureReason, NodeScope } from "@bb/types";
-import {
-  startEnrichmentRun,
-  getCompletedEnrichmentFiles,
-  markFileEnriched,
-  recordEnrichmentFailure,
-  completeEnrichmentRun,
-  failEnrichmentRun,
-} from "@bb/mongo";
+import { enrichmentDb } from "@bb/db";
 import { throwIfCancelled, CancellationError } from "@bb/ingest-core";
 import { withConcurrency } from "@bb/ingest-core";
 import type { MetaPaths } from "@bb/ingest-core";
@@ -31,7 +24,7 @@ import { enrichOneFile, type EnrichOneFileInput } from "#src/concept-graph/phase
 // LLM emits a strict-Zod-validated JSON object; on success we upsert
 // :Concept / :Contract / :Guidepost nodes + edges in idempotent batches.
 //
-// Resume protocol: `Mongo.KnowledgeDoc.completedFiles[]` lists files that
+// Resume protocol: `KnowledgeDoc.completedFiles[]` lists files that
 // finished successfully in the current run. We skip those. A fresh
 // enrichment run (`startEnrichmentRun` with a new UUID) clears the list.
 //
@@ -61,9 +54,9 @@ export async function enrichFiles(input: EnrichFilesInput): Promise<EnrichFilesR
   const enrichmentRunId = randomUUID();
   const enrichmentModel = getConfigValue(Config.EnrichmentModel);
   if (enrichmentModel.length === 0) {
-    throw new LlmConfigError("bytebell set enrichment.model <model-id>");
+    throw new LlmConfigError("plumbline set enrichment.model <model-id>");
   }
-  await startEnrichmentRun(input.scope.knowledgeId, enrichmentRunId);
+  await enrichmentDb.startEnrichmentRun(input.scope.knowledgeId, enrichmentRunId);
 
   const concurrency = getConfigValue(Config.EnrichmentConcurrency);
   const maxToolCalls = getConfigValue(Config.EnrichmentMaxToolCallsPerFile);
@@ -80,24 +73,24 @@ export async function enrichFiles(input: EnrichFilesInput): Promise<EnrichFilesR
   const executor = buildEnrichmentToolExecutor({ knowledgeId: input.scope.knowledgeId });
   const systemPrompt = buildEnrichFileSystemPrompt();
 
-  // Resume: union of (a) Mongo `completedFiles[]` from prior attempts and
+  // Resume: union of (a) the ledger's `completedFiles[]` from prior attempts and
   // (b) on-disk artifacts under `meta-output/enrichment/`. Either is
   // sufficient evidence the file was successfully enriched. The disk check
   // is the canonical source of truth — `completedFiles[]` mirrors it.
   // Pre-filter the work queue so already-enriched files never reach the LLM.
   const allFiles = Array.from(input.cache.values());
-  const completedFromMongo = new Set(await getCompletedEnrichmentFiles(input.scope.knowledgeId));
+  const completedFromLedger = new Set(await enrichmentDb.getCompletedEnrichmentFiles(input.scope.knowledgeId));
   const filesToEnrich: typeof allFiles = [];
   let resumedFromPriorRun = 0;
   for (const file of allFiles) {
-    if (completedFromMongo.has(file.relativePath)) {
+    if (completedFromLedger.has(file.relativePath)) {
       resumedFromPriorRun += 1;
       continue;
     }
     if (await enrichmentArtifactExists(layout, file.relativePath)) {
-      // Disk says done but Mongo doesn't — reconcile so subsequent retries
-      // hit the cheap Mongo check first.
-      await markFileEnriched(input.scope.knowledgeId, file.relativePath);
+      // Disk says done but the ledger doesn't — reconcile so subsequent
+      // retries hit the cheap ledger check first.
+      await enrichmentDb.markFileEnriched(input.scope.knowledgeId, file.relativePath);
       resumedFromPriorRun += 1;
       continue;
     }
@@ -152,7 +145,7 @@ export async function enrichFiles(input: EnrichFilesInput): Promise<EnrichFilesR
             cumulativeUsage.inputTokens += usage.inputTokens;
             cumulativeUsage.outputTokens += usage.outputTokens;
             cumulativeUsage.costUsd += usage.costUsd;
-            await markFileEnriched(input.scope.knowledgeId, file.relativePath);
+            await enrichmentDb.markFileEnriched(input.scope.knowledgeId, file.relativePath);
             filesEnriched += 1;
             reporter?.increment(1, { fileName: file.relativePath });
           } catch (cause: unknown) {
@@ -167,7 +160,7 @@ export async function enrichFiles(input: EnrichFilesInput): Promise<EnrichFilesR
               lastError: cause instanceof Error ? cause.message : String(cause),
               lastAttemptAt: new Date(),
             };
-            await recordEnrichmentFailure(input.scope.knowledgeId, failure);
+            await enrichmentDb.recordEnrichmentFailure(input.scope.knowledgeId, failure);
             filesFailed += 1;
             failedPaths.push(file.relativePath);
             logger.warn(
@@ -184,13 +177,13 @@ export async function enrichFiles(input: EnrichFilesInput): Promise<EnrichFilesR
   }
 
   if (filesFailed > 0) {
-    await failEnrichmentRun(input.scope.knowledgeId);
+    await enrichmentDb.failEnrichmentRun(input.scope.knowledgeId);
     const head = failedPaths.slice(0, 5).join(", ");
     const more = failedPaths.length > 5 ? ` (+${failedPaths.length - 5} more)` : "";
     throw new LlmError(`concept-graph: ${filesFailed} file(s) failed enrichment: ${head}${more}`);
   }
 
-  await completeEnrichmentRun(input.scope.knowledgeId);
+  await enrichmentDb.completeEnrichmentRun(input.scope.knowledgeId);
   return { enrichmentRunId, filesEnriched, filesFailed, tokenUsage: cumulativeUsage };
 }
 

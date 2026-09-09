@@ -3,7 +3,7 @@ import path from "node:path";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 
-// Per-tool adapter table for `bytebell mcp install`. Each target knows how to
+// Per-tool adapter table for `plumbline mcp install`. Each target knows how to
 // locate its config file, whether the tool looks installed, and the exact
 // JSON shape its MCP server entry takes (the part that differs per tool).
 //
@@ -21,7 +21,7 @@ export interface McpTarget {
   configPath(): string;
   /** Heuristic "is this tool installed?" — config file or its app dir exists. */
   detect(): boolean;
-  /** The `bytebell` server entry. Shape varies per tool. */
+  /** The `plumbline` server entry. Shape varies per tool. */
   entry(url: string): Record<string, unknown>;
 }
 

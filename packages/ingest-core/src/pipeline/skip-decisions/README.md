@@ -22,7 +22,7 @@ defaults).
 5. Accept if the extension is in KNOWN_LANGUAGE_EXTENSIONS (fast-path, no LLM).
 6. Cache lookup by `extensions:<ext>` (or `filenames:<name>` when extensionless).
 7. Cache miss → askYesNoLLM with the first N chars of the file content.
-8. Persist verdict to ~/.bytebell/llmDecisions.json. LLM failure → reject + cache the rejection.
+8. Persist verdict to ~/.plumbline/llmDecisions.json. LLM failure → reject + cache the rejection.
 ```
 
 Steps 1-6 are pure CPU + cached lookup — they run synchronously via
@@ -62,7 +62,7 @@ interface SkipDecider {
   `SEED_DIRECTORIES`, `SEED_FILENAMES`, `SEED_EXTENSIONS`, `SEED_GLOBS`,
   `KNOWN_LANGUAGE_EXTENSIONS`, and `matchesAnyGlob`. Compiles globs once and
   caches the resulting `RegExp` for reuse.
-- `cache.ts` — load/save `~/.bytebell/llmDecisions.json` with atomic write
+- `cache.ts` — load/save `~/.plumbline/llmDecisions.json` with atomic write
   (write-tmp + fsync + rename + mode 0600). Mirror's kube's JSON shape so
   users can hand-edit `ignore: true → false` to permanently un-ignore an
   extension.
@@ -121,4 +121,4 @@ interface SkipDecider {
 - LLM failure defaults to reject and caches the rejection — matches kube's
   one-shot-rule behavior. Users can hand-edit the cache to revisit.
 - The decider is process-local: tests may construct one with `cachePath`
-  pointing at a temp file to avoid touching the real `~/.bytebell/`.
+  pointing at a temp file to avoid touching the real `~/.plumbline/`.

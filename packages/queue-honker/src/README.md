@@ -7,7 +7,7 @@ Implementation of the Honker-over-SQLite provider that registers itself with `@b
 - **[index.ts](index.ts)** — single side-effect import of `./provider.ts`. Importing the package as `import "@bb/queue-honker"` triggers provider registration.
 - **[provider.ts](provider.ts)** — `HonkerQueueProvider` class implementing `IQueueProvider`. Owns the `Database` handle, the `Map<JobType, Queue>`, the per-loop `AbortController[]` for worker shutdown, and the sweeper timer. Registered as `"honker"` via `registerQueueProvider` at module load.
 - **[priority.ts](priority.ts)** — `mapHonkerPriority(JobPriority)` returns Honker's higher-number-wins numeric priority (Low=1, Normal=100, High=1000).
-- **[paths.ts](paths.ts)** — `resolveQueueDbPath()` returns `Config.QueueDbPath` (with `~/...` expanded to the home dir) if set, else `path.join(getBytebellHome(), "queue.db")`.
+- **[paths.ts](paths.ts)** — `resolveQueueDbPath()` returns `Config.QueueDbPath` (with `~/...` expanded to the home dir) if set, else `path.join(getPlumblineHome(), "queue.db")`.
 - **[failed.ts](failed.ts)** — `normalizeFailed(row)` converts a raw `_honker_dead` row into the cross-provider `FailedJob` shape from `@bb/queue-core` (parses the TEXT JSON payload, extracts `knowledgeId`, converts `died_at` Unix seconds → ISO).
 
 ## Module dependency graph

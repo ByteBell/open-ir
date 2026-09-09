@@ -23,3 +23,12 @@ export { aggregateStats } from "./aggregateStats.ts";
 
 export { incrementUsage, getMonthlyUsage, getGlobalUsage } from "./usage.ts";
 export { recordActivity } from "./activity.ts";
+
+export {
+  startEnrichmentRun,
+  getCompletedEnrichmentFiles,
+  markFileEnriched,
+  recordEnrichmentFailure,
+  completeEnrichmentRun,
+  failEnrichmentRun,
+} from "./enrichment.ts";

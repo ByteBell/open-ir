@@ -5,7 +5,7 @@ import type { ArchiveSink, SourceReader } from "#src/types/pipeline.ts";
 import { affectedFolderPaths } from "./folder-path.ts";
 import type { ScanManifest } from "./scan-manifest.ts";
 
-export const ELIGIBLE_FILES_RELATIVE_PATH = ".bytebell/eligible_files.json";
+export const ELIGIBLE_FILES_RELATIVE_PATH = ".plumbline/eligible_files.json";
 
 export interface EligibleFilesDocument {
   knowledgeId: string;
@@ -25,7 +25,7 @@ export interface WriteEligibleFilesInput {
 /**
  * Persist the canonical list of files the analyzer is about to process,
  * BEFORE any small-file or big-file LLM call runs. The downstream
- * `@bytebell/knowledge-validation` service reads this artifact via the same
+ * `@plumbline/knowledge-validation` service reads this artifact via the same
  * source layer to cross-check that every eligible file landed in Neo4j.
  *
  * Writes to whichever source layer is active: local disk when the source
@@ -50,7 +50,7 @@ export async function writeEligibleFiles(input: WriteEligibleFilesInput): Promis
 
   let wrote = false;
   if (input.source.localRepoDir.length > 0) {
-    const targetDir = path.join(input.source.localRepoDir, ".bytebell");
+    const targetDir = path.join(input.source.localRepoDir, ".plumbline");
     const targetFile = path.join(targetDir, "eligible_files.json");
     await mkdir(targetDir, { recursive: true });
     await writeFile(targetFile, content, "utf8");

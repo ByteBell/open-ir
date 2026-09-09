@@ -10,6 +10,7 @@ import type {
   KnowledgeListEntry,
   DeleteKnowledgeResult,
   DbPingResult,
+  EnrichmentFailure,
 } from "@bb/types";
 
 export type { FileAnalysisSection, FileAnalysis, RawFileDoc, KnowledgeListEntry, DeleteKnowledgeResult, DbPingResult };
@@ -113,12 +114,45 @@ export interface IUsageRepository {
   getGlobalUsage(): Promise<unknown[]>;
 }
 
+/**
+ * Per-file enrichment ledger for the concept-graph strategy. The state lives on
+ * the existing knowledge document — no separate entity — and exists so a queue
+ * retry can resume by skipping files that already completed. The knowledge's
+ * own `KnowledgeState` stays PROCESSING throughout; this ledger is the
+ * finer-grained cursor underneath it.
+ *
+ * Every method throws `KnowledgeNotFoundError` when the document is missing.
+ */
+export interface IEnrichmentRepository {
+  /**
+   * Begins or resumes an enrichment attempt: stamps `runId`, clears recorded
+   * failures (failed files are re-evaluated on the retry) and moves the ledger
+   * to `Running`. `completedFiles` is preserved so a retry skips finished work
+   * — a clean re-enrichment is an explicit reset, not a retry.
+   */
+  startEnrichmentRun(knowledgeId: string, runId: string): Promise<void>;
+  /** Files already enriched, used to pre-filter the work queue on resume. */
+  getCompletedEnrichmentFiles(knowledgeId: string): Promise<string[]>;
+  /** Records `filePath` as enriched. Idempotent — a repeat does not duplicate. */
+  markFileEnriched(knowledgeId: string, filePath: string): Promise<void>;
+  /**
+   * Records or replaces the failure entry for `failure.filePath` (one entry per
+   * file). Diagnostic only — the strategy decides the overall outcome.
+   */
+  recordEnrichmentFailure(knowledgeId: string, failure: EnrichmentFailure): Promise<void>;
+  /** Moves the ledger to `Completed`. The caller transitions `KnowledgeState`. */
+  completeEnrichmentRun(knowledgeId: string): Promise<void>;
+  /** Moves the ledger to `Failed`. A fresh `startEnrichmentRun` retries it. */
+  failEnrichmentRun(knowledgeId: string): Promise<void>;
+}
+
 export interface IDocumentDatabaseProvider {
   knowledge: IKnowledgeRepository;
   raw: IRawRepository;
   stats: IAggregateStatsRepository;
   activity: IActivityRepository;
   usage: IUsageRepository;
+  enrichment: IEnrichmentRepository;
 
   connect(): Promise<void>;
   close(): Promise<void>;

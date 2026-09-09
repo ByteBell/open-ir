@@ -19,7 +19,7 @@ builders — no I/O, no schemas, no LLM calls.
 
 ## Invariants
 
-- Prompts are pure functions of typed inputs. No `await`, no Mongo,
+- Prompts are pure functions of typed inputs. No `await`, no document store,
   no Neo4j, no `process.*`.
 - The output contract these prompts describe MUST match
   `enrichment-schema.ts` exactly. When one changes, the other

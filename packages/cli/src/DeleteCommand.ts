@@ -1,6 +1,4 @@
 import { Command } from "commander";
-import { Config, DbProviderType } from "@bb/types";
-import { getConfigValue } from "@bb/config";
 import { ensureServerRunning } from "./serverSpawn.ts";
 import { ServerStartTimeoutError } from "@bb/errors";
 import { deleteJson, HttpClientError } from "./httpClient.ts";
@@ -10,17 +8,14 @@ import { error, success } from "./output.ts";
 interface DeleteResponse {
   knowledgeId: string;
   jobsRemoved: number;
-  mongoDeleted: number;
+  dbDeleted: number;
   rawDeleted: number;
   statsDeleted: number;
 }
 
 export function buildDeleteCommand(): Command {
   const cmd = new Command("delete");
-  const dbProvider = getConfigValue(Config.DbProvider) === DbProviderType.Sqlite ? "SQLite" : "Mongo";
-  cmd
-    .description(`Pick one or more indexed knowledge entries and delete them from ${dbProvider} + Neo4j.`)
-    .action(runDelete);
+  cmd.description("Pick one or more indexed knowledge entries and delete them from SQLite + Neo4j.").action(runDelete);
   return cmd;
 }
 
@@ -35,7 +30,7 @@ async function runDelete(): Promise<void> {
       title: "Select entries to delete",
       filterKind: "all",
       multi: true,
-      emptyMessage: "No indexed knowledge yet. Run `bytebell index <url>` or `bytebell ingest [path]` to add one.",
+      emptyMessage: "No indexed knowledge yet. Run `plumbline index <url>` or `plumbline ingest [path]` to add one.",
       confirm: { prompt: formatDeletePrompt },
     });
     if (result === null) {
@@ -57,11 +52,10 @@ async function runDelete(): Promise<void> {
 }
 
 function formatDeletePrompt(labels: string[]): string {
-  const dbProvider = getConfigValue(Config.DbProvider) === DbProviderType.Sqlite ? "SQLite" : "Mongo";
   if (labels.length === 1) {
-    return `Delete ${labels[0]} from ${dbProvider} + Neo4j? [y/N]`;
+    return `Delete ${labels[0]} from SQLite + Neo4j? [y/N]`;
   }
-  return `Delete ${labels.length} entries from ${dbProvider} + Neo4j? [y/N]`;
+  return `Delete ${labels.length} entries from SQLite + Neo4j? [y/N]`;
 }
 
 function handleError(cause: unknown): void {

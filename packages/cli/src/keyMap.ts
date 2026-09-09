@@ -9,7 +9,7 @@ export interface KeyEntry {
   setter: Setter;
   /**
    * For two-value enum keys (e.g. provider toggles): the allowed pair. When
-   * `bytebell set <key>` is run with no value, the CLI flips to the other one.
+   * `plumbline set <key>` is run with no value, the CLI flips to the other one.
    */
   toggleValues?: readonly [string, string];
 }
@@ -72,11 +72,6 @@ function parseBoolean(raw: string, key: string): boolean {
 }
 
 export const KEY_MAP: Record<string, KeyEntry> = {
-  mongo: {
-    configKey: Config.MongoUri,
-    redact: false,
-    setter: (s) => setConfigValue(Config.MongoUri, s),
-  },
   neo4j: {
     configKey: Config.Neo4jUri,
     redact: false,
@@ -91,11 +86,6 @@ export const KEY_MAP: Record<string, KeyEntry> = {
     configKey: Config.Neo4jPassword,
     redact: true,
     setter: (s) => setConfigValue(Config.Neo4jPassword, s),
-  },
-  redis: {
-    configKey: Config.RedisUrl,
-    redact: false,
-    setter: (s) => setConfigValue(Config.RedisUrl, s),
   },
   port: {
     configKey: Config.ServerPort,
@@ -171,7 +161,6 @@ export const KEY_MAP: Record<string, KeyEntry> = {
     configKey: Config.DbProvider,
     redact: false,
     setter: (s) => setConfigValue(Config.DbProvider, parseEnum(s, "db-provider", DB_PROVIDERS)),
-    toggleValues: [DbProviderType.Mongo, DbProviderType.Sqlite],
   },
   "graph-provider": {
     configKey: Config.GraphProvider,
@@ -193,7 +182,6 @@ export const KEY_MAP: Record<string, KeyEntry> = {
     configKey: Config.QueueProvider,
     redact: false,
     setter: (s) => setConfigValue(Config.QueueProvider, parseEnum(s, "queue-provider", QUEUE_PROVIDERS)),
-    toggleValues: [QueueProviderType.Bullmq, QueueProviderType.Honker],
   },
   "queue-db-path": {
     configKey: Config.QueueDbPath,

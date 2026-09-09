@@ -54,6 +54,6 @@ The package consumes `JobType.BusinessContextProcessing` jobs. For each job it:
   `<orgs>/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commitHash>/meta-output/business-context/`
   via the `@bb/ingest-github` path helpers (`businessContextDir(knowledgeId,
 commitHash, slug)`) — this package never invents its own layout. The
-  helper is **async**: it reads `KnowledgeDoc` from Mongo to derive
+  helper is **async**: it reads `KnowledgeDoc` from the document store to derive
   `(orgId, owner, repo)` from `info.repoUrl`, then resolves the
   commit-scoped path. Every call site awaits.

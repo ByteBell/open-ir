@@ -16,7 +16,7 @@ interface ShutdownOptions {
 export function buildShutdownCommand(): Command {
   const cmd = new Command("shutdown");
   cmd
-    .description("Stop the bytebell-server (and optionally Docker infra).")
+    .description("Stop the plumbline-server (and optionally Docker infra).")
     .option("--with-docker", "also stop Docker infra without prompting")
     .option("--keep-docker", "leave Docker infra running without prompting")
     .action((opts: ShutdownOptions) => runShutdown(opts));

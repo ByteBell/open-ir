@@ -46,7 +46,7 @@ DETACH DELETE k
 // Defensive cleanup: wipe File nodes whose knowledgeId has no matching
 // :Knowledge. Orphans accumulate when a worker writes files after the Knowledge
 // node is deleted (interrupted runs, racing deletes, partial failures). The TUI
-// delete picker reads from Mongo, so orphan-only knowledgeIds are otherwise
+// delete picker reads from the document store, so orphan-only knowledgeIds are otherwise
 // unreachable.
 const DELETE_ORPHAN_FILES = `
 MATCH (f:File)

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
-import { getBytebellHome, getConfigValue } from "@bb/config";
+import { getPlumblineHome, getConfigValue } from "@bb/config";
 import { knowledgeDb } from "@bb/db";
 import { Config, parseGithubOwnerRepo, repositoryDirFor, type RepoLocation } from "@bb/types";
 import { IngestError, KnowledgeNotFoundError } from "@bb/errors";
@@ -8,9 +8,9 @@ import { IngestError, KnowledgeNotFoundError } from "@bb/errors";
 // ─────────────────────────────────────────────────────────────────────────────
 // MCP file resolution. Under the commit-scoped layout, the cloned source tree
 // for a knowledge lives under
-// `~/.bytebell/orgs/<orgId>/github/<knowledgeId>/<owner>/<repo>/<commit>/repository/`,
+// `~/.plumbline/orgs/<orgId>/github/<knowledgeId>/<owner>/<repo>/<commit>/repository/`,
 // so resolving the clone dir for a `knowledgeId` is no longer a pure-string
-// operation — it needs a Mongo lookup to find the active commit and the
+// operation — it needs a document-store lookup to find the active commit and the
 // repo coordinates. We do one `KnowledgeDoc` read per `retrieve_file` call.
 //
 // For local knowledges (`source.kind === "local"`) we point straight at
@@ -34,7 +34,7 @@ export class FileReadError extends Error {
 
 /**
  * Resolves the active clone directory for `knowledgeId`. Reads
- * `KnowledgeDoc.source` from Mongo to find the active commit; for github
+ * `KnowledgeDoc.source` from the document store to find the active commit; for github
  * sources, parses `info.repoUrl` to get owner/repo; for local sources,
  * returns `source.sourcePath` unchanged.
  */
@@ -71,7 +71,7 @@ export async function resolveCloneDir(knowledgeId: string): Promise<string> {
     branch: kDoc.info.branch ?? "main",
     commitHash: commitId,
   };
-  return repositoryDirFor(getBytebellHome(), loc);
+  return repositoryDirFor(getPlumblineHome(), loc);
 }
 
 export async function resolveFilePath(knowledgeId: string, relativePath: string): Promise<string> {

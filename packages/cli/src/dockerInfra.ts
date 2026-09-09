@@ -7,7 +7,7 @@ import { parsePortFromComposeError } from "./dockerPortDiagnostics.ts";
 
 const COMPOSE_HEALTH_POLL_MS = 2_000;
 const COMPOSE_HEALTH_TIMEOUT_MS = 90_000;
-const SERVICES = ["mongo", "neo4j", "redis"] as const;
+const SERVICES = ["neo4j"] as const;
 
 type ServiceName = (typeof SERVICES)[number];
 
@@ -87,9 +87,7 @@ export async function up(opts: UpOptions): Promise<UpResult> {
   return {
     composeFile: composeFilePath(),
     services: {
-      mongo: `127.0.0.1:${opts.ports.mongo}`,
       neo4j: `127.0.0.1:${opts.ports.neo4jBolt} (HTTP ${opts.ports.neo4jHttp})`,
-      redis: `127.0.0.1:${opts.ports.redis}`,
     },
   };
 }

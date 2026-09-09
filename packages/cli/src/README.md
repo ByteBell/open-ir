@@ -6,7 +6,7 @@ package-level contract; this file documents how the source tree is split.
 ## Files
 
 - **[index.ts](index.ts)** — binary entry. Shebang `#!/usr/bin/env bun`.
-  Constructs the commander `Command("bytebell")`, wires version, and
+  Constructs the commander `Command("plumbline")`, wires version, and
   registers every shipped subcommand: `set`, `boot`, `shutdown`,
   `server`, `index`, `ingest`, `ls`. Calls `parseAsync`. Top-level
   `try/catch` prints any uncaught error and exits `2` (the typed-error
@@ -21,7 +21,7 @@ package-level contract; this file documents how the source tree is split.
   its own type narrowing — no `as` casts at the call site. Local
   helpers `parsePort` / `parsePositiveInt` / `parseLogLevel` throw
   `Error("Invalid value for \"<key>\": …")` which `SetCommand` pretty-
-  prints with the matching `bytebell set …` hint from `@bb/config`'s
+  prints with the matching `plumbline set …` hint from `@bb/config`'s
   `HINTS`. Carries entries for every config key the user can set
   headlessly today, including `openrouter-api-key` (`redact: true`)
   and `openrouter-model` (plain text).
@@ -36,13 +36,13 @@ package-level contract; this file documents how the source tree is split.
   and polls `/health`). Prints a final ready banner with the MCP URL.
   Idempotent — re-running on an already-up stack is a fast no-op.
 - **[ShutdownCommand.ts](ShutdownCommand.ts)** — the `shutdown`
-  subcommand. Reads `~/.bytebell/pid`, sends `SIGTERM`, polls until
+  subcommand. Reads `~/.plumbline/pid`, sends `SIGTERM`, polls until
   the PID file vanishes (≤ 30 s), and prints the explicit
   `docker compose down` hint. Docker is left running by design.
   Stale PID file is treated as "already stopped" and exits 0.
 - **[bootConfig.ts](bootConfig.ts)** — `applyInfraDefaults` writes
-  local-docker defaults (mongo / neo4j / neo4j-user / redis) and a
-  random base64url 24-byte Neo4j password into `~/.bytebell/config.json`
+  local-docker defaults (neo4j / neo4j-user) and a
+  random base64url 24-byte Neo4j password into `~/.plumbline/config.json`
   via `KEY_MAP[key].setter`, but only for keys that are currently
   blank. Returns the resolved Neo4j password (whether freshly
   generated or pre-existing) so `BootCommand` can pass it into
@@ -72,13 +72,13 @@ package-level contract; this file documents how the source tree is split.
   Resolves the endpoint URL from `Config.ServerPort`, filters
   `MCP_TARGETS` by `detect()`, prompts (interactive multi-select on a
   TTY; auto-selects all detected when stdin is not a TTY), then
-  **merges** a `bytebell` entry into each picked tool's config and
+  **merges** a `plumbline` entry into each picked tool's config and
   prints a result table. Merge is non-destructive: reads existing JSON
-  (`{}` on ENOENT), backs up to `<file>.bytebell.bak`, injects only the
-  `bytebell` key under the tool's top-level key, atomic-writes
+  (`{}` on ENOENT), backs up to `<file>.plumbline.bak`, injects only the
+  `plumbline` key under the tool's top-level key, atomic-writes
   (tmp + rename, mode `0600`). A malformed existing file fails that one
   tool instead of being overwritten. Idempotent — keyed by the literal
-  name `bytebell`, so re-running updates (e.g. a changed port) rather
+  name `plumbline`, so re-running updates (e.g. a changed port) rather
   than duplicating.
 - **[mcpTargets.ts](mcpTargets.ts)** — the `MCP_TARGETS` adapter table.
   One `McpTarget` per supported tool: `configPath()` (platform-branched
@@ -97,10 +97,10 @@ package-level contract; this file documents how the source tree is split.
   view shows `•••…` for masked rows. Renders an inline red error line
   underneath when the field's `validate` returns a non-null string.
 - **[SetupForm.tsx](SetupForm.tsx)** — the Ink form rendered by
-  `bytebell set` no-args **and** by `bytebell boot` when openrouter
+  `plumbline set` no-args **and** by `plumbline boot` when openrouter
   keys are missing on an interactive TTY. Nine rows declared in a
-  `ROWS` constant: Mongo URI / Neo4j URI / Neo4j user / Neo4j password
-  (masked) / Redis URL / Server port / GitHub Concurrency / OpenRouter
+  `ROWS` constant: Neo4j URI / Neo4j user / Neo4j password
+  (masked) / Server port / GitHub Concurrency / OpenRouter
   API key (masked) / OpenRouter model. Each row carries its own
   format-only `validate` regex (or non-empty check for the openrouter
   rows). State: a single `useState<Record<string,string>>` keyed by
@@ -128,12 +128,12 @@ dockerInfra.ts     → node:child_process, node:fs/promises, node:path, node:url
 BootCommand.ts     → commander, react, ink (render), @bb/types (Config),
                      @bb/config (HINTS, getConfigValue), bootConfig.ts, dockerInfra.ts,
                      serverSpawn.ts, SetupForm.tsx (SetupForm), output.ts
-ShutdownCommand.ts → commander, node:fs/promises, node:path, @bb/config (getBytebellHome),
+ShutdownCommand.ts → commander, node:fs/promises, node:path, @bb/config (getPlumblineHome),
                      dockerInfra.ts (composeFilePath), output.ts
 
 httpClient.ts      → node:url
 serverSpawn.ts     → node:child_process, node:fs/promises, node:path, node:url,
-                     @bb/types (Config), @bb/config (getBytebellHome, getConfigValue)
+                     @bb/types (Config), @bb/config (getPlumblineHome, getConfigValue)
 
 mcpTargets.ts      → node:path, node:fs (existsSync), node:os (homedir)
 McpToolSelector.tsx → ink, react (type-only)
@@ -179,11 +179,11 @@ context.
   a closure (or with a wrong-type setter) is a compile error.
 - **No env reads anywhere.** Repo-wide ESLint rule blocks `process.env`.
 - **`bootConfig.applyInfraDefaults` only writes blank keys.** Re-running
-  `bytebell boot` after a manual `bytebell set neo4j-password <new>`
+  `plumbline boot` after a manual `plumbline set neo4j-password <new>`
   reads the user's value back via `getConfigValue` and uses it for
   the compose `.env`; it does **not** overwrite the user's choice.
 - **`dockerInfra` resolves the compose file via `import.meta.url`.**
-  No env vars, no cwd dependence — `bytebell boot` works from any
+  No env vars, no cwd dependence — `plumbline boot` works from any
   directory and from `bun link`'d installs.
 - **`ShutdownCommand` never escalates to `SIGKILL`.** If the server
   doesn't drain in 30 s the command exits 1 with a warning; the

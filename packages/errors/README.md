@@ -16,28 +16,24 @@ re-introducing its own error namespace.
 Today the catalog covers:
 
 - **Config** — `ConfigIncompleteError` (missing required keys; carries the
-  missing `Config[]` and the corresponding `bytebell set …` hints)
-- **Mongo** — `MongoConfigError` (missing URI), `MongoConnectError` (driver
-  connect failed; redacts credentials in URI), `MongoNotConnectedError`
-  (`_getDb()` called before `connectMongo()`)
-- **Redis** — `RedisConfigError` (missing URL), `RedisConnectError` (ioredis
-  connect failed; redacts userinfo in URL), `RedisNotConnectedError`
-  (`_getRedis()` called before `connectRedis()`)
-- **Knowledge** — `KnowledgeNotFoundError` (`@bb/mongo.setKnowledgeState`
-  matched zero documents; carries the offending `knowledgeId` as a typed
-  field). Lives alongside the Mongo errors in `mongo-errors.ts`.
-- **Queue** — `QueueConnectError` (BullMQ Queue construction failed;
+  missing `Config[]` and the corresponding `plumbline set …` hints)
+- **Knowledge** — `KnowledgeNotFoundError` (a repository operation such as
+  `setKnowledgeState` matched no document; carries the offending
+  `knowledgeId` as a typed field). Provider-agnostic — every
+  `IDocumentDatabaseProvider` implementation throws it. Lives in
+  `knowledge-errors.ts`.
+- **Queue** — `QueueConnectError` (queue provider construction failed;
   carries `cause`), `QueueNotConnectedError` (publisher or
   `registerWorker` called before `connectQueue()`).
 - **LLM** — `LlmConfigError` (missing OpenRouter API key; carries the
-  `bytebell keys set` hint), `LlmError` (HTTP non-2xx, timeout, empty
+  `plumbline keys set` hint), `LlmError` (HTTP non-2xx, timeout, empty
   completion; carries `cause`).
 - **Ingest** — `GitCloneError` (git binary failed; redacts userinfo in
   the repo URL), `IngestError` (catch-all worker failure; carries
   `knowledgeId` and `cause`), `RepoUnavailableError` (source repo gone or
   inaccessible — terminal; the failure classifier maps it to the
   `repo_unavailable` category → knowledge marked `CORRUPTED`),
-  `IngestPathError` (`bytebell ingest <path>`
+  `IngestPathError` (`plumbline ingest <path>`
   pre-flight failure: missing path / not a directory),
   `UsageLimitExceededError` (thrown by a runtime `UsageGuard`
   implementation when a token quota would be exceeded mid-run; carries
@@ -45,7 +41,7 @@ Today the catalog covers:
   `UsageLimitExceededDetail`). OSS standalone never throws this; the
   pipeline only catches it when an optional guard is wired in.
 - **Server** — `ServerConfigError` (missing required config at boot;
-  carries `missing[]` + matching `bytebell set …` hints),
+  carries `missing[]` + matching `plumbline set …` hints),
   `ServerStartTimeoutError` (spawned server never passed its health check;
   carries `logPath`), `ServerInfraDownError` (server's `/health` reports an
   infra dependency down; carries the `services[]` names),
@@ -60,7 +56,7 @@ Today the catalog covers:
   before `connectNeo4j()`).
 - **Layout** — `LayoutMigrationRequiredError` (the legacy on-disk layout
   `repos/.meta/<knowledgeId>/` is present; the server refuses to boot
-  until the operator runs `bytebell migrate paths`). Carries the
+  until the operator runs `plumbline migrate paths`). Carries the
   detected legacy path in the message and the migration hint as a typed
   `hint` field.
 
@@ -70,13 +66,7 @@ New error classes land here as new packages are introduced.
 
 ```ts
 class ConfigIncompleteError    extends Error
-class MongoConfigError         extends Error
-class MongoConnectError        extends Error
-class MongoNotConnectedError   extends Error
 class KnowledgeNotFoundError   extends Error
-class RedisConfigError         extends Error
-class RedisConnectError        extends Error
-class RedisNotConnectedError   extends Error
 class QueueConnectError        extends Error
 class QueueNotConnectedError   extends Error
 class LlmConfigError           extends Error
@@ -107,7 +97,7 @@ None. Pure class declarations.
 2. **Stable `name`.** Every class sets `override readonly name` to its class
    name. The logger keys off this string; renaming is a coordinated change.
 3. **Credential redaction.** Any error message that includes a connection
-   URI must redact userinfo (see `redactUri` in `mongo-errors.ts`).
+   URI must redact userinfo (see `redactUri` in `neo4j-errors.ts`).
 4. **Typed metadata over string parsing.** Errors carry structured fields
    (`hint`, `missing`, `hints`, `cause`) — consumers read those, never parse
    `message`.

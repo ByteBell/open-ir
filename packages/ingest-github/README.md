@@ -3,7 +3,7 @@
 ## Tier
 
 Domain. Depends on Kernel (`@bb/types`, `@bb/errors`), Infrastructure
-(`@bb/config`, `@bb/mongo`, `@bb/neo4j`), Cross-cutting (`@bb/llm`), and
+(`@bb/config`, `@bb/db`, `@bb/neo4j`), Cross-cutting (`@bb/llm`), and
 Strategy (`@bb/queue`). May be imported by Binaries (`@bb/server` calls
 `registerGithubWorkers()` and `registerLocalIngestWorker()` once at
 boot). Never by `@bb/cli`.
@@ -15,9 +15,9 @@ by `@bb/queue`. For each job, runs the active `IngestionStrategy`
 (selected via `Config.IngestionStrategy`: `flat-folder` default, or
 `concept-graph` for the hypergraph-enrichment strategy) over the cloned
 source tree at
-`~/.bytebell/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/repository/`
-and persists per-file results to Mongo (`raw` collection via
-`@bb/mongo`) **and** Neo4j (`:File` nodes + `:HAS_KEYWORD` /
+`~/.plumbline/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/repository/`
+and persists per-file results to SQLite (`raw_files` table via
+`@bb/db`) **and** Neo4j (`:File` nodes + `:HAS_KEYWORD` /
 `:HAS_CLASS` / `:HAS_FUNCTION` / `:HAS_IMPORT_INTERNAL` /
 `:HAS_IMPORT_EXTERNAL` rels via `@bb/neo4j`).
 
@@ -37,12 +37,12 @@ The package owns:
   Field definitions live in `FILE_ANALYSIS_FIELDS_BLOCK` (single source
   of truth; wording adapted from kube-package's
   `fileAnalysisFieldDefs.ts`)
-- Translation of LLM output JSON → `RawFileDoc` shape (Mongo) **and**
+- Translation of LLM output JSON → `RawFileDoc` shape (SQLite) **and**
   `:File` graph node + entity relationships (Neo4j), with safe fallbacks
   for malformed responses
 - Knowledge `status.state` transitions (`Processing` on start,
   `Processed` on success, `Failed` on caught error) — kept in lock-step
-  between Mongo and Neo4j via a shared `transitionState` helper
+  between SQLite and Neo4j via a shared `transitionState` helper
 - The `IngestionStrategy` pluggable abstraction — the worker delegates
   the post-clone scan/analyze/persist loop to a strategy instance.
   v1 ships one concrete: `BasicFileAnalysisStrategy`
@@ -115,7 +115,7 @@ plus a branch in `pickStrategy()` in `src/index.ts`.
 
 ## Data ownership
 
-- `~/.bytebell/orgs/<orgId>/github/<knowledgeId>/<owner>/<repo>/<commit>/repository/`
+- `~/.plumbline/orgs/<orgId>/github/<knowledgeId>/<owner>/<repo>/<commit>/repository/`
   — the cloned working tree for each indexed commit (for `github_index`
   / `github_pull`). Persisted across job retries (clone is idempotent:
   `git fetch + reset` if `.git` exists). Each commit gets its own
@@ -123,13 +123,13 @@ plus a branch in `pickStrategy()` in `src/index.ts`.
   current head until the operator prunes. Local ingest jobs do NOT
   populate this dir; they read from `KnowledgeDoc.source.sourcePath` (the
   user's original directory) directly. Never deleted automatically —
-  `bytebell clean` per [docs/arch.md:157](../../docs/arch.md#L157)
+  `plumbline clean` per [docs/arch.md:157](../../docs/arch.md#L157)
   will own removal.
 - The Knowledge document's `status.state` field — written via
-  `setKnowledgeState` from `@bb/mongo` AND
+  `setKnowledgeState` from `@bb/db` AND
   `setKnowledgeStateInGraph` from `@bb/neo4j`, kept in lock-step.
 - Raw documents (one per scanned file) — written via `upsertRawFile`
-  from `@bb/mongo`. Compound key `(knowledgeId, relativePath)`.
+  from `@bb/db`. Compound key `(knowledgeId, relativePath)`.
 - `:File` graph nodes + `:HAS_FILE` / `:HAS_KEYWORD` / `:HAS_CLASS` /
   `:HAS_FUNCTION` / `:HAS_IMPORT_INTERNAL` / `:HAS_IMPORT_EXTERNAL` relationships — written via
   `upsertFileNode` from `@bb/neo4j`.
@@ -166,8 +166,8 @@ plus a branch in `pickStrategy()` in `src/index.ts`.
    for one JSON object keyed by integer label that returns one summary
    per folder. Bigger folders take the individual single-folder path.
    Roll back to one LLM call per folder via
-   `bytebell set folder.summary.batch.size 1`.
-3. **Clone idempotent.** Re-runs (BullMQ retries) call `git fetch` +
+   `plumbline set folder.summary.batch.size 1`.
+3. **Clone idempotent.** Re-runs (queue retries) call `git fetch` +
    `git reset --hard` in the existing dir rather than re-cloning.
    Tokens are re-injected into the remote URL each time.
 4. **Token redaction.** `GitCloneError` carries the **redacted** repo
@@ -176,14 +176,14 @@ plus a branch in `pickStrategy()` in `src/index.ts`.
 5. **State transition order.** `Processing` is set _before_ any clone
    work. `Processed` is set _only_ after the entire scan + analyze loop
    completes. On any thrown error, the handler best-effort sets `Failed`
-   then re-throws so BullMQ records the retry.
+   then re-throws so the queue records the retry.
 6. **Fail-soft analysis, fail-hard infra.** A single file's LLM call
    failing falls back to an empty-analysis Raw doc and processing
    continues. In the big-file path, a single chunk failure contributes
    an empty analysis to the merge but does not stop the file; a
    condensation-call failure falls through to deterministic
    `dedupAnalyses` so the merged result is always well-formed. A clone
-   failure or Mongo write failure throws and propagates to BullMQ for
+   failure or document-store write failure throws and propagates to the queue for
    retry under the queue's `attempts: 3`.
 7. **Hardcoded filters only.** No LLM-based ignore decisions in v0. The
    directory / file / extension blocklists in `scan.ts` are the only
@@ -193,7 +193,7 @@ plus a branch in `pickStrategy()` in `src/index.ts`.
 
 - Node built-ins only: `node:child_process` (git), `node:fs/promises`
   (walk), `node:crypto` (sha-256), `node:path`, `node:util`
-- Workspace deps: `@bb/config`, `@bb/errors`, `@bb/llm`, `@bb/mongo`,
+- Workspace deps: `@bb/config`, `@bb/errors`, `@bb/llm`, `@bb/db`,
   `@bb/neo4j`, `@bb/queue`, `@bb/types`
 - System binary: **`git`** must be on the user's `PATH`. Documented in
   the project README as a runtime prerequisite.
@@ -222,7 +222,7 @@ plus a branch in `pickStrategy()` in `src/index.ts`.
 - Model escalation
 - LLM-based ignore decisions
 - Cost ledger (the `@bb/llm` package itself doesn't have one yet)
-- Auto-cleanup of the `~/.bytebell/orgs/<orgId>/<provider>/<knowledgeId>/`
+- Auto-cleanup of the `~/.plumbline/orgs/<orgId>/<provider>/<knowledgeId>/`
   commit-scoped tree (clones + meta-output)
 
 ## How to extend
@@ -250,7 +250,7 @@ Adding the `github_pull` worker:
    → invoke a `Strategy` (likely the same `BasicFileAnalysisStrategy`)
    over a smaller scoped subset of files → delete Raw + graph entries
    for files removed in the diff (needs `deleteRawFile` and
-   `deleteFileNode` helpers in `@bb/mongo` / `@bb/neo4j`).
+   `deleteFileNode` helpers in `@bb/db` / `@bb/neo4j`).
 2. In `src/worker.ts`'s `registerGithubWorkers`, also call
    `registerWorker(JobType.GithubPull, handleGithubPull)`.
 3. Update _Public exports_ / _Out of scope_ here.

@@ -1,15 +1,15 @@
 ---
-name: bytebell
+name: plumbline
 description: >
-  Bytebell-public local knowledge graph. Discover, search, lookup, and
-  retrieve from code repositories indexed locally by bytebell-server.
+  Plumbline-public local knowledge graph. Discover, search, lookup, and
+  retrieve from code repositories indexed locally by plumbline-server.
   TRIGGER when using: list_knowledge, smart_search, keyword_lookup,
   retrieve_file.
 user-invocable: true
 argument-hint: "[search query or task description]"
 ---
 
-# Bytebell-public knowledge graph
+# Plumbline-public knowledge graph
 
 Single-tenant local engine. The graph is `Knowledge → File → (Keyword | Class | Function | Module)` — flat, no commit versioning, no multi-tenant scoping. Every `Knowledge` node carries a `repoName` (e.g. `anthropics/claude-code`) and a `knowledgeId` (UUID).
 
@@ -34,7 +34,7 @@ Single-tenant local engine. The graph is `Knowledge → File → (Keyword | Clas
 
 ## Per-task workflows
 
-For code search, file location, and reading: read `bytebell-code-search.md`.
+For code search, file location, and reading: read `plumbline-code-search.md`.
 
 ## What this server does NOT have
 

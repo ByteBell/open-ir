@@ -38,13 +38,13 @@ export function PortConflictSelector(props: PortConflictSelectorProps): ReactEle
     {
       action: "reuse",
       label: `Use the service already running on ${props.port}`,
-      hint: "skip starting bytebell's container for this service",
+      hint: "skip starting plumbline's container for this service",
     },
     killChoice(props),
     {
       action: "change",
-      label: `Change bytebell's host port for ${props.serviceLabel}`,
-      hint: "pick a new free port; bytebell config + compose env are updated",
+      label: `Change plumbline's host port for ${props.serviceLabel}`,
+      hint: "pick a new free port; plumbline config + compose env are updated",
     },
   ];
 

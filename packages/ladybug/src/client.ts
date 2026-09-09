@@ -1,4 +1,4 @@
-import { Database, Connection, PreparedStatement, type LbugValue } from "./coreStub.ts";
+import { Database, Connection, PreparedStatement, type LbugValue } from "@ladybugdb/core";
 import { getConfigValue } from "@bb/config";
 import { Config } from "@bb/types";
 

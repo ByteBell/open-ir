@@ -2,33 +2,40 @@
 
 ## Purpose
 
-Three-service `docker-compose.yml` that brings up the local infrastructure
-required by `bytebell-server`: MongoDB, Neo4j, and Redis. Consumed
-exclusively by the `bytebell boot` CLI command in `@bb/cli`. Not a
+Single-service `docker-compose.yml` that brings up the one containerised
+dependency `plumbline-server` has: Neo4j. The document store and the job queue
+are both SQLite files under `~/.plumbline`, so neither has a container here.
+Consumed exclusively by the `plumbline boot` CLI command in `@bb/cli`. Not a
 workspace package — this is operational data, not TypeScript code.
+
+The file also declares an optional `ladybug-explorer` viewer, which the CLI
+does not start or health-poll; it is not part of the contract below.
 
 ## Contract
 
-[`docker-compose.yml`](docker-compose.yml) declares three services on a
-single `bytebell` bridge network, all bound to `127.0.0.1` only
-(single-tenant local OSS engine — no remote network surface).
+[`docker-compose.yml`](docker-compose.yml) declares the one managed service on
+a `plumbline` bridge network, bound to `127.0.0.1` only (single-tenant local
+OSS engine — no remote network surface).
 
-| Service | Image            | Host port  | Container        | Volume name           |
-| ------- | ---------------- | ---------- | ---------------- | --------------------- |
-| mongo   | `mongo:7`        | 27017      | `bytebell-mongo` | `bytebell_mongo_data` |
-| neo4j   | `neo4j:5`        | 7687, 7474 | `bytebell-neo4j` | `bytebell_neo4j_data` |
-| redis   | `redis:7-alpine` | 6379       | `bytebell-redis` | `bytebell_redis_data` |
+The top-level `name: plumbline` key sets the Compose **project** name. It is
+load-bearing: `dockerInfra.ts` shells out to `docker compose -f <abs path>` with
+no `-p` flag, so without this key Compose falls back to the parent directory and
+files everything under a project called `docker` — which is what `docker compose
+ls` and Docker Desktop would then show. Container, network, and volume names are
+all declared explicitly elsewhere in the file, so the project name is the one
+identifier this key controls.
+
+| Service | Image     | Host port  | Container         | Volume name            |
+| ------- | --------- | ---------- | ----------------- | ---------------------- |
+| neo4j   | `neo4j:5` | 7687, 7474 | `plumbline-neo4j` | `plumbline_neo4j_data` |
 
 Each service has a healthcheck the CLI polls via `docker compose ps
 --format json`:
 
-- mongo: `mongosh ... ping`
 - neo4j: `wget -qO- http://localhost:7474` (Neo4j HTTP up implies Bolt
   is up shortly after; the CLI gates on the `Health` field)
-- redis: `redis-cli ping`
 
-Versions are pinned at the major-version level — `mongo:7`, `neo4j:5`,
-`redis:7-alpine`. Neo4j 5 is required for the fulltext-index syntax
+The version is pinned at the major level — `neo4j:5`. Neo4j 5 is required for the fulltext-index syntax
 declared in `@bb/neo4j/src/indexes.ts` (multi-label `FOR (n:Class|Function)`).
 
 The Neo4j password is read from `${NEO4J_PASSWORD}` in `.env` (gitignored).
@@ -39,14 +46,42 @@ APOC is enabled via `NEO4J_PLUGINS` and `NEO4J_dbms_security_procedures_unrestri
 to keep the door open for future graph algorithms; current Cypher in
 `@bb/neo4j` and `@bb/mcp` does not depend on it.
 
+## Disk bounds
+
+Docker's own storage — container logs, image layers, named volumes — lives
+inside the Docker VM disk (~31GB on a default Docker Desktop install), not on
+the host filesystem. Every unbounded writer in this stack competes for that one
+disk, and when it fills, writes start failing in ways that surface as unrelated
+application errors — a service looks broken when the real fault is disk. Two
+bounds in `docker-compose.yml` exist to prevent it, and neither may be removed
+without a replacement:
+
+| Bound                                                                | Where        | Why                                                                                                                                                                                      |
+| -------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `x-logging` anchor (`max-size: 50m`, `max-file: 3`) on every service | all services | Docker's `json-file` driver is unbounded by default. A chatty ingestion run writes GB of stdout.                                                                                         |
+| `NEO4J_db_tx__log_rotation_retention__policy: "256M size"`           | `neo4j`      | Neo4j keeps **2 days** of write-ahead logs by default; after a bulk ingest `/data/transactions` routinely dwarfs the store itself. Nothing replays these — no cluster, no backup window. |
+
+Neo4j JVM sizing (`NEO4J_HEAP_MAX`, `NEO4J_PAGECACHE`) is bounded for the same
+reason — left unset, the JVM sizes itself from the host's RAM and starves the
+ingestion worker running beside it. Both are overridable from `.env`.
+
+Note that container **logs** are capped here, while the server's own Winston
+logs go to `~/.plumbline/logs/` on the host and are pruned by
+`log_retention_days` in `config.json` — a different mechanism for a different
+disk.
+
+Changing a bound requires recreating the container: `logging:` and `command:`
+are baked in at create time, so an edit to this file has no effect on an
+already-running container until `docker compose up -d --force-recreate <svc>`.
+
 ## Data ownership
 
-- `bytebell_mongo_data`, `bytebell_neo4j_data`, `bytebell_redis_data` —
+- `plumbline_neo4j_data` —
   named Docker volumes. **Persisted across restarts**, **not** auto-deleted
   by `docker compose down`. Removed only on `docker compose down -v` or
   explicit `docker volume rm`.
 - `infra/docker/.env` — generated by `@bb/cli`'s `bootConfig.ts` on
-  first `bytebell boot`. Mode `0600`. Contains `NEO4J_PASSWORD=…`.
+  first `plumbline boot`. Mode `0600`. Contains `NEO4J_PASSWORD=…`.
   `.gitignore` here ensures it is never committed.
 
 ## How `@bb/cli` consumes this
@@ -54,40 +89,39 @@ to keep the door open for future graph algorithms; current Cypher in
 `packages/cli/src/dockerInfra.ts` resolves this directory via
 `import.meta.url`, writes `.env`, then invokes `docker compose -f
 <absolute path>/docker-compose.yml up -d` and polls
-`docker compose ps --format json` for `Health == "healthy"` on all
-three services.
+`docker compose ps --format json` for `Health == "healthy"` on the service.
 
 `packages/cli/src/bootConfig.ts` mirrors the auto-generated Neo4j
-password into both `~/.bytebell/config.json` (via the `neo4j-password`
+password into both `~/.plumbline/config.json` (via the `neo4j-password`
 key in `keyMap.ts`) and `infra/docker/.env`. The two stay in sync
-because every `bytebell boot` re-reads `Config.Neo4jPassword` and
+because every `plumbline boot` re-reads `Config.Neo4jPassword` and
 re-writes `.env` before invoking `docker compose up`.
 
 ## Lifecycle
 
-- `bytebell boot` — `docker compose up -d` + poll until healthy +
+- `plumbline boot` — `docker compose up -d` + poll until healthy +
   spawn server.
-- `bytebell shutdown` — stops the **server only**. Docker keeps
+- `plumbline shutdown` — stops the **server only**. Docker keeps
   running on purpose (per user direction, asymmetric lifecycle: warm
   re-boots are fast).
 - Stop the containers explicitly with
   `docker compose -f infra/docker/docker-compose.yml down`. Add
   `-v` to also drop the named volumes (destroys all indexed data).
-- A future `bytebell infra` subcommand group may wrap `up | down |
+- A future `plumbline infra` subcommand group may wrap `up | down |
 status | logs`. Out of scope for v0.
 
 ## Editing
 
 Bumping a service version: change the `image:` tag, run
-`bytebell boot`, watch the healthcheck pass. The named volumes are
+`plumbline boot`, watch the healthcheck pass. The named volumes are
 preserved, so data carries across; if a major-version bump requires a
 volume migration (rare) the operator runs the upgrade by hand.
 
-If you change the password manually via `bytebell set
+If you change the password manually via `plumbline set
 neo4j-password <new>` while Docker is running, the compose env stays
 on the old value until the container is recreated. Run
 `docker compose -f infra/docker/docker-compose.yml up -d
---force-recreate neo4j` afterwards. `bytebell boot` itself rewrites
+--force-recreate neo4j` afterwards. `plumbline boot` itself rewrites
 `.env` and runs `docker compose up -d`, which compose treats as a
 no-op when the env hash is unchanged but as a recreate when the env
 differs.

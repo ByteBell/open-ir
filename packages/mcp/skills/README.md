@@ -3,7 +3,7 @@
 ## Purpose
 
 Bundled skill files served over the MCP resources channel
-(`bytebell://skills/...`). This is data, not code: every file under
+(`plumbline://skills/...`). This is data, not code: every file under
 `skills/<skillName>/` is read verbatim from disk by
 [`../src/resourcesSkills.ts`](../src/resourcesSkills.ts) and streamed
 to the MCP client, which writes it to `~/.claude/skills/<skillName>/`
@@ -24,7 +24,7 @@ no spaces.
 
 ## What lives here in v1
 
-- [`bytebell/`](bytebell) — the single skill shipped with the OSS
+- [`plumbline/`](plumbline) — the single skill shipped with the OSS
   engine. Covers the three retrieval tools and the default code-search
   workflow.
 
@@ -34,8 +34,8 @@ The package's `resourcesSkills.ts` resolves this directory via
 `import.meta.url` (so dev `bun run` and built outputs both find it),
 rebuilds the index from disk on each request, and exposes:
 
-- `bytebell://skills/index` — JSON listing
-- `bytebell://skills/{skillName}/{filename}` — markdown content
+- `plumbline://skills/index` — JSON listing
+- `plumbline://skills/{skillName}/{filename}` — markdown content
 
 Edits to bundled skill files take effect on the next resource read; no
 server restart required.
@@ -55,6 +55,6 @@ server restart required.
    (`name`, `description`, `user-invocable`, `argument-hint`).
 2. Add per-task files (`<topic>.md`) referenced from `SKILL.md`.
 3. Add a `README.md` to the new `skills/<skillName>/` directory
-   following the existing `bytebell/README.md` template.
+   following the existing `plumbline/README.md` template.
 4. Restart the MCP server is **not** required — the index rebuilds
    from disk per request.

@@ -7,7 +7,7 @@ import { openRouterRawChat, type OpenRouterMessageInput } from "./openrouterChat
 export function resolveOpenRouterChain(opts: AskLlmOptions): string[] {
   const apiKey = opts.apiKey ?? getConfigValue(Config.OpenrouterApiKey);
   if (apiKey.length === 0) {
-    throw new LlmConfigError("bytebell keys set");
+    throw new LlmConfigError("plumbline keys set");
   }
   const model = opts.model ?? getConfigValue(Config.OpenrouterModel);
   const fallbackSlots = opts.fallbackModels ?? [

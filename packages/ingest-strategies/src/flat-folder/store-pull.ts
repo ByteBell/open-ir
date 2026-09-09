@@ -39,7 +39,7 @@ export interface StorePullResult {
  * Pull-time graph store. Mirrors the structure of `storeFlatAnalysis` but
  * applies only the changes the diff specified:
  *
- * 1. Delete `:File` + Mongo rows for deleted + renamed-from paths.
+ * 1. Delete `:File` + document-store rows for deleted + renamed-from paths.
  * 2. Upsert `:File` nodes for added + modified + renamed-to paths.
  * 3. Upsert affected `:Folder` nodes from the freshly-written folder
  *    summaries on disk.

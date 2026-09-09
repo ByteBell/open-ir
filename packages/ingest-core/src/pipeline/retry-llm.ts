@@ -18,7 +18,7 @@ import { CancellationError } from "#src/pipeline/cancellation.ts";
 // Callers wrap a single LLM call (or a small LLM-bound subgraph) in this
 // helper, then handle the final thrown error themselves — typically by
 // counting the unit as "failed" and continuing with the rest of the batch,
-// so the batch-level retry (BullMQ) can resume from disk on the next attempt.
+// so the batch-level retry (the queue) can resume from disk on the next attempt.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const MAX_LLM_ATTEMPTS = 3;

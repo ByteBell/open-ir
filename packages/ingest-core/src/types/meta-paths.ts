@@ -1,7 +1,7 @@
 /**
  * Per-commit meta artifact paths. Built by `pathsFor(loc)`, where
  * `repositoryDir` and `metaOutputRoot` are siblings under
- * `~/.bytebell/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/`,
+ * `~/.plumbline/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/`,
  * and every leaf path (file-analysis, folder-summaries, etc.) lives under
  * `metaOutputRoot`.
  *

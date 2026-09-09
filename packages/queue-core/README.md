@@ -4,7 +4,7 @@ Provider-agnostic interfaces for the async job queue layer.
 
 ## Responsibilities
 
-Defines the contract that every queue backend (BullMQ over Redis, Honker over SQLite, …) must implement. Contains no I/O — pure TypeScript interfaces and shared types.
+Defines the contract that every queue backend must implement. `@bb/queue-honker` (Honker over SQLite) is the only implementation shipped today. Contains no I/O — pure TypeScript interfaces and shared types.
 
 ## Public Interfaces
 
@@ -21,11 +21,11 @@ None. This package owns no data — it only describes shapes.
 
 ## Tier
 
-Strategy. Consumed by `@bb/queue` (facade) and implemented by `@bb/queue-bullmq`, `@bb/queue-honker`.
+Strategy. Consumed by `@bb/queue` (facade) and implemented by `@bb/queue-honker`.
 
 ## Invariants
 
-1. **`enqueueRaw` returns a stable string `jobId`.** Providers may use their own internal IDs (BullMQ dedupe strings, Honker integers stringified). The facade stores this on the knowledge doc as `queueJobId`.
+1. **`enqueueRaw` returns a stable string `jobId`.** Providers may use their own internal IDs (Honker integers stringified). The facade stores this on the knowledge doc as `queueJobId`.
 2. **`registerWorker` is synchronous.** It schedules workers; it does not await their first claim. Workers are torn down by `close()`.
 3. **`removeKnowledgeJobs` never throws on missing jobs.** Returns `{ removed: 0 }` if no live job is associated with the knowledgeId.
 4. **`listFailedJobs` is read-only.** It does not move, retry, or remove rows.

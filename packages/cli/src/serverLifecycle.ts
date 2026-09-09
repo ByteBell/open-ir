@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only WITH non-commercial-clause
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { getBytebellHome } from "@bb/config";
+import { getPlumblineHome } from "@bb/config";
 import {
   ServerStartTimeoutError,
   ServerInfraDownError,
@@ -62,7 +62,7 @@ export interface StopServerResult {
 }
 
 export async function stopServer(): Promise<StopServerResult> {
-  const pidFile = path.join(getBytebellHome(), "pid");
+  const pidFile = path.join(getPlumblineHome(), "pid");
   const pid = await readPid(pidFile);
   if (pid === null) {
     return { wasRunning: false, timedOut: false, pid: null };

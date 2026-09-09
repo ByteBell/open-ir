@@ -20,18 +20,9 @@ interface Row {
   validate: (raw: string) => string | null;
 }
 
-const MONGO_RX = /^mongodb(\+srv)?:\/\//u;
 const NEO4J_RX = /^(bolt|neo4j)(\+s|\+ssc)?:\/\//u;
-const REDIS_RX = /^rediss?:\/\//u;
 
 const ROWS: Row[] = [
-  {
-    id: "mongo",
-    label: "Mongo URI",
-    cliKey: "mongo",
-    infra: true,
-    validate: (s) => (MONGO_RX.test(s) ? null : "expected mongodb:// or mongodb+srv://"),
-  },
   {
     id: "neo4j",
     label: "Neo4j URI",
@@ -53,13 +44,6 @@ const ROWS: Row[] = [
     mask: true,
     infra: true,
     validate: (s) => (s.length > 0 ? null : "required"),
-  },
-  {
-    id: "redis",
-    label: "Redis URL",
-    cliKey: "redis",
-    infra: true,
-    validate: (s) => (REDIS_RX.test(s) ? null : "expected redis:// or rediss://"),
   },
   {
     id: "port",
@@ -90,11 +74,9 @@ const ROWS: Row[] = [
 
 function loadInitial(): Record<string, string> {
   return {
-    mongo: getConfigValue(Config.MongoUri),
     neo4j: getConfigValue(Config.Neo4jUri),
     "neo4j-user": getConfigValue(Config.Neo4jUser),
     "neo4j-password": getConfigValue(Config.Neo4jPassword),
-    redis: getConfigValue(Config.RedisUrl),
     port: String(getConfigValue(Config.ServerPort)),
     "concurrency-github": String(getConfigValue(Config.ConcurrencyGithub)),
     "openrouter-api-key": getConfigValue(Config.OpenrouterApiKey),
@@ -148,7 +130,7 @@ export function SetupForm({ onDone }: SetupFormProps): ReactElement {
   return (
     <Box flexDirection="column" borderStyle="round" paddingX={1} paddingY={0}>
       <Box marginBottom={1}>
-        <Text bold>Bytebell setup</Text>
+        <Text bold>Plumbline setup</Text>
       </Box>
       <ToggleField
         id="infra-mode"

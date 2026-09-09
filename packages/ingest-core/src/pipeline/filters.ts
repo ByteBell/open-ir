@@ -9,7 +9,7 @@ const LEGACY_SKIP_DIRS = [
   ".turbo",
   ".cache",
   "coverage",
-  ".bytebell",
+  ".plumbline",
 ];
 
 const LEGACY_SKIP_FILES = [

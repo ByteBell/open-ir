@@ -1,4 +1,4 @@
-# How every code-graph MCP tool works, and why Bytebell saves 80% on tokens
+# How every code-graph MCP tool works, and why Plumbline saves 80% on tokens
 
 Code knowledge graphs are not a new idea. Most of the tools below build one in some form. What actually matters is what each graph stores on its nodes, and how those nodes are connected to each other. That is where the token cost gap comes from when you start running real queries against your codebase.
 
@@ -38,7 +38,7 @@ Understand-Anything is a Claude Code plugin that runs a multi-agent pipeline to 
 
 ### code-grapher
 
-Code-grapher builds a Neo4j knowledge graph from AST analysis, with an optional AI-powered description pass through Ollama or Gemini. It supports a PRIMER.md file to inject business context, and does surgical diff-based updates via git. Of all the AST tools, this is probably closest in spirit to what Bytebell does. The difference is that business context here is global and opt-in rather than per file and automatic.
+Code-grapher builds a Neo4j knowledge graph from AST analysis, with an optional AI-powered description pass through Ollama or Gemini. It supports a PRIMER.md file to inject business context, and does surgical diff-based updates via git. Of all the AST tools, this is probably closest in spirit to what Plumbline does. The difference is that business context here is global and opt-in rather than per file and automatic.
 
 ### Deep Graph MCP (CodeGPT)
 
@@ -62,15 +62,15 @@ Skills are a different approach again. Instead of always-on context like CLAUDE.
 
 ---
 
-## How Bytebell does it
+## How Plumbline does it
 
-Bytebell builds a Neo4j graph too, so the architecture sounds similar on the surface. The difference is in what we put on each node, and how the nodes are connected to each other across repositories.
+Plumbline builds a Neo4j graph too, so the architecture sounds similar on the surface. The difference is in what we put on each node, and how the nodes are connected to each other across repositories.
 
 For every file in your codebase, an LLM generates a structured analysis at index time. You get a one-paragraph purpose explaining why the file exists, a longer summary covering what it does and how it fits into the architecture, a business context line that ties it to the product domain, plus the classes, functions, keywords, internal imports, and external imports it contains. All of that lives on the file node. The imports link to deduplicated module nodes, which means a question like "who imports parse_file" is just one Cypher hop. The semantic nodes for things like ontology concepts, business entities, contracts, and system capabilities are scoped to the entire organisation rather than to a single repository, so when two repos both reference the concept "authentication", they share the same node. That one design choice gives you a cross-repo dependency graph for free, with no special indexer required.
 
-Every node also carries a commit hash and a SHA-256 of the file content. When you run a reindex, Bytebell compares hashes and only re-analyses the files whose content actually changed. The LLM cost ends up proportional to your actual code churn, not to the size of your repository. If you reindex a 200,000 file monorepo where 12 files changed in the last commit, that costs you 12 LLM calls, not 200,000.
+Every node also carries a commit hash and a SHA-256 of the file content. When you run a reindex, Plumbline compares hashes and only re-analyses the files whose content actually changed. The LLM cost ends up proportional to your actual code churn, not to the size of your repository. If you reindex a 200,000 file monorepo where 12 files changed in the last commit, that costs you 12 LLM calls, not 200,000.
 
-This is where the 80 percent token savings actually comes from. Your AI assistant stops re-reading the same files at the start of every session. Instead of burning through roughly 38,900 tokens and 84 tool calls trying to answer a single cross-repo question, it pulls the pre-computed purpose, summary, business context, and import edges from the graph in milliseconds. Most well-formed questions resolve in two to four MCP tool calls and a small fraction of the tokens. On a test corpus of 500,000 files spread across 100 repositories, a complex cross-repo query that costs Claude Code on its own between $6 and $10 and takes three to five minutes will cost Bytebell plus Sonnet about $0.04 and finish in 30 to 40 seconds.
+This is where the 80 percent token savings actually comes from. Your AI assistant stops re-reading the same files at the start of every session. Instead of burning through roughly 38,900 tokens and 84 tool calls trying to answer a single cross-repo question, it pulls the pre-computed purpose, summary, business context, and import edges from the graph in milliseconds. Most well-formed questions resolve in two to four MCP tool calls and a small fraction of the tokens. On a test corpus of 500,000 files spread across 100 repositories, a complex cross-repo query that costs Claude Code on its own between $6 and $10 and takes three to five minutes will cost Plumbline plus Sonnet about $0.04 and finish in 30 to 40 seconds.
 
 Everything runs on 127.0.0.1. There are no vectors involved, no embedding provider, and no cloud component. The only outbound call is to OpenRouter for the per-file LLM analysis, and if you want to route that to a local model instead, you can.
 

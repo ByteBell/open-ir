@@ -11,7 +11,7 @@ export const FILE_ANALYSIS_FIELDS_BLOCK = `- purpose             : string  — A
 - businessEntities    : string[] — Domain nouns the code manipulates (e.g. "User", "Invoice", "Knowledge"). Names from the domain language, not generic CS terms. Max 8 entries.
 - systemCapabilities  : string[] — Capabilities this file contributes to the system (e.g. "GitHub repo ingestion", "JWT signing", "rate-limited fetch"). Action-oriented phrases. Max 6 entries.
 - sideEffects         : string[] — Observable side effects (e.g. "writes file-analysis/*.json", "sends HTTP POST to OpenRouter", "executes git clone"). Concrete and traceable. Max 8 entries.
-- configDependencies  : string[] — Config keys, env vars, or settings the file reads (e.g. "Config.OpenrouterApiKey", "BYTEBELL_HOME"). Exact key names.
+- configDependencies  : string[] — Config keys, env vars, or settings the file reads (e.g. "Config.OpenrouterApiKey", "PLUMBLINE_HOME"). Exact key names.
 - dataFlowDirection   : string  — One of: "inbound" (consumes external input), "outbound" (emits to external systems), "internal" (no external boundary crossed), "bidirectional". Empty string if ambiguous.
 - integrationSurface  : string[] — External systems this file touches (e.g. "OpenRouter API", "Neo4j", "Redis", "filesystem"). Names of systems, not function names.
 - contractsProvided   : string[] — Public exports / endpoints / interfaces this file exposes to other parts of the system (e.g. "registerGithubWorkers", "GET /api/v1/health"). Exact names.

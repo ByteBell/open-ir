@@ -12,16 +12,16 @@ Domain (sub-folder of `@bb/ingest-github`).
 ## Files
 
 - `paths.ts` — commit-scoped on-disk layout resolver. `pathsFor(loc:
-RepoLocation)` is the pure path builder (delegates to `bytebellPathsFor`
+RepoLocation)` is the pure path builder (delegates to `plumblinePathsFor`
   in `@bb/types`). Every per-commit artifact lives under
-  `~/.bytebell/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/`
+  `~/.plumbline/orgs/<orgId>/<provider>/<knowledgeId>/<owner>/<repo>/<commit>/`
   with the clone in `repository/` and meta in `meta-output/`. For local
   knowledges the owner/repo segments collapse:
   `orgs/<orgId>/local/<knowledgeId>/<syntheticCommit>/`. The
   knowledgeId-keyed helpers (`metaRootFor`, `businessContextDir`,
-  `orgRegistryDir`) are async — they look up `KnowledgeDoc` from Mongo to
+  `orgRegistryDir`) are async — they look up `KnowledgeDoc` from the document store to
   derive the active `RepoLocation` before resolving the path. The legacy
-  `repos/<id>/` + `repos/.meta/<id>/` layout is gone; `bytebell migrate
+  `repos/<id>/` + `repos/.meta/<id>/` layout is gone; `plumbline migrate
 paths` walks old data into the new tree. Also exports
   `encodeMetaPath`/`decodeMetaPath` (slash/backslash → `__SL__`/`__BS__` so
   paths flatten to one file on disk).
@@ -29,7 +29,7 @@ paths` walks old data into the new tree. Also exports
   Clone-or-fetch+reset against `origin/<branch>`, `--depth=1`. The pull plan
   may later relax depth; ingestion does not need full history. Wraps git
   failures in `GitCloneError` (from `@bb/errors`). Note this is the
-  GitHub-side primitive; GitLab knowledges use `@bytebell/ingest-gitlab`'s
+  GitHub-side primitive; GitLab knowledges use `@plumbline/ingest-gitlab`'s
   `cloneGitlabRepo` (oauth2 URL form, raises `GitlabCloneError`) via its
   `SourceFactory` and never enter this code path.
 - `filters.ts` — `SKIP_DIRS`, `SKIP_FILES`, `BINARY_EXTENSIONS`, `looksBinary`,
@@ -95,12 +95,12 @@ deps.skipDecider.decide(input)` per file. Same semantics as before this
   layout themselves see no effect — but mandatory: without it,
   `writeScanManifest` would ENOENT on its first write because the
   `meta-output/` parent dir wouldn't exist. For GitLab knowledges (which
-  reach the runner via `@bytebell/ingest-gitlab`'s injected `SourceFactory`),
+  reach the runner via `@plumbline/ingest-gitlab`'s injected `SourceFactory`),
   `parseGithubRepo` accepts gitlab.com URLs so the `location` built from
   `parsed.owner` / `parsed.repo` resolves cleanly; subgroup gitlab URLs
   collapse to two segments at this layer and the factory itself uses the
   full namespace for the path it clones into. State transitions (`CREATED → QUEUED → INGESTED → …`) are
-  persisted to Mongo + Neo4j via `transitionState`, and `CancellationError`
+  persisted to SQLite + Neo4j via `transitionState`, and `CancellationError`
   is re-thrown without flipping to FAILED. The optional
   `progressContextFactory` is the runner's own `ProgressContext` source:
   `runGithub` emits `phaseChanged("clone")` before `syncRepository` (or before the
@@ -121,7 +121,7 @@ deps.skipDecider.decide(input)` per file. Same semantics as before this
 - `pull-failure.ts` — `throwPullFailure(cause, deps)` maps a thrown pull cause to the correct persisted state, then re-throws (never returns). Retryable → `persistHalted` + plain `IngestError` (queue retries); terminal → `persistFailure` + failure SSE + non-retryable throw. **`deps.isAutoPull`**: set for unattended auto-pull / bulk refresh of already-`PROCESSED` knowledge (downstream multi-tenant payloads only — OSS standalone never sets it). When true, on **any** failure it restores `PROCESSED` (`transitionState`), skips both `persistHalted`/`persistFailure` and the failure SSE, and throws non-retryable — so a failed background refresh never degrades a healthy index. Because the row stays `PROCESSED`, the downstream queue finalizer's HALTED→FAILED promotion is inert. The next sweep retries.
 - `pull-source-resolver.ts` — `resolvePullSourceFromDisk(input)` builds a `SourceReader` + `DiffResult` + `targetCommit` triple by cloning (or fetch+resetting), reading branch HEAD, materialising the shallow clone, asserting branch ancestry, computing the diff, and checking out the target. Returns `{ noOp: true }` when the resolved target matches the previously-indexed commit so the caller can short-circuit to `PROCESSED`. Used only when `runPull`'s caller did not supply a `PullFactory`.
   Reads `repoUrl` and `branch` directly off `knowledge.info.*` (loaded via
-  `@bb/mongo.getKnowledge`). The `KnowledgeSource` discriminator (`kind`) is
+  `@bb/db.knowledgeDb.getKnowledge`). The `KnowledgeSource` discriminator (`kind`) is
   still read off `knowledge.source` along with `commitId`/`commitHashes`, but
   the repo coordinates themselves live on `info` — no fallback chain.
   When `pullFactory` is provided, it returns `{source, diff, targetCommit,
@@ -152,7 +152,7 @@ archiveSink?}` and `runPull` skips `syncRepository` + `materialiseEndpoints`
   `persistStats` write into the `processing_stats` collection has been
   removed — per-commit token and cost data now lives on the knowledge
   document's `source.commitHashes[]` (set by `setKnowledgeCommit` from
-  `@bb/mongo`), with the per-call `costUsd` sourced directly from
+  `@bb/db`), with the per-call `costUsd` sourced directly from
   OpenRouter's `response.usage.cost`.
 - `failure-classifier.ts` — `classifyFailure(cause)` returns
   `{ reason, category, detail? }` for any thrown ingestion error.
@@ -165,7 +165,7 @@ archiveSink?}` and `runPull` skips `syncRepository` + `materialiseEndpoints`
   `429` → `llm_rate_limit`, `5xx`/no-status → `llm_unreachable`. Anything
   else → `internal`. Each category produces a single short
   operator-readable `reason` sentence; the raw provider response body
-  lives in `detail`. Used by `run.ts`/`pull.ts` catch blocks (Mongo
+  lives in `detail`. Used by `run.ts`/`pull.ts` catch blocks (document-store
   persistence via `markKnowledgeFailed`) and
   `strategies/flat-folder/index.ts` (SSE event via
   `progressContext.failed`) so both paths share one classification.
@@ -183,7 +183,7 @@ archiveSink?}` and `runPull` skips `syncRepository` + `materialiseEndpoints`
   `clearCancellation`, `isCancelled`, `throwIfCancelled`, `CancellationError`.
   Strategies call `throwIfCancelled(knowledgeId)` between sub-phases. The
   cancel HTTP route flips the bit; the orchestrator clears it on a
-  `CancellationError` re-throw and leaves Mongo state untouched (no FAILED).
+  `CancellationError` re-throw and leaves the knowledge state untouched (no FAILED).
 - `concurrency.ts` — `withConcurrency(n)` returns a `limit(task)` function in
   the `p-limit` style. `runInPool(n, items, task)` is a convenience over async
   iterables. No external `p-limit` dependency.
@@ -193,7 +193,7 @@ archiveSink?}` and `runPull` skips `syncRepository` + `materialiseEndpoints`
 - Sibling files in this folder may import each other.
 - Down: `src/types/*` only (intra-package, via the `src/*` alias).
 - Up: `@bb/config`, `@bb/types`, `@bb/errors`, `@bb/logger`, `node:*`.
-- `run.ts` and `pull.ts` additionally import `@bb/mongo` and `@bb/neo4j`
+- `run.ts` and `pull.ts` additionally import `@bb/db` and `@bb/neo4j`
   for state transitions and graph state writes respectively.
 - `stats.ts` has no cross-package imports — it carries only pure helpers
   (`repoNameFromUrl`, `localRepoName`, `describe`).
@@ -202,7 +202,7 @@ archiveSink?}` and `runPull` skips `syncRepository` + `materialiseEndpoints`
 ## Invariants
 
 - Every file is ≤ 300 lines.
-- No graph traversal, no per-file Mongo writes happen here — those live
+- No graph traversal, no per-file document-store writes happen here — those live
   under `strategies/`. `run.ts` only performs end-of-pipeline state
   transitions and stats persistence. **Exception**: `skip-decisions/`
   uses `@bb/llm` for the unknown-extension YES/NO gate; this is the

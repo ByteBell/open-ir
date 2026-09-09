@@ -3,20 +3,18 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import express from "express";
 import { Config, DbProviderType, GraphProviderType, QueueProviderType, type Config as ConfigEnum } from "@bb/types";
-import { getBytebellHome, getConfigValue, HINTS } from "@bb/config";
+import { getPlumblineHome, getConfigValue, HINTS } from "@bb/config";
 import { connectDb } from "@bb/db";
 import { connectGraph, indexesGraph } from "@bb/graph-db";
 import { connectQueue, resumeOrphans } from "@bb/queue";
 // Provider registration is intentional and explicit at this composition root —
 // the public server supports every provider (Docker + embedded), so it imports
-// all of them. A different deployment that only needs a subset (e.g. a Neo4j +
-// Mongo production server) would import only those packages here and would never
+// all of them. A different deployment that only needs a subset (e.g. a Neo4j
+// production server) would import only those packages here and would never
 // load the unused drivers/native bindings (e.g. the `@bb/ladybug` core addon).
-import "@bb/mongo";
 import "@bb/sqlite";
 import "@bb/neo4j";
 import "@bb/ladybug";
-import "@bb/queue-bullmq";
 import "@bb/queue-honker";
 
 import { registerGithubWorkers, registerLocalIngestWorker, resolvePullSource } from "@bb/ingest-github";
@@ -32,14 +30,7 @@ import { registerRoutes } from "./routes.ts";
 import { installShutdownHandlers } from "./shutdown.ts";
 import { reconcileLegacyLayout } from "./legacyLayout.ts";
 
-const REQUIRED: ConfigEnum[] = [
-  Config.MongoUri,
-  Config.RedisUrl,
-  Config.Neo4jUri,
-  Config.Neo4jUser,
-  Config.Neo4jPassword,
-  Config.OpenrouterApiKey,
-];
+const REQUIRED: ConfigEnum[] = [Config.Neo4jUri, Config.Neo4jUser, Config.Neo4jPassword, Config.OpenrouterApiKey];
 
 function checkRequiredConfig(): void {
   const missing: string[] = [];
@@ -56,22 +47,15 @@ function checkRequiredConfig(): void {
     }
   };
 
-  if (dbProvider !== DbProviderType.Mongo) {
-    remove(Config.MongoUri);
-  }
   if (graphProvider !== GraphProviderType.Neo4j) {
     // Embedded graph (ladybug) needs no Neo4j connection details.
     remove(Config.Neo4jUri);
     remove(Config.Neo4jUser);
     remove(Config.Neo4jPassword);
   }
-  if (queueProvider !== QueueProviderType.Bullmq) {
-    remove(Config.RedisUrl);
-  }
 
-  // Embedded mode keeps its stores on disk — refuse to boot if any path the
-  // active embedded provider depends on is unset, instead of failing later
-  // with a cryptic file lock / IO error.
+  // File-backed stores refuse to boot if any path the active provider depends
+  // on is unset, instead of failing later with a cryptic file lock / IO error.
   if (dbProvider === DbProviderType.Sqlite) {
     required.push(Config.SqlitePath);
   }
@@ -143,10 +127,10 @@ async function main(): Promise<void> {
 
   const port = getConfigValue(Config.ServerPort);
   app.listen(port, "127.0.0.1", () => {
-    process.stdout.write(`Bytebell server listening on http://127.0.0.1:${port}\n`);
+    process.stdout.write(`Plumbline server listening on http://127.0.0.1:${port}\n`);
   });
 
-  await writeFile(path.join(getBytebellHome(), "pid"), String(process.pid), { mode: 0o644 });
+  await writeFile(path.join(getPlumblineHome(), "pid"), String(process.pid), { mode: 0o644 });
 }
 
 main().catch((cause: unknown) => {

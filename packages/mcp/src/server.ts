@@ -5,18 +5,18 @@ import { registerKeywordLookupTool } from "./keywordLookupTool.ts";
 import { registerRetrieveFileTool } from "./retrieveFileTool.ts";
 import { registerSkillResources } from "./resourcesSkills.ts";
 
-const SERVER_NAME = "bytebell-public";
+const SERVER_NAME = "plumbline-public";
 const SERVER_VERSION = "0.0.0";
 
-const INSTRUCTIONS = `Bytebell-public local knowledge graph.
+const INSTRUCTIONS = `Plumbline-public local knowledge graph.
 
 Four tools are registered: list_knowledge (call first — enumerates
 indexed repos and their knowledgeId UUIDs), smart_search (default —
 fused six-channel search), keyword_lookup (reverse lookup of named
 entities), and retrieve_file (metadata, content, bulk_search).
 
-Two resources are exposed: bytebell://skills/index and
-bytebell://skills/{skillName}/{filename}. Fetch the index once per
+Two resources are exposed: plumbline://skills/index and
+plumbline://skills/{skillName}/{filename}. Fetch the index once per
 session, install the listed files to ~/.claude/skills/{skillName}, and
 follow the per-task workflow files referenced from each SKILL.md.`;
 

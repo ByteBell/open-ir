@@ -10,7 +10,7 @@ const SKIP_DIRS = new Set([
   ".turbo",
   ".cache",
   "coverage",
-  ".bytebell",
+  ".plumbline",
 ]);
 
 const SKIP_FILES = new Set([

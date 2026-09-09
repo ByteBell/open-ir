@@ -9,7 +9,7 @@ export interface ConflictingContainer {
   id: string;
   name: string;
   image: string;
-  isBytebell: boolean;
+  isPlumbline: boolean;
 }
 
 export interface ConflictingHostProcess {
@@ -47,7 +47,7 @@ export async function findContainerOnPort(port: number): Promise<ConflictingCont
     id,
     name,
     image,
-    isBytebell: name.startsWith("bytebell-"),
+    isPlumbline: name.startsWith("plumbline-"),
   };
 }
 

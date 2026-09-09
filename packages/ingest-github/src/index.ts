@@ -1,6 +1,6 @@
 import path from "node:path";
 import { JobType } from "@bb/types";
-import { getBytebellHome } from "@bb/config";
+import { getPlumblineHome } from "@bb/config";
 import { registerWorker } from "@bb/queue";
 import type { IngestStrategy, PullFactory, PullRunner, SourceFactory, ProgressContextFactory } from "@bb/ingest-core";
 import { dbProgressContextFactory, orgsRoot } from "@bb/ingest-core";
@@ -66,7 +66,7 @@ export function registerLocalIngestWorker(strategy: IngestStrategy): void {
 }
 
 /**
- * Compatibility shim — the legacy `<bytebellHome>/repos/` directory still
+ * Compatibility shim — the legacy `<plumblineHome>/repos/` directory still
  * hosts the LLM-decision cache (`repos/llmdecisions/`) and the
  * local-snapshots staging dir for `localIndexRoute`. Knowledge / ingest
  * artifacts moved to the commit-scoped `orgs/` tree, but `reposRoot()` is
@@ -74,7 +74,7 @@ export function registerLocalIngestWorker(strategy: IngestStrategy): void {
  * the root.
  */
 export function reposRoot(): string {
-  return path.join(getBytebellHome(), "repos");
+  return path.join(getPlumblineHome(), "repos");
 }
 
 // ── GitHub provider surface (lives in this package) ─────────────────────────

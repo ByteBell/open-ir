@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getBytebellHome } from "@bb/config";
+import { getPlumblineHome } from "@bb/config";
 import { Config } from "@bb/types";
 import { getConfigValue } from "@bb/config";
 import { logger } from "@bb/logger";
@@ -33,7 +33,7 @@ export function defaultCachePath(): string {
   if (configured.length > 0) {
     return configured;
   }
-  return path.join(getBytebellHome(), "llmDecisions.json");
+  return path.join(getPlumblineHome(), "llmDecisions.json");
 }
 
 export function emptyCache(): DecisionsCache {

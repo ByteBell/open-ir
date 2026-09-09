@@ -1,8 +1,8 @@
 # ConceptGraphStrategy — manual end-to-end verification
 
 The unit tests in `__tests__/enrichment.test.ts` cover the pure-logic surface
-(schema validation, slug derivation). A full strategy run requires Mongo +
-Neo4j + Redis + an OpenRouter key, so end-to-end verification is a
+(schema validation, slug derivation). A full strategy run requires SQLite +
+Neo4j + an OpenRouter key, so end-to-end verification is a
 documented manual playbook rather than a CI test.
 
 Run the playbook below after any change that touches Phase 4 (file store) or
@@ -11,8 +11,8 @@ default.
 
 ## Prerequisites
 
-- `bytebell-server` running locally with Mongo, Neo4j, and Redis reachable
-- An OpenRouter API key configured (`bytebell keys set`)
+- `plumbline-server` running locally with Neo4j reachable
+- An OpenRouter API key configured (`plumbline keys set`)
 - A tool-use-capable enrichment model selected (Anthropic Claude Sonnet 4.x
   / Opus 4.x via OpenRouter — confirmed to support OpenAI-style `tool_calls`)
 - A small public repo to index (5–50 files is ideal)
@@ -20,20 +20,20 @@ default.
 ## Step 1 — Configure the strategy
 
 ```bash
-bytebell set ingestion.strategy concept-graph
-bytebell set enrichment.model anthropic/claude-sonnet-4
+plumbline set ingestion.strategy concept-graph
+plumbline set enrichment.model anthropic/claude-sonnet-4
 # Defaults are sensible; override only if you have a reason:
-# bytebell set enrichment.max.tool.calls.per.file 15
-# bytebell set enrichment.max.iterations.per.file 8
-# bytebell set enrichment.wall.time.ms.per.file 400000
-# bytebell set enrichment.concurrency 16
+# plumbline set enrichment.max.tool.calls.per.file 15
+# plumbline set enrichment.max.iterations.per.file 8
+# plumbline set enrichment.wall.time.ms.per.file 400000
+# plumbline set enrichment.concurrency 16
 ```
 
 Restart the server so the new config is picked up:
 
 ```bash
-bytebell shutdown
-bytebell boot
+plumbline shutdown
+plumbline boot
 ```
 
 Check the server log for `ingest-github: active strategy = concept-graph`.
@@ -41,8 +41,8 @@ Check the server log for `ingest-github: active strategy = concept-graph`.
 ## Step 2 — Index a small repo
 
 ```bash
-bytebell index https://github.com/some/small-repo
-bytebell ls   # wait until state = PROCESSED
+plumbline index https://github.com/some/small-repo
+plumbline ls   # wait until state = PROCESSED
 ```
 
 Phase progression in the log should be:
@@ -58,7 +58,7 @@ concept-graph: phase5 done — enriched=N runId=<uuid>
 
 ## Step 3 — Inspect Neo4j
 
-Replace `<KID>` with the `knowledgeId` from `bytebell ls`.
+Replace `<KID>` with the `knowledgeId` from `plumbline ls`.
 
 ```cypher
 // Files are written; no :Folder, no :Repo for this knowledge.
@@ -95,18 +95,19 @@ Pass criteria:
 - At least one `:Concept` exists with `kind` in (`role`, `pattern`, `domain`)
 - Each `:Concept` / `:Contract` / `:Guidepost` carries an `enrichmentRunId`
 
-## Step 4 — Inspect Mongo
+## Step 4 — Inspect the document store
 
-```js
-db.knowledge.findOne(
-  { knowledgeId: "<KID>" },
-  {
-    enrichmentRunId: 1,
-    enrichmentState: 1,
-    completedFiles: { $slice: 5 },
-    enrichmentFailures: 1,
-  },
-);
+The knowledge document is stored as JSON in the `knowledge` table, so query
+the enrichment ledger fields out of it:
+
+```sh
+sqlite3 ~/.plumbline/data.sqlite "
+  SELECT json_extract(value, '\$.enrichmentRunId'),
+         json_extract(value, '\$.enrichmentState'),
+         json_array_length(json_extract(value, '\$.completedFiles')),
+         json_extract(value, '\$.enrichmentFailures')
+  FROM knowledge WHERE key = '<KID>';
+"
 ```
 
 Pass criteria:
@@ -120,7 +121,7 @@ Pass criteria:
 Re-index the same repo:
 
 ```bash
-bytebell index <repo-url> --force   # or trigger a pull-style re-run
+plumbline index <repo-url> --force   # or trigger a pull-style re-run
 ```
 
 Re-run Step 3's Cypher queries — node counts should be unchanged (concepts /
@@ -131,7 +132,7 @@ without duplicate nodes).
 
 Force a failure mid-enrichment:
 
-1. Set `bytebell set enrichment.wall.time.ms.per.file 1` (1ms — every call
+1. Set `plumbline set enrichment.wall.time.ms.per.file 1` (1ms — every call
    will exceed wall-time)
 2. Re-index the repo
 3. Confirm:
@@ -140,28 +141,28 @@ Force a failure mid-enrichment:
      with `reason: "cap-exceeded"`
    - Knowledge state is NOT `PROCESSED` (stays `PROCESSING` since
      enrichment threw)
-4. Reset: `bytebell set enrichment.wall.time.ms.per.file 400000`
+4. Reset: `plumbline set enrichment.wall.time.ms.per.file 400000`
 5. Re-index — `completedFiles` from the prior run is cleared on
    `startEnrichmentRun` and the run proceeds fresh
 
 ## Step 7 — Inspect disk artifacts
 
-Under the commit-scoped layout (`bytebell migrate paths` if you're upgrading
+Under the commit-scoped layout (`plumbline migrate paths` if you're upgrading
 from the legacy `repos/.meta/` tree first), every per-commit artifact lives
-under `~/.bytebell/orgs/<orgId>/github/<KID>/<owner>/<repo>/<COMMIT_ID>/`. For
+under `~/.plumbline/orgs/<orgId>/github/<KID>/<owner>/<repo>/<COMMIT_ID>/`. For
 OSS the `<orgId>` segment is always `local`. The enrichment artifacts sit
 beside the rest of meta-output:
 
 ```bash
 ORG=local
-ls ~/.bytebell/orgs/$ORG/github/<KID>/<OWNER>/<REPO>/<COMMIT_ID>/meta-output/enrichment/
+ls ~/.plumbline/orgs/$ORG/github/<KID>/<OWNER>/<REPO>/<COMMIT_ID>/meta-output/enrichment/
 ```
 
 Each successfully enriched file gets a JSON artifact named after its
 flattened path. Open one to confirm the audit trail:
 
 ```bash
-cat ~/.bytebell/orgs/$ORG/github/<KID>/<OWNER>/<REPO>/<COMMIT_ID>/meta-output/enrichment/src__auth__controller.ts.json
+cat ~/.plumbline/orgs/$ORG/github/<KID>/<OWNER>/<REPO>/<COMMIT_ID>/meta-output/enrichment/src__auth__controller.ts.json
 ```
 
 The artifact carries `enrichment` (the validated LLM output), `llmUsage`

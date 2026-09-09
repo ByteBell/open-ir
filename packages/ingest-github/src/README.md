@@ -6,7 +6,7 @@ under the v2 flat-folder strategy.
 
 ## Tier
 
-Domain (composes infra: `@bb/config`, `@bb/llm`, `@bb/mongo`, `@bb/neo4j`,
+Domain (composes infra: `@bb/config`, `@bb/llm`, `@bb/db`, `@bb/neo4j`,
 `@bb/queue`, `@bb/logger`, `@bb/types`, `@bb/errors`).
 
 ## Top-level files
@@ -17,17 +17,17 @@ Domain (composes infra: `@bb/config`, `@bb/llm`, `@bb/mongo`, `@bb/neo4j`,
   consumers wire against their own queue/registry:
   - Factories: `createFlatFolderStrategy`, `createLlmFileAnalyzer`,
     `createDiskSourceReader`, `createPipelineRunner` (the orchestrator),
-    `createGithubIngestHandler` / `createLocalIngestHandler` (the BullMQ
+    `createGithubIngestHandler` / `createLocalIngestHandler` (the queue
     processor factories used internally by `registerGithubWorkers`).
   - Direct runner: `runPull(msg, pullFactory?, progressContextFactory?, usageGuard?)`
     — the pull worker downstream consumers invoke directly from their
     own registry.
-  - Helper: `reposRoot()` — resolves `~/.bytebell/repos`.
+  - Helper: `reposRoot()` — resolves `~/.plumbline/repos`.
   - Path resolvers: `pathsFor(loc)`, `orgsRoot()`, `ensureCommitDirs(loc)`,
     `metaRootFor(knowledgeId)`, `businessContextDir(...)`,
     `orgRegistryDir(...)`, plus the `RepoLocation` type. `ensureCommitDirs`
     is exported so downstream `SourceFactory` consumers (e.g.
-    `@bytebell/ingest-gitlab`) can pre-create the commit-scoped
+    `@plumbline/ingest-gitlab`) can pre-create the commit-scoped
     `repository/` + `meta-output/` tree before cloning into it. The runner
     also calls it inside the `sourceFactory !== undefined` branch so any
     factory consumer is safe even without pre-creating dirs itself
@@ -89,9 +89,9 @@ Domain (composes infra: `@bb/config`, `@bb/llm`, `@bb/mongo`, `@bb/neo4j`,
   and commit anchoring.
 - **[adapters/](adapters/README.md)** — `createLlmFileAnalyzer(deps)`
   returns the `FileAnalyzer` port; prompts are injected by the strategy.
-- **[payload/](payload/README.md)** — defensive narrowing of BullMQ
+- **[payload/](payload/README.md)** — defensive narrowing of queue
   payloads and `isEnvelopeCoherent`.
-- **[handlers/](handlers/README.md)** — BullMQ entry shells; pure
+- **[handlers/](handlers/README.md)** — queue entry shells; pure
   validation + delegate to the runner.
 - **[strategies/](strategies/README.md)** — one subfolder per strategy.
   Currently `flat-folder/` (active) and `basic-file-analysis/` (archived).
@@ -99,16 +99,16 @@ Domain (composes infra: `@bb/config`, `@bb/llm`, `@bb/mongo`, `@bb/neo4j`,
 ## Module dependency graph (abridged)
 
 ```
-types/                       → @bb/mongo (FileAnalysis), @bb/types
+types/                       → @bb/db-core (FileAnalysis), @bb/types
 pipeline/                    → types/, @bb/config, @bb/types, @bb/errors,
                                @bb/llm (tokenizer), node:*
-adapters/                    → types/, @bb/llm, @bb/mongo, @bb/logger
+adapters/                    → types/, @bb/llm, @bb/db, @bb/logger
 payload/                     → @bb/types, @bb/errors
 handlers/                    → types/, payload/, @bb/types, @bb/errors
 strategies/flat-folder/      → types/, pipeline/, adapters/, @bb/llm,
-                               @bb/mongo, @bb/neo4j, @bb/logger, @bb/config,
+                               @bb/db, @bb/neo4j, @bb/logger, @bb/config,
                                @bb/types, @bb/errors
-pipeline/run.ts              → types/, pipeline/*, @bb/mongo, @bb/neo4j,
+pipeline/run.ts              → types/, pipeline/*, @bb/db, @bb/neo4j,
                                @bb/llm, @bb/errors, @bb/logger, @bb/types
 index.ts                     → handlers/, pipeline/run.ts, strategies/flat-folder/,
                                adapters/, githubApi.ts, @bb/queue, @bb/types,
@@ -137,13 +137,13 @@ Tier flow is strict: `types/` is the leaf; `pipeline/`, `adapters/`,
   `askYesNoLLM`. OSS standalone leaves these unset and falls back to
   `Config.OpenrouterApiKey` + `Config.LlmProvider`.
 - **State transitions are explicit and dual-written.** `pipeline/run.ts`
-  transitions Mongo state to `PROCESSING` before any work, `PROCESSED` on
+  transitions the knowledge state to `PROCESSING` before any work, `PROCESSED` on
   success, `FAILED` best-effort on uncaught errors. Each transition mirrors
   to Neo4j via `setKnowledgeStateInGraph`, swallowing Neo4j failures so a
   graph hiccup doesn't fail the job.
 - **`CancellationError` is not `FAILED`.** A `throwIfCancelled` thrown
   inside the strategy propagates past `pipeline/run.ts`, which clears the
-  in-process cancel flag and re-throws — Mongo state stays at `PROCESSING`
+  in-process cancel flag and re-throws — the knowledge state stays at `PROCESSING`
   (clearable by re-running). Failed state is reserved for actual errors.
 - **Disk is the inter-phase contract.** The flat-folder strategy writes
   `bigFiles.json`, `file-analysis/*.json`, `big-file-analysis/<encoded>.manifest.json`,
@@ -151,14 +151,14 @@ Tier flow is strict: `types/` is the leaf; `pipeline/`, `adapters/`,
   resumes from the next sub-phase boundary on the next run.
 - **Per-file fallback never throws past the file.** LLM / parse / IO
   failures inside a file degrade to an empty analysis + WARN log; the batch
-  continues. Whole-strategy errors propagate to BullMQ for retry semantics.
+  continues. Whole-strategy errors propagate to the queue for retry semantics.
 - **No env reads.** Every setting flows through `@bb/config`. Repo path
-  through `pipeline/paths.ts.reposRoot()` → `getBytebellHome()`.
+  through `pipeline/paths.ts.reposRoot()` → `getPlumblineHome()`.
 - **Token redaction at error boundaries.** `GitCloneError` redacts URL
   userinfo. The git binary is invoked via `execFile` with no shell — no
   injection surface.
 - **No outbound calls except OpenRouter.** `@bb/llm` is the single egress;
-  every other dependency reads from / writes to local Mongo / Neo4j / Redis.
+  every other dependency reads from / writes to local SQLite / Neo4j.
 
 ## Adding a strategy
 

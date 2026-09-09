@@ -1,4 +1,4 @@
-import type { FileAnalysis } from "@bb/mongo";
+import type { FileAnalysis } from "@bb/db-core";
 import { basename } from "./pathUtils.ts";
 
 /** Public input shape for `upsertFileNode` / `upsertFileNodesBatch`. */

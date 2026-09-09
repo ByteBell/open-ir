@@ -22,7 +22,7 @@ export interface MigrationSummary {
 }
 
 export interface MigrateLegacyPathsInput {
-  /** Bytebell home directory (e.g. `~/.bytebell`). */
+  /** Plumbline home directory (e.g. `~/.plumbline`). */
   home: string;
   /** Single-tenant org id (`local`). */
   orgId: string;

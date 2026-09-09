@@ -48,8 +48,8 @@ export async function runMcpInstall(): Promise<McpInstallSummary> {
   };
 }
 
-// Merge the bytebell entry into one tool's config. Never clobbers: reads the
-// existing JSON, backs it up, injects only the `bytebell` key under the tool's
+// Merge the plumbline entry into one tool's config. Never clobbers: reads the
+// existing JSON, backs it up, injects only the `plumbline` key under the tool's
 // top-level key, and atomic-writes. A malformed existing file fails this tool
 // (caught below) rather than being overwritten.
 function applyTarget(target: McpTarget, url: string): InstallResult {
@@ -57,12 +57,12 @@ function applyTarget(target: McpTarget, url: string): InstallResult {
   try {
     const doc = readJsonObject(file);
     if (existsSync(file)) {
-      copyFileSync(file, `${file}.bytebell.bak`);
+      copyFileSync(file, `${file}.plumbline.bak`);
     } else {
       mkdirSync(path.dirname(file), { recursive: true });
     }
     const servers = asObject(doc[target.topLevelKey]);
-    servers["bytebell"] = target.entry(url);
+    servers["plumbline"] = target.entry(url);
     doc[target.topLevelKey] = servers;
     atomicWriteJson(file, doc);
     return { label: target.label, status: "configured", detail: file };

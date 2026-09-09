@@ -8,7 +8,7 @@ import type { PerFileEnrichment } from "./enrichment-schema.ts";
 // Layout: `<metaOutputRoot>/enrichment/<file-slug>.json`. One file per
 // successfully enriched source file. The graph is the canonical store; disk
 // is the "why was this concept created" audit trail required by the LLM
-// usage rule. Mongo's `KnowledgeDoc.completedFiles[]` is the resume cursor —
+// usage rule. `KnowledgeDoc.completedFiles[]` is the resume cursor —
 // disk artifacts are write-only from the strategy's perspective, written on
 // success and never re-read by the strategy (a manual diff against graph
 // state is possible if needed).

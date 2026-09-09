@@ -23,9 +23,9 @@ export function buildDeleteRoute(): Router {
       return;
     }
 
-    let mongoResult: Awaited<ReturnType<typeof knowledgeDb.deleteKnowledge>>;
+    let dbResult: Awaited<ReturnType<typeof knowledgeDb.deleteKnowledge>>;
     try {
-      mongoResult = await knowledgeDb.deleteKnowledge(knowledgeId);
+      dbResult = await knowledgeDb.deleteKnowledge(knowledgeId);
     } catch (cause: unknown) {
       if (cause instanceof KnowledgeNotFoundError) {
         res.status(404).json({ error: cause.message });
@@ -38,8 +38,8 @@ export function buildDeleteRoute(): Router {
     res.status(200).json({
       knowledgeId,
       jobsRemoved: removedJobs.removed,
-      mongoDeleted: mongoResult.knowledgeDeleted,
-      rawDeleted: mongoResult.rawDeleted,
+      dbDeleted: dbResult.knowledgeDeleted,
+      rawDeleted: dbResult.rawDeleted,
     });
   });
   return router;

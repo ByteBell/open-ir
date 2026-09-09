@@ -32,6 +32,6 @@ drift apart.
 
 ## Invariants
 
-- Prompts are pure functions of typed inputs. No I/O, no LLM calls, no Mongo.
+- Prompts are pure functions of typed inputs. No I/O, no LLM calls, no document store.
 - The field block lives in one file. Any change to the JSON schema starts here.
 - Prompts never depend on `pipeline/`, `adapters/`, or `handlers/`.

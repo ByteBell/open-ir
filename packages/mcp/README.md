@@ -4,7 +4,7 @@
 
 Domain. Imports `@bb/graph-db` (the `searchGraph` facade) and
 `@bb/graph-core` (read-side types like `ScoredHit`,
-`KnowledgeListRow`), `@bb/config` (`getBytebellHome`), `@bb/types` for
+`KnowledgeListRow`), `@bb/config` (`getPlumblineHome`), `@bb/types` for
 shared shapes, and `zod` + `@modelcontextprotocol/sdk`. Does not import
 from sibling domain packages, from binaries (`@bb/server`, `@bb/cli`),
 or from any concrete graph provider (`@bb/neo4j` / `@bb/ladybug`) —
@@ -21,7 +21,7 @@ tools and a skill-distribution resource channel.
 The package owns:
 
 - A single shared `McpServer` instance (lazy, idempotent build) named
-  `bytebell-public`, version pulled from this `package.json`.
+  `plumbline-public`, version pulled from this `package.json`.
 - Per-session `StreamableHTTPServerTransport` instances keyed by
   `mcp-session-id`. New sessions are created on initialize requests;
   existing sessions are looked up by header.
@@ -32,8 +32,8 @@ The package owns:
   `server.registerTool(...)` config-object API. `list_knowledge` is
   registered first so it sits at the top of `tools/list` output and
   the LLM gravitates toward calling it before anything else.
-- Two resources — `bytebell://skills/index` (JSON listing of bundled
-  skills) and `bytebell://skills/{skillName}/{filename}` (individual
+- Two resources — `plumbline://skills/index` (JSON listing of bundled
+  skills) and `plumbline://skills/{skillName}/{filename}` (individual
   markdown file content). Backed by the bundled `skills/` directory
   beside `package.json`.
 - Graceful shutdown — `closeAllMcpSessions()` closes every active
@@ -44,7 +44,7 @@ The package does **not** own:
 - Auth gating. MCP is unauthenticated in the OSS engine —
   single-tenant, localhost-only. See [docs/mcp.md](../../docs/mcp.md)
   "Transport and mounting".
-- Mongo or LLM access. The retrieval tools are pure
+- Document-store or LLM access. The retrieval tools are pure
   graph-and-disk reads.
 - HTTP body parsing — relies on `@bb/server`'s top-level `express.json`.
 
@@ -130,7 +130,7 @@ imports[], keywords[], language, sizeBytes}` from the active provider.
   `search` / `contextLines` / `maxTokens`. Resolves the active commit's
   clone via `repoFs.ts` (one `KnowledgeDoc` lookup per call to derive
   `(orgId, owner, repo, commitId)`), reads from
-  `~/.bytebell/orgs/<orgId>/github/<knowledgeId>/<owner>/<repo>/<commit>/repository/{relativePath}`,
+  `~/.plumbline/orgs/<orgId>/github/<knowledgeId>/<owner>/<repo>/<commit>/repository/{relativePath}`,
   slices in process, prepends line numbers, trims to the token char
   budget. Local knowledges read straight from `source.sourcePath`.
 - `bulk_search` — `paths[]` (≤ 50) + required `search` + optional
@@ -139,17 +139,17 @@ imports[], keywords[], language, sizeBytes}` from the active provider.
 
 ## Resources
 
-`bytebell://skills/index` — JSON listing of bundled skills, generated
+`plumbline://skills/index` — JSON listing of bundled skills, generated
 on each request from disk. Each entry: `{name, description (parsed
 from SKILL.md frontmatter), install_path, files: [{filename, bytes}]}`.
 
-`bytebell://skills/{skillName}/{filename}` — markdown content for a
+`plumbline://skills/{skillName}/{filename}` — markdown content for a
 single skill file. URI templating handled by the SDK.
 
 The bundled directory is `<package>/skills/` (relative to `package.json`).
 Resolution uses `import.meta.url` so the layout works in dev (`bun run`)
-and from a built output. `skills/bytebell/SKILL.md` and
-`skills/bytebell/bytebell-code-search.md` are the two files shipped in v1.
+and from a built output. `skills/plumbline/SKILL.md` and
+`skills/plumbline/plumbline-code-search.md` are the two files shipped in v1.
 
 ## Data ownership
 
@@ -159,7 +159,7 @@ and from a built output. `skills/bytebell/SKILL.md` and
 - Read-only access to the graph through `@bb/graph-db`'s `searchGraph`
   facade (which proxies to the active `IGraphSearchRepository`) and
   to the local clone directory through `@bb/config`'s
-  `getBytebellHome()`. No writes.
+  `getPlumblineHome()`. No writes.
 
 ## Invariants
 
@@ -175,7 +175,7 @@ and from a built output. `skills/bytebell/SKILL.md` and
    `closeAllMcpSessions` drains both maps.
 5. **Disk I/O is path-traversal safe.** `repoFs.ts` rejects absolute
    paths, `..` components, and any resolved target outside
-   `<bytebellHome>/repos/{knowledgeId}/`.
+   `<plumblineHome>/repos/{knowledgeId}/`.
 6. **No non-null assertions, no `any`, no dynamic `import()`.** Repo-wide
    strict-types rules apply — see CLAUDE.md.
 7. **Tool input types use `field?: T | undefined`.** The Zod-inferred
@@ -190,7 +190,7 @@ and from a built output. `skills/bytebell/SKILL.md` and
 - `@types/express` (dev) — types only; no express runtime dep
 - `@bb/graph-db` (workspace) — `searchGraph` facade for all read queries
 - `@bb/graph-core` (workspace) — read-side row/input types
-- `@bb/config` (workspace) — `getBytebellHome` for the clone directory
+- `@bb/config` (workspace) — `getPlumblineHome` for the clone directory
 - `@bb/types` (workspace) — shared shapes (no direct usage in v1, kept
   for upcoming tier integrations)
 

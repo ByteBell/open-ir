@@ -26,7 +26,7 @@ const CHOICES: readonly Choice[] = [
 ];
 
 /**
- * Two-option chooser shown after a single repo is selected in `bytebell pull`.
+ * Two-option chooser shown after a single repo is selected in `plumbline pull`.
  * The user picks between pulling to the branch's HEAD (default behaviour) or
  * picking a specific commit from the branch history.
  */

@@ -84,8 +84,8 @@ constructs its own `fetch` request.
 `askLLM` consults a filesystem-backed cache before issuing a request.
 Implemented in `src/cache.ts`:
 
-- **Location**: `~/.bytebell/repos/llmdecisions/<sha256-hex>.json` (one
-  file per cache key). Resolved via `@bb/config`'s `getBytebellHome()`.
+- **Location**: `~/.plumbline/repos/llmdecisions/<sha256-hex>.json` (one
+  file per cache key). Resolved via `@bb/config`'s `getPlumblineHome()`.
 - **Key**: `sha256(JSON.stringify({ provider, prompt, systemPrompt, modelChain }))`
   where `provider` is `"openrouter"` or `"ollama"` and `modelChain` is
   the resolved chain (capped-at-3 for OpenRouter, single-element for
@@ -106,18 +106,18 @@ Implemented in `src/cache.ts`:
   logged with `[LLM CACHE WRITE FAILED]` and the LLM call proceeds
   unaffected.
 - **Kill switch**: `Config.LlmCacheEnabled` (boolean, default `true`).
-  Toggle via `bytebell set llm_cache_enabled <true|false>`. When
+  Toggle via `plumbline set llm_cache_enabled <true|false>`. When
   `false`, both reads and writes are skipped.
 - **TTL / eviction**: none in v0. Manual prune is `rm` on the entry
-  file. A future `bytebell cache prune` lands alongside cost-ledger
+  file. A future `plumbline cache prune` lands alongside cost-ledger
   work.
 
 ## Data ownership
 
 `@bb/llm` owns the decision-cache directory at
-`~/.bytebell/repos/llmdecisions/`. No other package may read or write
+`~/.plumbline/repos/llmdecisions/`. No other package may read or write
 it. The cost ledger described in [docs/arch.md](../../docs/arch.md) is
-**not** owned by v0 — it lands when `bytebell cost` ships.
+**not** owned by v0 — it lands when `plumbline cost` ships.
 
 ## Invariants
 
@@ -146,7 +146,7 @@ it. The cost ledger described in [docs/arch.md](../../docs/arch.md) is
    four slots ship with curated defaults so a fresh install gets fallback
    without any user action. OpenRouter tries the chain in order and bills
    only the responder; `usage.model` reflects which one. Caller still
-   sees a single `AskLlmResult`. BullMQ's `attempts: 3` wraps the whole
+   sees a single `AskLlmResult`. the queue's `attempts: 3` wraps the whole
    call — retries walk the chain again, useful when a transient
    OpenRouter outage clears between retries.
    4a. **No upstream-provider fallback.** Every request carries
@@ -159,7 +159,7 @@ it. The cost ledger described in [docs/arch.md](../../docs/arch.md) is
    actionable (specific provider, specific status) instead of a generic
    timeout.
 5. **Errors are typed, not strings.** `LlmConfigError` carries the exact
-   `bytebell keys set` hint; `LlmError` carries `cause`.
+   `plumbline keys set` hint; `LlmError` carries `cause`.
 6. **Timeout is enforced.** AbortController fires at `timeoutMs`; the
    resulting `AbortError` is wrapped in `LlmError` with the timeout in
    the message.
@@ -178,7 +178,7 @@ it. The cost ledger described in [docs/arch.md](../../docs/arch.md) is
 
 ## What is intentionally out of scope (v0)
 
-- Cost ledger (`~/.bytebell/cost-ledger.sqlite`) — lands with `bytebell cost`
+- Cost ledger (`~/.plumbline/cost-ledger.sqlite`) — lands with `plumbline cost`
 - Streaming responses
 - Tool / function calling
 - A `askJsonLLM<T>(prompt, schema)` JSON-mode wrapper — caller does
@@ -201,10 +201,10 @@ needs strict JSON:
 2. Re-export from `src/index.ts`.
 3. Update _Public exports_ here.
 
-Adding a cost ledger when `bytebell cost` lands:
+Adding a cost ledger when `plumbline cost` lands:
 
 1. New file `src/ledger.ts` writing to
-   `~/.bytebell/cost-ledger.sqlite` via `bun:sqlite`.
+   `~/.plumbline/cost-ledger.sqlite` via `bun:sqlite`.
 2. Wrap `askLLM` to capture `model`, prompt-token count, completion-token
    count, latency. Lookup pricing via a curated table.
 3. Update _Out of scope_ → _Public exports_ here.

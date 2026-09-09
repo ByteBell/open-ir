@@ -59,7 +59,7 @@ export {
   commitBaseDirFor,
   repositoryDirFor,
   metaOutputRootFor,
-  bytebellPathsFor,
+  plumblinePathsFor,
   parseGithubOwnerRepo,
   parseGitlabOwnerRepo,
 } from "./path-layout.ts";

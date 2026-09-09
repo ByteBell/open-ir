@@ -2,7 +2,7 @@
 
 The public, provider-agnostic ingestion **strategies**. A strategy turns a
 cloned source tree (exposed through a `SourceReader` from `@bb/ingest-core`)
-into Mongo rows + Neo4j nodes. It never knows whether the source came from
+into SQLite rows + Neo4j nodes. It never knows whether the source came from
 GitHub, GitLab, or anywhere else.
 
 ## Strategies
@@ -19,8 +19,8 @@ GitHub, GitLab, or anywhere else.
 ## Dependencies
 
 Depends only on `@bb/ingest-core` (contracts, shared phases, primitives) plus
-infrastructure packages (`@bb/llm`, `@bb/graph-db`, `@bb/mongo`, `@bb/mcp`, …).
+infrastructure packages (`@bb/llm`, `@bb/graph-db`, `@bb/db`, `@bb/mcp`, …).
 It does **not** depend on any provider package (`@bb/ingest-github`,
-`@bytebell/ingest-gitlab`). Providers and the composition roots depend on it.
+`@plumbline/ingest-gitlab`). Providers and the composition roots depend on it.
 
 Tier: **strategy** (sits above core, below the composition roots).

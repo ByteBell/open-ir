@@ -31,11 +31,11 @@ function joinUrl(base: string, path: string): string {
 export function resolveOllamaChain(opts: AskLlmOptions): string[] {
   const url = getConfigValue(Config.OllamaUrl);
   if (url.length === 0) {
-    throw new LlmConfigError("bytebell set ollama-url <url>");
+    throw new LlmConfigError("plumbline set ollama-url <url>");
   }
   const model = opts.model ?? getConfigValue(Config.OllamaModel);
   if (model.length === 0) {
-    throw new LlmConfigError("bytebell set ollama-model <model>");
+    throw new LlmConfigError("plumbline set ollama-model <model>");
   }
   return [model];
 }
