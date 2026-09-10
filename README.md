@@ -1,9 +1,3 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)"  srcset=".github/banner-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset=".github/banner-light.svg">
-  <img alt="Plumbline — local-first code intelligence" src=".github/banner-light.svg">
-</picture>
-
 # Plumbline
 
 ```
@@ -50,52 +44,68 @@
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-> **On the name:** Plumbline is the project; `plumbline` is the command it installs.
-> Every CLI invocation, container name, and config path below uses `plumbline` — that is
-> the real binary, not a typo.
+> 📛 **Plumbline** is the project · `plumbline` is the binary it installs. Not a typo.
 
-## The problem
+## 🩸 The problem
 
-Coding agents read whole files into the context window. On a real repository that is both
-expensive and lossy — the agent spends its budget on files it did not need and still misses
-the one that mattered, because nothing told it where to look.
+- 🐘 agents read **whole files** → context burns on files nobody needed
+- 🎯 the file that mattered stays unread — nothing tells them where to look
 
-Plumbline gives it somewhere to look. Every file is analyzed once for its purpose, summary,
-business context, classes, functions and keywords. That metadata becomes a Neo4j graph; the
-raw content sits in a local SQLite database beside it. Retrieval fuses both — semantic meaning _and_
-structural relationships — so the agent asks a question instead of reading a directory.
+## 💡 The fix
 
-## Benchmark — cross-repository retrieval across 15 sibling repos
+- 🔍 every file analysed **once** → `purpose` · `summary` · `businessContext` · classes · functions · keywords
+- 🕸️ metadata → **Neo4j** · raw content → **local SQLite**
+- ⚡ retrieval fuses **meaning + structure** → the agent asks, instead of reading a directory
 
-The single-repo benchmark asks a question whose answer lives in one tree. This
-one asks a question whose answer is **spread across repositories that do not
-import one another** — no monorepo, no workspace, no shared package graph, no
-call edge to follow between them. The only thing connecting them is that they
-solve the same class of problem and therefore encode the same contracts.
+## 🧪 Benchmark — 15 sibling repos, no shared graph
 
-### The ecosystem
+- ❓ one question, answer **scattered across repos that never import each other**
+- 🚫 no monorepo · no workspace · no shared package graph · no call edge to follow
+- 🧬 only link between them: same problem class → **same contracts**
 
-Fifteen React state-management repositories, each pinned at exactly one commit.
-Those commits are the entire world for the task — later history is off-limits.
+### 🌍 The ecosystem
 
-| repo              | commit       |      files | code files |
-| ----------------- | ------------ | ---------: | ---------: |
-| `redux`           | `3aa561f9fc` |        477 |        198 |
-| `redux-toolkit`   | `b1c5130154` |      1,155 |        708 |
-| `react-redux`     | `ad5d1e0816` |        212 |         64 |
-| `reselect`        | `8d87c27b75` |        152 |         90 |
-| `redux-thunk`     | `184205d49f` |         31 |          7 |
-| `react`           | `3a717e4243` |      7,280 |      4,505 |
-| `jotai`           | `5c4ca26b0d` |        346 |        180 |
-| `zustand`         | `beca84e600` |        143 |         50 |
-| `TanStack/db`     | `7f0fa36ff6` |      1,574 |        709 |
-| `xyflow`          | `360f5b13e2` |        693 |        457 |
-| `TanStack/query`  | `46d7f02f1c` |      2,351 |      1,118 |
-| `TanStack/table`  | `d08af367e1` |      1,270 |        458 |
-| `tldraw`          | `5590d14d8e` |      4,492 |      2,769 |
-| `redux-devtools`  | `f4b4668c30` |        895 |        613 |
-| `TanStack/router` | `3dee5b2e94` |     11,976 |      8,801 |
-| **total**         |              | **33,047** | **20,727** |
+15 React state repos · **one pinned commit each** · later history off-limits 🔒
+
+```
+┌────────────────┐┌────────────────┐┌────────────────┐┌────────────────┐┌────────────────┐
+│     redux      ││ redux-toolkit  ││  react-redux   ││    reselect    ││  redux-thunk   │
+│   477 / 198    ││  1,155 / 708   ││    212 / 64    ││    152 / 90    ││     31 / 7     │
+└────────────────┘└────────────────┘└────────────────┘└────────────────┘└────────────────┘
+┌────────────────┐┌────────────────┐┌────────────────┐┌────────────────┐┌────────────────┐
+│     react      ││     jotai      ││    zustand     ││       db       ││     xyflow     │
+│ 7,280 / 4,505  ││   346 / 180    ││    143 / 50    ││  1,574 / 709   ││   693 / 457    │
+└────────────────┘└────────────────┘└────────────────┘└────────────────┘└────────────────┘
+┌────────────────┐┌────────────────┐┌────────────────┐┌────────────────┐┌────────────────┐
+│     query      ││     table      ││     tldraw     ││ redux-devtools ││     router     │
+│ 2,351 / 1,118  ││  1,270 / 458   ││ 4,492 / 2,769  ││   895 / 613    ││ 11,976 / 8,801 │
+└────────────────┘└────────────────┘└────────────────┘└────────────────┘└────────────────┘
+
+   15 repos · 33,047 files · 20,727 code files            each box:  files / code
+```
+
+<details>
+<summary>📌 the pinned commits</summary>
+
+| repo              | commit       |
+| ----------------- | ------------ |
+| `redux`           | `3aa561f9fc` |
+| `redux-toolkit`   | `b1c5130154` |
+| `react-redux`     | `ad5d1e0816` |
+| `reselect`        | `8d87c27b75` |
+| `redux-thunk`     | `184205d49f` |
+| `react`           | `3a717e4243` |
+| `jotai`           | `5c4ca26b0d` |
+| `zustand`         | `beca84e600` |
+| `TanStack/db`     | `7f0fa36ff6` |
+| `xyflow`          | `360f5b13e2` |
+| `TanStack/query`  | `46d7f02f1c` |
+| `TanStack/table`  | `d08af367e1` |
+| `tldraw`          | `5590d14d8e` |
+| `redux-devtools`  | `f4b4668c30` |
+| `TanStack/router` | `3dee5b2e94` |
+
+</details>
 
 ### How a case is built
 
