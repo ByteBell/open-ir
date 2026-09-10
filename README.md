@@ -296,105 +296,65 @@ flowchart LR
 
 It is **not** a hosted product, not a chat UI, and not a multi-tenant platform. There is exactly one tenant — `orgId="local"` — and the server binds to `127.0.0.1`. If you want hosted, multi-tenant, or commercial-use rights, see the [Enterprise](#enterprise) section.
 
-## How it works
+## ⚙️ How it works
 
-### Ingest
+### 📥 Ingest
 
-`plumbline index <url>` (or `plumbline ingest <path>`) submits a job to an in-process SQLite-backed queue. The worker dispatches to an `IngestionStrategy` — today, `BasicFileAnalysisStrategy` ([packages/ingest-github/src/BasicFileAnalysisStrategy.ts](packages/ingest-github/src/BasicFileAnalysisStrategy.ts)). It clones the repo to `~/.plumbline/repos/<knowledgeId>/`, walks every file, runs a per-file OpenRouter call, and persists raw content to SQLite + the enriched node to Neo4j.
-
-The per-file LLM call returns a single JSON object with this shape:
-
-```jsonc
-{
-  "purpose": "Why this file exists. Max ~300 tokens.",
-  "summary": "What it does, key patterns, architecture role. Max ~600 tokens.",
-  "businessContext": "Product/domain impact. 2–3 lines, max ~100 tokens.",
-  "classes": ["ExactName (~L3-29): What it represents", "..."],
-  "functions": ["exact_name (~L42-58): Primary responsibility", "..."],
-  "keywords": ["domain-term-1", "domain-term-2", "..."],
-  "importsInternal": ["./relative/paths.ts", "..."],
-  "importsExternal": ["express", "neo4j-driver", "..."],
-}
+```
+  plumbline index <url>
+          │
+          ▼
+     ┌─────────┐   clone    ┌──────────┐  1 call / file  ┌────────────────┐
+     │  queue  ├───────────►│  worker  ├────────────────►│ LLM (per file) │
+     └─────────┘  (SQLite)  └────┬─────┘                 └───────┬────────┘
+                                 │ raw content                   │ enriched node
+                                 ▼                               ▼
+                             SQLite 💾                        Neo4j 🕸️
 ```
 
-`classes` and `functions` carry approximate line ranges so `retrieve_file` can later pull the right slice without re-reading the whole file. **Re-indexing is diff-aware**: on `plumbline pull`, the strategy compares each file's SHA256 to the prior `:File.sha` and only re-analyses files whose hash changed. LLM cost is proportional to actual code churn, not to repo size.
+- 🧠 **per file →** `purpose` · `summary` · `businessContext` · keywords · imports
+- 📍 `classes` / `functions` carry **line ranges** → pull a slice, never the whole file
+- ♻️ `pull` re-reads **only changed SHAs** → 💸 cost tracks churn, not repo size
 
-### Graph shape
+### 🕸️ Graph
 
-```mermaid
-graph LR
-    K[":Knowledge"]
-    F[":File<br/>purpose, summary,<br/>businessContext"]
-    KW[":Keyword"]
-    C[":Class"]
-    Fn[":Function"]
-    M[":Module"]
-    K -- HAS_FILE --> F
-    F -- HAS_KEYWORD --> KW
-    F -- HAS_CLASS --> C
-    F -- HAS_FUNCTION --> Fn
-    F -- HAS_IMPORT_INTERNAL --> M
-    F -- HAS_IMPORT_EXTERNAL --> M
+```
+  :Knowledge ──HAS_FILE──► :File ──┬── HAS_KEYWORD ─────────► :Keyword  🏷️
+   (1 per repo)             │      ├── HAS_CLASS ───────────► :Class    🧱
+                            │      ├── HAS_FUNCTION ────────► :Function ⚡
+                            │      └── HAS_IMPORT_INT/EXT ──► :Module   📦
+                   purpose · summary        └──── global: one node per library,
+                   businessContext                export or term, across ALL repos
 ```
 
-One `:Knowledge` node per indexed repo owns its `:File` nodes. Each `:File` carries `purpose`, `summary`, `businessContext`, `language`, `sha`, `sizeBytes`, and a `relativePath` unique within its `knowledgeId`. From every file, the five `:HAS_*` edges link to deduplicated `:Keyword`, `:Class`, `:Function`, and `:Module` nodes that are global across the whole graph — the same library, the same exported function, the same domain term resolves to one node no matter how many repos reference it. Constraints make `(knowledgeId, relativePath)` unique on `:File`; fulltext indexes back the natural-language search side. Source: [packages/neo4j/src/files.ts](packages/neo4j/src/files.ts), [packages/neo4j/src/indexes.ts](packages/neo4j/src/indexes.ts).
+- 🔑 `(knowledgeId, relativePath)` unique · fulltext indexes back search
+- 🚫 **no cross-file call edges yet** — deliberate: keeps ingest language-agnostic
+- 🔌 next strategy adds them behind the same interface
 
-There are no cross-file call edges in the current schema — that's a deliberate tradeoff for ingestion simplicity and language-agnostic ingest. Future strategies will add them, plugged in behind the same `IngestionStrategy` interface.
+### 🔎 Retrieval — 3 MCP tools @ `127.0.0.1:8080/mcp`
 
-### Retrieval
+| 🛠️ tool                    | what it does                                                    |
+| -------------------------- | --------------------------------------------------------------- |
+| 🥇 `smart_search(q, k=20)` | ranked, deduped files across 6 channels — **start here**        |
+| 🔁 `keyword_lookup(term)`  | term → matching entities → the files behind each                |
+| 📄 `retrieve_file`         | `metadata` · `content` (line range) · `bulk_search` (≤50 files) |
 
-Three MCP tools, registered at `http://127.0.0.1:8080/mcp`:
-
-- **`smart_search(query, k=20)`** — fused six-channel search across File `purpose`/`summary`, `businessContext`, paths, keyword names, class/function signatures, and module imports. Returns deduplicated, ranked top-K files with folder clustering. Use first.
-- **`keyword_lookup(term)`** — reverse lookup. A search term resolves to all matching named entities (keywords, classes, functions, module names) and the files linked to each.
-- **`retrieve_file`** — three operations: `metadata` (purpose, summary, businessContext, classes/functions with line ranges, imports), `content` (read specific line ranges or search within one file with surrounding context), `bulk_search` (parallel scan of up to 50 files for a string).
-
-```mermaid
-flowchart TD
-    Q["Question from agent"] --> SS["smart_search"]
-    SS --> KL["keyword_lookup<br/>(optional)"]
-    SS --> RM["retrieve_file metadata<br/>→ class/function line ranges"]
-    KL --> RM
-    RM --> RC["retrieve_file content<br/>→ exact line slice"]
-    RC --> A["Cited answer"]
+```
+  question ──► smart_search ──► retrieve_file:metadata ──► retrieve_file:content ──► ✅ cited answer
 ```
 
-Most well-formed code questions resolve in 2–4 tool calls. No re-clone, no full-file dumps, no embeddings round-trip.
+- ⚡ **2–4 calls** for most questions
+- 🚫 no re-clone · 🚫 no full-file dumps · 🚫 no embeddings round-trip
 
-## Day-to-day commands
+### 🎛️ Running it
 
-| Command                                                       | Purpose                                                                             |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `plumbline setup`                                             | Interactive first-run wizard: provider, boot, optional index, MCP auto-install.     |
-| `plumbline ls`                                                | List indexed knowledge entries with state.                                          |
-| `plumbline stats`                                             | Ingestion totals, per-repo breakdown, per-commit token usage.                       |
-| `plumbline mcp install`                                       | Auto-detect installed editors and register the MCP endpoint in their config.        |
-| `plumbline mcp stats`                                         | MCP usage: input/output tokens, monthly breakdown.                                  |
-| `plumbline pull`                                              | Re-index a previously-added GitHub repo at branch HEAD (diff-aware).                |
-| `plumbline delete`                                            | Picker; cancels jobs, drops the Knowledge subgraph from Neo4j, removes SQLite rows. |
-| `plumbline shutdown`                                          | Stop the server. Docker keeps running.                                              |
-| `plumbline boot`                                              | Warm restart.                                                                       |
-| `docker compose -f infra/docker/docker-compose.yml down [-v]` | Stop containers (and optionally drop volumes — destroys all indexed data).          |
-
-Full reference, including every flag and option: [commands.md](commands.md).
-
-## Bring your own infrastructure
-
-By default, `plumbline boot` provisions a local Docker stack (`plumbline-neo4j`) with auto-generated credentials. The document store and the queue are SQLite — local files, never containers. If you already run Neo4j (or want to use a managed service), set the connection details before booting and the Docker step is skipped:
-
-```bash
-plumbline set neo4j-uri      bolt://host:7687
-plumbline set neo4j-user     neo4j
-plumbline set neo4j-password <your-password>
-```
-
-Docker is not required on the host in this mode. See the [Configuration reference](#configuration-reference) for the full key list.
-
-## Architecture at a glance
-
-A single Bun-built Express daemon, `plumbline-server`, hosts the ingestion HTTP routes, the MCP transport (Streamable HTTP + SSE), and the queue workers all in-process. The CLI is a thin Ink/React TUI that only ever talks HTTP to that daemon — it never touches SQLite or Neo4j directly. Workers run in the server's lifecycle; there is no separate worker fleet.
-
-For the full PRD — package tiers, state machine, HTTP route catalogue, verification checklist, distribution strategy — see [docs/arch.md](docs/arch.md).
+- 🪄 `setup` → wizard · 📋 `ls` · 📊 `stats` · ♻️ `pull` · 🗑️ `delete` · 🔌 `boot` / `shutdown` → [commands.md](commands.md)
+- 🐳 `boot` spins a local Docker Neo4j — or point at your own, no Docker needed:
+  ```bash
+  plumbline set neo4j-uri bolt://host:7687   # + neo4j-user, neo4j-password
+  ```
+- 🏗️ **one** Bun/Express daemon = ingest routes + MCP transport + workers, in-process
+- 🎈 CLI is a thin Ink TUI — speaks HTTP only, never touches SQLite or Neo4j → [docs/arch.md](docs/arch.md)
 
 ## Configuration reference
 
