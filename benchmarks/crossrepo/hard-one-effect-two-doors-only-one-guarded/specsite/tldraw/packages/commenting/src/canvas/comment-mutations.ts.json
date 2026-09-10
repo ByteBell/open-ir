@@ -1,0 +1,1756 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/commenting/src/canvas/comment-mutations.ts",
+    "language": "typescript",
+    "sizeBytes": 11272,
+    "tokenCount": 2813,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:18:25.220Z",
+    "module": {
+      "purpose": "Provides the canonical mutation API for comment records, applying configured history behavior, stale-record protection, soft deletion, and thread state cleanup.",
+      "summary": "This module centralizes writes to comment, thread, and reaction records. It resolves history policy by mutation category, coordinates nested editor transactions through a writer, prevents stale snapshots from overwriting newer store state, and exposes operations for inserting, removing, editing, resolving, reopening, and soft-deleting comments and threads. Deletion updates records rather than physically removing server-owned data.",
+      "businessContext": "Supports collaborative canvas commenting, including threaded discussions, reactions, moderation, and spatial anchors. Failure can cause lost edits, incorrect undo behavior, stale comment resurrection, or inconsistent open-thread state.",
+      "classes": [],
+      "functions": [
+        "historyModeFor (~L47-59): Resolves the configured history mode for a comment mutation category.",
+        "commitCommentMutation (~L75-126): Runs comment writes inside an editor history transaction.",
+        "putCommentRecords (~L136-138): Inserts or updates comment records using mutation history policy.",
+        "removeCommentRecords (~L150-155): Removes comment-related records by identifier.",
+        "readLatest (~L171-178): Reads the current matching record instead of trusting a stale snapshot.",
+        "editComment (~L194-200): Replaces a comment body and records its edit timestamp.",
+        "resolveThread (~L210-216): Marks a thread resolved with resolver identity and timestamp.",
+        "reopenThread (~L225-231): Clears a thread resolution state.",
+        "deleteComment (~L252-269): Soft-deletes a comment and closes its open final thread comment.",
+        "deleteThread (~L282-295): Soft-deletes a thread and closes it when currently open."
+      ],
+      "keywords": [
+        "tldraw",
+        "comment mutation",
+        "undo redo history",
+        "soft delete",
+        "stale snapshot",
+        "comment thread",
+        "editor store",
+        "thread resolution",
+        "spatial re-anchor",
+        "server synchronization"
+      ],
+      "ontologyConcepts": [
+        "transaction",
+        "history policy",
+        "optimistic concurrency",
+        "soft deletion",
+        "stale snapshot protection",
+        "thread lifecycle",
+        "permission-aware mutation",
+        "state synchronization"
+      ],
+      "businessEntities": ["Comment", "CommentThread", "CommentReaction", "Editor", "User", "CommentRecord"],
+      "systemCapabilities": [
+        "Commit comment mutations with undo policy",
+        "Protect writes against stale records",
+        "Edit and resolve discussion content",
+        "Soft-delete comments and threads",
+        "Maintain open-thread state",
+        "Import or remove comment records"
+      ],
+      "configDependencies": ["history", "dragHistory"],
+      "importsInternal": [
+        {
+          "spec": "./comment-store",
+          "symbols": ["getCommentRecord", "getLiveComments", "TLCommentRecord"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/commenting/src/canvas/comment-store.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/comment-store.ts",
+          "resolvedHint": "packages/commenting/src/canvas/comment-store.ts"
+        },
+        {
+          "spec": "./options",
+          "symbols": ["getCommentingOptions", "CommentingOptions"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/commenting/src/canvas/options.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/options.ts",
+          "resolvedHint": "packages/commenting/src/canvas/options.ts"
+        },
+        {
+          "spec": "./state",
+          "symbols": ["openThreadId"],
+          "anchor": { "startLine": 14, "endLine": 14 },
+          "resolvedRelativePath": "packages/commenting/src/canvas/state.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/state.ts",
+          "resolvedHint": "packages/commenting/src/canvas/state.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "tldraw",
+          "symbols": [
+            "Editor",
+            "TLComment",
+            "TLCommentId",
+            "TLCommentReactionId",
+            "TLCommentThread",
+            "TLCommentThreadId",
+            "TLHistoryBatchOptions",
+            "TLRecord",
+            "TLRichText"
+          ],
+          "package": "tldraw",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 11 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "CommentMutationKind",
+          "shape": "export type CommentMutationKind = 'delete' | 'drag' | 'mutation'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitCommentMutation",
+          "shape": "export function commitCommentMutation<T>(\n\teditor: Editor,\n\tfn: (writer: CommentMutationWriter) => T,\n\tkind: CommentMutationKind = 'mutation'\n): T",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "putCommentRecords",
+          "shape": "export function putCommentRecords(editor: Editor, records: TLCommentRecord[]): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "removeCommentRecords",
+          "shape": "export function removeCommentRecords(\n\teditor: Editor,\n\tids: (TLCommentId | TLCommentReactionId | TLCommentThreadId)[]\n): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "editComment",
+          "shape": "export function editComment(editor: Editor, comment: TLComment, body: TLRichText): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "resolveThread",
+          "shape": "export function resolveThread(editor: Editor, thread: TLCommentThread, userId: string): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "reopenThread",
+          "shape": "export function reopenThread(editor: Editor, thread: TLCommentThread): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "deleteComment",
+          "shape": "export function deleteComment(editor: Editor, comment: TLComment): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "deleteThread",
+          "shape": "export function deleteThread(editor: Editor, thread: TLCommentThread): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "CommentingOptions",
+          "shape": "CommentingOptions.history",
+          "resolvedRelativePath": "packages/commenting/src/canvas/options.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/options.ts"
+        },
+        {
+          "name": "CommentingOptions",
+          "shape": "CommentingOptions.dragHistory",
+          "resolvedRelativePath": "packages/commenting/src/canvas/options.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/options.ts"
+        },
+        {
+          "name": "getCommentRecord",
+          "shape": "getCommentRecord(editor, record.id)",
+          "resolvedRelativePath": "packages/commenting/src/canvas/comment-store.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/comment-store.ts"
+        },
+        {
+          "name": "getLiveComments",
+          "shape": "getLiveComments(editor)",
+          "resolvedRelativePath": "packages/commenting/src/canvas/comment-store.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/comment-store.ts"
+        },
+        {
+          "name": "openThreadId",
+          "shape": "openThreadId.get(editor)",
+          "resolvedRelativePath": "packages/commenting/src/canvas/state.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/state.ts"
+        },
+        {
+          "name": "openThreadId",
+          "shape": "openThreadId.set(editor, null)",
+          "resolvedRelativePath": "packages/commenting/src/canvas/state.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/state.ts"
+        },
+        {
+          "name": "Editor",
+          "shape": "editor.run(() => { ... }, { history })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Editor",
+          "shape": "editor.store.put(records as unknown as TLRecord[])",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Editor",
+          "shape": "editor.store.remove(ids as unknown as TLRecord['id'][])",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "history-policy-selection",
+          "intent": "Maps mutation categories to configured or forced editor history modes.",
+          "structureKind": "branch",
+          "predicate": "switch (kind)",
+          "branchOutcomes": ["delete", "drag", "mutation"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 51, "endLine": 58 }
+        },
+        {
+          "name": "mutation-transaction",
+          "intent": "Validates nesting and executes writes under one editor history transaction.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 80, "endLine": 126 }
+        },
+        {
+          "name": "writer-lifecycle",
+          "intent": "Prevents constituent writers from being used after transaction completion.",
+          "structureKind": "branch",
+          "predicate": "if (!isWriterActive)",
+          "branchOutcomes": ["writer active", "writer inactive"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 93, "endLine": 114 }
+        },
+        {
+          "name": "fresh-record-validation",
+          "intent": "Accepts only a currently stored record with the expected record type.",
+          "structureKind": "branch",
+          "predicate": "current?.typeName === record.typeName",
+          "branchOutcomes": ["matching current record", "missing or mismatched record"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 175, "endLine": 177 }
+        },
+        {
+          "name": "comment-soft-delete",
+          "intent": "Marks a live comment deleted and closes its open thread when final.",
+          "structureKind": "branch",
+          "predicate": "if (isLastInThread && openThreadId.get(editor) === current.threadId)",
+          "branchOutcomes": ["final comment in open thread", "other comment state"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 256, "endLine": 268 }
+        },
+        {
+          "name": "thread-soft-delete",
+          "intent": "Marks a current thread deleted and clears matching open-thread state.",
+          "structureKind": "branch",
+          "predicate": "if (openThreadId.get(editor) === current.id)",
+          "branchOutcomes": ["thread is open", "thread is not open"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 286, "endLine": 294 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "CommentMutationKind",
+          "signature": "export type CommentMutationKind = 'delete' | 'drag' | 'mutation'",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 36, "endLine": 36 }
+        },
+        {
+          "kind": "function",
+          "name": "commitCommentMutation",
+          "signature": "export function commitCommentMutation<T>(\n\teditor: Editor,\n\tfn: (writer: CommentMutationWriter) => T,\n\tkind: CommentMutationKind = 'mutation'\n): T",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": "T",
+          "exported": true,
+          "anchor": { "startLine": 75, "endLine": 79 }
+        },
+        {
+          "kind": "function",
+          "name": "putCommentRecords",
+          "signature": "export function putCommentRecords(editor: Editor, records: TLCommentRecord[]): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 136, "endLine": 136 }
+        },
+        {
+          "kind": "function",
+          "name": "removeCommentRecords",
+          "signature": "export function removeCommentRecords(\n\teditor: Editor,\n\tids: (TLCommentId | TLCommentReactionId | TLCommentThreadId)[]\n): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 150, "endLine": 153 }
+        },
+        {
+          "kind": "function",
+          "name": "editComment",
+          "signature": "export function editComment(editor: Editor, comment: TLComment, body: TLRichText): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 194, "endLine": 194 }
+        },
+        {
+          "kind": "function",
+          "name": "resolveThread",
+          "signature": "export function resolveThread(editor: Editor, thread: TLCommentThread, userId: string): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 210, "endLine": 210 }
+        },
+        {
+          "kind": "function",
+          "name": "reopenThread",
+          "signature": "export function reopenThread(editor: Editor, thread: TLCommentThread): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 225, "endLine": 225 }
+        },
+        {
+          "kind": "function",
+          "name": "deleteComment",
+          "signature": "export function deleteComment(editor: Editor, comment: TLComment): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 252, "endLine": 252 }
+        },
+        {
+          "kind": "function",
+          "name": "deleteThread",
+          "signature": "export function deleteThread(editor: Editor, thread: TLCommentThread): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 282, "endLine": 282 }
+        },
+        {
+          "kind": "interface",
+          "name": "CommentMutationWriter",
+          "signature": "interface CommentMutationWriter {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 38, "endLine": 38 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "union",
+          "name": "CommentMutationKind",
+          "shape": "'delete' | 'drag' | 'mutation'",
+          "discriminant": null,
+          "anchor": { "startLine": 36, "endLine": 36 }
+        },
+        {
+          "kind": "interface",
+          "name": "CommentMutationWriter",
+          "shape": "{\n\tput(records: TLCommentRecord[]): void\n\tremove(ids: (TLCommentId | TLCommentReactionId | TLCommentThreadId)[]): void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 38, "endLine": 41 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Mutation nested under a different history mode",
+          "handled": true,
+          "behavior": "Throws before opening the nested transaction.",
+          "anchor": { "startLine": 81, "endLine": 86 }
+        },
+        {
+          "inputShape": "Writer used after its commit finishes",
+          "handled": true,
+          "behavior": "Throws an error instead of writing to the store.",
+          "anchor": { "startLine": 93, "endLine": 99 }
+        },
+        {
+          "inputShape": "Caller record is stale, removed, or has a different type",
+          "handled": true,
+          "behavior": "The mutation becomes a no-op.",
+          "anchor": { "startLine": 171, "endLine": 178 }
+        },
+        {
+          "inputShape": "Already-deleted comment",
+          "handled": true,
+          "behavior": "The deletion is ignored without another write.",
+          "anchor": { "startLine": 256, "endLine": 260 }
+        },
+        {
+          "inputShape": "Comment is the last live comment in its thread",
+          "handled": true,
+          "behavior": "The comment is soft-deleted and an open matching thread is closed.",
+          "anchor": { "startLine": 260, "endLine": 268 }
+        },
+        {
+          "inputShape": "Thread already pruned or absent",
+          "handled": true,
+          "behavior": "Thread deletion is a no-op.",
+          "anchor": { "startLine": 286, "endLine": 287 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<=",
+          "left": "getLiveComments(editor).filter((c) => c.threadId === current.threadId).length",
+          "right": "1",
+          "inclusive": true,
+          "intent": "Treats a comment as the final live comment when one or fewer matching comments remain.",
+          "anchor": { "startLine": 260, "endLine": 261 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new Error(`A comment mutation that records history as '${history}' can't run inside one recording it as '${enclosing.history}': one of the two modes would be silently discarded. Use the provided writer for constituent records, or run this operation after the enclosing one has committed.`)",
+          "caught": null,
+          "action": "Rejects mutations whose history mode conflicts with the enclosing transaction.",
+          "fallback": null,
+          "anchor": { "startLine": 82, "endLine": 85 }
+        },
+        {
+          "thrown": "new Error('A comment mutation writer cannot be used after its commit has finished.')",
+          "caught": null,
+          "action": "Rejects store writes attempted after the transaction callback completes.",
+          "fallback": null,
+          "anchor": { "startLine": 95, "endLine": 98 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Nested comment mutations must resolve to the same history mode as their enclosing mutation.",
+          "anchor": { "startLine": 81, "endLine": 86 }
+        },
+        {
+          "kind": "ordering",
+          "description": "All constituent record writes occur through the active transaction writer.",
+          "anchor": { "startLine": 101, "endLine": 111 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A mutation never writes a caller snapshot when the current record is missing or type-mismatched.",
+          "anchor": { "startLine": 171, "endLine": 178 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Every successful comment edit stores a new body and an edit timestamp.",
+          "anchor": { "startLine": 194, "endLine": 199 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Delete operations set the soft-delete flag and do not physically remove server-owned records.",
+          "anchor": { "startLine": 265, "endLine": 268 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Deleting the final comment or an open thread clears the corresponding open-thread identifier.",
+          "anchor": { "startLine": 260, "endLine": 290 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide records whose identifiers and type names correspond to the intended comment entity.",
+          "anchor": { "startLine": 171, "endLine": 178 }
+        },
+        {
+          "kind": "config",
+          "description": "Commenting options provide history and optionally dragHistory values accepted by the editor.",
+          "anchor": { "startLine": 80, "endLine": 80 }
+        },
+        {
+          "kind": "schema",
+          "description": "Comment record identifiers encode record type and stored records expose a matching typeName.",
+          "anchor": { "startLine": 176, "endLine": 177 }
+        },
+        {
+          "kind": "platform",
+          "description": "The editor store accepts comment records cast to the general TLRecord representation.",
+          "anchor": { "startLine": 104, "endLine": 109 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Which server-side permission and pruning implementation consumes the soft-delete flags?",
+          "affects": "error_handling and business integration",
+          "anchor": { "startLine": 236, "endLine": 248 },
+          "resolution": null
+        },
+        {
+          "question": "What exact history values are permitted by TLHistoryBatchOptions['history']?",
+          "affects": "public_signatures and concurrency_model",
+          "anchor": { "startLine": 43, "endLine": 43 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Operations are synchronous and serialized through editor.run; matching nested mutations are supported, while conflicting nested history modes throw."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "uses-configured-history-for-mutations",
+          "scenario": "A mutation is committed with the configured history mode.",
+          "given": ["getCommentingOptions(editor).history === 'record'"],
+          "when": "editComment(editor, comment, body)",
+          "then": "the edit is committed with history mode 'record'",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the configured undo/redo policy for ordinary comment mutations."
+        },
+        {
+          "testId": "drag-history-falls-back-to-history",
+          "scenario": "A drag mutation has no dedicated drag history setting.",
+          "given": [
+            "getCommentingOptions(editor).dragHistory === undefined",
+            "getCommentingOptions(editor).history === 'record'"
+          ],
+          "when": "commitCommentMutation(editor, fn, 'drag')",
+          "then": "fn runs inside an editor commit with history mode 'record'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the documented dragHistory fallback."
+        },
+        {
+          "testId": "deletes-ignore-history",
+          "scenario": "A comment or thread is deleted regardless of the configured history option.",
+          "given": ["getCommentingOptions(editor).history === 'record'"],
+          "when": "deleteComment(editor, comment)",
+          "then": "the delete is committed with history mode 'ignore'",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures soft deletes remain permanently non-undoable."
+        },
+        {
+          "testId": "rejects-conflicting-nested-mutations",
+          "scenario": "A nested mutation resolves to a different history mode than its enclosing mutation.",
+          "given": ["commitCommentMutation(editor, () => {}, 'mutation')"],
+          "when": "commitCommentMutation(editor, () => {}, 'delete')",
+          "then": "an Error is thrown describing the conflicting history modes",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents silently discarded history policy when commits nest."
+        },
+        {
+          "testId": "writer-is-invalid-after-commit",
+          "scenario": "A mutation writer is retained and used after its commit has finished.",
+          "given": ["let writer: CommentMutationWriter"],
+          "when": "writer.put(records) after commitCommentMutation(editor, fn) returns",
+          "then": "an Error is thrown with message 'A comment mutation writer cannot be used after its commit has finished.'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the writer lifetime boundary."
+        },
+        {
+          "testId": "ignores-stale-or-removed-comment",
+          "scenario": "An edit is requested using a snapshot whose record is stale or no longer in the store.",
+          "given": ["getCommentRecord(editor, comment.id) === undefined"],
+          "when": "editComment(editor, comment, body)",
+          "then": "no record is written",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents stale edits from recreating deleted records or reverting newer fields."
+        },
+        {
+          "testId": "stamps-edited-comment",
+          "scenario": "A current comment is edited with new rich text.",
+          "given": ["getCommentRecord(editor, comment.id) === comment"],
+          "when": "editComment(editor, comment, body)",
+          "then": "the stored record has body equal to body and editedAt equal to the edit timestamp",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins both the content replacement and edited marker contract."
+        },
+        {
+          "testId": "soft-deletes-last-comment-and-closes-thread",
+          "scenario": "The only live comment in the open thread is deleted.",
+          "given": [
+            "getLiveComments(editor).filter((c) => c.threadId === current.threadId).length <= 1",
+            "openThreadId.get(editor) === current.threadId"
+          ],
+          "when": "deleteComment(editor, comment)",
+          "then": "the comment is stored with isDeleted: true and openThreadId is set to null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards soft deletion and automatic closure of the last open comment."
+        },
+        {
+          "testId": "reopen-clears-resolution",
+          "scenario": "A resolved thread is reopened.",
+          "given": ["current.resolved !== null"],
+          "when": "reopenThread(editor, thread)",
+          "then": "the stored thread has resolved: null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the inverse operation of thread resolution."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "tldraw type and editor imports",
+        "comment store imports",
+        "commenting options imports",
+        "open thread state import",
+        "CommentMutationKind union",
+        "CommentMutationWriter interface",
+        "activeCommentMutations module state",
+        "historyModeFor helper",
+        "commitCommentMutation transaction primitive",
+        "putCommentRecords public wrapper",
+        "removeCommentRecords public wrapper",
+        "readLatest stale-record helper",
+        "editComment mutation",
+        "resolveThread mutation",
+        "reopenThread mutation",
+        "deleteComment soft-delete mutation",
+        "deleteThread soft-delete mutation"
+      ],
+      "moduleLevelCode": "import {\n\tEditor,\n\tTLComment,\n\tTLCommentId,\n\tTLCommentReactionId,\n\tTLCommentThread,\n\tTLCommentThreadId,\n\tTLHistoryBatchOptions,\n\tTLRecord,\n\tTLRichText,\n} from 'tldraw'\nimport { getCommentRecord, getLiveComments, type TLCommentRecord } from './comment-store'\nimport { getCommentingOptions, type CommentingOptions } from './options'\nimport { openThreadId } from './state'",
+      "exports": [
+        { "name": "CommentMutationKind", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitCommentMutation", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "putCommentRecords", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "removeCommentRecords", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "editComment", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "resolveThread", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "reopenThread", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "deleteComment", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "deleteThread", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Editor", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLComment", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentId", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentReactionId", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentThread", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentThreadId", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLHistoryBatchOptions", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLRecord", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLRichText", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "getCommentRecord", "module": "./comment-store", "alias": null, "kind": "internal" },
+        { "symbol": "getLiveComments", "module": "./comment-store", "alias": null, "kind": "internal" },
+        { "symbol": "TLCommentRecord", "module": "./comment-store", "alias": null, "kind": "internal" },
+        { "symbol": "getCommentingOptions", "module": "./options", "alias": null, "kind": "internal" },
+        { "symbol": "CommentingOptions", "module": "./options", "alias": null, "kind": "internal" },
+        { "symbol": "openThreadId", "module": "./state", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        {
+          "name": "activeCommentMutations",
+          "value": "new WeakMap<Editor, { history: TLHistoryBatchOptions['history'] }>()",
+          "kind": "WeakMap"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__historyModeFor#function:historyModeFor",
+        "unitKind": "function",
+        "name": "historyModeFor",
+        "qualifiedName": "historyModeFor",
+        "parentUnitId": null,
+        "startLine": 47,
+        "endLine": 59,
+        "isBehavioral": true,
+        "source": "const activeCommentMutations = new WeakMap<Editor, { history: TLHistoryBatchOptions['history'] }>()\n\n/** The undo/redo mode a write of the given kind runs under. See {@link CommentMutationKind}. */\nfunction historyModeFor(\n\toptions: CommentingOptions,\n\tkind: CommentMutationKind\n): TLHistoryBatchOptions['history'] {\n\tswitch (kind) {\n\t\tcase 'delete':\n\t\t\treturn 'ignore'\n\t\tcase 'drag':\n\t\t\treturn options.dragHistory ?? options.history\n\t\tcase 'mutation':",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__historyModeFor#function:historyModeFor",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__historyModeFor",
+          "unitKind": "function",
+          "name": "historyModeFor",
+          "qualifiedName": "historyModeFor",
+          "parentUnitId": null,
+          "startLine": 47,
+          "endLine": 59,
+          "signature": "function historyModeFor(\n\toptions: CommentingOptions,\n\tkind: CommentMutationKind\n): TLHistoryBatchOptions['history']",
+          "parameters": [
+            {
+              "name": "options",
+              "type": "CommentingOptions",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "kind",
+              "type": "CommentMutationKind",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "TLHistoryBatchOptions['history']",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "options is a valid CommentingOptions value.",
+            "kind is a supported CommentMutationKind value."
+          ],
+          "postconditions": [
+            "Returns a TLHistoryBatchOptions['history'] value appropriate for the mutation kind.",
+            "Delete mutations always return 'ignore'.",
+            "Drag mutations use options.dragHistory when it is not nullish, otherwise options.history.",
+            "Mutation mutations use options.history."
+          ],
+          "invariants": [
+            "The function does not mutate its arguments or external state.",
+            "The returned mode depends only on options and kind."
+          ],
+          "edgeCases": [
+            "When kind is 'delete', the function returns 'ignore' regardless of the configured history options.",
+            "When kind is 'drag' and options.dragHistory is nullish, the function falls back to options.history.",
+            "When kind is 'mutation', the function returns options.history."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["CommentingOptions", "CommentMutationKind", "TLHistoryBatchOptions"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Selects the undo/redo history mode for a comment mutation based on its kind and the configured commenting options.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "delete", "role": "Selects the delete-mutation history behavior." },
+            { "kind": "enum-value", "value": "drag", "role": "Selects the drag-mutation history behavior." },
+            { "kind": "enum-value", "value": "mutation", "role": "Selects the general mutation history behavior." },
+            { "kind": "enum-value", "value": "ignore", "role": "History mode returned for delete mutations." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "historyModeFor(options, 'delete') is called.",
+              "then": "The result is exactly 'ignore'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "historyModeFor(options, 'drag') is called.",
+              "then": "The result equals options.history.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "historyModeFor(options, 'drag') is called.",
+              "then": "The result equals options.dragHistory.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "192064dfea6cf00e2261ae7b611c18c1afaee2ea1b07c99deb8013a404551995"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__commitCommentMutation#function:commitCommentMutation",
+        "unitKind": "function",
+        "name": "commitCommentMutation",
+        "qualifiedName": "commitCommentMutation",
+        "parentUnitId": null,
+        "startLine": 75,
+        "endLine": 126,
+        "isBehavioral": true,
+        "source": " * the write that triggered it, with no \"after the commit\" to defer to. (A `store.listen` handler\n * normally flushes on a later frame, so its writes open a commit of their own, but a synchronous\n * flush — as under test — lands it inside too.)\n * @internal\n */\nexport function commitCommentMutation<T>(\n\teditor: Editor,\n\tfn: (writer: CommentMutationWriter) => T,\n\tkind: CommentMutationKind = 'mutation'\n): T {\n\tconst history = historyModeFor(getCommentingOptions(editor), kind)\n\tconst enclosing = activeCommentMutations.get(editor)\n\tif (enclosing && enclosing.history !== history) {\n\t\tthrow new Error(\n\t\t\t`A comment mutation that records history as '${history}' can't run inside one recording it as '${enclosing.history}': one of the two modes would be silently discarded. Use the provided writer for constituent records, or run this operation after the enclosing one has committed.`\n\t\t)\n\t}\n\n\tactiveCommentMutations.set(editor, { history })\n\ttry {\n\t\tlet result: T\n\t\teditor.run(\n\t\t\t() => {\n\t\t\t\tlet isWriterActive = true\n\t\t\t\tconst assertWriterActive = () => {\n\t\t\t\t\tif (!isWriterActive) {\n\t\t\t\t\t\tthrow new Error(\n\t\t\t\t\t\t\t'A comment mutation writer cannot be used after its commit has finished.'\n\t\t\t\t\t\t)\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\ttry {\n\t\t\t\t\tresult = fn({\n\t\t\t\t\t\tput: (records) => {\n\t\t\t\t\t\t\tassertWriterActive()\n\t\t\t\t\t\t\teditor.store.put(records as unknown as TLRecord[])\n\t\t\t\t\t\t},\n\t\t\t\t\t\tremove: (ids) => {\n\t\t\t\t\t\t\tassertWriterActive()\n\t\t\t\t\t\t\teditor.store.remove(ids as unknown as TLRecord['id'][])\n\t\t\t\t\t\t},\n\t\t\t\t\t})\n\t\t\t\t} finally {\n\t\t\t\t\tisWriterActive = false\n\t\t\t\t}\n\t\t\t},\n\t\t\t{ history }\n\t\t)\n\t\treturn result!\n\t} finally {\n\t\tif (enclosing) {\n\t\t\tactiveCommentMutations.set(editor, enclosing)",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__commitCommentMutation#function:commitCommentMutation",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__commitCommentMutation",
+          "unitKind": "function",
+          "name": "commitCommentMutation",
+          "qualifiedName": "commitCommentMutation",
+          "parentUnitId": null,
+          "startLine": 75,
+          "endLine": 126,
+          "signature": "export function commitCommentMutation<T>(\n\teditor: Editor,\n\tfn: (writer: CommentMutationWriter) => T,\n\tkind: CommentMutationKind = 'mutation'\n): T",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "fn",
+              "type": "(writer: CommentMutationWriter) => T",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "kind",
+              "type": "CommentMutationKind",
+              "default": "'mutation'",
+              "optional": true,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "T",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T"],
+          "logicOutline": [],
+          "preconditions": [
+            "editor is a valid Editor instance with commenting options, a store, and a run method.",
+            "fn is callable and accepts a CommentMutationWriter.",
+            "kind is a valid CommentMutationKind."
+          ],
+          "postconditions": [
+            "The callback runs inside editor.run with the history mode selected by historyModeFor(getCommentingOptions(editor), kind).",
+            "The callback's return value is returned unchanged on normal completion.",
+            "The active mutation context is restored to its enclosing context or cleared after completion.",
+            "The writer supplied to fn cannot be used after the commit has finished."
+          ],
+          "invariants": [
+            "A nested comment mutation must use the same history mode as its enclosing mutation.",
+            "Writer put and remove operations are only allowed while the callback is active.",
+            "The active mutation context is cleaned up even when the callback or editor commit throws."
+          ],
+          "edgeCases": [
+            "When kind is omitted, the history mode is computed using the default kind 'mutation'.",
+            "When a mutation is nested inside one with a different history mode, the function throws before running the nested mutation.",
+            "When the callback uses its writer after the commit callback has finished, the writer operation throws.",
+            "When the callback throws, the error propagates and the enclosing active mutation context is restored or cleared.",
+            "When the callback calls put or remove while active, records are forwarded to the editor store within the current commit."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error when nested mutations require different history modes.",
+              "Error when a comment mutation writer is used after its commit has finished.",
+              "Any error thrown by fn or editor.run propagates to the caller."
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Sets, restores, or clears the activeCommentMutations entry for editor.",
+            "May add records to editor.store through writer.put.",
+            "May remove record IDs from editor.store through writer.remove."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getCommentingOptions", "source": "internal", "kind": "internal" },
+            { "name": "historyModeFor", "source": "internal", "kind": "internal" },
+            { "name": "editor.run", "source": "Editor", "kind": "external" },
+            { "name": "editor.store.put", "source": "Editor store", "kind": "external" },
+            { "name": "editor.store.remove", "source": "Editor store", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "Editor",
+            "CommentMutationWriter",
+            "CommentMutationKind",
+            "TLRecord",
+            "activeCommentMutations"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Executes a comment mutation within an editor commit using the history mode selected for the mutation kind. It provides a scoped writer for recording comment records and prevents incompatible nested history modes or use of the writer after completion.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "'mutation'",
+              "role": "Default comment mutation kind when kind is omitted."
+            },
+            {
+              "kind": "error-message",
+              "value": "A comment mutation that records history as '${history}' can't run inside one recording it as '${enclosing.history}': one of the two modes would be silently discarded. Use the provided writer for constituent records, or run this operation after the enclosing one has committed.",
+              "role": "Error message for incompatible nested history modes."
+            },
+            {
+              "kind": "error-message",
+              "value": "A comment mutation writer cannot be used after its commit has finished.",
+              "role": "Error message for using the scoped writer after completion."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitCommentMutation(editor, callback) completes.",
+              "then": "The callback's value is returned, the records are put into the editor store within one commit, and the default 'mutation' history mode is used.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The nested commitCommentMutation call is attempted.",
+              "then": "It throws an Error describing the incompatible history modes and does not run the nested callback.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The retained writer is later used to put or remove records.",
+              "then": "The operation throws an Error with message 'A comment mutation writer cannot be used after its commit has finished.'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "535c01b607f0e7c7344c4a2c5e99cad5868a73382acebefd7fbe9d92c2efadaa"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__putCommentRecords#function:putCommentRecords",
+        "unitKind": "function",
+        "name": "putCommentRecords",
+        "qualifiedName": "putCommentRecords",
+        "parentUnitId": null,
+        "startLine": 136,
+        "endLine": 138,
+        "isBehavioral": true,
+        "source": " *\n * Use it to seed or import threads, and to save an edit. To delete, prefer {@link deleteComment}\n * and {@link deleteThread}: comments are soft-deleted, and a synced server rejects the hard delete.",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__putCommentRecords#function:putCommentRecords",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__putCommentRecords",
+          "unitKind": "function",
+          "name": "putCommentRecords",
+          "qualifiedName": "putCommentRecords",
+          "parentUnitId": null,
+          "startLine": 136,
+          "endLine": 138,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the comment-record mutation used to seed or import comment threads and save comment edits.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2a5719758cb86ca7871076ac652b18af60419e142c21aa58c5d81bf32ef7691f"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__removeCommentRecords#function:removeCommentRecords",
+        "unitKind": "function",
+        "name": "removeCommentRecords",
+        "qualifiedName": "removeCommentRecords",
+        "parentUnitId": null,
+        "startLine": 150,
+        "endLine": 155,
+        "isBehavioral": true,
+        "source": " * This is a hard delete, which is rarely what you want: the built-in UI soft-deletes\n * ({@link deleteComment}, {@link deleteThread}) so the server can prune the records, and a server\n * enforcing per-record permissions vetoes a hard delete outright. Reach for this on a local,\n * unsynced store, or to drop a reaction (see {@link toggleCommentReaction}).\n *\n * @public",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__removeCommentRecords#function:removeCommentRecords",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__removeCommentRecords",
+          "unitKind": "function",
+          "name": "removeCommentRecords",
+          "qualifiedName": "removeCommentRecords",
+          "parentUnitId": null,
+          "startLine": 150,
+          "endLine": 155,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The caller uses this operation only when hard deletion is appropriate, such as for a local unsynced store or removing a reaction."
+          ],
+          "postconditions": [
+            "The targeted comment records are hard-deleted from the underlying store on successful completion."
+          ],
+          "invariants": [
+            "This operation does not provide the soft-delete semantics associated with deleteComment or deleteThread."
+          ],
+          "edgeCases": ["A server enforcing per-record permissions may veto the hard delete."],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Underlying comment-record storage is modified by permanently removing targeted records."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["deleteComment", "deleteThread", "toggleCommentReaction"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Hard-deletes comment records from the underlying store. This operation is intended for local unsynced data or reaction removal rather than normal user-facing comment deletion.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "4e5fd56e09c8a382294cf7efc5cf1303f545cc7a4658488bf2df74378f0a7eb5"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__readLatest#function:readLatest",
+        "unitKind": "function",
+        "name": "readLatest",
+        "qualifiedName": "readLatest",
+        "parentUnitId": null,
+        "startLine": 171,
+        "endLine": 178,
+        "isBehavioral": true,
+        "source": " *\n * So a verb reads what it's changing rather than trusting what it was given, and a record that's\n * gone is a no-op.\n */\nfunction readLatest<T extends TLComment | TLCommentThread>(\n\teditor: Editor,\n\trecord: T\n): T | undefined {",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__readLatest#function:readLatest",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__readLatest",
+          "unitKind": "function",
+          "name": "readLatest",
+          "qualifiedName": "readLatest",
+          "parentUnitId": null,
+          "startLine": 171,
+          "endLine": 178,
+          "signature": "function readLatest<T extends TLComment | TLCommentThread>(editor: Editor, record: T): T | undefined",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "record", "type": "T", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "T | undefined",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends TLComment | TLCommentThread"],
+          "logicOutline": [],
+          "preconditions": [
+            "editor provides access to the current record store.",
+            "record is a TLComment or TLCommentThread with an identifiable record ID."
+          ],
+          "postconditions": [
+            "Returns the current editor record for the supplied record ID when it exists.",
+            "Returns undefined when the supplied record ID is absent from the editor store."
+          ],
+          "invariants": [
+            "The returned record reflects the editor's current state rather than relying on the supplied record object's potentially stale fields.",
+            "A missing record does not produce a mutation or throw an error."
+          ],
+          "edgeCases": [
+            "When the supplied record has been removed from the editor, returns undefined.",
+            "When the supplied record exists, returns the latest corresponding record from the editor rather than necessarily returning the same object instance passed as record."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "Returns undefined when no current record exists for the supplied record ID."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "editor.store.get", "source": "Editor", "kind": "internal" }],
+          "symbolReferences": ["Editor", "TLComment", "TLCommentThread"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reads and returns the latest editor record corresponding to the supplied comment or comment thread. If the record no longer exists, it returns undefined so callers can treat the mutation as a no-op.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "readLatest(editor, record) is called.",
+              "then": "The current stored record is returned, reflecting the latest values rather than the stale values on record.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "readLatest(editor, record) is called.",
+              "then": "The result is undefined and no error is raised.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "698889c8100d486be64e04485cbf86d80085787b5eb0b05b5171aeef4250c71f"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__editComment#function:editComment",
+        "unitKind": "function",
+        "name": "editComment",
+        "qualifiedName": "editComment",
+        "parentUnitId": null,
+        "startLine": 194,
+        "endLine": 200,
+        "isBehavioral": true,
+        "source": " * ```ts\n * editComment(editor, comment, toRichText('Actually, make it dashed'))\n * ```\n *\n * @public\n */\nexport function editComment(editor: Editor, comment: TLComment, body: TLRichText): void {",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__editComment#function:editComment",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__editComment",
+          "unitKind": "function",
+          "name": "editComment",
+          "qualifiedName": "editComment",
+          "parentUnitId": null,
+          "startLine": 194,
+          "endLine": 200,
+          "signature": "export function editComment(editor: Editor, comment: TLComment, body: TLRichText): void",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "comment",
+              "type": "TLComment",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            { "name": "body", "type": "TLRichText", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["The specified comment's body is updated to the supplied rich-text value."],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The specified comment record in the editor is updated."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Editor", "TLComment", "TLRichText"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates the specified comment in the editor with the supplied rich-text body.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "81c5d68c09225e1e3775f8b2464decc67df340b93203831989c5e7aaeb215320"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__resolveThread#function:resolveThread",
+        "unitKind": "function",
+        "name": "resolveThread",
+        "qualifiedName": "resolveThread",
+        "parentUnitId": null,
+        "startLine": 210,
+        "endLine": 216,
+        "isBehavioral": true,
+        "source": " * checked one) and are hidden from the sidebar until its \"show resolved\" filter is on.\n *\n * Only the resolution is written — the rest of the thread is read fresh, so a stale copy can't drag\n * a pin back. A no-op on a thread that's gone.\n *\n * @public\n */",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__resolveThread#function:resolveThread",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__resolveThread",
+          "unitKind": "function",
+          "name": "resolveThread",
+          "qualifiedName": "resolveThread",
+          "parentUnitId": null,
+          "startLine": 210,
+          "endLine": 216,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "If the target thread exists, its resolution state is written without overwriting the rest of the thread.",
+            "If the target thread is absent, no mutation occurs."
+          ],
+          "invariants": [
+            "Only the thread's resolution state is written.",
+            "The latest thread data is used when applying the resolution."
+          ],
+          "edgeCases": [
+            "A thread that has already been removed is treated as a no-op.",
+            "A stale caller-side copy cannot cause a previously resolved thread to become pinned again."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The resolution state of the targeted comment thread, when the thread exists."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Resolves a comment thread by writing only its resolution state. It reads the thread fresh so stale data cannot restore a pin, and does nothing when the thread no longer exists.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "resolveThread is invoked for that thread.",
+              "then": "Only the thread's resolution state is persisted using freshly read thread data; stale fields do not restore a pin.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "resolveThread is invoked for the missing thread.",
+              "then": "The operation is a no-op and does not write a replacement thread.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "9532265d6a70ba7645af8ed03107e2c23060b7c00205d2fef2b58a26dcc93bb8"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__reopenThread#function:reopenThread",
+        "unitKind": "function",
+        "name": "reopenThread",
+        "qualifiedName": "reopenThread",
+        "parentUnitId": null,
+        "startLine": 225,
+        "endLine": 231,
+        "isBehavioral": true,
+        "source": "/**\n * Reopen a resolved thread, clearing the resolution. A no-op on a thread that isn't resolved, and\n * on one that's gone. Like {@link resolveThread}, it touches only the resolution.\n *\n * @public\n */\nexport function reopenThread(editor: Editor, thread: TLCommentThread): void {",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__reopenThread#function:reopenThread",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__reopenThread",
+          "unitKind": "function",
+          "name": "reopenThread",
+          "qualifiedName": "reopenThread",
+          "parentUnitId": null,
+          "startLine": 225,
+          "endLine": 231,
+          "signature": "export function reopenThread(editor: Editor, thread: TLCommentThread): void",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "thread",
+              "type": "TLCommentThread",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["editor is a valid Editor instance.", "thread is a TLCommentThread value."],
+          "postconditions": [
+            "If the thread exists and is resolved, its resolution is cleared.",
+            "If the thread is unresolved or no longer exists, no observable change is made.",
+            "Only the thread's resolution state is modified."
+          ],
+          "invariants": [
+            "Comment content and other thread properties are preserved.",
+            "The operation is idempotent for an unresolved or missing thread."
+          ],
+          "edgeCases": [
+            "An already unresolved thread is left unchanged.",
+            "A thread that is gone is treated as a no-op.",
+            "A resolved thread is reopened without changing any state other than its resolution."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "The target comment thread's resolution state in the editor is cleared when the thread exists and is resolved."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Editor", "TLCommentThread"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reopens a resolved comment thread by clearing its resolution state. It leaves unresolved threads and threads that no longer exist unchanged.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "reopenThread(editor, thread) is called",
+              "then": "The thread becomes unresolved and its other properties remain unchanged.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "reopenThread(editor, thread) is called",
+              "then": "The operation is a no-op.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "96f8155dd1557421dfae28f2de0774201096d9bd0a1fa24c96d079ce7d6a6a3f"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__deleteComment#function:deleteComment",
+        "unitKind": "function",
+        "name": "deleteComment",
+        "qualifiedName": "deleteComment",
+        "parentUnitId": null,
+        "startLine": 252,
+        "endLine": 269,
+        "isBehavioral": true,
+        "source": " * Deleting a thread's last comment closes it and leaves the thread record for the server to prune,\n * since the deleter may not be its creator. An already-deleted comment is a no-op.\n *\n * @public\n */\nexport function deleteComment(editor: Editor, comment: TLComment): void {\n\tcommitCommentMutation(\n\t\teditor,\n\t\t({ put }) => {\n\t\t\tconst current = readLatest(editor, comment)\n\t\t\t// Deleting twice is nothing to do rather than something to redo. The check below counts this\n\t\t\t// comment among the live ones, so it only reads as \"the last one\" while this delete takes it away.\n\t\t\tif (!current || current.isDeleted) return\n\t\t\tconst isLastInThread =\n\t\t\t\tgetLiveComments(editor).filter((c) => c.threadId === current.threadId).length <= 1\n\t\t\tif (isLastInThread && openThreadId.get(editor) === current.threadId) {\n\t\t\t\topenThreadId.set(editor, null)\n\t\t\t}",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__deleteComment#function:deleteComment",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__deleteComment",
+          "unitKind": "function",
+          "name": "deleteComment",
+          "qualifiedName": "deleteComment",
+          "parentUnitId": null,
+          "startLine": 252,
+          "endLine": 269,
+          "signature": "export function deleteComment(editor: Editor, comment: TLComment): void",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "comment",
+              "type": "TLComment",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "editor is a valid editor instance",
+            "comment identifies a comment that can be resolved by readLatest"
+          ],
+          "postconditions": [
+            "A live current comment is marked deleted through the comment mutation workflow",
+            "If the deleted comment was the last live comment in its thread and that thread was open, the open thread is set to null",
+            "The thread record is not removed by this operation"
+          ],
+          "invariants": [
+            "Deleting an already-deleted or unavailable comment produces no mutation",
+            "At most one comment deletion is applied for the supplied comment invocation"
+          ],
+          "edgeCases": [
+            "If readLatest cannot resolve the supplied comment, the function returns without changing comment or thread state",
+            "If the current comment is already deleted, the function is a no-op",
+            "If the current comment is the only live comment in its thread and that thread is open, the comment is deleted and the open-thread state is cleared",
+            "If other live comments remain in the thread, the comment is deleted without clearing the open-thread state"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Unavailable or already-deleted comments are ignored without mutation",
+            "returnsOnError": "void"
+          },
+          "stateMutations": [
+            "Comment record state managed by commitCommentMutation is updated to delete the current comment",
+            "openThreadId for the editor is set to null when deleting the last live comment of the currently open thread"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "commitCommentMutation", "source": "internal", "kind": "internal" },
+            { "name": "readLatest", "source": "internal", "kind": "internal" },
+            { "name": "getLiveComments", "source": "internal", "kind": "internal" },
+            { "name": "openThreadId.get", "source": "internal", "kind": "internal" },
+            { "name": "openThreadId.set", "source": "internal", "kind": "internal" }
+          ],
+          "symbolReferences": ["Editor", "TLComment", "openThreadId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Deletes the current version of a comment through the comment mutation workflow. If it is the last live comment in its thread, the thread is closed when that thread is currently open, while the thread record remains available for server-side pruning.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteComment(editor, comment) is called.",
+              "then": "The function returns void and performs no comment or open-thread mutation.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteComment(editor, comment) is called.",
+              "then": "The comment is deleted, the open-thread state is set to null, and the thread record remains present.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteComment(editor, comment) is called.",
+              "then": "The comment is deleted and the open-thread state is not cleared solely because of this deletion.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f94e7521809f86ae91c8fcb2466938836b9a57d8c84877b0f2cd514f5213cd28"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/comment-mutations.ts__deleteThread#function:deleteThread",
+        "unitKind": "function",
+        "name": "deleteThread",
+        "qualifiedName": "deleteThread",
+        "parentUnitId": null,
+        "startLine": 282,
+        "endLine": 295,
+        "isBehavioral": true,
+        "source": " * Closes the thread if it's the open one; a pruned thread is a no-op.\n *\n * @public\n */\nexport function deleteThread(editor: Editor, thread: TLCommentThread): void {\n\tcommitCommentMutation(\n\t\teditor,\n\t\t({ put }) => {\n\t\t\tconst current = readLatest(editor, thread)\n\t\t\tif (!current) return\n\t\t\tif (openThreadId.get(editor) === current.id) {\n\t\t\t\topenThreadId.set(editor, null)\n\t\t\t}\n\t\t\tput([{ ...current, isDeleted: true }])",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/comment-mutations.ts__deleteThread#function:deleteThread",
+          "fileId": "packages/commenting/src/canvas/comment-mutations.ts__deleteThread",
+          "unitKind": "function",
+          "name": "deleteThread",
+          "qualifiedName": "deleteThread",
+          "parentUnitId": null,
+          "startLine": 282,
+          "endLine": 295,
+          "signature": "export function deleteThread(editor: Editor, thread: TLCommentThread): void",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "thread",
+              "type": "TLCommentThread",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["editor is a valid Editor instance", "thread is a valid TLCommentThread value"],
+          "postconditions": [
+            "If a latest record exists for the thread, a record equivalent to that latest record with isDeleted set to true is committed",
+            "If the deleted latest record is the currently open thread, the editor's open-thread state is set to null",
+            "If no latest record exists, no thread record is written and the open-thread state is unchanged"
+          ],
+          "invariants": [
+            "The mutation operates on the latest record resolved for the supplied thread, not directly on the supplied thread object",
+            "A thread with no latest record is not modified"
+          ],
+          "edgeCases": [
+            "A pruned or otherwise unavailable thread resolves to no latest record and is a no-op",
+            "Deleting the currently open thread clears the open-thread identifier",
+            "Deleting a thread that is not currently open marks it deleted without changing the open-thread identifier"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Commits an updated comment record through the comment mutation mechanism",
+            "Sets the editor's open-thread identifier to null when it matches the latest record's id"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "commitCommentMutation",
+              "source": "packages/commenting/src/canvas/comment-mutations.ts",
+              "kind": "internal"
+            },
+            {
+              "name": "readLatest",
+              "source": "packages/commenting/src/canvas/comment-mutations.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["Editor", "TLCommentThread", "openThreadId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Marks the latest available record for a comment thread as deleted. If the thread is currently open, it also clears the editor's open-thread state; pruned or unavailable threads are a no-op.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteThread(editor, thread) is called",
+              "then": "The latest record is committed with isDeleted set to true and the editor's open-thread id becomes null",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteThread(editor, thread) is called",
+              "then": "No comment record is written and the editor's open-thread state is not cleared",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteThread(editor, thread) is called",
+              "then": "The latest record is committed with isDeleted set to true and the existing open-thread id remains unchanged",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b487ec3b5c127750906a266a8a8814e24ceb995698adad64df195d606bf5a61c"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/commenting/src/canvas/comment-store.ts",
+    "packages/commenting/src/canvas/options.ts",
+    "packages/commenting/src/canvas/state.ts"
+  ],
+  "in": [
+    "packages/commenting/src/canvas/thread-view.tsx",
+    "packages/commenting/src/canvas/options.test.ts",
+    "packages/commenting/src/canvas/anchor-lifecycle.ts",
+    "packages/commenting/src/canvas/hooks.test.ts",
+    "packages/commenting/src/canvas/anchor-lifecycle.test.ts",
+    "packages/commenting/src/canvas/comment-mutations.test.ts",
+    "packages/commenting/src/canvas/comment-reactions.tsx",
+    "packages/commenting/src/canvas/pending-composer.tsx",
+    "packages/commenting/src/canvas/thread-pin.tsx",
+    "packages/commenting/src/index.ts"
+  ],
+  "externals": ["tldraw"],
+  "impact": {
+    "seeds": 10,
+    "callers": 11,
+    "impactedFiles": [
+      "packages/commenting/src/canvas/thread-view.tsx",
+      "packages/commenting/src/canvas/comment-mutations.test.ts",
+      "packages/commenting/src/canvas/anchor-lifecycle.test.ts",
+      "packages/commenting/src/canvas/anchor-lifecycle.ts",
+      "packages/commenting/src/canvas/thread-pin.tsx",
+      "packages/commenting/src/canvas/comment-reactions.tsx",
+      "packages/commenting/src/canvas/pending-composer.tsx"
+    ]
+  }
+}

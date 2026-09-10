@@ -1,0 +1,803 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts",
+    "language": "typescript",
+    "sizeBytes": 9055,
+    "tokenCount": 2264,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-27T17:29:58.338Z",
+    "module": {
+      "purpose": "Validates a proposed booking against user availability, busy periods, booking limits, and optional restriction schedules, returning users who can accept it.",
+      "summary": "This module coordinates date normalization, limit-aware busy-time retrieval, availability lookup, restriction-schedule validation, and conflict detection. It logs diagnostic and privacy-safe booking context, excludes users without matching availability or without conflicts-free calendars, and raises domain errors when restrictions or all-user availability checks fail. The exported wrapper adds reporting around the internal asynchronous orchestration.",
+      "businessContext": "Supports booking creation and rescheduling by ensuring at least one assigned user can accept the requested time. Failure prevents invalid or overbooked appointments from being created.",
+      "classes": [],
+      "functions": [
+        "getDateTimeInUtc (~L26-28): Converts booking input into a UTC date-time using timezone rules.",
+        "getOriginalBookingDuration (~L30-33): Calculates the duration of a rescheduled booking.",
+        "hasDateRangeForBooking (~L35-52): Checks whether a booking interval fits within any availability range.",
+        "_ensureAvailableUsers (~L54-248): Coordinates availability, restrictions, conflicts, logging, and errors.",
+        "ensureAvailableUsers (~L250-250): Exposes the reported availability validation operation."
+      ],
+      "keywords": [
+        "booking availability",
+        "restriction schedule",
+        "busy times",
+        "booking limits",
+        "duration limits",
+        "rescheduled booking",
+        "calendar conflicts",
+        "travel schedules",
+        "PII-safe logging"
+      ],
+      "ontologyConcepts": [
+        "availability validation",
+        "conflict detection",
+        "schedule restriction",
+        "time zone normalization",
+        "rescheduling",
+        "capacity limits",
+        "error reporting"
+      ],
+      "businessEntities": [
+        "Booking",
+        "User",
+        "Event Type",
+        "Restriction Schedule",
+        "Availability Rule",
+        "Travel Schedule",
+        "Calendar Conflict"
+      ],
+      "systemCapabilities": [
+        "Validate booking availability",
+        "Apply schedule restrictions",
+        "Check calendar conflicts",
+        "Enforce booking limits",
+        "Support rescheduled bookings",
+        "Report booking validation failures"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs", "Dayjs"],
+          "anchor": { "startLine": 3, "endLine": 4 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/conflictChecker/checkForConflicts",
+          "symbols": ["checkForConflicts"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/features/bookings/lib/conflictChecker/checkForConflicts.ts",
+          "resolvedFileId": "packages/features/bookings/lib/conflictChecker/checkForConflicts.ts",
+          "resolvedHint": "packages/features/bookings/lib/conflictChecker/checkForConflicts.ts"
+        },
+        {
+          "spec": "@calcom/lib/date-ranges",
+          "symbols": ["buildDateRanges"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": "packages/lib/date-ranges.ts",
+          "resolvedFileId": "packages/lib/date-ranges.ts",
+          "resolvedHint": "packages/lib/date-ranges.ts"
+        },
+        {
+          "spec": "@calcom/lib/errorCodes",
+          "symbols": ["ErrorCode"],
+          "anchor": { "startLine": 7, "endLine": 7 },
+          "resolvedRelativePath": "packages/lib/errorCodes.ts",
+          "resolvedFileId": "packages/lib/errorCodes.ts",
+          "resolvedHint": "packages/lib/errorCodes.ts"
+        },
+        {
+          "spec": "@calcom/lib/getBusyTimes",
+          "symbols": ["getBusyTimesForLimitChecks"],
+          "anchor": { "startLine": 8, "endLine": 8 },
+          "resolvedRelativePath": "packages/lib/getBusyTimes.ts",
+          "resolvedFileId": "packages/lib/getBusyTimes.ts",
+          "resolvedHint": "packages/lib/getBusyTimes.ts"
+        },
+        {
+          "spec": "@calcom/lib/getUserAvailability",
+          "symbols": ["getUsersAvailability"],
+          "anchor": { "startLine": 9, "endLine": 9 },
+          "resolvedRelativePath": "packages/lib/getUserAvailability.ts",
+          "resolvedFileId": "packages/lib/getUserAvailability.ts",
+          "resolvedHint": "packages/lib/getUserAvailability.ts"
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/isBookingLimits",
+          "symbols": ["parseBookingLimit"],
+          "anchor": { "startLine": 10, "endLine": 10 },
+          "resolvedRelativePath": "packages/lib/intervalLimits/isBookingLimits.ts",
+          "resolvedFileId": "packages/lib/intervalLimits/isBookingLimits.ts",
+          "resolvedHint": "packages/lib/intervalLimits/isBookingLimits.ts"
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/isDurationLimits",
+          "symbols": ["parseDurationLimit"],
+          "anchor": { "startLine": 11, "endLine": 11 },
+          "resolvedRelativePath": "packages/lib/intervalLimits/isDurationLimits.ts",
+          "resolvedFileId": "packages/lib/intervalLimits/isDurationLimits.ts",
+          "resolvedHint": "packages/lib/intervalLimits/isDurationLimits.ts"
+        },
+        {
+          "spec": "@calcom/lib/piiFreeData",
+          "symbols": ["getPiiFreeUser"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/lib/piiFreeData.ts",
+          "resolvedFileId": "packages/lib/piiFreeData.ts",
+          "resolvedHint": "packages/lib/piiFreeData.ts"
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/lib/safeStringify.ts",
+          "resolvedFileId": "packages/lib/safeStringify.ts",
+          "resolvedHint": "packages/lib/safeStringify.ts"
+        },
+        {
+          "spec": "@calcom/lib/sentryWrapper",
+          "symbols": ["withReporting"],
+          "anchor": { "startLine": 14, "endLine": 14 },
+          "resolvedRelativePath": "packages/lib/sentryWrapper.ts",
+          "resolvedFileId": "packages/lib/sentryWrapper.ts",
+          "resolvedHint": "packages/lib/sentryWrapper.ts"
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "anchor": { "startLine": 15, "endLine": 15 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "./getEventTypesFromDB",
+          "symbols": ["getEventTypeResponse"],
+          "anchor": { "startLine": 17, "endLine": 17 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+        },
+        {
+          "spec": "./originalRescheduledBookingUtils",
+          "symbols": ["BookingType"],
+          "anchor": { "startLine": 18, "endLine": 18 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/originalRescheduledBookingUtils.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/originalRescheduledBookingUtils.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/originalRescheduledBookingUtils.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": ["IsFixedAwareUser"],
+          "anchor": { "startLine": 19, "endLine": 19 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/types.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/types.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "tslog",
+          "symbols": ["Logger"],
+          "package": "tslog",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes debug and error diagnostics through the supplied logger."],
+        "network": ["Retrieves user availability and busy calendar data through imported availability services."],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Appends eligible user objects to a local available-users collection without mutating input objects."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "ensureAvailableUsers",
+          "shape": "export const ensureAvailableUsers = withReporting(_ensureAvailableUsers, \"ensureAvailableUsers\");",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "Logger", "shape": "Logger<unknown>", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "Dayjs", "shape": "Dayjs", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "checkForConflicts",
+          "shape": "checkForConflicts({ busy, time, eventLength })",
+          "resolvedRelativePath": "packages/features/bookings/lib/conflictChecker/checkForConflicts.ts",
+          "resolvedFileId": "packages/features/bookings/lib/conflictChecker/checkForConflicts.ts"
+        },
+        {
+          "name": "buildDateRanges",
+          "shape": "buildDateRanges({ availability, timeZone, dateFrom, dateTo, travelSchedules })",
+          "resolvedRelativePath": "packages/lib/date-ranges.ts",
+          "resolvedFileId": "packages/lib/date-ranges.ts"
+        },
+        {
+          "name": "ErrorCode",
+          "shape": "ErrorCode.RestrictionScheduleNotFound | ErrorCode.BookingNotAllowedByRestrictionSchedule | ErrorCode.NoAvailableUsersFound",
+          "resolvedRelativePath": "packages/lib/errorCodes.ts",
+          "resolvedFileId": "packages/lib/errorCodes.ts"
+        },
+        {
+          "name": "getBusyTimesForLimitChecks",
+          "shape": "getBusyTimesForLimitChecks({ userIds, eventTypeId, startDate, endDate, rescheduleUid, bookingLimits, durationLimits })",
+          "resolvedRelativePath": "packages/lib/getBusyTimes.ts",
+          "resolvedFileId": "packages/lib/getBusyTimes.ts"
+        },
+        {
+          "name": "getUsersAvailability",
+          "shape": "getUsersAvailability({ users, query, initialData })",
+          "resolvedRelativePath": "packages/lib/getUserAvailability.ts",
+          "resolvedFileId": "packages/lib/getUserAvailability.ts"
+        },
+        {
+          "name": "parseBookingLimit",
+          "shape": "parseBookingLimit(eventType?.bookingLimits)",
+          "resolvedRelativePath": "packages/lib/intervalLimits/isBookingLimits.ts",
+          "resolvedFileId": "packages/lib/intervalLimits/isBookingLimits.ts"
+        },
+        {
+          "name": "parseDurationLimit",
+          "shape": "parseDurationLimit(eventType?.durationLimits)",
+          "resolvedRelativePath": "packages/lib/intervalLimits/isDurationLimits.ts",
+          "resolvedFileId": "packages/lib/intervalLimits/isDurationLimits.ts"
+        },
+        {
+          "name": "getPiiFreeUser",
+          "shape": "getPiiFreeUser(input.originalRescheduledBooking.user)",
+          "resolvedRelativePath": "packages/lib/piiFreeData.ts",
+          "resolvedFileId": "packages/lib/piiFreeData.ts"
+        },
+        {
+          "name": "safeStringify",
+          "shape": "safeStringify({ startDateTimeUtc, endDateTimeUtc, ...input })",
+          "resolvedRelativePath": "packages/lib/safeStringify.ts",
+          "resolvedFileId": "packages/lib/safeStringify.ts"
+        },
+        {
+          "name": "withReporting",
+          "shape": "withReporting(_ensureAvailableUsers, \"ensureAvailableUsers\")",
+          "resolvedRelativePath": "packages/lib/sentryWrapper.ts",
+          "resolvedFileId": "packages/lib/sentryWrapper.ts"
+        },
+        {
+          "name": "prisma.schedule",
+          "shape": "prisma.schedule.findUnique({ where: { id: eventType.restrictionScheduleId }, select: { id, timeZone, userId, availability, user } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getEventTypeResponse",
+          "shape": "Omit<getEventTypeResponse, \"users\"> & { users: IsFixedAwareUser[] }",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+        },
+        {
+          "name": "BookingType",
+          "shape": "originalRescheduledBooking?: BookingType",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/originalRescheduledBookingUtils.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/originalRescheduledBookingUtils.ts"
+        },
+        {
+          "name": "IsFixedAwareUser",
+          "shape": "Promise<[IsFixedAwareUser, ...IsFixedAwareUser[]]>",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/types.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/types.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "date normalization and limit preparation",
+          "intent": "Normalizes requested times and prepares booking and duration limit inputs.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 64, "endLine": 74 }
+        },
+        {
+          "name": "limit-aware busy-time retrieval",
+          "intent": "Loads limit-related busy periods only when applicable limits exist.",
+          "structureKind": "branch",
+          "predicate": "eventType && (bookingLimits || durationLimits)",
+          "branchOutcomes": ["retrieve busy times", "use empty busy-time list"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 75, "endLine": 86 }
+        },
+        {
+          "name": "user availability retrieval",
+          "intent": "Requests availability using event, rescheduling, buffering, and cache parameters.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 88, "endLine": 107 }
+        },
+        {
+          "name": "restriction schedule validation",
+          "intent": "Rejects bookings missing or outside the configured restriction schedule.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 125, "endLine": 204 }
+        },
+        {
+          "name": "availability range construction",
+          "intent": "Builds restriction date ranges with timezone and travel schedule adjustments.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 171, "endLine": 192 }
+        },
+        {
+          "name": "per-user eligibility evaluation",
+          "intent": "Filters users by availability ranges and calendar conflict results.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 206, "endLine": 238 }
+        },
+        {
+          "name": "conflict-check fallback",
+          "intent": "Retains processing when conflict evaluation raises an error.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 226, "endLine": 237 }
+        },
+        {
+          "name": "non-empty result enforcement",
+          "intent": "Raises a domain error when no user remains eligible.",
+          "structureKind": "branch",
+          "predicate": "availableUsers.length === 0",
+          "branchOutcomes": ["throw no-available-users error", "return at least one available user"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 240, "endLine": 247 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "getDateTimeInUtc",
+          "signature": "const getDateTimeInUtc = (timeInput: string, timeZone?: string) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 26, "endLine": 26 }
+        },
+        {
+          "kind": "function",
+          "name": "getOriginalBookingDuration",
+          "signature": "const getOriginalBookingDuration = (originalBooking?: BookingType) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 30, "endLine": 30 }
+        },
+        {
+          "kind": "function",
+          "name": "hasDateRangeForBooking",
+          "signature": "const hasDateRangeForBooking = (",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 35, "endLine": 39 }
+        },
+        {
+          "kind": "function",
+          "name": "_ensureAvailableUsers",
+          "signature": "const _ensureAvailableUsers = async (\n  eventType: Omit<getEventTypeResponse, \"users\"> & {\n    users: IsFixedAwareUser[];\n  },\n  input: { dateFrom: string; dateTo: string; timeZone: string; originalRescheduledBooking?: BookingType },\n  loggerWithEventDetails: Logger<unknown>,\n  shouldServeCache?: boolean\n  // ReturnType hint of at least one IsFixedAwareUser, as it's made sure at least one entry exists\n): Promise<[IsFixedAwareUser, ...IsFixedAwareUser[]]> => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<[IsFixedAwareUser, ...IsFixedAwareUser[]]>",
+          "exported": false,
+          "anchor": { "startLine": 54, "endLine": 63 }
+        },
+        {
+          "kind": "function",
+          "name": "ensureAvailableUsers",
+          "signature": "export const ensureAvailableUsers = withReporting(_ensureAvailableUsers, \"ensureAvailableUsers\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 250, "endLine": 250 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "DateRange",
+          "shape": "{\n  start: Dayjs;\n  end: Dayjs;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 21, "endLine": 24 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "No booking or duration limits configured",
+          "handled": true,
+          "behavior": "Skips limit busy-time retrieval and uses an empty list.",
+          "anchor": { "startLine": 75, "endLine": 86 }
+        },
+        {
+          "inputShape": "Missing restriction schedule record",
+          "handled": true,
+          "behavior": "Logs the missing identifier and throws RestrictionScheduleNotFound.",
+          "anchor": { "startLine": 155, "endLine": 158 }
+        },
+        {
+          "inputShape": "Restriction schedule lacks timezone while booker timezone is disabled",
+          "handled": true,
+          "behavior": "Logs the configuration error and throws BookingNotAllowedByRestrictionSchedule.",
+          "anchor": { "startLine": 164, "endLine": 169 }
+        },
+        {
+          "inputShape": "Booking interval outside restriction availability",
+          "handled": true,
+          "behavior": "Logs privacy-safe input context and rejects the booking.",
+          "anchor": { "startLine": 194, "endLine": 198 }
+        },
+        {
+          "inputShape": "User has no availability ranges",
+          "handled": true,
+          "behavior": "Logs the condition and excludes that user.",
+          "anchor": { "startLine": 213, "endLine": 218 }
+        },
+        {
+          "inputShape": "Conflict checker throws for one user",
+          "handled": true,
+          "behavior": "Logs the error and continues evaluating remaining users.",
+          "anchor": { "startLine": 226, "endLine": 237 }
+        },
+        {
+          "inputShape": "No users pass availability and conflict checks",
+          "handled": true,
+          "behavior": "Logs the failure and throws NoAvailableUsersFound.",
+          "anchor": { "startLine": 240, "endLine": 244 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": "Error(ErrorCode.RestrictionScheduleNotFound)",
+          "caught": "catch (error)",
+          "action": "Logs restriction-schedule checking failure with privacy-safe input context and rethrows.",
+          "fallback": null,
+          "anchor": { "startLine": 155, "endLine": 158 }
+        },
+        {
+          "thrown": "Error(ErrorCode.BookingNotAllowedByRestrictionSchedule)",
+          "caught": "catch (error)",
+          "action": "Logs restriction-schedule checking failure with privacy-safe input context and rethrows.",
+          "fallback": null,
+          "anchor": { "startLine": 164, "endLine": 169 }
+        },
+        {
+          "thrown": "Error(ErrorCode.BookingNotAllowedByRestrictionSchedule)",
+          "caught": "catch (error)",
+          "action": "Logs restriction-schedule checking failure with privacy-safe input context and rethrows.",
+          "fallback": null,
+          "anchor": { "startLine": 194, "endLine": 202 }
+        },
+        {
+          "thrown": null,
+          "caught": "catch (error)",
+          "action": "Logs conflict-check failure and treats the user as unavailable without aborting the loop.",
+          "fallback": "The affected user is not appended to availableUsers.",
+          "anchor": { "startLine": 235, "endLine": 237 }
+        },
+        {
+          "thrown": "Error(ErrorCode.NoAvailableUsersFound)",
+          "caught": null,
+          "action": "Logs that no eligible users were found and aborts the operation.",
+          "fallback": null,
+          "anchor": { "startLine": 240, "endLine": 244 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "postcondition",
+          "description": "Successful completion returns an array containing at least one eligible user.",
+          "anchor": { "startLine": 240, "endLine": 247 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A user is appended only after a matching date range and no detected conflict.",
+          "anchor": { "startLine": 221, "endLine": 234 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Returned eligible users preserve the order of eventType.users.",
+          "anchor": { "startLine": 206, "endLine": 234 }
+        },
+        {
+          "kind": "non-null",
+          "description": "A restriction schedule timezone is required when booker timezone usage is disabled.",
+          "anchor": { "startLine": 164, "endLine": 168 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The event type provides a users array whose ordering matches the usersAvailability result.",
+          "anchor": { "startLine": 206, "endLine": 207 }
+        },
+        {
+          "kind": "schema",
+          "description": "Availability services return one availability result for each event-type user.",
+          "anchor": { "startLine": 206, "endLine": 207 }
+        },
+        {
+          "kind": "caller",
+          "description": "Booking date strings are parseable by the date-time library.",
+          "anchor": { "startLine": 66, "endLine": 70 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the reporting wrapper alter retry, error, or telemetry behavior beyond the visible call?",
+          "affects": "public wrapper behavior and error reporting",
+          "anchor": { "startLine": 250, "endLine": 250 },
+          "resolution": null
+        },
+        {
+          "question": "Can the availability service return fewer or differently ordered records than the supplied users array?",
+          "affects": "user-to-availability association",
+          "anchor": { "startLine": 206, "endLine": 207 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "The operation awaits external data sources sequentially and evaluates returned users synchronously in input order."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "returns-users-without-conflicts",
+          "scenario": "Users whose availability contains the requested booking range and whose buffered busy times have no conflict are returned.",
+          "given": [
+            "usersAvailability.forEach(({ oooExcludedDateRanges: dateRanges, busy: bufferedBusyTimes }, index) => {",
+            "const foundConflict = checkForConflicts({ busy: bufferedBusyTimes, time: startDateTimeUtc, eventLength: duration });"
+          ],
+          "when": "ensureAvailableUsers(eventType, input, loggerWithEventDetails)",
+          "then": "availableUsers contains each user for which !foundConflict is true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the core eligibility rule combining availability range containment and conflict absence."
+        },
+        {
+          "testId": "rejects-when-no-users-available",
+          "scenario": "No user is available for the requested booking.",
+          "given": ["const availableUsers: IsFixedAwareUser[] = []"],
+          "when": "ensureAvailableUsers(eventType, input, loggerWithEventDetails)",
+          "then": "throws new Error(ErrorCode.NoAvailableUsersFound)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the required failure contract when every candidate is unavailable."
+        },
+        {
+          "testId": "rejects-outside-restriction-schedule",
+          "scenario": "A restriction schedule exists but does not contain the requested booking range.",
+          "given": [
+            "eventType.restrictionScheduleId",
+            "!hasDateRangeForBooking(restrictionRanges, startDateTimeUtc, endDateTimeUtc)"
+          ],
+          "when": "ensureAvailableUsers(eventType, input, loggerWithEventDetails)",
+          "then": "throws new Error(ErrorCode.BookingNotAllowedByRestrictionSchedule)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures restriction schedules are enforced before users are accepted."
+        },
+        {
+          "testId": "rejects-missing-restriction-schedule",
+          "scenario": "The configured restriction schedule cannot be found.",
+          "given": ["eventType.restrictionScheduleId", "!restrictionSchedule"],
+          "when": "ensureAvailableUsers(eventType, input, loggerWithEventDetails)",
+          "then": "throws new Error(ErrorCode.RestrictionScheduleNotFound)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the distinct error contract for a stale or invalid restriction schedule reference."
+        },
+        {
+          "testId": "rejects-missing-restriction-timezone",
+          "scenario": "A restriction schedule has no timezone while booking in the schedule timezone is required.",
+          "given": ["!eventType.useBookerTimezone && !restrictionSchedule.timeZone"],
+          "when": "ensureAvailableUsers(eventType, input, loggerWithEventDetails)",
+          "then": "throws new Error(ErrorCode.BookingNotAllowedByRestrictionSchedule)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Protects timezone-dependent restriction validation from ambiguous schedule data."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "type-only and value imports",
+        "DateRange type alias",
+        "getDateTimeInUtc helper",
+        "getOriginalBookingDuration helper",
+        "hasDateRangeForBooking helper",
+        "_ensureAvailableUsers asynchronous orchestrator",
+        "ensureAvailableUsers reported export"
+      ],
+      "moduleLevelCode": "Import declarations and type-only imports occupy the module preamble; no standalone executable top-level statements are present.",
+      "exports": [{ "name": "ensureAvailableUsers", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "Logger", "module": "tslog", "alias": null, "kind": "external" },
+        { "symbol": "dayjs", "module": "@calcom/dayjs", "alias": null, "kind": "internal" },
+        { "symbol": "Dayjs", "module": "@calcom/dayjs", "alias": null, "kind": "internal" },
+        {
+          "symbol": "checkForConflicts",
+          "module": "@calcom/features/bookings/lib/conflictChecker/checkForConflicts",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "buildDateRanges", "module": "@calcom/lib/date-ranges", "alias": null, "kind": "internal" },
+        { "symbol": "ErrorCode", "module": "@calcom/lib/errorCodes", "alias": null, "kind": "internal" },
+        {
+          "symbol": "getBusyTimesForLimitChecks",
+          "module": "@calcom/lib/getBusyTimes",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getUsersAvailability",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "parseBookingLimit",
+          "module": "@calcom/lib/intervalLimits/isBookingLimits",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "parseDurationLimit",
+          "module": "@calcom/lib/intervalLimits/isDurationLimits",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "getPiiFreeUser", "module": "@calcom/lib/piiFreeData", "alias": null, "kind": "internal" },
+        { "symbol": "safeStringify", "module": "@calcom/lib/safeStringify", "alias": null, "kind": "internal" },
+        { "symbol": "withReporting", "module": "@calcom/lib/sentryWrapper", "alias": null, "kind": "internal" },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "internal" },
+        { "symbol": "getEventTypeResponse", "module": "./getEventTypesFromDB", "alias": null, "kind": "internal" },
+        { "symbol": "BookingType", "module": "./originalRescheduledBookingUtils", "alias": null, "kind": "internal" },
+        { "symbol": "IsFixedAwareUser", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts__DateRange_1#type_alias:DateRange",
+        "unitKind": "type_alias",
+        "name": "DateRange",
+        "qualifiedName": "DateRange",
+        "parentUnitId": null,
+        "startLine": 21,
+        "endLine": 24,
+        "isBehavioral": false,
+        "source": "type DateRange = {\n  start: Dayjs;\n  end: Dayjs;\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts__getDateTimeInUtc_2#function:getDateTimeInUtc",
+        "unitKind": "function",
+        "name": "getDateTimeInUtc",
+        "qualifiedName": "getDateTimeInUtc",
+        "parentUnitId": null,
+        "startLine": 26,
+        "endLine": 28,
+        "isBehavioral": true,
+        "source": "const getDateTimeInUtc = (timeInput: string, timeZone?: string) => {\n  return timeZone === \"Etc/GMT\" ? dayjs.utc(timeInput) : dayjs(timeInput).tz(timeZone).utc();\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts__getOriginalBookingDuration_3#function:getOriginalBookingDuration",
+        "unitKind": "function",
+        "name": "getOriginalBookingDuration",
+        "qualifiedName": "getOriginalBookingDuration",
+        "parentUnitId": null,
+        "startLine": 30,
+        "endLine": 34,
+        "isBehavioral": true,
+        "source": "const getOriginalBookingDuration = (originalBooking?: BookingType) => {\n  return originalBooking\n    ? dayjs(originalBooking.endTime).diff(dayjs(originalBooking.startTime), \"minutes\")\n    : undefined;\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts__hasDateRangeForBooking_4#function:hasDateRangeForBooking",
+        "unitKind": "function",
+        "name": "hasDateRangeForBooking",
+        "qualifiedName": "hasDateRangeForBooking",
+        "parentUnitId": null,
+        "startLine": 36,
+        "endLine": 39,
+        "isBehavioral": true,
+        "source": "const hasDateRangeForBooking = (\n  dateRanges: DateRange[],\n  startDateTimeUtc: dayjs.Dayjs,\n  endDateTimeUtc: dayjs.Dayjs"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts___ensureAvailableUsers_5#function:_ensureAvailableUsers",
+        "unitKind": "function",
+        "name": "_ensureAvailableUsers",
+        "qualifiedName": "_ensureAvailableUsers",
+        "parentUnitId": null,
+        "startLine": 56,
+        "endLine": 59,
+        "isBehavioral": true,
+        "source": "const _ensureAvailableUsers = async (\n  eventType: Omit<getEventTypeResponse, \"users\"> & {\n    users: IsFixedAwareUser[];\n  },"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts__ensureAvailableUsers_6#function:ensureAvailableUsers",
+        "unitKind": "function",
+        "name": "ensureAvailableUsers",
+        "qualifiedName": "ensureAvailableUsers",
+        "parentUnitId": null,
+        "startLine": 258,
+        "endLine": 258,
+        "isBehavioral": true,
+        "source": "export const ensureAvailableUsers = withReporting(_ensureAvailableUsers, \"ensureAvailableUsers\");"
+      }
+    ]
+  },
+  "out": [
+    "packages/lib/intervalLimits/isDurationLimits.ts",
+    "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+    "packages/lib/date-ranges.ts",
+    "packages/lib/intervalLimits/isBookingLimits.ts",
+    "packages/features/bookings/lib/handleNewBooking/originalRescheduledBookingUtils.ts",
+    "packages/lib/getBusyTimes.ts",
+    "packages/lib/sentryWrapper.ts",
+    "packages/lib/errorCodes.ts",
+    "packages/lib/safeStringify.ts",
+    "packages/lib/piiFreeData.ts",
+    "packages/lib/getUserAvailability.ts",
+    "packages/features/bookings/lib/conflictChecker/checkForConflicts.ts",
+    "packages/features/bookings/lib/handleNewBooking/types.ts"
+  ],
+  "in": ["packages/features/ee/round-robin/roundRobinReassignment.ts"],
+  "externals": ["tslog", "@calcom/dayjs", "@calcom/prisma"],
+  "impact": {
+    "seeds": 6,
+    "callers": 3,
+    "impactedFiles": ["packages/features/ee/round-robin/roundRobinReassignment.ts"]
+  }
+}

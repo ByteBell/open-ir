@@ -1,0 +1,3788 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "jotai",
+  "commitHash": "5c4ca26b0db5571114be58393e17854a771f7790",
+  "generatedAt": "2026-07-18T07:32:05.853Z",
+  "file": {
+    "relativePath": "src/vanilla/internals.ts",
+    "language": "typescript",
+    "sizeBytes": 39197,
+    "tokenCount": 9800,
+    "model": "poolside/laguna-xs-2.1",
+    "analysedAt": "2026-07-17T18:44:49.753Z",
+    "module": {
+      "purpose": "Internal module providing low-level building blocks for atom state management, including dependency tracking, mounting/unmounting lifecycle, store creation, and callback handling. Marked as subject to change without notice.",
+      "summary": "This file implements the core reactive atom system internals. It defines the state structures (AtomState, Mounted), building block functions for reading/writing atoms, managing dependencies, handling mount/unmount lifecycle, and implementing store hooks. The module exports internal types and functions prefixed with INTERNAL_ for use by the library's internals, along with utility functions for debugging and development.",
+      "businessContext": "Provides foundational reactive state management capabilities. If this fails, the entire atom-based reactivity system breaks, causing apps using the library to have broken state updates, memory leaks, or incorrect dependency tracking.",
+      "classes": [],
+      "functions": [
+        "hasInitialValue (~L188-193): Type guard checking if atom has initial value property",
+        "isActuallyWritableAtom (~L200-207): Type guard determining if atom is writable",
+        "hasOnMount (~L214-218): Type guard checking for onMount lifecycle method",
+        "isAtomStateInitialized (~L221-223): Checks if atom state has value or error",
+        "returnAtomValue (~L226-237): Returns atom value or throws error if present",
+        "isPromiseLike (~L240-243): Type guard for promise-like objects",
+        "shouldThrowSynchronously (~L246-255): Determines if error should propagate synchronously",
+        "addPendingPromiseToDependency (~L258-267): Tracks pending promises as dependencies",
+        "getMountedOrPendingDependents (~L270-287): Returns mounted or pending dependents set",
+        "createStoreHook (~L311-320): Creates callback registry for store hooks",
+        "createStoreHookForAtoms (~L323-347): Creates atom-specific callback registry",
+        "initializeStoreHooks (~L350-358): Initializes all store hooks to required implementations",
+        "hasOnInit (~L361-364): Type guard checking for INTERNAL_onInit lifecycle method",
+        "BUILDING_BLOCK_atomRead (~L367-369): Reads atom value with building blocks",
+        "BUILDING_BLOCK_atomWrite (~L372-375): Writes to atom with building blocks",
+        "BUILDING_BLOCK_atomOnInit (~L376-378): Calls atom's internal onInit method",
+        "BUILDING_BLOCK_atomOnMount (~L380-384): Calls atom's onMount lifecycle",
+        "BUILDING_BLOCK_ensureAtomState (~L387-407): Ensures atom state exists, initializes if needed",
+        "BUILDING_BLOCK_flushCallbacks (~L410-450): Executes pending callbacks in batch",
+        "BUILDING_BLOCK_recomputeInvalidatedAtoms (~L453-522): Topologically sorts and recomputes changed atoms",
+        "BUILDING_BLOCK_readAtomState (~L525-635): Reads atom state with dependency tracking",
+        "BUILDING_BLOCK_invalidateDependents (~L638-654): Invalidates all dependents of an atom",
+        "BUILDING_BLOCK_writeAtomState (~L657-728): Writes to atom state with getter/setter pattern",
+        "BUILDING_BLOCK_mountDependencies (~L731-758): Mounts all atom dependencies",
+        "BUILDING_BLOCK_mountAtom (~L761-810): Mounts atom and its dependencies",
+        "BUILDING_BLOCK_unmountAtom (~L813-850): Unmounts atom and cleans up dependencies",
+        "BUILDING_BLOCK_setAtomStateValueOrPromise (~L853-880): Sets atom value or registers pending promise",
+        "BUILDING_BLOCK_storeGet (~L883-885): Gets atom value from store",
+        "BUILDING_BLOCK_storeSet (~L888-908): Sets atom value and triggers recomputation",
+        "BUILDING_BLOCK_storeSub (~L911-933): Subscribes to atom changes",
+        "BUILDING_BLOCK_registerAbortHandler (~L936-955): Registers abort handler for promise cleanup",
+        "BUILDING_BLOCK_abortPromise (~L958-962): Aborts all registered handlers for a promise",
+        "getBuildingBlocks (~L965-975): Retrieves building blocks for a store",
+        "buildStore (~L978-1008): Creates a store with optional partial building blocks override"
+      ],
+      "keywords": [
+        "atom",
+        "reactive state",
+        "dependency tracking",
+        "mount lifecycle",
+        "store hooks",
+        "building blocks",
+        "WeakMap",
+        "topological sort"
+      ],
+      "ontologyConcepts": [
+        "reactive programming",
+        "dependency graph",
+        "atom state lifecycle",
+        "callback registry",
+        "store abstraction",
+        "mount/unmount semantics",
+        "promise tracking"
+      ],
+      "businessEntities": ["Atom", "Store", "AtomState", "Mounted", "BuildingBlocks"],
+      "systemCapabilities": [
+        "reactive state management",
+        "dependency tracking",
+        "lifecycle management",
+        "callback batching",
+        "store creation",
+        "promise handling"
+      ],
+      "configDependencies": ["import.meta.env.MODE"],
+      "importsInternal": [
+        {
+          "spec": "./atom.ts",
+          "symbols": ["Atom", "WritableAtom"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "src/vanilla/atom.ts",
+          "resolvedFileId": "src/vanilla/atom.ts",
+          "resolvedHint": "src/vanilla/atom.ts"
+        },
+        {
+          "spec": "./typeUtils.ts",
+          "symbols": ["ExtractAtomArgs", "ExtractAtomResult"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "src/vanilla/typeUtils.ts",
+          "resolvedFileId": "src/vanilla/typeUtils.ts",
+          "resolvedHint": "src/vanilla/typeUtils.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": ["console.warn in development mode (setSelf deprecation, store mutation detection)"],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates AtomState.n (epoch), AtomState.v (value), AtomState.e (error), AtomState.m (store epoch)"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "INTERNAL_AtomState",
+          "shape": "type AtomState<Value = AnyValue> = { d: Map<AnyAtom, EpochNumber>; p: Set<AnyAtom>; n: EpochNumber; m?: EpochNumber; v?: Value; e?: AnyError }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_Mounted",
+          "shape": "type Mounted = { l: Set<() => void>; d: Set<AnyAtom>; t: Set<AnyAtom>; u?: () => void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_Store",
+          "shape": "type Store = { get: <Value>(atom: Atom<Value>) => Value; set: <Value, Args extends unknown[], Result>(atom: WritableAtom<Value, Args, Result>, ...args: Args) => Result; sub: (atom: AnyAtom, listener: () => void) => () => void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_BuildingBlocks",
+          "shape": "type BuildingBlocks = [atomStateMap: AtomStateMap, mountedMap: MountedMap, invalidatedAtoms: InvalidatedAtoms, changedAtoms: ChangedAtoms, mountCallbacks: Callbacks, unmountCallbacks: Callbacks, storeHooks: StoreHooks, atomRead: AtomRead, atomWrite: AtomWrite, atomOnInit: AtomOnInit, atomOnMount: AtomOnMount, ensureAtomState: EnsureAtomState, flushCallbacks: FlushCallbacks, recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms, readAtomState: ReadAtomState, invalidateDependents: InvalidateDependents, writeAtomState: WriteAtomState, mountDependencies: MountDependencies, mountAtom: MountAtom, unmountAtom: UnmountAtom, setAtomStateValueOrPromise: SetAtomStateValueOrPromise, storeGet: StoreGet, storeSet: StoreSet, storeSub: StoreSub, enhanceBuildingBlocks: EnhanceBuildingBlocks | undefined, abortHandlersMap: AbortHandlersMap, registerAbortHandler: RegisterAbortHandler, abortPromise: AbortPromise, storeEpochHolder: StoreEpochHolder]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_StoreHooks",
+          "shape": "type StoreHooks = { i?: StoreHookForAtoms; r?: StoreHookForAtoms; c?: StoreHookForAtoms; m?: StoreHookForAtoms; u?: StoreHookForAtoms; f?: StoreHook }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_buildStoreRev3",
+          "shape": "function buildStore(...partialBuildingBlocks: Partial<BuildingBlocks>): Store",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_getBuildingBlocksRev3",
+          "shape": "function getBuildingBlocks(store: Store): Readonly<BuildingBlocks>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_initializeStoreHooksRev3",
+          "shape": "function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_hasInitialValue",
+          "shape": "function hasInitialValue<T extends AnyAtom>(atom: T): atom is T & (T extends Atom<infer Value> ? { init: Value } : never)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_isActuallyWritableAtom",
+          "shape": "function isActuallyWritableAtom<T extends AnyAtom>(atom: T): atom is ActuallyWritableAtom<T>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_isAtomStateInitialized",
+          "shape": "function isAtomStateInitialized(atomState: AtomState<AnyValue>): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_returnAtomValue",
+          "shape": "function returnAtomValue<Value>(atomState: AtomState<Value>): Value",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_isPromiseLike",
+          "shape": "function isPromiseLike(p: unknown): p is PromiseLike<unknown>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_shouldThrowSynchronously",
+          "shape": "function shouldThrowSynchronously(error: unknown): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_addPendingPromiseToDependency",
+          "shape": "function addPendingPromiseToDependency(atom: AnyAtom, promise: PromiseLike<AnyValue>, dependencyAtomState: AtomState): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "INTERNAL_getMountedOrPendingDependents",
+          "shape": "function getMountedOrPendingDependents(atom: AnyAtom, atomState: AtomState, mountedMap: MountedMap): Iterable<AnyAtom>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Atom",
+          "shape": "type Atom<Value = AnyValue> = { read: AtomRead; write?: AtomWrite; onMount?: NonNullable<AtomWrite>['onMount']; INTERNAL_onInit?: () => void }",
+          "resolvedRelativePath": "src/vanilla/atom.ts",
+          "resolvedFileId": "src/vanilla/atom.ts"
+        },
+        {
+          "name": "WritableAtom",
+          "shape": "type WritableAtom<Value, Args extends unknown[], Result> = { read: AtomRead; write: AtomWrite; onMount?: NonNullable<AtomWrite>['onMount']; INTERNAL_onInit?: () => void }",
+          "resolvedRelativePath": "src/vanilla/atom.ts",
+          "resolvedFileId": "src/vanilla/atom.ts"
+        },
+        {
+          "name": "ExtractAtomArgs",
+          "shape": "type ExtractAtomArgs<T extends Atom<any>> = T extends Atom<any, infer A, any> ? A : never",
+          "resolvedRelativePath": "src/vanilla/typeUtils.ts",
+          "resolvedFileId": "src/vanilla/typeUtils.ts"
+        },
+        {
+          "name": "ExtractAtomResult",
+          "shape": "type ExtractAtomResult<T extends Atom<any>> = T extends Atom<any, any, infer R> ? R : never",
+          "resolvedRelativePath": "src/vanilla/typeUtils.ts",
+          "resolvedFileId": "src/vanilla/typeUtils.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "type_definitions",
+          "intent": "Define internal type structures for atom state and store",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 1, "endLine": 142 }
+        },
+        {
+          "name": "utility_functions",
+          "intent": "Provide helper type guards and value accessors",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 188, "endLine": 287 }
+        },
+        {
+          "name": "store_hooks",
+          "intent": "Implement callback registry for store lifecycle events",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 303, "endLine": 364 }
+        },
+        {
+          "name": "building_blocks",
+          "intent": "Core implementation of atom read/write/mount lifecycle",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 367, "endLine": 962 }
+        },
+        {
+          "name": "store_creation",
+          "intent": "Create store with configurable building blocks",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 978, "endLine": 1008 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "INTERNAL_buildStoreRev3",
+          "signature": "buildStore as INTERNAL_buildStoreRev3",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Store",
+          "exported": true,
+          "anchor": { "startLine": 818, "endLine": 820 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_getBuildingBlocks",
+          "signature": "getBuildingBlocks as INTERNAL_getBuildingBlocksRev3",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Readonly<BuildingBlocks>",
+          "exported": true,
+          "anchor": { "startLine": 819, "endLine": 821 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_initializeStoreHooks",
+          "signature": "initializeStoreHooks as INTERNAL_initializeStoreHooksRev3",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Required<StoreHooks>",
+          "exported": true,
+          "anchor": { "startLine": 822, "endLine": 824 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_hasInitialValue",
+          "signature": "hasInitialValue as INTERNAL_hasInitialValue",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 827, "endLine": 829 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_isActuallyWritableAtom",
+          "signature": "isActuallyWritableAtom as INTERNAL_isActuallyWritableAtom",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 830, "endLine": 832 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_isAtomStateInitialized",
+          "signature": "isAtomStateInitialized as INTERNAL_isAtomStateInitialized",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 833, "endLine": 835 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_returnAtomValue",
+          "signature": "returnAtomValue as INTERNAL_returnAtomValue",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Value",
+          "exported": true,
+          "anchor": { "startLine": 836, "endLine": 838 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_isPromiseLike",
+          "signature": "isPromiseLike as INTERNAL_isPromiseLike",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 839, "endLine": 841 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_shouldThrowSynchronously",
+          "signature": "shouldThrowSynchronously as INTERNAL_shouldThrowSynchronously",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 842, "endLine": 844 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_addPendingPromiseToDependency",
+          "signature": "addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 845, "endLine": 847 }
+        },
+        {
+          "kind": "function",
+          "name": "INTERNAL_getMountedOrPendingDependents",
+          "signature": "getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Iterable<AnyAtom>",
+          "exported": true,
+          "anchor": { "startLine": 848, "endLine": 850 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "AtomState",
+          "shape": "{\n  readonly d: Map<AnyAtom, EpochNumber>\n  readonly p: Set<AnyAtom>\n  n: EpochNumber\n  m?: EpochNumber\n  v?: Value\n  e?: AnyError\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 37, "endLine": 59 }
+        },
+        {
+          "kind": "type",
+          "name": "Mounted",
+          "shape": "{\n  readonly l: Set<() => void>\n  readonly d: Set<AnyAtom>\n  readonly t: Set<AnyAtom>\n  u?: () => void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 68, "endLine": 81 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreHook",
+          "shape": "{\n  (): void\n  add(callback: () => void): () => void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 306, "endLine": 309 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreHookForAtoms",
+          "shape": "{\n  (atom: AnyAtom): void\n  add(atom: AnyAtom, callback: () => void): () => void\n  add(atom: undefined, callback: (atom: AnyAtom) => void): () => void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 312, "endLine": 318 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreHooks",
+          "shape": "{\n  readonly i?: StoreHookForAtoms\n  readonly r?: StoreHookForAtoms\n  readonly c?: StoreHookForAtoms\n  readonly m?: StoreHookForAtoms\n  readonly u?: StoreHookForAtoms\n  readonly f?: StoreHook\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 323, "endLine": 335 }
+        },
+        {
+          "kind": "type",
+          "name": "Store",
+          "shape": "{\n  get: <Value>(atom: Atom<Value>) => Value\n  set: <Value, Args extends unknown[], Result>(\n    atom: WritableAtom<Value, Args, Result>,\n    ...args: Args\n  ) => Result\n  sub: (atom: AnyAtom, listener: () => void) => () => void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 134, "endLine": 142 }
+        },
+        {
+          "kind": "type",
+          "name": "BuildingBlocks",
+          "shape": "[\n  atomStateMap: AtomStateMap,\n  mountedMap: MountedMap,\n  invalidatedAtoms: InvalidatedAtoms,\n  changedAtoms: ChangedAtoms,\n  mountCallbacks: Callbacks,\n  unmountCallbacks: Callbacks,\n  storeHooks: StoreHooks,\n  atomRead: AtomRead,\n  atomWrite: AtomWrite,\n  atomOnInit: AtomOnInit,\n  atomOnMount: AtomOnMount,\n  ensureAtomState: EnsureAtomState,\n  flushCallbacks: FlushCallbacks,\n  recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms,\n  readAtomState: ReadAtomState,\n  invalidateDependents: InvalidateDependents,\n  writeAtomState: WriteAtomState,\n  mountDependencies: MountDependencies,\n  mountAtom: MountAtom,\n  unmountAtom: UnmountAtom,\n  setAtomStateValueOrPromise: SetAtomStateValueOrPromise,\n  storeGet: StoreGet,\n  storeSet: StoreSet,\n  storeSub: StoreSub,\n  enhanceBuildingBlocks: EnhanceBuildingBlocks | undefined,\n  abortHandlersMap: AbortHandlersMap,\n  registerAbortHandler: RegisterAbortHandler,\n  abortPromise: AbortPromise,\n  storeEpochHolder: StoreEpochHolder,\n]",
+          "discriminant": null,
+          "anchor": { "startLine": 145, "endLine": 182 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Atom with circular dependency",
+          "handled": true,
+          "behavior": "Algorithm detects cycles via visiting/visited sets, skips recomputation for already-visited atoms",
+          "anchor": { "startLine": 495, "endLine": 507 }
+        },
+        {
+          "inputShape": "Promise-like atom value",
+          "handled": true,
+          "behavior": "Adds atom to dependency's pending set, registers cleanup on promise settlement",
+          "anchor": { "startLine": 258, "endLine": 267 }
+        },
+        {
+          "inputShape": "Unmount without listeners and not a dependent",
+          "handled": true,
+          "behavior": "Completely removes from mountedMap and unmounts all dependencies",
+          "anchor": { "startLine": 813, "endLine": 848 }
+        },
+        {
+          "inputShape": "Store mutation during atom read in dev mode",
+          "handled": true,
+          "behavior": "Logs warning to console",
+          "anchor": { "startLine": 625, "endLine": 628 }
+        },
+        {
+          "inputShape": "Stack overflow error in dev mode",
+          "handled": true,
+          "behavior": "Rethrows synchronously to allow proper error handling",
+          "anchor": { "startLine": 246, "endLine": 255 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<=",
+          "left": "import.meta.env?.MODE",
+          "right": "'production'",
+          "inclusive": true,
+          "intent": "Development-only checks (warnings, errors)",
+          "anchor": { "startLine": 232, "endLine": 233 }
+        },
+        {
+          "operator": "<",
+          "left": "stackAtoms.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Topological sort loop termination",
+          "anchor": { "startLine": 477, "endLine": 478 }
+        },
+        {
+          "operator": ">",
+          "left": "i",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Reverse iteration over sorted atoms",
+          "anchor": { "startLine": 499, "endLine": 500 }
+        },
+        {
+          "operator": "==",
+          "left": "invalidatedAtoms.get(a)",
+          "right": "aState.n",
+          "inclusive": true,
+          "intent": "Check if atom was already processed during cycle detection",
+          "anchor": { "startLine": 502, "endLine": 503 }
+        },
+        {
+          "operator": "==",
+          "left": "prevEpochNumber",
+          "right": "aState.n",
+          "inclusive": false,
+          "intent": "Check if atom value actually changed before invalidating dependents",
+          "anchor": { "startLine": 703, "endLine": 704 }
+        },
+        {
+          "operator": "==",
+          "left": "storeMutationSet.has(store)",
+          "right": "true",
+          "inclusive": true,
+          "intent": "Detect store mutation during atom read (dev mode warning)",
+          "anchor": { "startLine": 625, "endLine": 626 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "Error('[Bug] atom state is not initialized')",
+          "caught": null,
+          "action": "Throw to indicate internal inconsistency",
+          "fallback": null,
+          "anchor": { "startLine": 232, "endLine": 233 }
+        },
+        {
+          "thrown": "Error('[Bug] invalidated atom exists')",
+          "caught": null,
+          "action": "Throw in dev mode when invalidated atom already processed",
+          "fallback": null,
+          "anchor": { "startLine": 506, "endLine": 507 }
+        },
+        {
+          "thrown": "Error('[Bug] atom state is not initialized')",
+          "caught": null,
+          "action": "Throw when atom lacks init and no value",
+          "fallback": null,
+          "anchor": { "startLine": 607, "endLine": 608 }
+        },
+        {
+          "thrown": "Error('atom not writable')",
+          "caught": null,
+          "action": "Throw when attempting to write without initial value",
+          "fallback": null,
+          "anchor": { "startLine": 689, "endLine": 690 }
+        },
+        {
+          "thrown": "Error('Store must be created by buildStore...')",
+          "caught": null,
+          "action": "Throw when accessing building blocks without store",
+          "fallback": null,
+          "anchor": { "startLine": 971, "endLine": 973 }
+        },
+        {
+          "thrown": "unknown errors from callbacks",
+          "caught": "AggregateError",
+          "action": "Collect all callback errors and throw AggregateError",
+          "fallback": "none - throws AggregateError after all callbacks",
+          "anchor": { "startLine": 413, "endLine": 448 }
+        },
+        {
+          "thrown": "errors caught in readAtomState",
+          "caught": "atomState.e assignment",
+          "action": "Store error in atom state and increment epoch",
+          "fallback": "atomState.e holds the error",
+          "anchor": { "startLine": 633, "endLine": 637 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Atom state must have either v or e property after initialization",
+          "anchor": { "startLine": 232, "endLine": 233 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Store must be created by buildStore to have building blocks",
+          "anchor": { "startLine": 971, "endLine": 973 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Dependencies must be mounted before dependent atoms in mountAtom",
+          "anchor": { "startLine": 791, "endLine": 794 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Callbacks must be flushed after recompute in writeAtomState",
+          "anchor": { "startLine": 713, "endLine": 715 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "env",
+          "description": "import.meta.env.MODE is set by bundler for dev/prod detection",
+          "anchor": { "startLine": 232, "endLine": 233 }
+        },
+        {
+          "kind": "caller",
+          "description": "Store must be created via buildStore before accessing building blocks",
+          "anchor": { "startLine": 971, "endLine": 973 }
+        },
+        {
+          "kind": "init-order",
+          "description": "Atom must have INTERNAL_onInit if it needs initialization",
+          "anchor": { "startLine": 400, "endLine": 401 }
+        },
+        {
+          "kind": "schema",
+          "description": "Atom.read returns value or promise-like object",
+          "anchor": { "startLine": 367, "endLine": 368 }
+        }
+      ],
+      "ambiguities": [],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Synchronous execution with optional async handling for promise-like values. Reentrant through store hooks. Deterministic topological ordering for invalidation."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [],
+      "language": "typescript",
+      "moduleLayout": [
+        "type definitions (lines 1-142)",
+        "type exports (lines 134-185)",
+        "utility functions (lines 188-287)",
+        "store hooks types (lines 303-335)",
+        "store hook functions (lines 311-364)",
+        "BUILDING_BLOCK functions (lines 367-962)",
+        "getBuildingBlocks function (lines 965-975)",
+        "buildStore function (lines 978-1008)",
+        "public exports (lines 818-850)"
+      ],
+      "moduleLevelCode": "import statements at top (lines 1-3), type exports (lines 134-185), and function exports (lines 818-850)",
+      "exports": [
+        { "name": "INTERNAL_AtomState", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_Mounted", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_AtomStateMap", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_MountedMap", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_InvalidatedAtoms", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_ChangedAtoms", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_Callbacks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_AtomRead", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_AtomWrite", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_AtomOnInit", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_AtomOnMount", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_EnsureAtomState", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_FlushCallbacks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_RecomputeInvalidatedAtoms", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_ReadAtomState", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_InvalidateDependents", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_WriteAtomState", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_MountDependencies", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_MountAtom", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_UnmountAtom", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_Store", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_BuildingBlocks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_StoreHooks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_buildStoreRev3", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_getBuildingBlocksRev3", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_initializeStoreHooksRev3", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_hasInitialValue", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_isActuallyWritableAtom", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_isAtomStateInitialized", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_returnAtomValue", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_isPromiseLike", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_shouldThrowSynchronously", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_addPendingPromiseToDependency", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "INTERNAL_getMountedOrPendingDependents", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Atom", "module": "./atom.ts", "alias": null, "kind": "internal" },
+        { "symbol": "WritableAtom", "module": "./atom.ts", "alias": null, "kind": "internal" },
+        { "symbol": "ExtractAtomArgs", "module": "./typeUtils.ts", "alias": null, "kind": "internal" },
+        { "symbol": "ExtractAtomResult", "module": "./typeUtils.ts", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "storeMutationSet", "value": "new WeakSet<Store>()", "kind": "WeakSet" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "src/vanilla/internals.ts__hasInitialValue#function:hasInitialValue",
+        "unitKind": "function",
+        "name": "hasInitialValue",
+        "qualifiedName": "hasInitialValue",
+        "parentUnitId": null,
+        "startLine": 188,
+        "endLine": 193,
+        "isBehavioral": false,
+        "source": "type RegisterAbortHandler = <T>(\n  buildingBlocks: Readonly<BuildingBlocks>,\n  store: Store,\n  promise: PromiseLike<T>,\n  abortHandler: () => void,\n) => void",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__hasInitialValue#function:hasInitialValue",
+          "fileId": "src/vanilla/internals.ts__hasInitialValue",
+          "unitKind": "function",
+          "name": "hasInitialValue",
+          "qualifiedName": "hasInitialValue",
+          "parentUnitId": null,
+          "startLine": 188,
+          "endLine": 193,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "A predicate function that determines whether a provided value should be treated as an initial value for an atom state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e74c92f849498c22b9b23d6fe294b0fc83555490d73bd8528cc5df4c37bf0561"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__isActuallyWritableAtom#function:isActuallyWritableAtom",
+        "unitKind": "function",
+        "name": "isActuallyWritableAtom",
+        "qualifiedName": "isActuallyWritableAtom",
+        "parentUnitId": null,
+        "startLine": 200,
+        "endLine": 207,
+        "isBehavioral": false,
+        "source": "\ntype Store = {\n  get: <Value>(atom: Atom<Value>) => Value\n  set: <Value, Args extends unknown[], Result>(\n    atom: WritableAtom<Value, Args, Result>,\n    ...args: Args\n  ) => Result\n  sub: (atom: AnyAtom, listener: () => void) => () => void",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__isActuallyWritableAtom#function:isActuallyWritableAtom",
+          "fileId": "src/vanilla/internals.ts__isActuallyWritableAtom",
+          "unitKind": "function",
+          "name": "isActuallyWritableAtom",
+          "qualifiedName": "isActuallyWritableAtom",
+          "parentUnitId": null,
+          "startLine": 200,
+          "endLine": 207,
+          "signature": "function isActuallyWritableAtom(atom: AnyAtom): boolean",
+          "parameters": [
+            { "name": "atom", "type": "AnyAtom", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The atom argument must be defined and of a supported atom type."],
+          "postconditions": ["Returns true if the atom is writable, false otherwise."],
+          "invariants": [],
+          "edgeCases": [
+            "If the atom is not writable, returns false without error.",
+            "Handles atoms that may not be initialized or are of non-writable types."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "returns false", "returnsOnError": "false" },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["AnyAtom"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines if a given atom is writable, allowing mutations via store.set operations.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "189ba85700cf1d6fe21f7f8b9e42ea52a79d70c5d5d5d4f99df4d458d4deedb7"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__hasOnMount#function:hasOnMount",
+        "unitKind": "function",
+        "name": "hasOnMount",
+        "qualifiedName": "hasOnMount",
+        "parentUnitId": null,
+        "startLine": 214,
+        "endLine": 218,
+        "isBehavioral": false,
+        "source": "  invalidatedAtoms: InvalidatedAtoms, //                       2\n  changedAtoms: ChangedAtoms, //                               3\n  mountCallbacks: Callbacks, //                                4\n  unmountCallbacks: Callbacks, //                              5\n  storeHooks: StoreHooks, //                                   6",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__hasOnMount#function:hasOnMount",
+          "fileId": "src/vanilla/internals.ts__hasOnMount",
+          "unitKind": "function",
+          "name": "hasOnMount",
+          "qualifiedName": "hasOnMount",
+          "parentUnitId": null,
+          "startLine": 214,
+          "endLine": 218,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether an atom has an onMount hook. Returns true if the atom's definition includes an onMount callback.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3fd3ca1731c5ecf2e2f73056ecebcef37fd3017f7dd4544923ba770e02c48bfc"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__isAtomStateInitialized#function:isAtomStateInitialized",
+        "unitKind": "function",
+        "name": "isAtomStateInitialized",
+        "qualifiedName": "isAtomStateInitialized",
+        "parentUnitId": null,
+        "startLine": 221,
+        "endLine": 223,
+        "isBehavioral": false,
+        "source": "  atomWrite: AtomWrite, //                                     8\n  atomOnInit: AtomOnInit, //                                   9\n  atomOnMount: AtomOnMount, //                                 10",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__isAtomStateInitialized#function:isAtomStateInitialized",
+          "fileId": "src/vanilla/internals.ts__isAtomStateInitialized",
+          "unitKind": "function",
+          "name": "isAtomStateInitialized",
+          "qualifiedName": "isAtomStateInitialized",
+          "parentUnitId": null,
+          "startLine": 221,
+          "endLine": 223,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "atomState",
+              "type": "AtomState",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The atomState parameter must be a valid object."],
+          "postconditions": [
+            "Returns true if the atom state has a non-undefined value or a promise.",
+            "Returns false if the atom state has no value (undefined) and no promise."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "When atomState is null or undefined, returns false.",
+            "When atomState has a value property that is undefined and no promise property, returns false.",
+            "When atomState has a promise property, returns true regardless of value property."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "returns false", "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether an atom's internal state object has been initialized with a value or promise.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isAtomStateInitialized is called with this state",
+              "then": "Returns true",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isAtomStateInitialized is called with this state",
+              "then": "Returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isAtomStateInitialized is called with this state",
+              "then": "Returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a1ad5acde4a4a5c78947074b6534b498b9a4d7c9696c79032b568b759a294405"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__returnAtomValue#function:returnAtomValue",
+        "unitKind": "function",
+        "name": "returnAtomValue",
+        "qualifiedName": "returnAtomValue",
+        "parentUnitId": null,
+        "startLine": 226,
+        "endLine": 237,
+        "isBehavioral": false,
+        "source": "  flushCallbacks: FlushCallbacks, //                           12\n  recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms, //     13\n  readAtomState: ReadAtomState, //                             14\n  invalidateDependents: InvalidateDependents, //               15\n  writeAtomState: WriteAtomState, //                           16\n  mountDependencies: MountDependencies, //                     17\n  mountAtom: MountAtom, //                                     18\n  unmountAtom: UnmountAtom, //                                 19\n  setAtomStateValueOrPromise: SetAtomStateValueOrPromise, //   20\n  // store api\n  storeGet: StoreGet, //                                       21\n  storeSet: StoreSet, //                                       22",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__returnAtomValue#function:returnAtomValue",
+          "fileId": "src/vanilla/internals.ts__returnAtomValue",
+          "unitKind": "function",
+          "name": "returnAtomValue",
+          "qualifiedName": "returnAtomValue",
+          "parentUnitId": null,
+          "startLine": 226,
+          "endLine": 237,
+          "signature": "function returnAtomValue<TValue>(atomState: AtomState<TValue>): TValue",
+          "parameters": [
+            {
+              "name": "atomState",
+              "type": "AtomState<TValue>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "TValue",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["TValue"],
+          "logicOutline": [],
+          "preconditions": ["The `atomState` argument must be a non-null AtomState instance."],
+          "postconditions": ["Returns the `v` (value) property of the provided `atomState` object."],
+          "invariants": [],
+          "edgeCases": [
+            "If `atomState` is a promise (i.e., atomState.v is a Promise), the function returns the Promise object itself, not its resolved value."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["AtomState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Extracts and returns the current value stored within an AtomState object, serving as a direct accessor for the atom's resolved value.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "993de5b288363e4db47614a1397c155ff6913fbd7843e2ed02962e3a12e8c0fe"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__isPromiseLike#function:isPromiseLike",
+        "unitKind": "function",
+        "name": "isPromiseLike",
+        "qualifiedName": "isPromiseLike",
+        "parentUnitId": null,
+        "startLine": 240,
+        "endLine": 243,
+        "isBehavioral": false,
+        "source": "  // abortable promise support\n  abortHandlersMap: AbortHandlersMap, //                       25\n  registerAbortHandler: RegisterAbortHandler, //               26\n  abortPromise: AbortPromise, //                               27",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__isPromiseLike#function:isPromiseLike",
+          "fileId": "src/vanilla/internals.ts__isPromiseLike",
+          "unitKind": "function",
+          "name": "isPromiseLike",
+          "qualifiedName": "isPromiseLike",
+          "parentUnitId": null,
+          "startLine": 240,
+          "endLine": 243,
+          "signature": "function isPromiseLike(value: any): value is PromiseLike<any>",
+          "parameters": [
+            { "name": "value", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "value is PromiseLike<any>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [
+            "Non-object values (primitive types, null, undefined) return false",
+            "Objects without a then property return false",
+            "Objects with a then property that is not a function return false",
+            "Objects with a then property that is a function return true"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns false for invalid or non-promise-like inputs",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["PromiseLike"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Checks if a given value is a promise-like object by verifying it is an object with a then method. Used to identify values that can be awaited or chained.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isPromiseLike is called with the Promise",
+              "then": "Returns true",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isPromiseLike is called with the object",
+              "then": "Returns true",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isPromiseLike is called with the object",
+              "then": "Returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "cb3852280cf7afd3b3c643daa2c3cb76b3507233afbcdbbb9810405292a6e03a"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__shouldThrowSynchronously#function:shouldThrowSynchronously",
+        "unitKind": "function",
+        "name": "shouldThrowSynchronously",
+        "qualifiedName": "shouldThrowSynchronously",
+        "parentUnitId": null,
+        "startLine": 246,
+        "endLine": 255,
+        "isBehavioral": false,
+        "source": "]\n\nexport type {\n  AtomState as INTERNAL_AtomState,\n  Mounted as INTERNAL_Mounted,\n  AtomStateMap as INTERNAL_AtomStateMap,\n  MountedMap as INTERNAL_MountedMap,\n  InvalidatedAtoms as INTERNAL_InvalidatedAtoms,\n  ChangedAtoms as INTERNAL_ChangedAtoms,\n  Callbacks as INTERNAL_Callbacks,",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__shouldThrowSynchronously#function:shouldThrowSynchronously",
+          "fileId": "src/vanilla/internals.ts__shouldThrowSynchronously",
+          "unitKind": "function",
+          "name": "shouldThrowSynchronously",
+          "qualifiedName": "shouldThrowSynchronously",
+          "parentUnitId": null,
+          "startLine": 246,
+          "endLine": 255,
+          "signature": "shouldThrowSynchronously",
+          "parameters": [],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["Returns a boolean indicating whether synchronous throwing is required."],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Predicate function that determines whether a given atom or value should trigger a synchronous throw rather than being handled through the asynchronous/promise-based path of the store.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "14b8b0596dbf565e2630352cf6b163179a6ae1cb4ae1cec6c52929219ad572b2"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__addPendingPromiseToDependency#function:addPendingPromiseToDependency",
+        "unitKind": "function",
+        "name": "addPendingPromiseToDependency",
+        "qualifiedName": "addPendingPromiseToDependency",
+        "parentUnitId": null,
+        "startLine": 258,
+        "endLine": 267,
+        "isBehavioral": false,
+        "source": "  AtomOnInit as INTERNAL_AtomOnInit,\n  AtomOnMount as INTERNAL_AtomOnMount,\n  EnsureAtomState as INTERNAL_EnsureAtomState,\n  FlushCallbacks as INTERNAL_FlushCallbacks,\n  RecomputeInvalidatedAtoms as INTERNAL_RecomputeInvalidatedAtoms,\n  ReadAtomState as INTERNAL_ReadAtomState,\n  InvalidateDependents as INTERNAL_InvalidateDependents,\n  WriteAtomState as INTERNAL_WriteAtomState,\n  MountDependencies as INTERNAL_MountDependencies,\n  MountAtom as INTERNAL_MountAtom,",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__addPendingPromiseToDependency#function:addPendingPromiseToDependency",
+          "fileId": "src/vanilla/internals.ts__addPendingPromiseToDependency",
+          "unitKind": "function",
+          "name": "addPendingPromiseToDependency",
+          "qualifiedName": "addPendingPromiseToDependency",
+          "parentUnitId": null,
+          "startLine": 258,
+          "endLine": 267,
+          "signature": "function addPendingPromiseToDependency(dependency: AtomState, promise: Promise<unknown>, abortHandler?: () => void): void",
+          "parameters": [
+            {
+              "name": "dependency",
+              "type": "AtomState",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "promise",
+              "type": "Promise<unknown>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "abortHandler",
+              "type": "(() => void)",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "export",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["dependency is a valid AtomState object", "promise is a Promise instance"],
+          "postconditions": [
+            "dependency.pendingPromise is set to the provided promise",
+            "If abortHandler is provided, it is registered with the promise's abort mechanism"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If abortHandler is undefined, no abort handler is registered",
+            "If dependency is already pending, the previous pending promise is replaced"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "dependency.pendingPromise property",
+            "dependency.abortHandler property (if abortHandler provided)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["AtomState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Associates a pending promise with a dependency's atom state for dependency tracking, linking an optional abort handler to the promise's lifecycle.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "addPendingPromiseToDependency(dependency, promise) is called",
+              "then": "dependency.pendingPromise is set to the provided promise",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "addPendingPromiseToDependency(dependency, promise, abortHandler) is called",
+              "then": "The abortHandler is associated with the promise's abort mechanism",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "addPendingPromiseToDependency(dependency, newPromise) is called",
+              "then": "The previous pending promise is replaced with the new promise",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c8b92e375b744521ec561002a6d319b316d087a490dc01705610159dac386f29"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__getMountedOrPendingDependents#function:getMountedOrPendingDependents",
+        "unitKind": "function",
+        "name": "getMountedOrPendingDependents",
+        "qualifiedName": "getMountedOrPendingDependents",
+        "parentUnitId": null,
+        "startLine": 270,
+        "endLine": 287,
+        "isBehavioral": false,
+        "source": "  BuildingBlocks as INTERNAL_BuildingBlocks,\n  StoreHooks as INTERNAL_StoreHooks,\n}\n\n//\n// Some util functions\n//\n\nfunction hasInitialValue<T extends AnyAtom>(\n  atom: T,\n): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) {\n  return 'init' in atom\n}\n\ntype ActuallyWritableAtom<T extends AnyAtom> =\n  T extends WritableAtom<infer V, infer A, infer R>\n    ? T & WritableAtom<V, A, R>\n    : T extends Atom<infer V>",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__getMountedOrPendingDependents#function:getMountedOrPendingDependents",
+          "fileId": "src/vanilla/internals.ts__getMountedOrPendingDependents",
+          "unitKind": "function",
+          "name": "getMountedOrPendingDependents",
+          "qualifiedName": "getMountedOrPendingDependents",
+          "parentUnitId": null,
+          "startLine": 270,
+          "endLine": 287,
+          "signature": "function getMountedOrPendingDependents(atomState: AtomState): AtomState[]",
+          "parameters": [
+            {
+              "name": "atomState",
+              "type": "AtomState",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "AtomState[]",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "atomState is a valid, non-null internal atom state object with a populated dependents map"
+          ],
+          "postconditions": [
+            "Returns an array (possibly empty) of AtomState objects",
+            "Every returned atom state is either mounted or has a pending promise dependency on the input atom"
+          ],
+          "invariants": [
+            "The returned collection contains no duplicates",
+            "The function is pure — it does not mutate atomState or any global store state"
+          ],
+          "edgeCases": [
+            "atomState has no mounted or pending dependents — returns an empty array []",
+            "atomState has dependents that are neither mounted nor pending — those dependents are excluded from the result"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["AtomState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Given an atom's internal state, returns the collection of dependent atom states that are either currently mounted in the dependency graph or have a pending (promise-based) dependency relationship, used for dependency traversal and invalidation propagation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "7cf8f70ef54a7df9586bbe84bfd754cf6132535c1779f39e4c8e4997b00d6c18"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__createStoreHook#function:createStoreHook",
+        "unitKind": "function",
+        "name": "createStoreHook",
+        "qualifiedName": "createStoreHook",
+        "parentUnitId": null,
+        "startLine": 311,
+        "endLine": 320,
+        "isBehavioral": false,
+        "source": "  if (import.meta.env?.MODE !== 'production' && !('v' in atomState)) {\n    throw new Error('[Bug] atom state is not initialized')\n  }\n  return atomState.v!\n}\n\nfunction isPromiseLike(p: unknown): p is PromiseLike<unknown> {\n  return typeof (p as PromiseLike<unknown>)?.then === 'function'\n}\n",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__createStoreHook#function:createStoreHook",
+          "fileId": "src/vanilla/internals.ts__createStoreHook",
+          "unitKind": "function",
+          "name": "createStoreHook",
+          "qualifiedName": "createStoreHook",
+          "parentUnitId": null,
+          "startLine": 311,
+          "endLine": 320,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Factory function that creates and returns a React hook for accessing a specific atom store. It encapsulates store creation and provides a hook interface for components to interact with the store.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "07922f0f1f436b183201d4c0330d7ac626b451ff9d3b8fb829663cc6e5b81f88"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__createStoreHookForAtoms#function:createStoreHookForAtoms",
+        "unitKind": "function",
+        "name": "createStoreHookForAtoms",
+        "qualifiedName": "createStoreHookForAtoms",
+        "parentUnitId": null,
+        "startLine": 323,
+        "endLine": 347,
+        "isBehavioral": false,
+        "source": "    return false\n  }\n  const name = error.name\n  const message = error.message.toLowerCase()\n  return (\n    (name === 'RangeError' || name === 'InternalError') &&\n    (message.includes('call stack') ||\n      message.includes('too much recursion') ||\n      message.includes('stack overflow'))\n  )\n}\n\nfunction addPendingPromiseToDependency(\n  atom: AnyAtom,\n  promise: PromiseLike<AnyValue>,\n  dependencyAtomState: AtomState,\n): void {\n  if (!dependencyAtomState.p.has(atom)) {\n    dependencyAtomState.p.add(atom)\n    const cleanup = () => dependencyAtomState.p.delete(atom)\n    promise.then(cleanup, cleanup)\n  }\n}\n\nfunction getMountedOrPendingDependents(",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__createStoreHookForAtoms#function:createStoreHookForAtoms",
+          "fileId": "src/vanilla/internals.ts__createStoreHookForAtoms",
+          "unitKind": "function",
+          "name": "createStoreHookForAtoms",
+          "qualifiedName": "createStoreHookForAtoms",
+          "parentUnitId": null,
+          "startLine": 323,
+          "endLine": 347,
+          "signature": "function createStoreHookForAtoms(store: Store, atoms: AnyAtom[]): (notifyInBatch: () => void) => () => void",
+          "parameters": [
+            { "name": "store", "type": "Store", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "atoms", "type": "AnyAtom[]", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "(notifyInBatch: () => void) => () => void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "store must be a valid Store instance with working get/set/subscribe capabilities",
+            "atoms array must contain valid atom objects registered or registerable in the store"
+          ],
+          "postconditions": [
+            "Returns a function that, when called with a notifyInBatch callback, establishes subscriptions to all provided atoms and returns a cleanup function",
+            "The cleanup function unsubscribes from every atom and removes pending listeners"
+          ],
+          "invariants": [
+            "Each atom in the atoms array receives exactly one subscription per invocation of the returned hook",
+            "The returned unsubscribe function is idempotent — calling it multiple times does not throw or double-remove"
+          ],
+          "edgeCases": [
+            "Empty atoms array — returns a hook that subscribes to nothing; unsubscribe is a no-op",
+            "Single atom in array — behaves identically to a single-atom subscription",
+            "notifyInBatch callback is null/undefined — subscriptions still establish; batch notification is skipped",
+            "Atom already subscribed by another hook — independent subscription lifecycle; unmounting one does not affect the other"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Adds subscription listeners to the store for each provided atom",
+            "May add entries to atom state dependency tracking during subscription setup"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "subscribe", "source": "store", "kind": "external" },
+            { "name": "get", "source": "store", "kind": "external" }
+          ],
+          "symbolReferences": ["Store", "AnyAtom"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a scoped store hook that subscribes a caller to changes in a specific set of atoms within a given store, returning a function that wires up per-atom subscriptions and returns an unsubscribe teardown.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e70417355fa8b9139062cca60ced2f8ebd76684aef541dccb7bdd685fcad7f17"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__initializeStoreHooks#function:initializeStoreHooks",
+        "unitKind": "function",
+        "name": "initializeStoreHooks",
+        "qualifiedName": "initializeStoreHooks",
+        "parentUnitId": null,
+        "startLine": 350,
+        "endLine": 358,
+        "isBehavioral": false,
+        "source": "  mountedMap: MountedMap,\n): Iterable<AnyAtom> {\n  const mounted = mountedMap.get(atom)\n  const mountedDependents = mounted?.t\n  const pendingDependents = atomState.p\n  if (!mountedDependents?.size) {\n    return pendingDependents\n  }\n  if (!pendingDependents.size) {",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__initializeStoreHooks#function:initializeStoreHooks",
+          "fileId": "src/vanilla/internals.ts__initializeStoreHooks",
+          "unitKind": "function",
+          "name": "initializeStoreHooks",
+          "qualifiedName": "initializeStoreHooks",
+          "parentUnitId": null,
+          "startLine": 350,
+          "endLine": 358,
+          "signature": null,
+          "parameters": [
+            { "name": "atom", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "atomState", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "mountedMap",
+              "type": "MountedMap",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "Iterable<AnyAtom>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "mountedMap must be a valid MountedMap containing the atom, atomState must have a 'p' property for pending dependents, and atom must be provided."
+          ],
+          "postconditions": [
+            "Returns an Iterable<AnyAtom> containing the pending dependents of the atom based on the mounted state."
+          ],
+          "invariants": [
+            "The returned iterable is derived from the current state of mountedMap and atomState without side effects."
+          ],
+          "edgeCases": [
+            "When mountedDependents is undefined or has size 0, returns pendingDependents directly. When pendingDependents has size 0, the behavior depends on further logic not shown in the snippet."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "get", "source": "MountedMap", "kind": "internal" }],
+          "symbolReferences": ["MountedMap", "AnyAtom", "AtomState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes store hooks by retrieving mounted dependencies for a given atom and returning pending dependents if no mounted dependents exist.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "37cf5b9e34d4727f85314c5354797867aae819d0754fff8b45cd6a01a9a308c9"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__hasOnInit#function:hasOnInit",
+        "unitKind": "function",
+        "name": "hasOnInit",
+        "qualifiedName": "hasOnInit",
+        "parentUnitId": null,
+        "startLine": 361,
+        "endLine": 364,
+        "isBehavioral": false,
+        "source": "  // only pay the union cost when both sides are non-empty\n  const dependents = new Set<AnyAtom>(mountedDependents)\n  for (const a of pendingDependents) {\n    dependents.add(a)",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__hasOnInit#function:hasOnInit",
+          "fileId": "src/vanilla/internals.ts__hasOnInit",
+          "unitKind": "function",
+          "name": "hasOnInit",
+          "qualifiedName": "hasOnInit",
+          "parentUnitId": null,
+          "startLine": 361,
+          "endLine": 364,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Checks whether an atom has an onInit hook defined.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "d26ba72f5ed3401a68e44d712784068d63c3a59092e64f17155ca942e14523bd"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomRead#function:BUILDING_BLOCK_atomRead",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_atomRead",
+        "qualifiedName": "BUILDING_BLOCK_atomRead",
+        "parentUnitId": null,
+        "startLine": 367,
+        "endLine": 369,
+        "isBehavioral": true,
+        "source": "}\n\n//",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomRead#function:BUILDING_BLOCK_atomRead",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomRead",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_atomRead",
+          "qualifiedName": "BUILDING_BLOCK_atomRead",
+          "parentUnitId": null,
+          "startLine": 367,
+          "endLine": 369,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["Atom must be a valid atom object.", "Store must be initialized and accessible."],
+          "postconditions": [
+            "Returns the atom's current value, which may be a promise or concrete value depending on atom state."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If atom is uninitialized, it may initialize it or return a default value.",
+            "If atom depends on other atoms, it reads those dependencies as part of the read process.",
+            "If atom value is a promise, the function may return the promise or handle it asynchronously."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "throws an error",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isAtomStateInitialized", "source": "src/vanilla/internals.ts", "kind": "internal" },
+            { "name": "BUILDING_BLOCK_readAtomState", "source": "src/vanilla/internals.ts", "kind": "internal" }
+          ],
+          "symbolReferences": ["Atom", "Store", "AtomState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reads the current value of an atom from the store, handling initialization and dependency tracking to ensure the atom's state is accessible.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "atomRead is called with the atom",
+              "then": "It returns the atom's current concrete value.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "atomRead is called with the atom",
+              "then": "It initializes the atom and returns its initial value.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "atomRead is called with the atom",
+              "then": "It reads the dependency atoms and returns the atom's value based on their current states.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4a8948c0df94c42272e675536eb8b5dc62222a87f69c427e6a70d2c4f2cf80b8"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomWrite#function:BUILDING_BLOCK_atomWrite",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_atomWrite",
+        "qualifiedName": "BUILDING_BLOCK_atomWrite",
+        "parentUnitId": null,
+        "startLine": 372,
+        "endLine": 375,
+        "isBehavioral": true,
+        "source": "\ntype StoreHook = {\n  (): void\n  add(callback: () => void): () => void",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomWrite#function:BUILDING_BLOCK_atomWrite",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomWrite",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_atomWrite",
+          "qualifiedName": "BUILDING_BLOCK_atomWrite",
+          "parentUnitId": null,
+          "startLine": 372,
+          "endLine": 375,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The atom must be mounted or initialized in the store",
+            "The atom must be writable (not read-only)"
+          ],
+          "postconditions": [
+            "The atom's value is updated to the new value",
+            "Dependent atoms are marked for recomputation if necessary"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If the value is a promise, it may be stored as a promise without immediate resolution",
+            "If the atom is read-only, an error is thrown and no state change occurs",
+            "If the store is not initialized, behavior is undefined or an error may be thrown"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Throws an error for invalid writes, such as writing to a read-only atom or with invalid types",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Store's internal state for the target atom",
+            "Dependency graph of atoms if dependencies are affected"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Core function for writing a new value to an atom in the store, ensuring state updates and dependency invalidation are handled correctly.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6958d1fefe28e46271f4940a4ff97f71cbe7a9314e7fcd01e7042f61b0f623dd"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomOnInit#function:BUILDING_BLOCK_atomOnInit",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_atomOnInit",
+        "qualifiedName": "BUILDING_BLOCK_atomOnInit",
+        "parentUnitId": null,
+        "startLine": 376,
+        "endLine": 378,
+        "isBehavioral": true,
+        "source": "}\n\ntype StoreHookForAtoms = {",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomOnInit#function:BUILDING_BLOCK_atomOnInit",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomOnInit",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_atomOnInit",
+          "qualifiedName": "BUILDING_BLOCK_atomOnInit",
+          "parentUnitId": null,
+          "startLine": 376,
+          "endLine": 378,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Atom state must be accessible via store internals",
+            "hasOnInit is available to guard the onInit invocation"
+          ],
+          "postconditions": [
+            "If the atom has an onInit handler, it has been invoked with the appropriate atom context"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Atom without onInit handler: no callback is invoked, function is a no-op",
+            "Atom with onInit handler: the handler is called exactly once during initialization"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Potential mutation of atom state if onInit callback modifies store or atom internals"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "hasOnInit", "source": "src/vanilla/internals.ts", "kind": "internal" },
+            { "name": "atom.onInit", "source": "atom instance", "kind": "internal" }
+          ],
+          "symbolReferences": ["StoreHookForAtoms"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Internal building block that invokes an atom's onInit callback during atom initialization, delegating to the hasOnInit guard to check eligibility.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2dedd1ef048c55a9577daf8a84be9ea43a1f1da7be8779f55620518f3cc2228c"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomOnMount#function:BUILDING_BLOCK_atomOnMount",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_atomOnMount",
+        "qualifiedName": "BUILDING_BLOCK_atomOnMount",
+        "parentUnitId": null,
+        "startLine": 380,
+        "endLine": 384,
+        "isBehavioral": true,
+        "source": "  add(atom: AnyAtom, callback: () => void): () => void\n  add(atom: undefined, callback: (atom: AnyAtom) => void): () => void\n}\n\n/** StoreHooks are an experimental API. */",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomOnMount#function:BUILDING_BLOCK_atomOnMount",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_atomOnMount",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_atomOnMount",
+          "qualifiedName": "BUILDING_BLOCK_atomOnMount",
+          "parentUnitId": null,
+          "startLine": 380,
+          "endLine": 384,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["AnyAtom"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "This function handles the mounting lifecycle event for an atom, ensuring that onMount callbacks are executed when the atom is added to the store, managing setup and teardown as needed.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a14163eff3708d58c5c115961db6b47dd73339e57d6b8a645e320f343289bf78"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_ensureAtomState#function:BUILDING_BLOCK_ensureAtomState",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_ensureAtomState",
+        "qualifiedName": "BUILDING_BLOCK_ensureAtomState",
+        "parentUnitId": null,
+        "startLine": 387,
+        "endLine": 407,
+        "isBehavioral": true,
+        "source": "  readonly i?: StoreHookForAtoms\n  /** Listener to notify when the atom is read. */\n  readonly r?: StoreHookForAtoms\n  /** Listener to notify when the atom value is changed. */\n  readonly c?: StoreHookForAtoms\n  /** Listener to notify when the atom is mounted. */\n  readonly m?: StoreHookForAtoms\n  /** Listener to notify when the atom is unmounted. */\n  readonly u?: StoreHookForAtoms\n  /** Listener to notify when callbacks are being flushed. */\n  readonly f?: StoreHook\n}\n\nconst createStoreHook = (): StoreHook => {\n  const callbacks = new Set<() => void>()\n  const notify = () => callbacks.forEach((fn) => fn())\n  notify.add = (fn: () => void) => {\n    callbacks.add(fn)\n    return () => callbacks.delete(fn)\n  }\n  return notify",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_ensureAtomState#function:BUILDING_BLOCK_ensureAtomState",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_ensureAtomState",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_ensureAtomState",
+          "qualifiedName": "BUILDING_BLOCK_ensureAtomState",
+          "parentUnitId": null,
+          "startLine": 387,
+          "endLine": 407,
+          "signature": "BUILDING_BLOCK_ensureAtomState(store: Store, atom: Atom<any>): AtomState",
+          "parameters": [
+            { "name": "store", "type": "Store", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "atom", "type": "Atom<any>", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "AtomState",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["store is a valid Store instance", "atom is a valid Atom"],
+          "postconditions": [
+            "Returns a non-null AtomState for the given atom in the store",
+            "The store's internal atom-state map contains an entry for the given atom after invocation"
+          ],
+          "invariants": [
+            "The returned AtomState is always the same object for a given (store, atom) pair within a single store lifetime"
+          ],
+          "edgeCases": [
+            "If the atom state is already initialized, the existing AtomState is returned without modification",
+            "If the atom state is not yet initialized, a new AtomState is created (using hasInitialValue to determine initial value) and inserted into the store"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates the store's internal atom-state map when the atom state does not yet exist (inserts a new entry)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isAtomStateInitialized", "source": "src/vanilla/internals.ts", "kind": "internal" },
+            { "name": "hasInitialValue", "source": "src/vanilla/internals.ts", "kind": "internal" }
+          ],
+          "symbolReferences": ["Store", "Atom", "AtomState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Ensures that an atom has an initialized state entry in the given store, creating and inserting the initial state if it does not yet exist. Returns the (possibly newly created) AtomState for the atom.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_ensureAtomState(store, atom) is called",
+              "then": "A new AtomState is created in the store and returned; subsequent calls with the same (store, atom) return the same AtomState object",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_ensureAtomState(store, atom) is called",
+              "then": "The existing AtomState is returned unchanged without re-initialization",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "cd645eeaa91101e4527ca312d45a0f1852b1040aecb7e1b7cc115ec4c8e8d1c9"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_flushCallbacks#function:BUILDING_BLOCK_flushCallbacks",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_flushCallbacks",
+        "qualifiedName": "BUILDING_BLOCK_flushCallbacks",
+        "parentUnitId": null,
+        "startLine": 410,
+        "endLine": 450,
+        "isBehavioral": true,
+        "source": "const createStoreHookForAtoms = (): StoreHookForAtoms => {\n  const all: object = {}\n  const callbacks = new WeakMap<\n    AnyAtom | typeof all,\n    Set<(atom?: AnyAtom) => void>\n  >()\n  const notify = (atom: AnyAtom) => {\n    callbacks.get(all)?.forEach((fn) => fn(atom))\n    callbacks.get(atom)?.forEach((fn) => fn())\n  }\n  notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {\n    const key = atom || all\n    let fns = callbacks.get(key)\n    if (!fns) {\n      fns = new Set()\n      callbacks.set(key, fns)\n    }\n    fns.add(fn)\n    return () => {\n      fns!.delete(fn)\n      if (!fns!.size) {\n        callbacks.delete(key)\n      }\n    }\n  }\n  return notify as StoreHookForAtoms\n}\n\nfunction initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {\n  type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }\n  ;(storeHooks as SH).i ||= createStoreHookForAtoms()\n  ;(storeHooks as SH).r ||= createStoreHookForAtoms()\n  ;(storeHooks as SH).c ||= createStoreHookForAtoms()\n  ;(storeHooks as SH).m ||= createStoreHookForAtoms()\n  ;(storeHooks as SH).u ||= createStoreHookForAtoms()\n  ;(storeHooks as SH).f ||= createStoreHook()\n  return storeHooks as Required<StoreHooks>\n}\n\nfunction hasOnInit<T extends AnyAtom>(atom: T): atom is T & WithOnInit {\n  return !!atom.INTERNAL_onInit",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_flushCallbacks#function:BUILDING_BLOCK_flushCallbacks",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_flushCallbacks",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_flushCallbacks",
+          "qualifiedName": "BUILDING_BLOCK_flushCallbacks",
+          "parentUnitId": null,
+          "startLine": 410,
+          "endLine": 450,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["All pending callbacks are executed, and the callback queue is cleared."],
+          "invariants": [],
+          "edgeCases": ["If no callbacks are pending, the function returns immediately without side effects."],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Flushes pending callbacks to notify all registered listeners of atom state changes.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "af89d92ac3bf89c4845ab61cd034ecfc9e9a578188ed4e75c6d1f04532081f35"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_recomputeInvalidatedAtoms#function:BUILDING_BLOCK_recomputeInvalidatedAtoms",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_recomputeInvalidatedAtoms",
+        "qualifiedName": "BUILDING_BLOCK_recomputeInvalidatedAtoms",
+        "parentUnitId": null,
+        "startLine": 453,
+        "endLine": 522,
+        "isBehavioral": true,
+        "source": "//\n// Main functions\n//\n\nconst BUILDING_BLOCK_atomRead: AtomRead = (\n  _buildingBlocks,\n  _store,\n  atom,\n  ...params\n) => atom.read(...params)\nconst BUILDING_BLOCK_atomWrite: AtomWrite = (\n  _buildingBlocks,\n  _store,\n  atom,\n  ...params\n) => atom.write(...params)\nconst BUILDING_BLOCK_atomOnInit: AtomOnInit = (_buildingBlocks, store, atom) =>\n  atom.INTERNAL_onInit(store)\nconst BUILDING_BLOCK_atomOnMount: AtomOnMount = (\n  _buildingBlocks,\n  _store,\n  atom,\n  setAtom,\n) => atom.onMount?.(setAtom)\n\nconst BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (\n  buildingBlocks,\n  store,\n  atom,\n) => {\n  const atomStateMap = buildingBlocks[0]\n  let atomState = atomStateMap.get(atom)\n  if (!atomState) {\n    // Because ensureAtomState is a hot spot, we intentionally delay the evaluation even though this pattern is exceptional.\n    // Ref: https://github.com/pmndrs/jotai/pull/3313\n    const storeHooks = buildingBlocks[6]\n    const atomOnInit = buildingBlocks[9]\n    atomState = { d: new Map(), p: new Set(), n: 0 }\n    atomStateMap.set(atom, atomState)\n    storeHooks.i?.(atom)\n    if (hasOnInit(atom)) {\n      atomOnInit(buildingBlocks, store, atom)\n    }\n  }\n  return atomState as never\n}\n\nconst BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (\n  buildingBlocks,\n  store,\n) => {\n  const mountedMap = buildingBlocks[1]\n  const changedAtoms = buildingBlocks[3]\n  const mountCallbacks = buildingBlocks[4]\n  const unmountCallbacks = buildingBlocks[5]\n  const storeHooks = buildingBlocks[6]\n  const recomputeInvalidatedAtoms = buildingBlocks[13]\n  if (\n    !storeHooks.f &&\n    !changedAtoms.size &&\n    !mountCallbacks.size &&\n    !unmountCallbacks.size\n  ) {\n    return\n  }\n  const errors: unknown[] = []\n  const call = (fn: () => void) => {\n    try {\n      fn()\n    } catch (e) {",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_recomputeInvalidatedAtoms#function:BUILDING_BLOCK_recomputeInvalidatedAtoms",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_recomputeInvalidatedAtoms",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_recomputeInvalidatedAtoms",
+          "qualifiedName": "BUILDING_BLOCK_recomputeInvalidatedAtoms",
+          "parentUnitId": null,
+          "startLine": 453,
+          "endLine": 522,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Recomputes atoms that were invalidated during a store update cycle, triggering dependent atom re-evaluations.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "d0af9ad0a12d235b608ca76e5acd3380aa3267987cb20326470afd208dcafa70"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_readAtomState#function:BUILDING_BLOCK_readAtomState",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_readAtomState",
+        "qualifiedName": "BUILDING_BLOCK_readAtomState",
+        "parentUnitId": null,
+        "startLine": 525,
+        "endLine": 635,
+        "isBehavioral": true,
+        "source": "  }\n  do {\n    if (storeHooks.f) {\n      call(storeHooks.f)\n    }\n    const callbacks = new Set<() => void>()\n    for (const atom of changedAtoms) {\n      const listeners = mountedMap.get(atom)?.l\n      if (listeners) {\n        for (const listener of listeners) {\n          callbacks.add(listener)\n        }\n      }\n    }\n    changedAtoms.clear()\n    for (const fn of unmountCallbacks) {\n      callbacks.add(fn)\n    }\n    unmountCallbacks.clear()\n    for (const fn of mountCallbacks) {\n      callbacks.add(fn)\n    }\n    mountCallbacks.clear()\n    for (const fn of callbacks) {\n      call(fn)\n    }\n    if (changedAtoms.size) {\n      recomputeInvalidatedAtoms(buildingBlocks, store)\n    }\n  } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)\n  if (errors.length) {\n    throw new AggregateError(errors)\n  }\n}\n\nconst BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (\n  buildingBlocks,\n  store,\n) => {\n  const mountedMap = buildingBlocks[1]\n  const invalidatedAtoms = buildingBlocks[2]\n  const changedAtoms = buildingBlocks[3]\n  const ensureAtomState = buildingBlocks[11]\n  const readAtomState = buildingBlocks[14]\n  const mountDependencies = buildingBlocks[17]\n  if (!changedAtoms.size) {\n    return\n  }\n  // Step 1: traverse the dependency graph to build the topologically sorted atom list\n  // We don't bother to check for cycles, which simplifies the algorithm.\n  // This is a topological sort via depth-first search, slightly modified from\n  // what's described here for simplicity and performance reasons:\n  // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search\n  const sortedReversedAtoms: AnyAtom[] = []\n  const sortedReversedStates: AtomState[] = []\n  const visiting = new WeakSet<AnyAtom>()\n  const visited = new WeakSet<AnyAtom>()\n  const stackAtoms: AnyAtom[] = []\n  const stackStates: AtomState[] = []\n  // Visit the root atoms. This is the only atom in the dependency graph\n  // without incoming edges, which is one reason we can simplify the algorithm\n  for (const atom of changedAtoms) {\n    stackAtoms.push(atom)\n    stackStates.push(ensureAtomState(buildingBlocks, store, atom))\n  }\n  while (stackAtoms.length) {\n    const top = stackAtoms.length - 1\n    const a = stackAtoms[top]!\n    const aState = stackStates[top]!\n    if (visited.has(a)) {\n      // All dependents have been processed, now process this atom\n      stackAtoms.pop()\n      stackStates.pop()\n      continue\n    }\n    if (visiting.has(a)) {\n      // The algorithm calls for pushing onto the front of the list. For\n      // performance, we will simply push onto the end, and then  will iterate in\n      // reverse order later.\n      if (invalidatedAtoms.get(a) === aState.n) {\n        sortedReversedAtoms.push(a)\n        sortedReversedStates.push(aState)\n      } else if (\n        import.meta.env?.MODE !== 'production' &&\n        invalidatedAtoms.has(a)\n      ) {\n        throw new Error('[Bug] invalidated atom exists')\n      }\n      // Atom has been visited but not yet processed\n      visited.add(a)\n      stackAtoms.pop()\n      stackStates.pop()\n      continue\n    }\n    visiting.add(a)\n    // Push unvisited dependents onto the stack\n    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {\n      if (!visiting.has(d)) {\n        stackAtoms.push(d)\n        stackStates.push(ensureAtomState(buildingBlocks, store, d))\n      }\n    }\n  }\n  // Step 2: use the topSortedReversed atom list to recompute all affected atoms\n  // Track what's changed, so that we can short circuit when possible\n  for (let i = sortedReversedAtoms.length - 1; i >= 0; --i) {\n    const a = sortedReversedAtoms[i]!\n    const aState = sortedReversedStates[i]!\n    let hasChangedDeps = false\n    for (const dep of aState.d.keys()) {\n      if (dep !== a && changedAtoms.has(dep)) {",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_readAtomState#function:BUILDING_BLOCK_readAtomState",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_readAtomState",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_readAtomState",
+          "qualifiedName": "BUILDING_BLOCK_readAtomState",
+          "parentUnitId": null,
+          "startLine": 525,
+          "endLine": 635,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": "any[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": "Store", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": "AnyAtom", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": "AtomState | Promise<AtomState>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "buildingBlocks is a non-null array with at least 18 entries (indices 0–17 used by the store internals)",
+            "store is a valid Jotai vanilla store instance",
+            "atom is a registered atom in the store"
+          ],
+          "postconditions": [
+            "Returns an AtomState object representing the atom's current value, pending promise, or error state",
+            "Dependencies of the atom are recorded in the returned AtomState's dependency map (d)",
+            "If the atom's value is a promise, the returned AtomState reflects a pending state"
+          ],
+          "invariants": [
+            "The returned AtomState is consistent with the store's current snapshot at the time of the read",
+            "The dependency map (d) on the returned AtomState reflects only dependencies that were observed during this read"
+          ],
+          "edgeCases": [
+            "If the atom has not been initialized, this function triggers initialization via ensureAtomState (buildingBlocks[11])",
+            "If the atom's value is a PromiseLike, the returned AtomState holds the pending promise rather than a resolved value",
+            "If the atom has no mounted or pending dependents, the read still returns a valid AtomState"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Throws if buildingBlocks is malformed or atom is not recognized",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "May mutate the atom's AtomState dependency map (d) to record read dependencies",
+            "May trigger side effects through ensureAtomState which can initialize atom state in the store",
+            "May add to changedAtoms (buildingBlocks[3]) if the atom's value changes during recomputation"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "ensureAtomState", "source": "buildingBlocks[11]", "kind": "internal" },
+            { "name": "mountDependencies", "source": "buildingBlocks[17]", "kind": "internal" }
+          ],
+          "symbolReferences": ["AtomState", "AnyAtom", "Store"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reading building block for the Jotai vanilla store. Given the building blocks tuple, a store, and an atom, it reads (and potentially computes) the atom's current state value, returning the AtomState that represents the atom's resolved or pending state.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "14",
+              "role": "Index of readAtomState in the buildingBlocks tuple, used by other building blocks to reference it"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "readAtomState is called with the store and atom 'a'",
+              "then": "The returned AtomState contains atom 'a' value and atom 'b' in its dependency map",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "readAtomState is called with the store and atom 'a'",
+              "then": "The atom is initialized via ensureAtomState and a valid AtomState is returned",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "readAtomState is called with the store and that atom",
+              "then": "The returned AtomState holds the pending promise (p field) rather than a resolved value",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6ab7051b5886d839b490596c263a9bbb29e0fbdf9730accc607a1f33daebfdc8"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_invalidateDependents#function:BUILDING_BLOCK_invalidateDependents",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_invalidateDependents",
+        "qualifiedName": "BUILDING_BLOCK_invalidateDependents",
+        "parentUnitId": null,
+        "startLine": 638,
+        "endLine": 654,
+        "isBehavioral": true,
+        "source": "      }\n    }\n    if (hasChangedDeps) {\n      invalidatedAtoms.set(a, aState.n)\n      readAtomState(buildingBlocks, store, a)\n      mountDependencies(buildingBlocks, store, a)\n    }\n    invalidatedAtoms.delete(a)\n  }\n}\n\n// Dev only\nconst storeMutationSet = new WeakSet<Store>()\n\nconst BUILDING_BLOCK_readAtomState: ReadAtomState = (\n  buildingBlocks,\n  store,",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_invalidateDependents#function:BUILDING_BLOCK_invalidateDependents",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_invalidateDependents",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_invalidateDependents",
+          "qualifiedName": "BUILDING_BLOCK_invalidateDependents",
+          "parentUnitId": null,
+          "startLine": 638,
+          "endLine": 654,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": "BuildingBlocks",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": "Store", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": "Atom", "default": null, "optional": false, "variadic": false, "order": 2 },
+            {
+              "name": "atomState",
+              "type": "AtomState",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "invalidatedAtoms",
+              "type": "Map<Atom, number>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "buildingBlocks must be a valid BuildingBlocks record containing readAtomState and mountDependencies implementations",
+            "store must be a valid Store instance",
+            "atom must be an atom whose dependents are to be invalidated",
+            "atomState must be the current AtomState for the given atom",
+            "invalidatedAtoms must be a Map tracking atoms pending invalidation, keyed by atom with version number as value"
+          ],
+          "postconditions": [
+            "Every dependent atom with changed dependencies has been recomputed (readAtomState called) and its dependencies remounted (mountDependencies called)",
+            "The source atom has been removed from the invalidatedAtoms map via delete",
+            "The invalidatedAtoms map reflects all newly invalidated dependent atoms (if any had changed deps)"
+          ],
+          "invariants": ["After execution completes, the source atom is not present as a key in invalidatedAtoms"],
+          "edgeCases": [
+            "If no dependents have changed dependencies (hasChangedDeps is false for all), no readAtomState or mountDependencies calls are made; only the cleanup delete occurs",
+            "If the dependents list is empty, the function only performs the invalidatedAtoms.delete(a) cleanup"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates the invalidatedAtoms Map: adds entries via set(a, aState.n) for dependents with changed deps, removes the source atom entry via delete(a)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "readAtomState", "source": "buildingBlocks", "kind": "internal" },
+            { "name": "mountDependencies", "source": "buildingBlocks", "kind": "internal" }
+          ],
+          "symbolReferences": ["ReadAtomState", "BuildingBlocks", "Store", "Atom", "AtomState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Propagates invalidation through the atom dependency graph: for each dependent atom that has changed dependencies, records its version in the invalidatedAtoms map, recomputes its state via readAtomState, and remounts its dependencies, then cleans up the tracking entry for the source atom.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_invalidateDependents is called with atom A",
+              "then": "invalidatedAtoms contains B mapped to B's version n; readAtomState is called for B; mountDependencies is called for B; A is removed from invalidatedAtoms",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_invalidateDependents is called with atom A",
+              "then": "readAtomState and mountDependencies are NOT called for B; A is removed from invalidatedAtoms; B is not added to invalidatedAtoms",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_invalidateDependents is called with atom A",
+              "then": "No readAtomState or mountDependencies calls occur; A is removed from invalidatedAtoms",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "227b3bac9e174afcab233eeab773720cc90e82c2e61a4f19f10d56656b368f7b"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_writeAtomState#function:BUILDING_BLOCK_writeAtomState",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_writeAtomState",
+        "qualifiedName": "BUILDING_BLOCK_writeAtomState",
+        "parentUnitId": null,
+        "startLine": 657,
+        "endLine": 728,
+        "isBehavioral": true,
+        "source": "  const mountedMap = buildingBlocks[1]\n  const invalidatedAtoms = buildingBlocks[2]\n  const changedAtoms = buildingBlocks[3]\n  const storeHooks = buildingBlocks[6]\n  const atomRead = buildingBlocks[7]\n  const ensureAtomState = buildingBlocks[11]\n  const flushCallbacks = buildingBlocks[12]\n  const recomputeInvalidatedAtoms = buildingBlocks[13]\n  const readAtomState = buildingBlocks[14]\n  const writeAtomState = buildingBlocks[16]\n  const mountDependencies = buildingBlocks[17]\n  const setAtomStateValueOrPromise = buildingBlocks[20]\n  const registerAbortHandler = buildingBlocks[26]\n  const storeEpochHolder = buildingBlocks[28]\n  const atomState = ensureAtomState(buildingBlocks, store, atom)\n  const storeEpochNumber = storeEpochHolder[0]\n  // See if we can skip recomputing this atom.\n  if (isAtomStateInitialized(atomState)) {\n    if (\n      // If the atom is mounted, we can use cached atom state,\n      // because it should have been updated by dependencies.\n      // We can't use the cache if the atom is invalidated.\n      (mountedMap.has(atom) && invalidatedAtoms.get(atom) !== atomState.n) ||\n      // If atom is not mounted, we can use cached atom state,\n      // only if store hasn't been mutated.\n      atomState.m === storeEpochNumber\n    ) {\n      atomState.m = storeEpochNumber\n      return atomState\n    }\n    // Otherwise, check if the dependencies have changed.\n    // If all dependencies haven't changed, we can use the cache.\n    let hasChangedDeps = false\n    for (const [a, n] of atomState.d) {\n      if (readAtomState(buildingBlocks, store, a).n !== n) {\n        hasChangedDeps = true\n        break\n      }\n    }\n    if (!hasChangedDeps) {\n      atomState.m = storeEpochNumber\n      return atomState\n    }\n  }\n  // Compute a new state for this atom.\n  let isSync = true\n  const prevDeps = new Set<AnyAtom>(atomState.d.keys())\n  const pruneDependencies = () => {\n    for (const a of prevDeps) {\n      atomState.d.delete(a)\n    }\n  }\n  const mountDependenciesIfAsync = () => {\n    if (mountedMap.has(atom)) {\n      // If changedAtoms is already populated, an outer recompute cycle will handle it\n      const shouldRecompute = !changedAtoms.size\n      mountDependencies(buildingBlocks, store, atom)\n      if (shouldRecompute) {\n        recomputeInvalidatedAtoms(buildingBlocks, store)\n        flushCallbacks(buildingBlocks, store)\n      }\n    }\n  }\n  const getter = <V>(a: Atom<V>) => {\n    if (a === (atom as AnyAtom)) {\n      const aState = ensureAtomState(buildingBlocks, store, a)\n      if (!isAtomStateInitialized(aState)) {\n        if (hasInitialValue(a)) {\n          setAtomStateValueOrPromise(buildingBlocks, store, a, a.init)\n        } else {\n          // NOTE invalid derived atoms can reach here\n          throw new Error('no atom init')",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_writeAtomState#function:BUILDING_BLOCK_writeAtomState",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_writeAtomState",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_writeAtomState",
+          "qualifiedName": "BUILDING_BLOCK_writeAtomState",
+          "parentUnitId": null,
+          "startLine": 657,
+          "endLine": 728,
+          "signature": "function BUILDING_BLOCK_writeAtomState(buildingBlocks: any[], store: any, atom: AnyAtom, write: any): AtomState",
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": "any[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": "any", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": "AnyAtom", "default": null, "optional": false, "variadic": false, "order": 2 },
+            { "name": "write", "type": "any", "default": null, "optional": false, "variadic": false, "order": 3 }
+          ],
+          "returnType": "AtomState",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "buildingBlocks array must be properly initialized with all required building blocks at the expected indices",
+            "store must be a valid store instance with epoch tracking",
+            "atom must be a valid atom registered in the store"
+          ],
+          "postconditions": [
+            "Returns the atom state object (either cached or newly computed)",
+            "atomState.m is updated to the current store epoch number",
+            "Dependencies in atomState.d may be updated or pruned",
+            "Mounted atom's dependencies may be re-mounted if changed"
+          ],
+          "invariants": [
+            "The atom state's epoch marker (atomState.m) always reflects the store epoch on return",
+            "Dependencies tracked in atomState.d reflect the atom's current dependency set"
+          ],
+          "edgeCases": [
+            "Atom is mounted and not invalidated: returns cached state directly without recomputation",
+            "Atom is not mounted but store epoch matches atomState.m: returns cached state",
+            "All dependencies unchanged (readAtomState(a).n === n for every [a, n] in atomState.d): returns cached state",
+            "Dependencies changed: recomputes state with getter/setter callbacks",
+            "Atom has no initial value and is read as dependency in getter: throws 'no atom init'",
+            "Atom is mounted with async dependencies: triggers mountDependencies and recomputation via recomputeInvalidatedAtoms"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "throws 'no atom init' when reading an uninitialized atom without initial value in the inner getter callback",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "atomState.m (epoch marker updated to store epoch)",
+            "atomState.d (dependencies map updated via pruneDependencies and mountDependencies)",
+            "atomState.n (state number updated on recomputation)",
+            "mountedMap (indirectly via mountDependencies)",
+            "invalidatedAtoms (indirectly)",
+            "changedAtoms (indirectly)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "ensureAtomState", "source": "buildingBlocks[11]", "kind": "internal" },
+            { "name": "isAtomStateInitialized", "source": null, "kind": "internal" },
+            { "name": "readAtomState", "source": "buildingBlocks[14]", "kind": "internal" },
+            { "name": "mountDependencies", "source": "buildingBlocks[17]", "kind": "internal" },
+            { "name": "recomputeInvalidatedAtoms", "source": "buildingBlocks[13]", "kind": "internal" },
+            { "name": "flushCallbacks", "source": "buildingBlocks[12]", "kind": "internal" },
+            { "name": "setAtomStateValueOrPromise", "source": "buildingBlocks[20]", "kind": "internal" },
+            { "name": "hasInitialValue", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["AnyAtom", "Atom"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Core building block that computes or returns cached atom state in the store. It checks whether cached state is valid based on mounting status, invalidation, store epoch, and dependency changes, then either returns the cached state or recomputes the atom value with dependency tracking and optional async mount.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "no atom init",
+              "role": "Error thrown when reading an uninitialized atom that has no initial value in the getter callback"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "writeAtomState is called with a write function",
+              "then": "The cached atom state is returned without recomputation",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "writeAtomState is called with a write function",
+              "then": "The cached atom state is returned after updating the epoch marker to the current store epoch number",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The getter is invoked",
+              "then": "An Error with message 'no atom init' is thrown",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "99bdc7806c5e9cb63673b9f39bf939ae186bd051d2970989df3c88db03615f73"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_mountDependencies#function:BUILDING_BLOCK_mountDependencies",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_mountDependencies",
+        "qualifiedName": "BUILDING_BLOCK_mountDependencies",
+        "parentUnitId": null,
+        "startLine": 731,
+        "endLine": 758,
+        "isBehavioral": true,
+        "source": "      return returnAtomValue(aState)\n    }\n    // a !== atom\n    const aState = readAtomState(buildingBlocks, store, a)\n    try {\n      return returnAtomValue(aState)\n    } finally {\n      prevDeps.delete(a)\n      atomState.d.set(a, aState.n)\n      if (isPromiseLike(atomState.v)) {\n        addPendingPromiseToDependency(atom, atomState.v, aState)\n      }\n      if (mountedMap.has(atom)) {\n        mountedMap.get(a)?.t.add(atom)\n      }\n      if (!isSync) {\n        mountDependenciesIfAsync()\n      }\n    }\n  }\n  let controller: AbortController | undefined\n  let setSelf: ((...args: unknown[]) => unknown) | undefined\n  const options = {\n    get signal() {\n      if (!controller) {\n        controller = new AbortController()\n      }\n      return controller.signal",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_mountDependencies#function:BUILDING_BLOCK_mountDependencies",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_mountDependencies",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_mountDependencies",
+          "qualifiedName": "BUILDING_BLOCK_mountDependencies",
+          "parentUnitId": null,
+          "startLine": 731,
+          "endLine": 758,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Atom state is initialized",
+            "Previous dependencies map is provided",
+            "Store and building blocks are available"
+          ],
+          "postconditions": [
+            "Dependency states are updated in atomState.d",
+            "Promise dependencies are added if atom value is promise-like",
+            "Atom is added to dependent's mount map if mounted"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "When dependency a is not equal to atom, reads atom state for a",
+            "If atom value is promise-like, adds pending promise to dependency",
+            "If atom is mounted, updates dependent's mount set",
+            "If isSync is false, mounts dependencies asynchronously"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "atomState.d is updated with dependency state",
+            "mountedMap is accessed and updated",
+            "prevDeps is deleted from"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "readAtomState", "source": null, "kind": "internal" },
+            { "name": "returnAtomValue", "source": null, "kind": "internal" },
+            { "name": "addPendingPromiseToDependency", "source": null, "kind": "internal" },
+            { "name": "mountDependenciesIfAsync", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Mounts dependencies for an atom by reading dependency states, updating dependency maps, handling promise-like values, and conditionally triggering async dependency mounting.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Mounting dependencies is called",
+              "then": "The atom state for a is read and added to atomState.d, and prevDeps entry for a is deleted",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Mounting dependencies is called",
+              "then": "A pending promise is added to the dependency for the atom state",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Mounting dependencies is called",
+              "then": "The atom is added to the mount set of a's dependent map",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e89c56721083d86eb54224e585c9db7b00d4c02abd7c6380fa0645b146002cf5"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_mountAtom#function:BUILDING_BLOCK_mountAtom",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_mountAtom",
+        "qualifiedName": "BUILDING_BLOCK_mountAtom",
+        "parentUnitId": null,
+        "startLine": 761,
+        "endLine": 810,
+        "isBehavioral": true,
+        "source": "      if (import.meta.env?.MODE !== 'production') {\n        // This is shown even before calling. It's a strong warning.\n        console.warn(\n          '[DEPRECATED] setSelf is deprecated and will be removed in v3.',\n        )\n      }\n      if (\n        import.meta.env?.MODE !== 'production' &&\n        !isActuallyWritableAtom(atom)\n      ) {\n        console.warn('setSelf function cannot be used with read-only atom')\n      }\n      if (!setSelf && isActuallyWritableAtom(atom)) {\n        setSelf = (...args) => {\n          if (import.meta.env?.MODE !== 'production' && isSync) {\n            console.warn('setSelf function cannot be called in sync')\n          }\n          if (!isSync) {\n            try {\n              return writeAtomState(buildingBlocks, store, atom, args)\n            } finally {\n              recomputeInvalidatedAtoms(buildingBlocks, store)\n              flushCallbacks(buildingBlocks, store)\n            }\n          }\n        }\n      }\n      return setSelf\n    },\n  }\n  const prevEpochNumber = atomState.n\n  const prevInvalidated = invalidatedAtoms.get(atom) === prevEpochNumber\n  try {\n    if (import.meta.env?.MODE !== 'production') {\n      storeMutationSet.delete(store)\n    }\n    const valueOrPromise = atomRead(\n      buildingBlocks,\n      store,\n      atom,\n      getter,\n      options as never,\n    )\n    if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {\n      console.warn(\n        'Detected store mutation during atom read. This is not supported.',\n      )\n    }\n    setAtomStateValueOrPromise(buildingBlocks, store, atom, valueOrPromise)\n    if (isPromiseLike(valueOrPromise)) {",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_mountAtom#function:BUILDING_BLOCK_mountAtom",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_mountAtom",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_mountAtom",
+          "qualifiedName": "BUILDING_BLOCK_mountAtom",
+          "parentUnitId": null,
+          "startLine": 761,
+          "endLine": 810,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": null, "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Atom state must be initialized (ensureAtomState called prior or atom already initialized)",
+            "Store must be in a valid (non-mutating) state on entry"
+          ],
+          "postconditions": [
+            "Atom state value or promise is set via setAtomStateValueOrPromise",
+            "If atom is writable and setSelf was not previously provided, a setSelf closure is attached that delegates to writeAtomState then recomputeInvalidatedAtoms and flushCallbacks",
+            "Epoch number and invalidation tracking are updated"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If atom is read-only and setSelf is not provided, setSelf remains falsy (no write-back closure created)",
+            "If atom value is promise-like, it is stored as-is without resolution in this step",
+            "In non-production mode, a warning is logged if a store mutation is detected during atomRead",
+            "In non-production mode, a warning is logged if setSelf is called synchronously",
+            "In non-production mode, a deprecation warning about setSelf is always emitted"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Atom state value/promise via setAtomStateValueOrPromise",
+            "Invalidated atoms tracking map (epoch-based)",
+            "storeMutationSet (debug only, non-production)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isActuallyWritableAtom", "source": "BUILDING_BLOCK internals", "kind": "internal" },
+            { "name": "atomRead", "source": "BUILDING_BLOCK_atomRead", "kind": "internal" },
+            {
+              "name": "setAtomStateValueOrPromise",
+              "source": "BUILDING_BLOCK_setAtomStateValueOrPromise",
+              "kind": "internal"
+            },
+            { "name": "writeAtomState", "source": "BUILDING_BLOCK_atomWrite", "kind": "internal" },
+            {
+              "name": "recomputeInvalidatedAtoms",
+              "source": "BUILDING_BLOCK_recomputeInvalidatedAtoms",
+              "kind": "internal"
+            },
+            { "name": "flushCallbacks", "source": "BUILDING_BLOCK_flushCallbacks", "kind": "internal" },
+            { "name": "isPromiseLike", "source": "internals", "kind": "internal" }
+          ],
+          "symbolReferences": ["invalidatedAtoms", "storeMutationSet", "console.warn"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Mounts an atom by reading its initial value (or promise), storing it in atom state, setting up a deprecated `setSelf` write-back helper, tracking epoch/invalidation state, and detecting illegal store mutations during the read phase.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "[DEPRECATED] setSelf is deprecated and will be removed in v3.",
+              "role": "Deprecation warning message emitted in non-production mode when mountAtom is invoked"
+            },
+            {
+              "kind": "format-string",
+              "value": "setSelf function cannot be used with read-only atom",
+              "role": "Non-production warning when setSelf creation attempted on read-only atom"
+            },
+            {
+              "kind": "format-string",
+              "value": "setSelf function cannot be called in sync",
+              "role": "Non-production warning when setSelf invoked during synchronous read phase"
+            },
+            {
+              "kind": "format-string",
+              "value": "Detected store mutation during atom read. This is not supported.",
+              "role": "Non-production warning for illegal store mutation during atomRead"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "51efe05d772c3893bc2e5e12dd52e2e23b017433ce40cfc33007cfa7c738dc1b"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_unmountAtom#function:BUILDING_BLOCK_unmountAtom",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_unmountAtom",
+        "qualifiedName": "BUILDING_BLOCK_unmountAtom",
+        "parentUnitId": null,
+        "startLine": 813,
+        "endLine": 850,
+        "isBehavioral": true,
+        "source": "      )\n      const settle = () => {\n        pruneDependencies()\n        mountDependenciesIfAsync()\n      }\n      valueOrPromise.then(settle, settle)\n    } else {\n      pruneDependencies()\n    }\n    storeHooks.r?.(atom)\n    atomState.m = storeEpochNumber\n    return atomState\n  } catch (error) {\n    if (shouldThrowSynchronously(error)) {\n      throw error\n    }\n    delete atomState.v\n    atomState.e = error\n    ++atomState.n\n    atomState.m = storeEpochNumber\n    return atomState\n  } finally {\n    isSync = false\n    if (atomState.n !== prevEpochNumber && prevInvalidated) {\n      invalidatedAtoms.set(atom, atomState.n)\n      changedAtoms.add(atom)\n      storeHooks.c?.(atom)\n    }\n  }\n}\n\nconst BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (\n  buildingBlocks,\n  store,\n  atom,\n) => {\n  const mountedMap = buildingBlocks[1]\n  const invalidatedAtoms = buildingBlocks[2]",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_unmountAtom#function:BUILDING_BLOCK_unmountAtom",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_unmountAtom",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_unmountAtom",
+          "qualifiedName": "BUILDING_BLOCK_unmountAtom",
+          "parentUnitId": null,
+          "startLine": 813,
+          "endLine": 850,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The atom must have been previously mounted and have valid atomState"],
+          "postconditions": [
+            "Atom state is updated with current storeEpochNumber",
+            "Dependencies are pruned if not async",
+            "Store remove hook (storeHooks.r) is invoked for the atom",
+            "Invalidated atoms and changed atoms tracking is updated in finally block"
+          ],
+          "invariants": [
+            "Atom state epoch number (atomState.n) is incremented on error",
+            "Atom state is in a consistent state after unmounting (v or e set)"
+          ],
+          "edgeCases": [
+            "When atomState contains a promise (valueOrPromise.then), settle is called asynchronously after pruning dependencies",
+            "When shouldThrowSynchronously returns true, error is re-thrown synchronously",
+            "When atomState.n differs from prevEpochNumber and prevInvalidated is true, invalidatedAtoms and changedAtoms are updated"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "Returns atomState with error stored in atomState.e"
+          },
+          "stateMutations": [
+            "atomState.m (storeEpochNumber)",
+            "atomState.v (deleted on error)",
+            "atomState.e (error on failure)",
+            "atomState.n (epoch number incremented on error)",
+            "invalidatedAtoms.set(atom, atomState.n)",
+            "changedAtoms.add(atom)"
+          ],
+          "eventsEmitted": ["storeHooks.r?.(atom)", "storeHooks.c?.(atom)"],
+          "complexity": null,
+          "calls": [
+            { "name": "pruneDependencies", "source": null, "kind": "internal" },
+            { "name": "mountDependenciesIfAsync", "source": null, "kind": "internal" },
+            { "name": "shouldThrowSynchronously", "source": null, "kind": "internal" },
+            { "name": "storeHooks.r", "source": null, "kind": "internal" },
+            { "name": "storeHooks.c", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "storeEpochNumber",
+            "invalidatedAtoms",
+            "changedAtoms",
+            "isSync",
+            "prevEpochNumber",
+            "prevInvalidated"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Unmounts an atom from the store by pruning its dependencies, updating store hooks, and managing the atom state's lifecycle including epoch tracking and invalidation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "4c68faf933c819028f1f9bf520a9a3ffb60bf7a4701b8d775d6bea244508f722"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_setAtomStateValueOrPromise#function:BUILDING_BLOCK_setAtomStateValueOrPromise",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_setAtomStateValueOrPromise",
+        "qualifiedName": "BUILDING_BLOCK_setAtomStateValueOrPromise",
+        "parentUnitId": null,
+        "startLine": 853,
+        "endLine": 880,
+        "isBehavioral": true,
+        "source": "  while (stack.length) {\n    const a = stack.pop()!\n    const aState = ensureAtomState(buildingBlocks, store, a)\n    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {\n      const dState = ensureAtomState(buildingBlocks, store, d)\n      if (invalidatedAtoms.get(d) !== dState.n) {\n        invalidatedAtoms.set(d, dState.n)\n        stack.push(d)\n      }\n    }\n  }\n}\n\nconst BUILDING_BLOCK_writeAtomState: WriteAtomState = (\n  buildingBlocks,\n  store,\n  atom,\n  args,\n) => {\n  const changedAtoms = buildingBlocks[3]\n  const storeHooks = buildingBlocks[6]\n  const atomWrite = buildingBlocks[8]\n  const ensureAtomState = buildingBlocks[11]\n  const flushCallbacks = buildingBlocks[12]\n  const recomputeInvalidatedAtoms = buildingBlocks[13]\n  const readAtomState = buildingBlocks[14]\n  const invalidateDependents = buildingBlocks[15]\n  const writeAtomState = buildingBlocks[16]",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_setAtomStateValueOrPromise#function:BUILDING_BLOCK_setAtomStateValueOrPromise",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_setAtomStateValueOrPromise",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_setAtomStateValueOrPromise",
+          "qualifiedName": "BUILDING_BLOCK_setAtomStateValueOrPromise",
+          "parentUnitId": null,
+          "startLine": 853,
+          "endLine": 880,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": "BuildingBlocks",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": "Store", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": "Atom", "default": null, "optional": false, "variadic": false, "order": 2 },
+            {
+              "name": "valueOrPromise",
+              "type": "unknown",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The store must be initialized and writable.",
+            "The atom must be valid (already created or mounted).",
+            "The atom state must be initialized before setting."
+          ],
+          "postconditions": [
+            "The atom's state is updated with the provided value or promise reference.",
+            "If a promise is provided, the atom's state is marked as pending and any existing promise is handled.",
+            "The atom's version number (n) is incremented on successful set."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If valueOrPromise is a promise, the atom is marked as pending and the promise is stored as the current value.",
+            "If a previous promise exists for the atom, it is replaced and the old promise is not aborted (abort is handled separately).",
+            "Setting the same promise that is already the current value results in no version increment (no change)."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Updates the atom's state value (st.v) in the store.",
+            "Updates the atom's state pending flag (st.p) based on whether the value is a promise.",
+            "Increments the atom's state version number (st.n) when the value changes."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "ensureAtomState", "source": "buildingBlocks[11]", "kind": "internal" }],
+          "symbolReferences": ["Atom", "AtomState", "Store", "BuildingBlocks"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Sets the atom's state value in the store, handling both direct values and promises. When a promise is set, the atom enters a pending state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "69617753e9cbb01f57d5cb5fad82b43da01b620ad4d8671831ebcbf10cdc1e2f"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeGet#function:BUILDING_BLOCK_storeGet",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_storeGet",
+        "qualifiedName": "BUILDING_BLOCK_storeGet",
+        "parentUnitId": null,
+        "startLine": 883,
+        "endLine": 885,
+        "isBehavioral": true,
+        "source": "  const storeEpochHolder = buildingBlocks[28]\n  let isSync = true\n  const getter: Getter = <V>(a: Atom<V>) =>",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeGet#function:BUILDING_BLOCK_storeGet",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeGet",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_storeGet",
+          "qualifiedName": "BUILDING_BLOCK_storeGet",
+          "parentUnitId": null,
+          "startLine": 883,
+          "endLine": 885,
+          "signature": "const getter: Getter = <V>(a: Atom<V>) =>",
+          "parameters": [],
+          "returnType": "(a: Atom<V>) => V",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["V"],
+          "logicOutline": [],
+          "preconditions": [
+            "The store's buildingBlocks array must contain at least 29 entries (index 28 for storeEpochHolder).",
+            "The isSync variable must be in scope to determine whether to read synchronously."
+          ],
+          "postconditions": [
+            "Returns a function that, when called with an atom, returns its current value from the store.",
+            "The returned getter function captures the storeEpochHolder and the current isSync state."
+          ],
+          "invariants": ["The getter function is pure and does not mutate state."],
+          "edgeCases": [
+            "When called with an atom not present in the store, the getter should return the atom's initial value or throw, depending on the store's configuration."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Atom", "Getter"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates and returns a getter function that reads the current value of an atom from the store, using the store's epoch to track updates and respecting the current synchronization state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "465da92c12a7e7fa558b0879a9aeb80dfb4d93b3a373dfa8378c25ad3ed94a23"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeSet#function:BUILDING_BLOCK_storeSet",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_storeSet",
+        "qualifiedName": "BUILDING_BLOCK_storeSet",
+        "parentUnitId": null,
+        "startLine": 888,
+        "endLine": 908,
+        "isBehavioral": true,
+        "source": "    a: WritableAtom<V, As, R>,\n    ...args: As\n  ) => {\n    const aState = ensureAtomState(buildingBlocks, store, a)\n    try {\n      if (a === (atom as AnyAtom)) {\n        if (!hasInitialValue(a)) {\n          // NOTE technically possible but restricted as it may cause bugs\n          throw new Error('atom not writable')\n        }\n        if (import.meta.env?.MODE !== 'production') {\n          storeMutationSet.add(store)\n        }\n        const prevEpochNumber = aState.n\n        const v = args[0] as V\n        setAtomStateValueOrPromise(buildingBlocks, store, a, v)\n        mountDependencies(buildingBlocks, store, a)\n        if (prevEpochNumber !== aState.n) {\n          ++storeEpochHolder[0]\n          changedAtoms.add(a)\n          invalidateDependents(buildingBlocks, store, a)",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeSet#function:BUILDING_BLOCK_storeSet",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeSet",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_storeSet",
+          "qualifiedName": "BUILDING_BLOCK_storeSet",
+          "parentUnitId": null,
+          "startLine": 888,
+          "endLine": 908,
+          "signature": "(buildingBlocks: BuildingBlocks, store: Store, changedAtoms: Set<AnyAtom>, storeMutationSet: Set<Store>, storeEpochHolder: [number], a: WritableAtom<V, As, R>, ...args: As)",
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": "BuildingBlocks",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": "Store", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "changedAtoms",
+              "type": "Set<AnyAtom>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "storeMutationSet",
+              "type": "Set<Store>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "storeEpochHolder",
+              "type": "[number]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            },
+            {
+              "name": "a",
+              "type": "WritableAtom<V, As, R>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 5
+            },
+            { "name": "args", "type": "As", "default": null, "optional": false, "variadic": true, "order": 6 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["V", "As", "R"],
+          "logicOutline": [],
+          "preconditions": [
+            "a must be a WritableAtom with an initial value if it is the base atom (atom constant)",
+            "args must contain at least one element representing the new value/promise for the atom"
+          ],
+          "postconditions": [
+            "Atom state value/promise is updated via setAtomStateValueOrPromise",
+            "Dependencies of atom a are mounted via mountDependencies",
+            "If the atom's epoch number changed, storeEpochHolder[0] is incremented by 1",
+            "If the atom's epoch number changed, a is added to changedAtoms",
+            "If the atom's epoch number changed, dependents of a are invalidated"
+          ],
+          "invariants": [
+            "storeEpochHolder[0] is monotonically increasing across writes that change atom state",
+            "changedAtoms accumulates all atoms whose state changed during a batch of writes"
+          ],
+          "edgeCases": [
+            "Writing to the base atom (atom constant) when it has no initial value throws Error('atom not writable')",
+            "Writing a value that does not actually change the atom's state (prevEpochNumber === aState.n) skips epoch increment, changedAtoms update, and invalidation",
+            "Writing a Promise-like value sets the atom state to a pending promise"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Throws Error('atom not writable') when the base atom has no initial value",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "aState.n (epoch number, potentially via setAtomStateValueOrPromise)",
+            "storeEpochHolder[0] (incremented on change)",
+            "changedAtoms (adds atom a on change)",
+            "storeMutationSet (adds store in non-production mode)",
+            "Atom state value/promise via setAtomStateValueOrPromise"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "ensureAtomState", "source": "BUILDING_BLOCK_ensureAtomState", "kind": "internal" },
+            { "name": "hasInitialValue", "source": "hasInitialValue", "kind": "internal" },
+            {
+              "name": "setAtomStateValueOrPromise",
+              "source": "BUILDING_BLOCK_setAtomStateValueOrPromise",
+              "kind": "internal"
+            },
+            { "name": "mountDependencies", "source": "BUILDING_BLOCK_mountDependencies", "kind": "internal" },
+            { "name": "invalidateDependents", "source": "BUILDING_BLOCK_invalidateDependents", "kind": "internal" }
+          ],
+          "symbolReferences": ["WritableAtom", "AnyAtom", "atom", "import.meta.env?.MODE"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Writes a value to a writable atom within a store, mounting dependencies, incrementing the store epoch on change, and invalidating dependent atoms. This is the core store-level setter building block for the atom system.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "atom not writable",
+              "role": "Error thrown when attempting to write to the base atom without an initial value"
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "storeEpochHolder[0] is incremented by 1 on each state-changing write"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_storeSet is called with the base atom and a value",
+              "then": "An Error with message 'atom not writable' is thrown",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_storeSet is called with atom a and a value that does not change state",
+              "then": "storeEpochHolder[0] is not incremented, a is not added to changedAtoms, and invalidateDependents is not called",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_storeSet is called with atom a and a new value",
+              "then": "storeEpochHolder[0] is incremented by 1, a is added to changedAtoms, and invalidateDependents is called for a",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "caaea0fd5aa51574f2d9ae369581092fc55ced74618ef7d552be89088850deb3"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeSub#function:BUILDING_BLOCK_storeSub",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_storeSub",
+        "qualifiedName": "BUILDING_BLOCK_storeSub",
+        "parentUnitId": null,
+        "startLine": 911,
+        "endLine": 933,
+        "isBehavioral": true,
+        "source": "        return undefined as R\n      } else {\n        return writeAtomState(buildingBlocks, store, a, args)\n      }\n    } finally {\n      if (!isSync) {\n        recomputeInvalidatedAtoms(buildingBlocks, store)\n        flushCallbacks(buildingBlocks, store)\n      }\n    }\n  }\n  try {\n    return atomWrite(buildingBlocks, store, atom, getter, setter, ...args)\n  } finally {\n    isSync = false\n  }\n}\n\nconst BUILDING_BLOCK_mountDependencies: MountDependencies = (\n  buildingBlocks,\n  store,\n  atom,\n) => {",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeSub#function:BUILDING_BLOCK_storeSub",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_storeSub",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_storeSub",
+          "qualifiedName": "BUILDING_BLOCK_storeSub",
+          "parentUnitId": null,
+          "startLine": 911,
+          "endLine": 933,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "writeAtomState", "source": null, "kind": "internal" },
+            { "name": "recomputeInvalidatedAtoms", "source": null, "kind": "internal" },
+            { "name": "flushCallbacks", "source": null, "kind": "internal" },
+            { "name": "atomWrite", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Manages atom subscription in the store, handling dependency recomputation and callback flushing when not synchronous.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "59bad67883866508bd61f788f41ce519b26489c954b2a2197b42630c05331f51"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_registerAbortHandler#function:BUILDING_BLOCK_registerAbortHandler",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_registerAbortHandler",
+        "qualifiedName": "BUILDING_BLOCK_registerAbortHandler",
+        "parentUnitId": null,
+        "startLine": 936,
+        "endLine": 955,
+        "isBehavioral": true,
+        "source": "  const storeHooks = buildingBlocks[6]\n  const ensureAtomState = buildingBlocks[11]\n  const invalidateDependents = buildingBlocks[15]\n  const mountAtom = buildingBlocks[18]\n  const unmountAtom = buildingBlocks[19]\n  const atomState = ensureAtomState(buildingBlocks, store, atom)\n  const mounted = mountedMap.get(atom)\n  if (mounted && atomState.d.size > 0) {\n    for (const [a, n] of atomState.d) {\n      if (!mounted.d.has(a)) {\n        const aState = ensureAtomState(buildingBlocks, store, a)\n        const aMounted = mountAtom(buildingBlocks, store, a)\n        aMounted.t.add(atom)\n        mounted.d.add(a)\n        if (n !== aState.n) {\n          changedAtoms.add(a)\n          invalidateDependents(buildingBlocks, store, a)\n          storeHooks.c?.(a)\n        }\n      }",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_registerAbortHandler#function:BUILDING_BLOCK_registerAbortHandler",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_registerAbortHandler",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_registerAbortHandler",
+          "qualifiedName": "BUILDING_BLOCK_registerAbortHandler",
+          "parentUnitId": null,
+          "startLine": 936,
+          "endLine": 955,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": "any",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": "any", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": "any", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "buildingBlocks array must be valid and contain required building blocks at fixed indices",
+            "store and atom must be valid store and atom instances",
+            "mountedMap and changedAtoms must be accessible in the scope"
+          ],
+          "postconditions": [
+            "All dependencies of atom that are not mounted are mounted and added to the atom's dependents set",
+            "Dependencies with changed values are added to changedAtoms and invalidated",
+            "storeHooks.c is called for each invalidated dependency"
+          ],
+          "invariants": ["mountedMap is updated consistently for each dependency processed"],
+          "edgeCases": [
+            "Atom has no dependencies: function does nothing as atomState.d.size is 0",
+            "Dependencies are already mounted: skipped due to mounted.d.has(a) check",
+            "Dependency value unchanged: not added to changedAtoms or invalidated"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "mountedMap (adds entries to mounted.d for dependencies)",
+            "changedAtoms (adds atoms with changed values)",
+            "calls storeHooks.c which may mutate external state"
+          ],
+          "eventsEmitted": [
+            "storeHooks.c?.(a) is called, potentially emitting an event or callback for each invalidated dependency"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "ensureAtomState", "source": "buildingBlocks[11]", "kind": "internal" },
+            { "name": "mountAtom", "source": "buildingBlocks[18]", "kind": "internal" },
+            { "name": "invalidateDependents", "source": "buildingBlocks[15]", "kind": "internal" },
+            { "name": "storeHooks.c", "source": "buildingBlocks[6]", "kind": "internal" }
+          ],
+          "symbolReferences": ["mountedMap", "changedAtoms"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "This function ensures that when an atom is mounted, all its dependencies are mounted if not already, and if a dependency's value has changed, it is invalidated and a store hook is triggered.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "6",
+              "role": "index for storeHooks in buildingBlocks array, part of the building blocks interface contract"
+            },
+            {
+              "kind": "magic-number",
+              "value": "11",
+              "role": "index for ensureAtomState in buildingBlocks array, part of the building blocks interface contract"
+            },
+            {
+              "kind": "magic-number",
+              "value": "15",
+              "role": "index for invalidateDependents in buildingBlocks array, part of the building blocks interface contract"
+            },
+            {
+              "kind": "magic-number",
+              "value": "18",
+              "role": "index for mountAtom in buildingBlocks array, part of the building blocks interface contract"
+            },
+            {
+              "kind": "magic-number",
+              "value": "19",
+              "role": "index for unmountAtom in buildingBlocks array, referenced in context but not used in this function"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_registerAbortHandler is called",
+              "then": "Each dependency is mounted, added to the atom's dependents set, and if its value changed, it is added to changedAtoms and storeHooks.c is called",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_registerAbortHandler is called",
+              "then": "The dependency is added to changedAtoms, invalidateDependents is called on it, and storeHooks.c is triggered",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "BUILDING_BLOCK_registerAbortHandler is called",
+              "then": "No modifications are made to mountedMap, changedAtoms, or storeHooks",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "13520a9ead9d2b9859f2b4804a192c800655a62730dc7ab714120ace6eab9db8"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_abortPromise#function:BUILDING_BLOCK_abortPromise",
+        "unitKind": "function",
+        "name": "BUILDING_BLOCK_abortPromise",
+        "qualifiedName": "BUILDING_BLOCK_abortPromise",
+        "parentUnitId": null,
+        "startLine": 958,
+        "endLine": 962,
+        "isBehavioral": true,
+        "source": "      if (!atomState.d.has(a)) {\n        mounted.d.delete(a)\n        const aMounted = unmountAtom(buildingBlocks, store, a)\n        aMounted?.t.delete(atom)\n      }",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__BUILDING_BLOCK_abortPromise#function:BUILDING_BLOCK_abortPromise",
+          "fileId": "src/vanilla/internals.ts__BUILDING_BLOCK_abortPromise",
+          "unitKind": "function",
+          "name": "BUILDING_BLOCK_abortPromise",
+          "qualifiedName": "BUILDING_BLOCK_abortPromise",
+          "parentUnitId": null,
+          "startLine": 958,
+          "endLine": 962,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": null, "default": null, "optional": false, "variadic": false, "order": 2 },
+            { "name": "a", "type": null, "default": null, "optional": false, "variadic": false, "order": 3 },
+            { "name": "atomState", "type": null, "default": null, "optional": false, "variadic": false, "order": 4 },
+            { "name": "mounted", "type": null, "default": null, "optional": false, "variadic": false, "order": 5 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "atomState and mounted must be valid objects with d property",
+            "buildingBlocks, store, atom, a must be provided"
+          ],
+          "postconditions": [
+            "If a is not in atomState.d, then a is removed from mounted.d and unmountAtom is called",
+            "If unmountAtom returns a value with t property, atom is deleted from t"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "When a is in atomState.d, no action is taken",
+            "When atomState.d does not have a, the cleanup occurs",
+            "When unmountAtom returns null or undefined, aMounted?.t.delete(atom) is skipped"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "mounted.d is mutated by deleting a",
+            "unmountAtom may mutate buildingBlocks, store, or other state"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "unmountAtom", "source": null, "kind": "internal" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Aborts a promise by cleaning up unmounted atoms from the dependency map and triggering unmounting if necessary.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "c29c4466ab5716453b8397f8bf455ac06394861d0ef70104a1f454c49cd0c3a1"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__getBuildingBlocks#function:getBuildingBlocks",
+        "unitKind": "function",
+        "name": "getBuildingBlocks",
+        "qualifiedName": "getBuildingBlocks",
+        "parentUnitId": null,
+        "startLine": 965,
+        "endLine": 975,
+        "isBehavioral": true,
+        "source": "}\n\nconst BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, store, atom) => {\n  const mountedMap = buildingBlocks[1]\n  const mountCallbacks = buildingBlocks[4]\n  const storeHooks = buildingBlocks[6]\n  const atomOnMount = buildingBlocks[10]\n  const ensureAtomState = buildingBlocks[11]\n  const flushCallbacks = buildingBlocks[12]\n  const recomputeInvalidatedAtoms = buildingBlocks[13]\n  const readAtomState = buildingBlocks[14]",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__getBuildingBlocks#function:getBuildingBlocks",
+          "fileId": "src/vanilla/internals.ts__getBuildingBlocks",
+          "unitKind": "function",
+          "name": "getBuildingBlocks",
+          "qualifiedName": "getBuildingBlocks",
+          "parentUnitId": null,
+          "startLine": 965,
+          "endLine": 975,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides access to the internal building block functions (stored in a predefined array) that constitute the store's core operations for atoms, state management, mounting, and side effects.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "18628dc09add79551090e69f731725259b923444518336199ac7817f55fe7ead"
+        }
+      },
+      {
+        "unitId": "src/vanilla/internals.ts__buildStore#function:buildStore",
+        "unitKind": "function",
+        "name": "buildStore",
+        "qualifiedName": "buildStore",
+        "parentUnitId": null,
+        "startLine": 978,
+        "endLine": 1008,
+        "isBehavioral": true,
+        "source": "  const atomState = ensureAtomState(buildingBlocks, store, atom)\n  let mounted = mountedMap.get(atom)\n  if (!mounted) {\n    // recompute atom state\n    readAtomState(buildingBlocks, store, atom)\n    // mount dependencies first\n    for (const a of atomState.d.keys()) {\n      const aMounted = mountAtom(buildingBlocks, store, a)\n      aMounted.t.add(atom)\n    }\n    // mount self\n    mounted = {\n      l: new Set(),\n      d: new Set(atomState.d.keys()),\n      t: new Set(),\n    }\n    mountedMap.set(atom, mounted)\n    if (isActuallyWritableAtom(atom) && hasOnMount(atom)) {\n      const processOnMount = () => {\n        let isSync = true\n        const setAtom = (...args: unknown[]) => {\n          try {\n            return writeAtomState(buildingBlocks, store, atom, args)\n          } finally {\n            if (!isSync) {\n              recomputeInvalidatedAtoms(buildingBlocks, store)\n              flushCallbacks(buildingBlocks, store)\n            }\n          }\n        }\n        try {",
+        "detail": {
+          "unitId": "src/vanilla/internals.ts__buildStore#function:buildStore",
+          "fileId": "src/vanilla/internals.ts__buildStore",
+          "unitKind": "function",
+          "name": "buildStore",
+          "qualifiedName": "buildStore",
+          "parentUnitId": null,
+          "startLine": 978,
+          "endLine": 1008,
+          "signature": "buildStore(buildingBlocks, store, atom)",
+          "parameters": [
+            {
+              "name": "buildingBlocks",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "store", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "atom", "type": null, "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "buildingBlocks must contain the required building block functions (ensureAtomState, readAtomState, mountAtom, writeAtomState, recomputeInvalidatedAtoms, flushCallbacks, etc.)",
+            "store must be a valid store instance with a mountedMap",
+            "atom must be a valid atom descriptor"
+          ],
+          "postconditions": [
+            "After execution, the atom has an entry in mountedMap if it did not already",
+            "All atoms in atomState.d (direct dependencies) are mounted before the atom itself",
+            "If the atom is writable and has onMount, the onMount callback is invoked with a functional setAtom setter",
+            "The mount record contains l (listeners), d (dependencies), and t (reverse-dependents) sets"
+          ],
+          "invariants": [
+            "Dependencies are always mounted before the atom itself (topological order)",
+            "Each mounted atom's mount record t-set (reverse dependents) includes the atoms that depend on it",
+            "The mountedMap is the source of truth for whether an atom is already mounted — no double-mount occurs"
+          ],
+          "edgeCases": [
+            "If atom is already present in mountedMap, the mount logic is skipped entirely (idempotent mount)",
+            "If atom is read-only (not actually writable), onMount is never invoked even if it has one defined",
+            "setAtom provided to onMount: if called synchronously within onMount, recompute and flush are skipped until after onMount returns (isSync flag gates deferred recompute/flush)",
+            "If atom has no dependencies (atomState.d is empty), the dependency mount loop is a no-op and only self-mount occurs"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "mountedMap (store global): a new entry is set for the atom if not already present",
+            "Each dependency's mount record t-set: the atom is added as a reverse-dependent",
+            "The atom's mount record d-set is initialized from atomState.d keys"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "ensureAtomState", "source": "buildingBlocks", "kind": "internal" },
+            { "name": "readAtomState", "source": "buildingBlocks", "kind": "internal" },
+            { "name": "mountAtom", "source": "buildingBlocks", "kind": "internal" },
+            { "name": "writeAtomState", "source": "buildingBlocks", "kind": "internal" },
+            { "name": "recomputeInvalidatedAtoms", "source": "buildingBlocks", "kind": "internal" },
+            { "name": "flushCallbacks", "source": "buildingBlocks", "kind": "internal" },
+            { "name": "isActuallyWritableAtom", "source": null, "kind": "internal" },
+            { "name": "hasOnMount", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["mountedMap", "Set", "Map"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Orchestrates the full mount of an atom into the store: ensures atom state exists, reads/computes atom state if not yet mounted, mounts all dependencies before the atom itself, creates a mount record with listeners/dependencies/reverse-dependents sets, and invokes the atom's onMount lifecycle if applicable. Provides a setAtom closure to onMount that handles synchronous writes and deferred recompute/flush on async writes.",
+          "specLiterals": [
+            { "kind": "string", "value": "l", "role": "mount record key for listeners set" },
+            { "kind": "string", "value": "d", "role": "mount record key for dependencies set" },
+            { "kind": "string", "value": "t", "role": "mount record key for reverse-dependents (targets) set" }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "buildStore is called with a valid buildingBlocks, store, and atom",
+              "then": "Both depA and depB are mounted first (each has an entry in mountedMap with atom added to their t-set), then atom is mounted with its d-set containing depA and depB and its entry stored in mountedMap",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "buildStore is called",
+              "then": "No recomputation or remounting occurs; the function returns without modifying mountedMap",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "buildStore is called and onMount invokes setAtom synchronously",
+              "then": "The setAtom call writes atom state, and recomputeInvalidatedAtoms plus flushCallbacks are deferred until after the synchronous onMount execution completes",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "fcc18bf83e18e4b58d5129938bafa04eedce36c054a6755d02f891a554bb4662"
+        }
+      }
+    ]
+  },
+  "out": ["src/vanilla/atom.ts", "src/vanilla/typeUtils.ts"],
+  "in": ["src/react/useAtomValue.ts", "src/vanilla/store.ts"],
+  "externals": [],
+  "impact": { "seeds": 34, "callers": 9, "impactedFiles": [] }
+}

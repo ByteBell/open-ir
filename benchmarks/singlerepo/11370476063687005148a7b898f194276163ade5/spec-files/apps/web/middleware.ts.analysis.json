@@ -1,0 +1,1179 @@
+{
+  "relativePath": "apps/web/middleware.ts",
+  "language": "typescript",
+  "sha256": "585280a734ed8d4694f21756b6b4d3913182a7a9f9294637ca2650dcd4205c8a",
+  "sizeBytes": 6102,
+  "tokenCount": 1526,
+  "lineCount": 195,
+  "analysedAt": "2026-09-04T15:48:04.826Z",
+  "analysis": {
+    "module": {
+      "purpose": "This file defines the Next.js edge middleware pipeline for request validation, legacy route rewriting, signup availability checks, redirect handling, CSP processing, embed headers, and telemetry collection.",
+      "summary": "The middleware applies ordered request guards before forwarding traffic. It rejects unsupported POST requests, bypasses static assets, enriches eligible page requests with CSP nonces, rewrites legacy routing-form URLs, enforces signup maintenance state, processes installation redirects and logout cookies, and adds security or embed-specific response headers. The exported matcher limits execution to authentication, installation, embed, logout, and signup routes, while the final middleware is wrapped with telemetry event collection.",
+      "businessContext": "This supports a scheduling and authentication web application with embedded experiences and installed integrations.\nFailures can expose insecure responses, break legacy links, permit unavailable signup, or disrupt authentication and integration redirects.",
+      "classes": [],
+      "functions": [
+        "safeGet (~L10-16): Safely retrieves typed Edge Config values without failing middleware requests.",
+        "checkPostMethod (~L19-31): Rejects unsupported POST requests while allowing explicitly permitted API routes.",
+        "checkStaticFiles (~L33-39): Bypasses middleware processing for Next.js internals and common static assets.",
+        "isPagePathRequest (~L41-46): Determines whether a URL represents a page eligible for CSP nonce injection.",
+        "shouldEnforceCsp (~L48-50): Identifies authentication paths requiring strict content security policy enforcement.",
+        "middleware (~L52-100): Processes requests through validation, rewrites, maintenance gates, cookies, and security headers.",
+        "routingForms.handleRewrite (~L103-109): Rewrites legacy routing forms URLs to their current route structure.",
+        "embeds.addResponseHeaders (~L113-129): Adds embed policy, color scheme, and identification response headers.",
+        "contentSecurityPolicy.addResponseHeaders (~L133-144): Applies CSP response headers based on request nonce and route.",
+        "contentSecurityPolicy.addRequestHeaders (~L145-156): Adds CSP nonces to eligible page request headers when configured.",
+        "responseWithHeaders (~L159-163): Applies content security and embed headers to outgoing responses.",
+        "enrichRequestWithHeaders (~L165-168): Enriches incoming requests with configured security headers."
+      ],
+      "keywords": [
+        "Next.js edge middleware",
+        "Vercel Edge Config",
+        "Content Security Policy",
+        "CSP nonce",
+        "routing forms rewrite",
+        "embed response headers",
+        "signup maintenance mode",
+        "NextAuth session cookie",
+        "method restriction",
+        "telemetry event collection"
+      ],
+      "ontologyConcepts": [
+        "request interception",
+        "route rewriting",
+        "access control",
+        "security policy enforcement",
+        "feature flag evaluation",
+        "cookie lifecycle management",
+        "response enrichment",
+        "event telemetry"
+      ],
+      "businessEntities": [
+        "Signup",
+        "Routing Form",
+        "Installed App",
+        "Authentication Session",
+        "Embed",
+        "User Request",
+        "Security Policy"
+      ],
+      "systemCapabilities": [
+        "Restrict unsupported API methods",
+        "Rewrite legacy routing-form links",
+        "Disable signup during maintenance",
+        "Manage installation and logout cookies",
+        "Enforce CSP for authentication pages",
+        "Instrument middleware requests"
+      ],
+      "configDependencies": ["CSP_POLICY", "EDGE_CONFIG", "isSignupDisabled"],
+      "importsInternal": [
+        {
+          "spec": "@lib/csp",
+          "symbols": ["getCspHeader", "getCspNonce"],
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@vercel/edge-config",
+          "symbols": ["get"],
+          "package": "@vercel/edge-config",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          }
+        },
+        {
+          "spec": "next-collect/server",
+          "symbols": ["collectEvents"],
+          "package": "next-collect",
+          "subpath": "server",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "spec": "next/server",
+          "symbols": ["NextRequest", "NextResponse"],
+          "package": "next",
+          "subpath": "server",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 4
+          }
+        },
+        {
+          "spec": "@calcom/lib/telemetry",
+          "symbols": ["extendEventData", "nextCollectBasicSettings"],
+          "package": "@calcom/lib",
+          "subpath": "telemetry",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 6,
+            "endLine": 6
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": ["safeGet calls the Edge Config get function for the requested key."],
+        "env": ["Reads process.env.CSP_POLICY to determine whether CSP request headers are added."],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "routingForms.handleRewrite mutates the supplied URL pathname when rewriting /apps/routing_forms paths.",
+          "contentSecurityPolicy.addRequestHeaders mutates the request headers by setting x-csp-nonce.",
+          "Response processing mutates response headers for CSP and embed metadata.",
+          "The middleware deletes return-to and next-auth.session-token cookies from responses."
+        ]
+      },
+      "integrationSurface": [
+        {
+          "kind": "http",
+          "role": "provides",
+          "address": "/auth/login",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "provides",
+          "address": "/login",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "provides",
+          "address": "/apps/installed",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "provides",
+          "address": "/auth/logout",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "provides",
+          "address": "/:path*/embed",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "provides",
+          "address": "/api/auth/signup",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "provides",
+          "address": "/apps/routing_forms",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "POST_METHODS_ALLOWED_API_ROUTES",
+          "shape": "[\"/api/auth/signup\"]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "checkPostMethod",
+          "shape": "function checkPostMethod(req: NextRequest)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "checkStaticFiles",
+          "shape": "function checkStaticFiles(pathname: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "config",
+          "shape": "{ matcher: [\"/auth/login\", \"/login\", \"/apps/installed\", \"/auth/logout\", \"/:path*/embed\", \"/api/auth/signup\"] }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "middleware",
+          "shape": "collectEvents({ middleware, ...nextCollectBasicSettings, cookieName: \"__clnds\", extend: extendEventData })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "NextRequest",
+          "shape": "NextRequest",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "NextResponse",
+          "shape": "NextResponse",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getCspHeader",
+          "shape": "getCspHeader({ shouldEnforceCsp: shouldEnforceCsp(req.nextUrl), nonce })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getCspNonce",
+          "shape": "getCspNonce()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isSignupDisabled",
+          "shape": "safeGet<boolean>(\"isSignupDisabled\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "safeGet",
+          "intent": "Reads an Edge Config value and suppresses configuration access failures.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 10,
+            "endLine": 16
+          }
+        },
+        {
+          "name": "checkPostMethod",
+          "intent": "Rejects disallowed POST routes with a 405 response.",
+          "structureKind": "branch",
+          "predicate": "!POST_METHODS_ALLOWED_API_ROUTES.some((route) => pathname.startsWith(route)) && req.method === \"POST\"",
+          "branchOutcomes": ["returns 405 Method Not Allowed with Allow: GET", "returns null"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 19,
+            "endLine": 31
+          }
+        },
+        {
+          "name": "checkStaticFiles",
+          "intent": "Bypasses Next.js internal paths and recognized static asset extensions.",
+          "structureKind": "branch",
+          "predicate": "pathname.startsWith(\"/_next\") || hasFileExtension",
+          "branchOutcomes": ["returns NextResponse.next()", "returns undefined"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 33,
+            "endLine": 39
+          }
+        },
+        {
+          "name": "middleware",
+          "intent": "Applies route checks, rewrites, signup maintenance, redirects, cookies, and response headers.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 52,
+            "endLine": 100
+          }
+        },
+        {
+          "name": "routingForms.handleRewrite",
+          "intent": "Rewrites legacy routing forms URLs to the hyphenated route.",
+          "structureKind": "branch",
+          "predicate": "url.pathname.startsWith(\"/apps/routing_forms\")",
+          "branchOutcomes": ["mutates pathname and returns a rewrite response", "returns undefined"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 102,
+            "endLine": 110
+          }
+        },
+        {
+          "name": "embeds.addResponseHeaders",
+          "intent": "Adds embed markers and optional COEP and color-scheme response headers.",
+          "structureKind": "branch",
+          "predicate": "!url.pathname.endsWith(\"/embed\")",
+          "branchOutcomes": [
+            "returns the response unchanged",
+            "sets applicable embed headers and returns the response"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 112,
+            "endLine": 130
+          }
+        },
+        {
+          "name": "contentSecurityPolicy",
+          "intent": "Adds CSP request nonces and response policy headers when configured.",
+          "structureKind": "branch",
+          "predicate": "!nonce",
+          "branchOutcomes": ["sets x-csp-status to not-opted-in", "optionally sets the generated CSP header"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 132,
+            "endLine": 157
+          }
+        },
+        {
+          "name": "config",
+          "intent": "Limits middleware execution to explicitly listed authentication, embed, and application routes.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 170,
+            "endLine": 187
+          }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "safeGet",
+          "signature": "const safeGet = async <T = any>(key: string): Promise<T | undefined> => {",
+          "generics": "<T = any>",
+          "decorators": [],
+          "returnType": "Promise<T | undefined>",
+          "exported": false,
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          }
+        },
+        {
+          "kind": "const",
+          "name": "POST_METHODS_ALLOWED_API_ROUTES",
+          "signature": "export const POST_METHODS_ALLOWED_API_ROUTES = [\"/api/auth/signup\"];",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 18,
+            "endLine": 18
+          }
+        },
+        {
+          "kind": "function",
+          "name": "checkPostMethod",
+          "signature": "export function checkPostMethod(req: NextRequest) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 19,
+            "endLine": 19
+          }
+        },
+        {
+          "kind": "function",
+          "name": "checkStaticFiles",
+          "signature": "export function checkStaticFiles(pathname: string) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 33,
+            "endLine": 33
+          }
+        },
+        {
+          "kind": "function",
+          "name": "isPagePathRequest",
+          "signature": "const isPagePathRequest = (url: URL) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 41,
+            "endLine": 41
+          }
+        },
+        {
+          "kind": "function",
+          "name": "shouldEnforceCsp",
+          "signature": "const shouldEnforceCsp = (url: URL) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 48
+          }
+        },
+        {
+          "kind": "function",
+          "name": "middleware",
+          "signature": "const middleware = async (req: NextRequest): Promise<NextResponse<unknown>> => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<NextResponse<unknown>>",
+          "exported": false,
+          "anchor": {
+            "startLine": 52,
+            "endLine": 52
+          }
+        },
+        {
+          "kind": "const",
+          "name": "routingForms",
+          "signature": "const routingForms = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 102,
+            "endLine": 102
+          }
+        },
+        {
+          "kind": "method",
+          "name": "handleRewrite",
+          "signature": "handleRewrite: (url: URL) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 103,
+            "endLine": 103
+          }
+        },
+        {
+          "kind": "const",
+          "name": "embeds",
+          "signature": "const embeds = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 112,
+            "endLine": 112
+          }
+        },
+        {
+          "kind": "method",
+          "name": "addResponseHeaders",
+          "signature": "addResponseHeaders: ({ url, res }: { url: URL; res: NextResponse }) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 113,
+            "endLine": 113
+          }
+        },
+        {
+          "kind": "const",
+          "name": "contentSecurityPolicy",
+          "signature": "const contentSecurityPolicy = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 132,
+            "endLine": 132
+          }
+        },
+        {
+          "kind": "method",
+          "name": "addResponseHeaders",
+          "signature": "addResponseHeaders: ({ res, req }: { res: NextResponse; req: NextRequest }) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 133,
+            "endLine": 133
+          }
+        },
+        {
+          "kind": "method",
+          "name": "addRequestHeaders",
+          "signature": "addRequestHeaders: ({ req }: { req: NextRequest }) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 145,
+            "endLine": 145
+          }
+        },
+        {
+          "kind": "function",
+          "name": "responseWithHeaders",
+          "signature": "function responseWithHeaders({ url, res, req }: { url: URL; res: NextResponse; req: NextRequest }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 159,
+            "endLine": 159
+          }
+        },
+        {
+          "kind": "function",
+          "name": "enrichRequestWithHeaders",
+          "signature": "function enrichRequestWithHeaders({ req }: { req: NextRequest }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 165,
+            "endLine": 165
+          }
+        },
+        {
+          "kind": "const",
+          "name": "config",
+          "signature": "export const config = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 170,
+            "endLine": 170
+          }
+        },
+        {
+          "kind": "default",
+          "name": "default",
+          "signature": "export default collectEvents({",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 189,
+            "endLine": 189
+          }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "POST request whose pathname does not start with /api/auth/signup",
+          "handled": true,
+          "behavior": "Returns a 405 response with statusText Method Not Allowed and Allow: GET.",
+          "anchor": {
+            "startLine": 21,
+            "endLine": 28
+          }
+        },
+        {
+          "inputShape": "POST request whose pathname starts with /api/auth/signup, including longer suffixes",
+          "handled": true,
+          "behavior": "The method check allows the request to continue.",
+          "anchor": {
+            "startLine": 18,
+            "endLine": 21
+          }
+        },
+        {
+          "inputShape": "Path beginning with /_next or ending in a recognized lowercase static extension",
+          "handled": true,
+          "behavior": "Returns NextResponse.next() before further middleware processing.",
+          "anchor": {
+            "startLine": 33,
+            "endLine": 39
+          }
+        },
+        {
+          "inputShape": "Legacy path beginning with /apps/routing_forms",
+          "handled": true,
+          "behavior": "Replaces the legacy prefix with /apps/routing-forms/ and returns a rewrite response.",
+          "anchor": {
+            "startLine": 104,
+            "endLine": 107
+          }
+        },
+        {
+          "inputShape": "Signup request when Edge Config returns a truthy isSignupDisabled value",
+          "handled": true,
+          "behavior": "Returns JSON { error: \"Signup is disabled\" } with status 503.",
+          "anchor": {
+            "startLine": 68,
+            "endLine": 74
+          }
+        },
+        {
+          "inputShape": "Installed-app request with no return-to cookie or an empty cookie value",
+          "handled": true,
+          "behavior": "Skips redirection and continues to the normal NextResponse.next() path.",
+          "anchor": {
+            "startLine": 77,
+            "endLine": 89
+          }
+        },
+        {
+          "inputShape": "Page request with CSP_POLICY unset or empty",
+          "handled": true,
+          "behavior": "Does not add x-csp-nonce to the request.",
+          "anchor": {
+            "startLine": 145,
+            "endLine": 148
+          }
+        },
+        {
+          "inputShape": "Request without x-csp-nonce when adding response headers",
+          "handled": true,
+          "behavior": "Sets x-csp-status to not-opted-in and does not generate a CSP header.",
+          "anchor": {
+            "startLine": 133,
+            "endLine": 137
+          }
+        },
+        {
+          "inputShape": "Malformed return-to cookie value that cannot form a URL",
+          "handled": false,
+          "behavior": "URL construction throws while creating the redirect response; the middleware does not catch the error.",
+          "anchor": {
+            "startLine": 80,
+            "endLine": 85
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "get<T>(key)",
+          "caught": "error",
+          "action": "Suppresses the Edge Config access error.",
+          "fallback": "Returns undefined.",
+          "anchor": {
+            "startLine": 11,
+            "endLine": 16
+          }
+        },
+        {
+          "thrown": "URL construction error from new URL(returnTo.value, reqWithEnrichedHeaders.url)",
+          "caught": null,
+          "action": "Propagates the error from the middleware.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 80,
+            "endLine": 82
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "env",
+          "description": "CSP_POLICY is available through process.env and its truthiness controls CSP request-header enrichment.",
+          "anchor": {
+            "startLine": 145,
+            "endLine": 148
+          }
+        },
+        {
+          "kind": "env",
+          "description": "Edge Config access may fail when the EDGE_CONFIG environment variable is missing.",
+          "anchor": {
+            "startLine": 11,
+            "endLine": 15
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "The return-to cookie value is expected to be a valid URL or URL-relative reference.",
+          "anchor": {
+            "startLine": 78,
+            "endLine": 82
+          }
+        },
+        {
+          "kind": "caller",
+          "description": "Middleware receives a NextRequest with nextUrl, headers, cookies, method, and url properties.",
+          "anchor": {
+            "startLine": 52,
+            "endLine": 61
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact CSP header name and value does getCspHeader return for each URL and nonce?",
+          "affects": "contentSecurityPolicy response behavior",
+          "anchor": {
+            "startLine": 139,
+            "endLine": 142
+          },
+          "resolution": null
+        },
+        {
+          "question": "What events and response behavior does collectEvents add around middleware execution?",
+          "affects": "default export telemetry and middleware side effects",
+          "anchor": {
+            "startLine": 189,
+            "endLine": 194
+          },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-disallowed-post-route",
+          "scenario": "A POST request targets an API route not explicitly allowed for POST.",
+          "given": ["req.method === \"POST\"", "req.nextUrl.pathname === \"/api/users\""],
+          "when": "checkPostMethod(req)",
+          "then": "result.status === 405 && result.headers.get(\"Allow\") === \"GET\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the middleware's method restriction and advertised allowed method."
+        },
+        {
+          "testId": "allows-signup-post",
+          "scenario": "A POST request targets the explicitly permitted signup API route.",
+          "given": ["req.method === \"POST\"", "req.nextUrl.pathname === \"/api/auth/signup\""],
+          "when": "checkPostMethod(req)",
+          "then": "result === null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the sole API exception to the POST restriction."
+        },
+        {
+          "testId": "skips-static-assets",
+          "scenario": "A request targets a Next.js internal path or recognized static image asset.",
+          "given": ["pathname === \"/_next/static/chunk.js\" || pathname === \"/images/logo.svg\""],
+          "when": "checkStaticFiles(pathname)",
+          "then": "result === NextResponse.next()",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures static resources bypass normal middleware processing."
+        },
+        {
+          "testId": "rewrites-legacy-routing-forms",
+          "scenario": "A request uses the legacy routing_forms application path.",
+          "given": ["url.pathname === \"/apps/routing_forms/example\""],
+          "when": "middleware(req)",
+          "then": "response is a rewrite to \"/apps/routing-forms/example\"",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Protects backward compatibility for old routing form links."
+        },
+        {
+          "testId": "blocks-disabled-signup",
+          "scenario": "Signup is disabled in edge configuration and a signup request arrives.",
+          "given": ["url.pathname === \"/api/auth/signup\"", "safeGet<boolean>(\"isSignupDisabled\") === true"],
+          "when": "middleware(req)",
+          "then": "response.status === 503 && response.json() === { error: \"Signup is disabled\" }",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins maintenance-mode behavior for the signup endpoint."
+        },
+        {
+          "testId": "adds-csp-nonce-for-page-request",
+          "scenario": "CSP is configured and a page request requires nonce enrichment.",
+          "given": ["process.env.CSP_POLICY is truthy", "isPagePathRequest(req.nextUrl) === true"],
+          "when": "enrichRequestWithHeaders({ req })",
+          "then": "req.headers.get(\"x-csp-nonce\") is a generated nonce",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures applicable page requests receive the CSP correlation nonce."
+        },
+        {
+          "testId": "marks-embed-response",
+          "scenario": "A response is produced for an embed URL.",
+          "given": ["url.pathname.endsWith(\"/embed\")"],
+          "when": "responseWithHeaders({ url, res, req })",
+          "then": "res.headers.get(\"x-isEmbed\") === \"true\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the wire-visible embed marker used by embedded clients."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "safeGet",
+        "POST_METHODS_ALLOWED_API_ROUTES",
+        "checkPostMethod",
+        "checkStaticFiles",
+        "isPagePathRequest",
+        "shouldEnforceCsp",
+        "middleware",
+        "routingForms",
+        "embeds",
+        "contentSecurityPolicy",
+        "responseWithHeaders",
+        "enrichRequestWithHeaders",
+        "config",
+        "default"
+      ],
+      "moduleLevelCode": "import { get } from \"@vercel/edge-config\";\nimport { collectEvents } from \"next-collect/server\";\nimport type { NextRequest } from \"next/server\";\nimport { NextResponse } from \"next/server\";\n\nimport { extendEventData, nextCollectBasicSettings } from \"@calcom/lib/telemetry\";\n\nimport { getCspHeader, getCspNonce } from \"@lib/csp\";",
+      "exports": [
+        {
+          "name": "POST_METHODS_ALLOWED_API_ROUTES",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "checkPostMethod",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "checkStaticFiles",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "config",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "middleware",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": "default"
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "get",
+          "module": "@vercel/edge-config",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "collectEvents",
+          "module": "next-collect/server",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "NextRequest",
+          "module": "next/server",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "NextResponse",
+          "module": "next/server",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "extendEventData",
+          "module": "@calcom/lib/telemetry",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "nextCollectBasicSettings",
+          "module": "@calcom/lib/telemetry",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getCspHeader",
+          "module": "@lib/csp",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getCspNonce",
+          "module": "@lib/csp",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        {
+          "name": "POST_METHODS_ALLOWED_API_ROUTES",
+          "value": "[\"/api/auth/signup\"]",
+          "kind": "array"
+        },
+        {
+          "name": "config",
+          "value": "{\n  // Next.js Doesn't support spread operator in config matcher, so, we must list all paths explicitly here.\n  // https://github.com/vercel/next.js/discussions/42458\n  // WARNING: DO NOT ADD AN ENDING SLASH \"/\" TO THE PATHS BELOW\n  // THIS WILL MAKE THEM NOT MATCH AND HENCE NOT HIT MIDDLEWARE\n  matcher: [\n    // Routes to enforce CSP\n    \"/auth/login\",\n    \"/login\",\n    // Routes to set cookies\n    \"/apps/installed\",\n    \"/auth/logout\",\n    // Embed Routes,\n    \"/:path*/embed\",\n    // API routes\n    \"/api/auth/signup\",\n  ],\n}",
+          "kind": "object"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/web/middleware.ts__safeGet_1#function:safeGet",
+        "unitKind": "function",
+        "name": "safeGet",
+        "qualifiedName": "safeGet",
+        "parentUnitId": null,
+        "startLine": 10,
+        "endLine": 16,
+        "isBehavioral": true,
+        "source": "const safeGet = async <T = any>(key: string): Promise<T | undefined> => {\n  try {\n    return get<T>(key);\n  } catch (error) {\n    // Don't crash if EDGE_CONFIG env var is missing\n  }\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__POST_METHODS_ALLOWED_API_ROUTES_2#const:POST_METHODS_ALLOWED_API_ROUTES",
+        "unitKind": "const",
+        "name": "POST_METHODS_ALLOWED_API_ROUTES",
+        "qualifiedName": "POST_METHODS_ALLOWED_API_ROUTES",
+        "parentUnitId": null,
+        "startLine": 18,
+        "endLine": 18,
+        "isBehavioral": false,
+        "source": "export const POST_METHODS_ALLOWED_API_ROUTES = [\"/api/auth/signup\"];"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__checkPostMethod_3#function:checkPostMethod",
+        "unitKind": "function",
+        "name": "checkPostMethod",
+        "qualifiedName": "checkPostMethod",
+        "parentUnitId": null,
+        "startLine": 19,
+        "endLine": 31,
+        "isBehavioral": true,
+        "source": "export function checkPostMethod(req: NextRequest) {\n  const pathname = req.nextUrl.pathname;\n  if (!POST_METHODS_ALLOWED_API_ROUTES.some((route) => pathname.startsWith(route)) && req.method === \"POST\") {\n    return new NextResponse(null, {\n      status: 405,\n      statusText: \"Method Not Allowed\",\n      headers: {\n        Allow: \"GET\",\n      },\n    });\n  }\n  return null;\n}"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__checkStaticFiles_4#function:checkStaticFiles",
+        "unitKind": "function",
+        "name": "checkStaticFiles",
+        "qualifiedName": "checkStaticFiles",
+        "parentUnitId": null,
+        "startLine": 33,
+        "endLine": 39,
+        "isBehavioral": true,
+        "source": "export function checkStaticFiles(pathname: string) {\n  const hasFileExtension = /\\.(svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname);\n  // Skip Next.js internal paths (_next) and static assets\n  if (pathname.startsWith(\"/_next\") || hasFileExtension) {\n    return NextResponse.next();\n  }\n}"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__isPagePathRequest_5#function:isPagePathRequest",
+        "unitKind": "function",
+        "name": "isPagePathRequest",
+        "qualifiedName": "isPagePathRequest",
+        "parentUnitId": null,
+        "startLine": 41,
+        "endLine": 46,
+        "isBehavioral": true,
+        "source": "const isPagePathRequest = (url: URL) => {\n  const isNonPagePathPrefix = /^\\/(?:_next|api)\\//;\n  const isFile = /\\..*$/;\n  const { pathname } = url;\n  return !isNonPagePathPrefix.test(pathname) && !isFile.test(pathname);\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__shouldEnforceCsp_6#function:shouldEnforceCsp",
+        "unitKind": "function",
+        "name": "shouldEnforceCsp",
+        "qualifiedName": "shouldEnforceCsp",
+        "parentUnitId": null,
+        "startLine": 48,
+        "endLine": 50,
+        "isBehavioral": true,
+        "source": "const shouldEnforceCsp = (url: URL) => {\n  return url.pathname.startsWith(\"/auth/login\") || url.pathname.startsWith(\"/login\");\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__middleware_7#function:middleware",
+        "unitKind": "function",
+        "name": "middleware",
+        "qualifiedName": "middleware",
+        "parentUnitId": null,
+        "startLine": 52,
+        "endLine": 100,
+        "isBehavioral": true,
+        "source": "const middleware = async (req: NextRequest): Promise<NextResponse<unknown>> => {\n  const postCheckResult = checkPostMethod(req);\n  if (postCheckResult) return postCheckResult;\n\n  const isStaticFile = checkStaticFiles(req.nextUrl.pathname);\n  if (isStaticFile) return isStaticFile;\n\n  const url = req.nextUrl;\n  const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });\n  const requestHeaders = new Headers(reqWithEnrichedHeaders.headers);\n\n  const routingFormRewriteResponse = routingForms.handleRewrite(url);\n  if (routingFormRewriteResponse) {\n    return responseWithHeaders({ url, res: routingFormRewriteResponse, req: reqWithEnrichedHeaders });\n  }\n\n  if (url.pathname.startsWith(\"/api/auth/signup\")) {\n    const isSignupDisabled = await safeGet<boolean>(\"isSignupDisabled\");\n    // If is in maintenance mode, point the url pathname to the maintenance page\n    if (isSignupDisabled) {\n      // TODO: Consider using responseWithHeaders here\n      return NextResponse.json({ error: \"Signup is disabled\" }, { status: 503 });\n    }\n  }\n\n  if (url.pathname.startsWith(\"/apps/installed\")) {\n    const returnTo = reqWithEnrichedHeaders.cookies.get(\"return-to\");\n\n    if (returnTo?.value) {\n      const response = NextResponse.redirect(new URL(returnTo.value, reqWithEnrichedHeaders.url), {\n        headers: requestHeaders,\n      });\n      response.cookies.delete(\"return-to\");\n      return response;\n    }\n  }\n\n  const res = NextResponse.next({\n    request: {\n      headers: requestHeaders,\n    },\n  });\n\n  if (url.pathname.startsWith(\"/auth/logout\")) {\n    res.cookies.delete(\"next-auth.session-token\");\n  }\n\n  return responseWithHeaders({ url, res, req: reqWithEnrichedHeaders });\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__routingForms_8#object:routingForms",
+        "unitKind": "object",
+        "name": "routingForms",
+        "qualifiedName": "routingForms",
+        "parentUnitId": null,
+        "startLine": 102,
+        "endLine": 110,
+        "isBehavioral": false,
+        "source": "const routingForms = {\n  handleRewrite: (url: URL) => {\n    // Don't 404 old routing_forms links\n    if (url.pathname.startsWith(\"/apps/routing_forms\")) {\n      url.pathname = url.pathname.replace(/^\\/apps\\/routing_forms($|\\/)/, \"/apps/routing-forms/\");\n      return NextResponse.rewrite(url);\n    }\n  },\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__routingForms.handleRewrite_9#method:routingForms.handleRewrite",
+        "unitKind": "method",
+        "name": "handleRewrite",
+        "qualifiedName": "routingForms.handleRewrite",
+        "parentUnitId": "apps/web/middleware.ts__routingForms_8#object:routingForms",
+        "startLine": 103,
+        "endLine": 109,
+        "isBehavioral": true,
+        "source": "  handleRewrite: (url: URL) => {\n    // Don't 404 old routing_forms links\n    if (url.pathname.startsWith(\"/apps/routing_forms\")) {\n      url.pathname = url.pathname.replace(/^\\/apps\\/routing_forms($|\\/)/, \"/apps/routing-forms/\");\n      return NextResponse.rewrite(url);\n    }\n  },"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__embeds_10#object:embeds",
+        "unitKind": "object",
+        "name": "embeds",
+        "qualifiedName": "embeds",
+        "parentUnitId": null,
+        "startLine": 112,
+        "endLine": 130,
+        "isBehavioral": false,
+        "source": "const embeds = {\n  addResponseHeaders: ({ url, res }: { url: URL; res: NextResponse }) => {\n    if (!url.pathname.endsWith(\"/embed\")) {\n      return res;\n    }\n    const isCOEPEnabled = url.searchParams.get(\"flag.coep\") === \"true\";\n    if (isCOEPEnabled) {\n      res.headers.set(\"Cross-Origin-Embedder-Policy\", \"require-corp\");\n    }\n\n    const embedColorScheme = url.searchParams.get(\"ui.color-scheme\");\n    if (embedColorScheme) {\n      res.headers.set(\"x-embedColorScheme\", embedColorScheme);\n    }\n\n    res.headers.set(\"x-isEmbed\", \"true\");\n    return res;\n  },\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__embeds.addResponseHeaders_11#method:embeds.addResponseHeaders",
+        "unitKind": "method",
+        "name": "addResponseHeaders",
+        "qualifiedName": "embeds.addResponseHeaders",
+        "parentUnitId": "apps/web/middleware.ts__embeds_10#object:embeds",
+        "startLine": 113,
+        "endLine": 129,
+        "isBehavioral": true,
+        "source": "  addResponseHeaders: ({ url, res }: { url: URL; res: NextResponse }) => {\n    if (!url.pathname.endsWith(\"/embed\")) {\n      return res;\n    }\n    const isCOEPEnabled = url.searchParams.get(\"flag.coep\") === \"true\";\n    if (isCOEPEnabled) {\n      res.headers.set(\"Cross-Origin-Embedder-Policy\", \"require-corp\");\n    }\n\n    const embedColorScheme = url.searchParams.get(\"ui.color-scheme\");\n    if (embedColorScheme) {\n      res.headers.set(\"x-embedColorScheme\", embedColorScheme);\n    }\n\n    res.headers.set(\"x-isEmbed\", \"true\");\n    return res;\n  },"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__contentSecurityPolicy_12#object:contentSecurityPolicy",
+        "unitKind": "object",
+        "name": "contentSecurityPolicy",
+        "qualifiedName": "contentSecurityPolicy",
+        "parentUnitId": null,
+        "startLine": 132,
+        "endLine": 157,
+        "isBehavioral": false,
+        "source": "const contentSecurityPolicy = {\n  addResponseHeaders: ({ res, req }: { res: NextResponse; req: NextRequest }) => {\n    const nonce = req.headers.get(\"x-csp-nonce\");\n    if (!nonce) {\n      res.headers.set(\"x-csp-status\", \"not-opted-in\");\n      return res;\n    }\n    const cspHeader = getCspHeader({ shouldEnforceCsp: shouldEnforceCsp(req.nextUrl), nonce });\n    if (cspHeader) {\n      res.headers.set(cspHeader.name, cspHeader.value);\n    }\n    return res;\n  },\n  addRequestHeaders: ({ req }: { req: NextRequest }) => {\n    if (!process.env.CSP_POLICY) {\n      return req;\n    }\n    const isCspApplicable = isPagePathRequest(req.nextUrl);\n    if (!isCspApplicable) {\n      return req;\n    }\n    const nonce = getCspNonce();\n    req.headers.set(\"x-csp-nonce\", nonce);\n    return req;\n  },\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__contentSecurityPolicy.addResponseHeaders_13#method:contentSecurityPolicy.addResponseHeaders",
+        "unitKind": "method",
+        "name": "addResponseHeaders",
+        "qualifiedName": "contentSecurityPolicy.addResponseHeaders",
+        "parentUnitId": "apps/web/middleware.ts__contentSecurityPolicy_12#object:contentSecurityPolicy",
+        "startLine": 133,
+        "endLine": 144,
+        "isBehavioral": true,
+        "source": "  addResponseHeaders: ({ res, req }: { res: NextResponse; req: NextRequest }) => {\n    const nonce = req.headers.get(\"x-csp-nonce\");\n    if (!nonce) {\n      res.headers.set(\"x-csp-status\", \"not-opted-in\");\n      return res;\n    }\n    const cspHeader = getCspHeader({ shouldEnforceCsp: shouldEnforceCsp(req.nextUrl), nonce });\n    if (cspHeader) {\n      res.headers.set(cspHeader.name, cspHeader.value);\n    }\n    return res;\n  },"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__contentSecurityPolicy.addRequestHeaders_14#method:contentSecurityPolicy.addRequestHeaders",
+        "unitKind": "method",
+        "name": "addRequestHeaders",
+        "qualifiedName": "contentSecurityPolicy.addRequestHeaders",
+        "parentUnitId": "apps/web/middleware.ts__contentSecurityPolicy_12#object:contentSecurityPolicy",
+        "startLine": 145,
+        "endLine": 156,
+        "isBehavioral": true,
+        "source": "  addRequestHeaders: ({ req }: { req: NextRequest }) => {\n    if (!process.env.CSP_POLICY) {\n      return req;\n    }\n    const isCspApplicable = isPagePathRequest(req.nextUrl);\n    if (!isCspApplicable) {\n      return req;\n    }\n    const nonce = getCspNonce();\n    req.headers.set(\"x-csp-nonce\", nonce);\n    return req;\n  },"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__responseWithHeaders_15#function:responseWithHeaders",
+        "unitKind": "function",
+        "name": "responseWithHeaders",
+        "qualifiedName": "responseWithHeaders",
+        "parentUnitId": null,
+        "startLine": 159,
+        "endLine": 163,
+        "isBehavioral": true,
+        "source": "function responseWithHeaders({ url, res, req }: { url: URL; res: NextResponse; req: NextRequest }) {\n  const resWithCSP = contentSecurityPolicy.addResponseHeaders({ res, req });\n  const resWithEmbeds = embeds.addResponseHeaders({ url, res: resWithCSP });\n  return resWithEmbeds;\n}"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__enrichRequestWithHeaders_16#function:enrichRequestWithHeaders",
+        "unitKind": "function",
+        "name": "enrichRequestWithHeaders",
+        "qualifiedName": "enrichRequestWithHeaders",
+        "parentUnitId": null,
+        "startLine": 165,
+        "endLine": 168,
+        "isBehavioral": true,
+        "source": "function enrichRequestWithHeaders({ req }: { req: NextRequest }) {\n  const reqWithCSP = contentSecurityPolicy.addRequestHeaders({ req });\n  return reqWithCSP;\n}"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__config_17#const:config",
+        "unitKind": "const",
+        "name": "config",
+        "qualifiedName": "config",
+        "parentUnitId": null,
+        "startLine": 170,
+        "endLine": 187,
+        "isBehavioral": false,
+        "source": "export const config = {\n  // Next.js Doesn't support spread operator in config matcher, so, we must list all paths explicitly here.\n  // https://github.com/vercel/next.js/discussions/42458\n  // WARNING: DO NOT ADD AN ENDING SLASH \"/\" TO THE PATHS BELOW\n  // THIS WILL MAKE THEM NOT MATCH AND HENCE NOT HIT MIDDLEWARE\n  matcher: [\n    // Routes to enforce CSP\n    \"/auth/login\",\n    \"/login\",\n    // Routes to set cookies\n    \"/apps/installed\",\n    \"/auth/logout\",\n    // Embed Routes,\n    \"/:path*/embed\",\n    // API routes\n    \"/api/auth/signup\",\n  ],\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__default_18#default:default",
+        "unitKind": "default",
+        "name": "default",
+        "qualifiedName": "default",
+        "parentUnitId": null,
+        "startLine": 189,
+        "endLine": 194,
+        "isBehavioral": true,
+        "source": "export default collectEvents({\n  middleware,\n  ...nextCollectBasicSettings,\n  cookieName: \"__clnds\",\n  extend: extendEventData,\n});"
+      }
+    ],
+    "extractedUnitCount": 18,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 18922,
+    "outputTokens": 14641,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

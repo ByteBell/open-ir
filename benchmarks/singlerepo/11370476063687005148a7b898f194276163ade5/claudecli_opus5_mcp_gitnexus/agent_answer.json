@@ -1,0 +1,31 @@
+{
+  "repo": "calcom/cal.com",
+  "summary": "The settings sidebar is the only thing gating the org-admin \"Other Teams\" screens: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/SettingsLayoutAppDirClient.tsx:271 drops the `other_teams` tab with `if (tab.name === \"other_teams\" && !isOrgAdminOrOwner) return false;`, and SettingsLayoutAppDirClient.tsx:175-182 (`organizationAdminKeys`) plus the filter at lines ~215-218 hide the other admin-only children. That is a menu filter only \u2014 no route in the `organizations/teams/other` group carries a server-side role guard. The repository has exactly the guard that is missing: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/(org-admin-only)/layout.tsx:9-23 defines `OrgAdminOnlyLayout`, which reads the session via `getServerSession`/`buildLegacyRequest`, derives `orgRole` from `session.user.org.role` (falling back to the profile membership lookup), calls `checkAdminOrOwner` (packages/features/auth/lib/checkAdminOrOwner.ts) and `redirect(\"/settings/organizations/profile\")` when the caller is not an admin/owner. That layout only covers privacy, billing, sso, dsync, delegation-credential and attributes; a graph enumeration of every file under `organizations/teams/other` returns only page/loading/skeleton files and no layout.tsx, so nothing wraps the group. Each of the four screens in the group renders unconditionally: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/page.tsx:20-40 checks only `if (!session?.user?.id) redirect(\"/auth/login\")` \u2014 a signed-in plain member passes and gets the `org_admin_other_teams` shell; and apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/members/page.tsx:16-27, .../[id]/profile/page.tsx:14-22 and .../[id]/appearance/page.tsx:14-25 resolve no session at all, going straight to `SettingsHeader` + the legacy view. This is why every screen in the group behaves identically. The enclosing layouts do not help: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/layout.tsx:8-18 (`SettingsOrganizationsLayout`) only asserts that an organisation exists and redirects otherwise, with no role test. The contrast inside the same tree confirms the omission is local to this group \u2014 apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/general/page.tsx:22-51 does call `getResourcePermissions` with MEMBER/ADMIN/OWNER fallback roles before rendering. The tRPC layer is already correct (packages/trpc/server/routers/viewer/organizations/listOtherTeams.handler.ts returns `[]` unless `user.organization.isOrgAdmin`, and getOtherTeam.handler.ts notes it is served by `authedOrgAdminProcedure`), which is precisely why the symptom is \"the screen renders\" rather than a data leak \u2014 the defect is at the route segment, not the data layer. The same class of defect exists at apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/admin-api/page.tsx:14-25, which renders `AdminAPIView` with no session or role check even though SettingsLayoutAppDirClient.tsx:246-251 hides the `admin_api` link from non-org-admins.",
+  "answer": [
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/page.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/members/page.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/profile/page.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/appearance/page.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/loading.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/skeleton.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/(org-admin-only)/layout.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/SettingsLayoutAppDirClient.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/admin-api/page.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/layout.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/organizations/(org-admin-only)/layout.tsx",
+    "packages/features/auth/lib/checkAdminOrOwner.ts",
+    "packages/features/ee/organizations/pages/settings/other-team-members-view.tsx",
+    "packages/features/ee/organizations/pages/settings/other-team-profile-view.tsx",
+    "packages/features/ee/organizations/pages/components/OtherTeamsListing.tsx",
+    "packages/features/ee/teams/pages/team-appearance-view.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/organizations/(org-user-only)/layout.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/roles/page.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/profile/page.tsx",
+    "apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/general/page.tsx",
+    "packages/features/ee/organizations/pages/components/OtherTeamList.tsx",
+    "packages/features/ee/organizations/pages/components/OtherTeamListItem.tsx",
+    "packages/trpc/server/routers/viewer/organizations/listOtherTeams.handler.ts",
+    "packages/features/auth/lib/getServerSession.ts",
+    "apps/web/lib/buildLegacyCtx.ts"
+  ]
+}

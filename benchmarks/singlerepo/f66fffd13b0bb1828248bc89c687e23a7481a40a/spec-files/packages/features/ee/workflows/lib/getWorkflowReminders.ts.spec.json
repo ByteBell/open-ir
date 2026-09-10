@@ -1,0 +1,878 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/ee/workflows/lib/getWorkflowReminders.ts",
+    "language": "typescript",
+    "sizeBytes": 6460,
+    "tokenCount": 1615,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-09-04T07:30:04.909Z",
+    "module": {
+      "purpose": "This file retrieves workflow reminders from Prisma for deletion, cancellation, and imminent scheduling, while defining the selected reminder data shape and resolving recipients for workflow actions.",
+      "summary": "The module provides paginated database access for workflow reminders using Prisma filters and typed selections. It identifies cancelled email reminders that are overdue for deletion, scheduled reminders requiring cancellation, and unscheduled reminders approaching execution with retry limits. It also selects booking, event, host, user, and workflow-step context needed for reminder delivery, and maps workflow actions to recipient email addresses.",
+      "businessContext": "Supports automated appointment communication through workflow reminders across email, SMS, and WhatsApp channels.\nFailures can leave cancelled notifications active, delay customer messaging, or route reminders to incorrect recipients.",
+      "classes": [
+        "PartialWorkflowStep (~L6-13): Partial workflow step with optional workflow ownership identifiers.",
+        "Booking (~L15-19): Prisma booking payload including attendee relations for reminder processing.",
+        "PartialBooking (~L21-47): Selected booking details with event type, host, and user context.",
+        "PartialWorkflowReminder (~L49-54): Selected reminder fields joined with booking and workflow-step context.",
+        "RemindersToDeleteType (~L86-86): Identifier pair for cancelled email reminders pending deletion.",
+        "RemindersToCancelType (~L110-110): Identifier pair for scheduled reminders requiring cancellation."
+      ],
+      "functions": [
+        "getWorkflowReminders (~L56-84): Retrieves filtered reminder records through paginated Prisma queries.",
+        "getAllRemindersToDelete (~L88-108): Finds overdue cancelled email reminders with deletion references.",
+        "getAllRemindersToCancel (~L112-129): Finds imminent scheduled reminders marked for cancellation.",
+        "getAllUnscheduledReminders (~L211-228): Finds eligible email reminders awaiting scheduling within two hours.",
+        "getWorkflowRecipientEmail (~L230-260): Resolves recipient email addresses from workflow action and contact inputs."
+      ],
+      "keywords": [
+        "workflow reminders",
+        "Prisma pagination",
+        "scheduled reminders",
+        "cancelled reminders",
+        "retryCount",
+        "WorkflowMethods.EMAIL",
+        "recipient routing",
+        "booking attendees",
+        "workflow actions",
+        "reminder delivery"
+      ],
+      "ontologyConcepts": [
+        "Reminder scheduling",
+        "Notification cancellation",
+        "Retry management",
+        "Recipient resolution",
+        "Workflow execution",
+        "Temporal filtering",
+        "Relational data selection"
+      ],
+      "businessEntities": ["WorkflowReminder", "WorkflowStep", "Booking", "EventType", "User", "Attendee", "Team"],
+      "systemCapabilities": [
+        "Retrieve reminders in database pages",
+        "Identify reminders pending deletion",
+        "Identify reminders requiring cancellation",
+        "Prepare imminent reminders for scheduling",
+        "Resolve workflow notification recipients"
+      ],
+      "configDependencies": [],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["default"],
+          "package": "@calcom/dayjs",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["default"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@calcom/prisma/client",
+          "symbols": ["EventType", "Prisma", "User", "WorkflowReminder", "WorkflowStep"],
+          "package": "@calcom/prisma",
+          "subpath": "client",
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["WorkflowMethods"],
+          "package": "@calcom/prisma",
+          "subpath": "enums",
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Queries prisma.workflowReminder.findMany in paginated batches.",
+          "Reads the current time through dayjs() and new Date() to construct reminder filters."
+        ],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "workflowReminder",
+          "payloadRef": "WorkflowReminder",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "PartialWorkflowReminder",
+          "shape": "Pick<WorkflowReminder, \"id\" | \"isMandatoryReminder\" | \"scheduledDate\" | \"uuid\" | \"seatReferenceId\"> & { booking: PartialBooking | null } & { workflowStep: PartialWorkflowStep }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getAllRemindersToDelete",
+          "shape": "(): Promise<RemindersToDeleteType[]>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getAllRemindersToCancel",
+          "shape": "(): Promise<RemindersToCancelType[]>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "select",
+          "shape": "Prisma.WorkflowReminderSelect",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getAllUnscheduledReminders",
+          "shape": "(): Promise<PartialWorkflowReminder[]>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getWorkflowRecipientEmail",
+          "shape": "({ action, organizerEmail, attendeeEmail, sendToEmail }: { action: string; organizerEmail?: string; attendeeEmail?: string; sendToEmail?: string | null }): string | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Prisma.WorkflowReminderWhereInput",
+          "shape": "Prisma.WorkflowReminderWhereInput",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Prisma.WorkflowReminderSelect",
+          "shape": "Prisma.WorkflowReminderSelect",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Prisma.WorkflowReminderGetPayload",
+          "shape": "Prisma.WorkflowReminderGetPayload<{ select: T }>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.workflowReminder.findMany",
+          "shape": "findMany({ where: filter, select: select, skip: pageNumber * pageSize, take: pageSize })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "WorkflowMethods.EMAIL",
+          "shape": "WorkflowMethods.EMAIL",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "getWorkflowReminders pagination",
+          "intent": "Fetches all matching workflow reminders in pages of 90.",
+          "structureKind": "loop",
+          "predicate": "true",
+          "branchOutcomes": [],
+          "bounds": "pageSize = 90",
+          "terminationCondition": "newFilteredWorkflowReminders.length === 0",
+          "anchor": { "startLine": 60, "endLine": 83 }
+        },
+        {
+          "name": "getAllRemindersToDelete",
+          "intent": "Finds cancelled email reminders past their scheduled time.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 88, "endLine": 108 }
+        },
+        {
+          "name": "getAllRemindersToCancel",
+          "intent": "Finds scheduled cancelled reminders within the next hour.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 110, "endLine": 129 }
+        },
+        {
+          "name": "reminder select definition",
+          "intent": "Defines the nested reminder, workflow, booking, and event selections.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 131, "endLine": 209 }
+        },
+        {
+          "name": "getAllUnscheduledReminders",
+          "intent": "Finds eligible unscheduled email reminders within the next two hours.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 211, "endLine": 228 }
+        },
+        {
+          "name": "getWorkflowRecipientEmail",
+          "intent": "Maps workflow actions to recipient email addresses.",
+          "structureKind": "branch",
+          "predicate": "action",
+          "branchOutcomes": [
+            "EMAIL_ADDRESS",
+            "EMAIL_HOST",
+            "EMAIL_ATTENDEE",
+            "SMS_ATTENDEE",
+            "WHATSAPP_ATTENDEE",
+            "SMS_NUMBER",
+            "WHATSAPP_NUMBER",
+            "default"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 230, "endLine": 260 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "PartialWorkflowStep",
+          "signature": "type PartialWorkflowStep =\n  | (Partial<WorkflowStep> & {\n      workflow: {\n        userId?: number;\n        teamId?: number;\n      };\n    })\n  | null;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 6, "endLine": 13 }
+        },
+        {
+          "kind": "type",
+          "name": "Booking",
+          "signature": "type Booking = Prisma.BookingGetPayload<{\n  include: {\n    attendees: true;\n  };\n}>;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 15, "endLine": 19 }
+        },
+        {
+          "kind": "type",
+          "name": "PartialBooking",
+          "signature": "type PartialBooking =\n  | (Pick<\n      Booking,\n      | \"startTime\"\n      | \"endTime\"\n      | \"location\"\n      | \"description\"\n      | \"metadata\"\n      | \"customInputs\"\n      | \"responses\"\n      | \"uid\"\n      | \"attendees\"\n      | \"userPrimaryEmail\"\n      | \"smsReminderNumber\"\n      | \"title\"\n    > & {\n      eventType:\n        | (Partial<EventType> & {\n            slug: string;\n            team: { parentId?: number; hideBranding: boolean };\n            hosts: { user: { email: string; destinationCalendar?: { primaryEmail: string } } }[] | undefined;\n          })\n        | null;\n    } & {\n      user: Partial<User> | null;\n    })\n  | null;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 21, "endLine": 47 }
+        },
+        {
+          "kind": "type",
+          "name": "PartialWorkflowReminder",
+          "signature": "export type PartialWorkflowReminder = Pick<\n  WorkflowReminder,\n  \"id\" | \"isMandatoryReminder\" | \"scheduledDate\" | \"uuid\" | \"seatReferenceId\"\n> & {\n  booking: PartialBooking | null;\n} & { workflowStep: PartialWorkflowStep };",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 49, "endLine": 54 }
+        },
+        {
+          "kind": "function",
+          "name": "getWorkflowReminders",
+          "signature": "async function getWorkflowReminders<T extends Prisma.WorkflowReminderSelect>(\n  filter: Prisma.WorkflowReminderWhereInput,\n  select: T\n): Promise<Array<Prisma.WorkflowReminderGetPayload<{ select: T }>>>",
+          "generics": "T extends Prisma.WorkflowReminderSelect",
+          "decorators": [],
+          "returnType": "Promise<Array<Prisma.WorkflowReminderGetPayload<{ select: T }>>>",
+          "exported": false,
+          "anchor": { "startLine": 56, "endLine": 59 }
+        },
+        {
+          "kind": "type",
+          "name": "RemindersToDeleteType",
+          "signature": "type RemindersToDeleteType = { referenceId: string | null; id: number };",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 86, "endLine": 86 }
+        },
+        {
+          "kind": "function",
+          "name": "getAllRemindersToDelete",
+          "signature": "export async function getAllRemindersToDelete(): Promise<RemindersToDeleteType[]>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<RemindersToDeleteType[]>",
+          "exported": true,
+          "anchor": { "startLine": 88, "endLine": 88 }
+        },
+        {
+          "kind": "type",
+          "name": "RemindersToCancelType",
+          "signature": "type RemindersToCancelType = { referenceId: string | null; id: number };",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 110, "endLine": 110 }
+        },
+        {
+          "kind": "function",
+          "name": "getAllRemindersToCancel",
+          "signature": "export async function getAllRemindersToCancel(): Promise<RemindersToCancelType[]>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<RemindersToCancelType[]>",
+          "exported": true,
+          "anchor": { "startLine": 112, "endLine": 112 }
+        },
+        {
+          "kind": "const",
+          "name": "select",
+          "signature": "export const select = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 131, "endLine": 131 }
+        },
+        {
+          "kind": "function",
+          "name": "getAllUnscheduledReminders",
+          "signature": "export async function getAllUnscheduledReminders(): Promise<PartialWorkflowReminder[]>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<PartialWorkflowReminder[]>",
+          "exported": true,
+          "anchor": { "startLine": 211, "endLine": 211 }
+        },
+        {
+          "kind": "function",
+          "name": "getWorkflowRecipientEmail",
+          "signature": "export function getWorkflowRecipientEmail({\n  action,\n  organizerEmail,\n  attendeeEmail,\n  sendToEmail,\n}: {\n  action: string;\n  organizerEmail?: string;\n  attendeeEmail?: string;\n  sendToEmail?: string | null;\n}): string | null",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string | null",
+          "exported": true,
+          "anchor": { "startLine": 230, "endLine": 240 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "union",
+          "name": "PartialWorkflowStep",
+          "shape": "\n  | (Partial<WorkflowStep> & {\n      workflow: {\n        userId?: number;\n        teamId?: number;\n      };\n    })\n  | null",
+          "discriminant": null,
+          "anchor": { "startLine": 6, "endLine": 13 }
+        },
+        {
+          "kind": "alias",
+          "name": "Booking",
+          "shape": "Prisma.BookingGetPayload<{\n  include: {\n    attendees: true;\n  };\n}>",
+          "discriminant": null,
+          "anchor": { "startLine": 15, "endLine": 19 }
+        },
+        {
+          "kind": "union",
+          "name": "PartialBooking",
+          "shape": "\n  | (Pick<\n      Booking,\n      | \"startTime\"\n      | \"endTime\"\n      | \"location\"\n      | \"description\"\n      | \"metadata\"\n      | \"customInputs\"\n      | \"responses\"\n      | \"uid\"\n      | \"attendees\"\n      | \"userPrimaryEmail\"\n      | \"smsReminderNumber\"\n      | \"title\"\n    > & {\n      eventType:\n        | (Partial<EventType> & {\n            slug: string;\n            team: { parentId?: number; hideBranding: boolean };\n            hosts: { user: { email: string; destinationCalendar?: { primaryEmail: string } } }[] | undefined;\n          })\n        | null;\n    } & {\n      user: Partial<User> | null;\n    })\n  | null",
+          "discriminant": null,
+          "anchor": { "startLine": 21, "endLine": 47 }
+        },
+        {
+          "kind": "intersection",
+          "name": "PartialWorkflowReminder",
+          "shape": "Pick<\n  WorkflowReminder,\n  \"id\" | \"isMandatoryReminder\" | \"scheduledDate\" | \"uuid\" | \"seatReferenceId\"\n> & {\n  booking: PartialBooking | null;\n} & { workflowStep: PartialWorkflowStep }",
+          "discriminant": null,
+          "anchor": { "startLine": 49, "endLine": 54 }
+        },
+        {
+          "kind": "alias",
+          "name": "RemindersToDeleteType",
+          "shape": "{ referenceId: string | null; id: number }",
+          "discriminant": null,
+          "anchor": { "startLine": 86, "endLine": 86 }
+        },
+        {
+          "kind": "alias",
+          "name": "RemindersToCancelType",
+          "shape": "{ referenceId: string | null; id: number }",
+          "discriminant": null,
+          "anchor": { "startLine": 110, "endLine": 110 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Empty database page",
+          "handled": true,
+          "behavior": "Stops pagination when findMany returns an empty array and returns the accumulated reminders.",
+          "anchor": { "startLine": 72, "endLine": 74 }
+        },
+        {
+          "inputShape": "Result count exactly divisible by page size",
+          "handled": true,
+          "behavior": "Performs one additional query after the final full page, then stops on the empty result.",
+          "anchor": { "startLine": 64, "endLine": 81 }
+        },
+        {
+          "inputShape": "Reminder retryCount at or above 3",
+          "handled": true,
+          "behavior": "Excludes the reminder from unscheduled reminders because retryCount must be less than 3.",
+          "anchor": { "startLine": 219, "endLine": 221 }
+        },
+        {
+          "inputShape": "Reminder cancelled is false or null",
+          "handled": true,
+          "behavior": "Includes the reminder in the unscheduled-reminder filter.",
+          "anchor": { "startLine": 222, "endLine": 223 }
+        },
+        {
+          "inputShape": "Missing recipient email for a recognized email action",
+          "handled": true,
+          "behavior": "Returns null through the logical-or fallback.",
+          "anchor": { "startLine": 243, "endLine": 252 }
+        },
+        {
+          "inputShape": "SMS_NUMBER or WHATSAPP_NUMBER action",
+          "handled": true,
+          "behavior": "Returns null.",
+          "anchor": { "startLine": 253, "endLine": 256 }
+        },
+        {
+          "inputShape": "Unrecognized action",
+          "handled": true,
+          "behavior": "Returns null through the default switch branch.",
+          "anchor": { "startLine": 257, "endLine": 259 }
+        }
+      ],
+      "errorHandling": [],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "The Prisma workflowReminder model supports the queried filters, pagination fields, and selected relations.",
+          "anchor": { "startLine": 65, "endLine": 70 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers provide workflow action and recipient values using the expected email or nullability conventions.",
+          "anchor": { "startLine": 230, "endLine": 240 }
+        }
+      ],
+      "ambiguities": [],
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "resolves-explicit-email-address",
+          "scenario": "An email-address workflow action uses the explicitly configured recipient.",
+          "given": ["action = \"EMAIL_ADDRESS\"", "sendToEmail = \"configured@example.com\""],
+          "when": "getWorkflowRecipientEmail({ action, sendToEmail })",
+          "then": "returns \"configured@example.com\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins explicit destination precedence for EMAIL_ADDRESS."
+        },
+        {
+          "testId": "resolves-organizer-email",
+          "scenario": "A host workflow action uses the organizer email when available.",
+          "given": ["action = \"EMAIL_HOST\"", "organizerEmail = \"organizer@example.com\""],
+          "when": "getWorkflowRecipientEmail({ action, organizerEmail })",
+          "then": "returns \"organizer@example.com\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "resolves-attendee-email",
+          "scenario": "An attendee email action uses the attendee email when available.",
+          "given": ["action = \"EMAIL_ATTENDEE\"", "attendeeEmail = \"attendee@example.com\""],
+          "when": "getWorkflowRecipientEmail({ action, attendeeEmail })",
+          "then": "returns \"attendee@example.com\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "resolves-attendee-for-sms",
+          "scenario": "An SMS attendee action returns the attendee email value.",
+          "given": ["action = \"SMS_ATTENDEE\"", "attendeeEmail = \"attendee@example.com\""],
+          "when": "getWorkflowRecipientEmail({ action, attendeeEmail })",
+          "then": "returns \"attendee@example.com\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the function's shared attendee-recipient contract across delivery methods."
+        },
+        {
+          "testId": "returns-null-for-number-actions",
+          "scenario": "A phone-number action does not resolve an email recipient.",
+          "given": ["action = \"SMS_NUMBER\""],
+          "when": "getWorkflowRecipientEmail({ action })",
+          "then": "returns null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "returns-null-for-unknown-action",
+          "scenario": "An unsupported workflow action has no recipient email.",
+          "given": ["action = \"UNKNOWN_ACTION\""],
+          "when": "getWorkflowRecipientEmail({ action })",
+          "then": "returns null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the safe default for future or malformed action values."
+        },
+        {
+          "testId": "returns-only-delete-eligible-reminders",
+          "scenario": "The delete query selects cancelled email reminders with references scheduled before now.",
+          "given": [
+            "prisma.workflowReminder.findMany = mockFindMany",
+            "dayjs().toISOString() = \"2024-01-01T00:00:00.000Z\""
+          ],
+          "when": "getAllRemindersToDelete()",
+          "then": "mockFindMany is called with where { method: WorkflowMethods.EMAIL, cancelled: true, referenceId: { not: null }, scheduledDate: { lt: \"2024-01-01T00:00:00.000Z\" } } and select { referenceId: true, id: true }",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the cleanup eligibility predicate and returned projection."
+        },
+        {
+          "testId": "returns-only-unscheduled-retryable-reminders",
+          "scenario": "The unscheduled query restricts email reminders to the next two hours, fewer than three retries, and non-cancelled states.",
+          "given": ["prisma.workflowReminder.findMany = mockFindMany", "new Date() = \"2024-01-01T00:00:00.000Z\""],
+          "when": "getAllUnscheduledReminders()",
+          "then": "mockFindMany is called with a where filter containing method: WorkflowMethods.EMAIL, scheduled: false, retryCount: { lt: 3 }, and OR: [{ cancelled: false }, { cancelled: null }]",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards retry limits and cancellation semantics for reminder dispatch."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "dayjs",
+        "prisma",
+        "EventType",
+        "Prisma",
+        "User",
+        "WorkflowReminder",
+        "WorkflowStep",
+        "WorkflowMethods",
+        "PartialWorkflowStep",
+        "Booking",
+        "PartialBooking",
+        "PartialWorkflowReminder",
+        "getWorkflowReminders",
+        "RemindersToDeleteType",
+        "getAllRemindersToDelete",
+        "RemindersToCancelType",
+        "getAllRemindersToCancel",
+        "select",
+        "getAllUnscheduledReminders",
+        "getWorkflowRecipientEmail"
+      ],
+      "moduleLevelCode": "import dayjs from \"@calcom/dayjs\";\nimport prisma from \"@calcom/prisma\";\nimport type { EventType, Prisma, User, WorkflowReminder, WorkflowStep } from \"@calcom/prisma/client\";\nimport { WorkflowMethods } from \"@calcom/prisma/enums\";",
+      "exports": [
+        { "name": "PartialWorkflowReminder", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getAllRemindersToDelete", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getAllRemindersToCancel", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "select", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getAllUnscheduledReminders", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getWorkflowRecipientEmail", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "default", "module": "@calcom/dayjs", "alias": "dayjs", "kind": "external" },
+        { "symbol": "default", "module": "@calcom/prisma", "alias": "prisma", "kind": "external" },
+        { "symbol": "EventType", "module": "@calcom/prisma/client", "alias": null, "kind": "external" },
+        { "symbol": "Prisma", "module": "@calcom/prisma/client", "alias": null, "kind": "external" },
+        { "symbol": "User", "module": "@calcom/prisma/client", "alias": null, "kind": "external" },
+        { "symbol": "WorkflowReminder", "module": "@calcom/prisma/client", "alias": null, "kind": "external" },
+        { "symbol": "WorkflowStep", "module": "@calcom/prisma/client", "alias": null, "kind": "external" },
+        { "symbol": "WorkflowMethods", "module": "@calcom/prisma/enums", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [
+        {
+          "name": "select",
+          "value": "{\n  id: true,\n  scheduledDate: true,\n  isMandatoryReminder: true,\n  uuid: true,\n  seatReferenceId: true,\n  workflowStep: {\n    select: {\n      action: true,\n      sendTo: true,\n      reminderBody: true,\n      emailSubject: true,\n      template: true,\n      sender: true,\n      includeCalendarEvent: true,\n      workflow: {\n        select: {\n          userId: true,\n          teamId: true,\n        },\n      },\n    },\n  },\n  booking: {\n    select: {\n      startTime: true,\n      endTime: true,\n      location: true,\n      description: true,\n      smsReminderNumber: true,\n      userPrimaryEmail: true,\n      user: {\n        select: {\n          email: true,\n          name: true,\n          timeZone: true,\n          locale: true,\n          username: true,\n          timeFormat: true,\n          hideBranding: true,\n        },\n      },\n      metadata: true,\n      uid: true,\n      customInputs: true,\n      responses: true,\n      attendees: true,\n      eventType: {\n        select: {\n          bookingFields: true,\n          title: true,\n          slug: true,\n          hosts: {\n            select: {\n              user: {\n                select: {\n                  email: true,\n                  destinationCalendar: {\n                    select: {\n                      primaryEmail: true,\n                    },\n                  },\n                },\n              },\n            },\n          },\n          recurringEvent: true,\n          team: {\n            select: {\n              parentId: true,\n              hideBranding: true,\n            },\n          },\n          customReplyToEmail: true,\n        },\n      },\n    },\n  },\n} satisfies Prisma.WorkflowReminderSelect;",
+          "kind": "object"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__PartialWorkflowStep_1#type_alias:PartialWorkflowStep",
+        "unitKind": "type_alias",
+        "name": "PartialWorkflowStep",
+        "qualifiedName": "PartialWorkflowStep",
+        "parentUnitId": null,
+        "startLine": 6,
+        "endLine": 12,
+        "isBehavioral": false,
+        "source": "type PartialWorkflowStep =\n  | (Partial<WorkflowStep> & {\n      workflow: {\n        userId?: number;\n        teamId?: number;\n      };\n    })"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__Booking_2#type_alias:Booking",
+        "unitKind": "type_alias",
+        "name": "Booking",
+        "qualifiedName": "Booking",
+        "parentUnitId": null,
+        "startLine": 15,
+        "endLine": 19,
+        "isBehavioral": false,
+        "source": "type Booking = Prisma.BookingGetPayload<{\n  include: {\n    attendees: true;\n  };\n}>;"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__PartialBooking_3#type_alias:PartialBooking",
+        "unitKind": "type_alias",
+        "name": "PartialBooking",
+        "qualifiedName": "PartialBooking",
+        "parentUnitId": null,
+        "startLine": 21,
+        "endLine": 47,
+        "isBehavioral": false,
+        "source": "type PartialBooking =\n  | (Pick<\n      Booking,\n      | \"startTime\"\n      | \"endTime\"\n      | \"location\"\n      | \"description\"\n      | \"metadata\"\n      | \"customInputs\"\n      | \"responses\"\n      | \"uid\"\n      | \"attendees\"\n      | \"userPrimaryEmail\"\n      | \"smsReminderNumber\"\n      | \"title\"\n    > & {\n      eventType:\n        | (Partial<EventType> & {\n            slug: string;\n            team: { parentId?: number; hideBranding: boolean };\n            hosts: { user: { email: string; destinationCalendar?: { primaryEmail: string } } }[] | undefined;\n          })\n        | null;\n    } & {\n      user: Partial<User> | null;\n    })\n  | null;"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__PartialWorkflowReminder_4#type_alias:PartialWorkflowReminder",
+        "unitKind": "type_alias",
+        "name": "PartialWorkflowReminder",
+        "qualifiedName": "PartialWorkflowReminder",
+        "parentUnitId": null,
+        "startLine": 49,
+        "endLine": 51,
+        "isBehavioral": false,
+        "source": "export type PartialWorkflowReminder = Pick<\n  WorkflowReminder,\n  \"id\" | \"isMandatoryReminder\" | \"scheduledDate\" | \"uuid\" | \"seatReferenceId\"",
+        "detail": {
+          "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__PartialWorkflowReminder_4#type_alias:PartialWorkflowReminder",
+          "fileId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__PartialWorkflowReminder_4",
+          "unitKind": "type_alias",
+          "name": "PartialWorkflowReminder",
+          "qualifiedName": "PartialWorkflowReminder",
+          "parentUnitId": null,
+          "startLine": 49,
+          "endLine": 51,
+          "signature": "export type PartialWorkflowReminder = Pick<WorkflowReminder, \"id\" | \"isMandatoryReminder\" | \"scheduledDate\" | \"uuid\" | \"seatReferenceId\">;",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "A PartialWorkflowReminder type selects a subset of fields from WorkflowReminder needed for reminder handling.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "faf79bd35f374a536dea92411721e27b17cdf778cb73049f1ef6d61ecadb1b46"
+        }
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__getWorkflowReminders_5#function:getWorkflowReminders",
+        "unitKind": "function",
+        "name": "getWorkflowReminders",
+        "qualifiedName": "getWorkflowReminders",
+        "parentUnitId": null,
+        "startLine": 56,
+        "endLine": 58,
+        "isBehavioral": true,
+        "source": "async function getWorkflowReminders<T extends Prisma.WorkflowReminderSelect>(\n  filter: Prisma.WorkflowReminderWhereInput,\n  select: T"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__RemindersToDeleteType_6#type_alias:RemindersToDeleteType",
+        "unitKind": "type_alias",
+        "name": "RemindersToDeleteType",
+        "qualifiedName": "RemindersToDeleteType",
+        "parentUnitId": null,
+        "startLine": 86,
+        "endLine": 86,
+        "isBehavioral": false,
+        "source": "type RemindersToDeleteType = { referenceId: string | null; id: number };"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__getAllRemindersToDelete_7#function:getAllRemindersToDelete",
+        "unitKind": "function",
+        "name": "getAllRemindersToDelete",
+        "qualifiedName": "getAllRemindersToDelete",
+        "parentUnitId": null,
+        "startLine": 88,
+        "endLine": 108,
+        "isBehavioral": true,
+        "source": "export async function getAllRemindersToDelete(): Promise<RemindersToDeleteType[]> {\n  const whereFilter: Prisma.WorkflowReminderWhereInput = {\n    method: WorkflowMethods.EMAIL,\n    cancelled: true,\n    referenceId: {\n      not: null,\n    },\n    scheduledDate: {\n      lt: dayjs().toISOString(),\n    },\n  };\n\n  const select = {\n    referenceId: true,\n    id: true,\n  } satisfies Prisma.WorkflowReminderSelect;\n\n  const remindersToDelete = await getWorkflowReminders(whereFilter, select);\n\n  return remindersToDelete;\n}"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__RemindersToCancelType_8#type_alias:RemindersToCancelType",
+        "unitKind": "type_alias",
+        "name": "RemindersToCancelType",
+        "qualifiedName": "RemindersToCancelType",
+        "parentUnitId": null,
+        "startLine": 110,
+        "endLine": 110,
+        "isBehavioral": false,
+        "source": "type RemindersToCancelType = { referenceId: string | null; id: number };"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__getAllRemindersToCancel_9#function:getAllRemindersToCancel",
+        "unitKind": "function",
+        "name": "getAllRemindersToCancel",
+        "qualifiedName": "getAllRemindersToCancel",
+        "parentUnitId": null,
+        "startLine": 112,
+        "endLine": 129,
+        "isBehavioral": true,
+        "source": "export async function getAllRemindersToCancel(): Promise<RemindersToCancelType[]> {\n  const whereFilter: Prisma.WorkflowReminderWhereInput = {\n    cancelled: true,\n    scheduled: true, //if it is false then they are already cancelled\n    scheduledDate: {\n      lte: dayjs().add(1, \"hour\").toISOString(),\n    },\n  };\n\n  const select = {\n    referenceId: true,\n    id: true,\n  } satisfies Prisma.WorkflowReminderSelect;\n\n  const remindersToCancel = await getWorkflowReminders(whereFilter, select);\n\n  return remindersToCancel;\n}"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__select_10#const:select",
+        "unitKind": "const",
+        "name": "select",
+        "qualifiedName": "select",
+        "parentUnitId": null,
+        "startLine": 131,
+        "endLine": 209,
+        "isBehavioral": false,
+        "source": "export const select = {\n  id: true,\n  scheduledDate: true,\n  isMandatoryReminder: true,\n  uuid: true,\n  seatReferenceId: true,\n  workflowStep: {\n    select: {\n      action: true,\n      sendTo: true,\n      reminderBody: true,\n      emailSubject: true,\n      template: true,\n      sender: true,\n      includeCalendarEvent: true,\n      workflow: {\n        select: {\n          userId: true,\n          teamId: true,\n        },\n      },\n    },\n  },\n  booking: {\n    select: {\n      startTime: true,\n      endTime: true,\n      location: true,\n      description: true,\n      smsReminderNumber: true,\n      userPrimaryEmail: true,\n      user: {\n        select: {\n          email: true,\n          name: true,\n          timeZone: true,\n          locale: true,\n          username: true,\n          timeFormat: true,\n          hideBranding: true,\n        },\n      },\n      metadata: true,\n      uid: true,\n      customInputs: true,\n      responses: true,\n      attendees: true,\n      eventType: {\n        select: {\n          bookingFields: true,\n          title: true,\n          slug: true,\n          hosts: {\n            select: {\n              user: {\n                select: {\n                  email: true,\n                  destinationCalendar: {\n                    select: {\n                      primaryEmail: true,\n                    },\n                  },\n                },\n              },\n            },\n          },\n          recurringEvent: true,\n          team: {\n            select: {\n              parentId: true,\n              hideBranding: true,\n            },\n          },\n          customReplyToEmail: true,\n        },\n      },\n    },\n  },\n} satisfies Prisma.WorkflowReminderSelect;",
+        "detail": {
+          "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__select_10#const:select",
+          "fileId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__select_10",
+          "unitKind": "const",
+          "name": "select",
+          "qualifiedName": "select",
+          "parentUnitId": null,
+          "startLine": 131,
+          "endLine": 209,
+          "signature": "export const select = { ... } satisfies Prisma.WorkflowReminderSelect",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": "const",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": ["The shape of the object conforms to Prisma.WorkflowReminderSelect."],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Prisma.WorkflowReminderSelect"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "A constant Prisma selection object that specifies which fields of a workflow reminder and its related entities should be retrieved from the database.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "2ddad859387dadcf606f284e90d7a2483595d7800ffc2e4f657de37df9aaf7cd"
+        }
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__getAllUnscheduledReminders_11#function:getAllUnscheduledReminders",
+        "unitKind": "function",
+        "name": "getAllUnscheduledReminders",
+        "qualifiedName": "getAllUnscheduledReminders",
+        "parentUnitId": null,
+        "startLine": 211,
+        "endLine": 228,
+        "isBehavioral": true,
+        "source": "export async function getAllUnscheduledReminders(): Promise<PartialWorkflowReminder[]> {\n  const whereFilter: Prisma.WorkflowReminderWhereInput = {\n    method: WorkflowMethods.EMAIL,\n    scheduled: false,\n    scheduledDate: {\n      gte: new Date(),\n      lte: dayjs().add(2, \"hour\").toISOString(),\n    },\n    retryCount: {\n      lt: 3, // Don't continue retrying if it's already failed 3 times\n    },\n    OR: [{ cancelled: false }, { cancelled: null }],\n  };\n\n  const unscheduledReminders = (await getWorkflowReminders(whereFilter, select)) as PartialWorkflowReminder[];\n\n  return unscheduledReminders;\n}"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts__getWorkflowRecipientEmail_12#function:getWorkflowRecipientEmail",
+        "unitKind": "function",
+        "name": "getWorkflowRecipientEmail",
+        "qualifiedName": "getWorkflowRecipientEmail",
+        "parentUnitId": null,
+        "startLine": 230,
+        "endLine": 260,
+        "isBehavioral": true,
+        "source": "export function getWorkflowRecipientEmail({\n  action,\n  organizerEmail,\n  attendeeEmail,\n  sendToEmail,\n}: {\n  action: string;\n  organizerEmail?: string;\n  attendeeEmail?: string;\n  sendToEmail?: string | null;\n}): string | null {\n  // const action = reminder.workflowStep.action;\n\n  switch (action) {\n    case \"EMAIL_ADDRESS\":\n      return sendToEmail || null;\n    case \"EMAIL_HOST\":\n      return organizerEmail || null;\n    case \"EMAIL_ATTENDEE\":\n      return attendeeEmail || null;\n    case \"SMS_ATTENDEE\":\n      return attendeeEmail || null;\n    case \"WHATSAPP_ATTENDEE\":\n      return attendeeEmail || null;\n    case \"SMS_NUMBER\":\n    case \"WHATSAPP_NUMBER\":\n      return null;\n    default:\n      return null;\n  }\n}"
+      }
+    ]
+  },
+  "out": [],
+  "in": [
+    "packages/features/ee/workflows/lib/service/EmailWorkflowService.ts",
+    "packages/features/ee/workflows/lib/reminders/utils.ts",
+    "packages/features/ee/workflows/api/scheduleEmailReminders.ts",
+    "packages/features/ee/workflows/api/scheduleSMSReminders.ts",
+    "packages/features/ee/workflows/api/scheduleWhatsappReminders.ts"
+  ],
+  "externals": ["@calcom/dayjs", "@calcom/prisma", "@calcom/prisma/client", "@calcom/prisma/enums"],
+  "impact": {
+    "seeds": 12,
+    "callers": 5,
+    "impactedFiles": [
+      "packages/features/ee/workflows/api/scheduleSMSReminders.ts",
+      "packages/features/ee/workflows/lib/service/EmailWorkflowService.ts",
+      "packages/features/ee/workflows/api/scheduleEmailReminders.ts"
+    ]
+  }
+}

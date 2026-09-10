@@ -1,0 +1,1490 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/profile/lib/hideBranding.ts",
+    "language": "typescript",
+    "sizeBytes": 4657,
+    "tokenCount": 1165,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-09-02T20:04:41.494Z",
+    "module": {
+      "purpose": "This file centralizes branding-visibility resolution for user and team events, applying entity settings with organization-level overrides and retrieving missing profile data when necessary.",
+      "summary": "The module evaluates whether product branding should be hidden for teams, users, and their events. It prioritizes organization settings over entity settings, treats missing values as visible by default, queries repositories when identifiers or profiles are unavailable, and logs events lacking an owner or team.",
+      "businessContext": "Supports white-label and organization branding preferences across scheduling events.\nIncorrect resolution can expose platform branding where customers expect their own identity, or hide branding unexpectedly.",
+      "classes": [
+        "Team (~L10-15): Represents team branding settings and inherited parent organization branding configuration.",
+        "Profile (~L17-21): Represents organization branding settings associated with a user profile.",
+        "UserWithoutProfile (~L23-26): Represents user identity and branding settings without loaded profile data.",
+        "UserWithProfile (~L28-30): Represents user data augmented with an optional profile and organization."
+      ],
+      "functions": [
+        "resolveHideBranding (~L35-45): Resolves effective branding visibility from entity and organization settings.",
+        "getHideBranding (~L50-80): Retrieves branding visibility for a user or team identifier.",
+        "shouldHideBrandingForEventUsingProfile (~L85-110): Determines event branding visibility using supplied owner or team profiles.",
+        "shouldHideBrandingForEvent (~L116-153): Resolves event branding visibility while fetching missing user profile information.",
+        "shouldHideBrandingForTeamEvent (~L158-164): Provides a team-specific convenience wrapper for event branding resolution.",
+        "shouldHideBrandingForUserEvent (~L169-181): Provides a user-specific convenience wrapper for event branding resolution."
+      ],
+      "keywords": [
+        "hide branding",
+        "white-label branding",
+        "organization branding override",
+        "team branding settings",
+        "user profile",
+        "event ownership",
+        "TeamRepository",
+        "ProfileRepository",
+        "UserRepository"
+      ],
+      "ontologyConcepts": [
+        "branding visibility",
+        "inheritance",
+        "organization override",
+        "event ownership",
+        "profile enrichment",
+        "repository lookup",
+        "fallback resolution",
+        "error logging"
+      ],
+      "businessEntities": ["Team", "User", "Profile", "Organization", "Event", "Event type"],
+      "systemCapabilities": [
+        "Resolve effective branding visibility",
+        "Retrieve branding settings by identifier",
+        "Evaluate team event branding",
+        "Evaluate user event branding",
+        "Enrich users with organization profiles",
+        "Log events missing ownership"
+      ],
+      "configDependencies": [],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@calcom/features/ee/teams/repositories/TeamRepository",
+          "symbols": ["TeamRepository"],
+          "package": "@calcom/features",
+          "subpath": "ee/teams/repositories/TeamRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@calcom/features/profile/repositories/ProfileRepository",
+          "symbols": ["ProfileRepository"],
+          "package": "@calcom/features",
+          "subpath": "profile/repositories/ProfileRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@calcom/features/users/repositories/UserRepository",
+          "symbols": ["UserRepository"],
+          "package": "@calcom/features",
+          "subpath": "users/repositories/UserRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 5, "endLine": 5 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads team branding settings through teamRepository.findTeamWithParentHideBranding.",
+          "Reads user branding settings through userRepository.findUserWithHideBranding.",
+          "Reads a user profile through ProfileRepository.findByUserIdAndOrgSlug.",
+          "Logs an error when no owner or team is available for an event."
+        ],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "getHideBranding",
+          "shape": "export async function getHideBranding({ userId, teamId }: { userId?: number; teamId?: number }): Promise<boolean>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "shouldHideBrandingForEventUsingProfile",
+          "shape": "export function shouldHideBrandingForEventUsingProfile({ eventTypeId, owner, team }: { owner: UserWithProfile | null; team: Team | null; eventTypeId: number })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "shouldHideBrandingForEvent",
+          "shape": "export async function shouldHideBrandingForEvent({ eventTypeId, team, owner, organizationId }: { eventTypeId: number; team: Team | null; owner: UserWithoutProfile | null; organizationId: number | null })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "shouldHideBrandingForTeamEvent",
+          "shape": "export function shouldHideBrandingForTeamEvent({ eventTypeId, team }: { eventTypeId: number; team: Team })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "shouldHideBrandingForUserEvent",
+          "shape": "export function shouldHideBrandingForUserEvent({ eventTypeId, owner }: { eventTypeId: number; owner: UserWithProfile })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TeamRepository.findTeamWithParentHideBranding",
+          "shape": "teamRepository.findTeamWithParentHideBranding({ teamId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "UserRepository.findUserWithHideBranding",
+          "shape": "userRepository.findUserWithHideBranding({ userId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ProfileRepository.findByUserIdAndOrgSlug",
+          "shape": "ProfileRepository.findByUserIdAndOrgSlug({ userId: owner.id, organizationId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "logger.getSubLogger",
+          "shape": "logger.getSubLogger({ name: \"hideBranding\" })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "logger.error",
+          "shape": "log.error(`No owner or team found for event: ${eventTypeId}`)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "resolveHideBranding",
+          "intent": "Resolve entity and organization branding settings with organization precedence.",
+          "structureKind": "branch",
+          "predicate": "if (options.organizationHideBranding)",
+          "branchOutcomes": [
+            "organization branding is hidden: return true",
+            "otherwise: return entity setting or false"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 35, "endLine": 45 }
+        },
+        {
+          "name": "getHideBranding",
+          "intent": "Fetch branding settings for a team or user identified by truthy IDs.",
+          "structureKind": "branch",
+          "predicate": "if (teamId)",
+          "branchOutcomes": ["team ID provided", "user ID provided", "neither ID provided"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 50, "endLine": 80 }
+        },
+        {
+          "name": "shouldHideBrandingForEventUsingProfile",
+          "intent": "Resolve event branding from an available team or profiled owner.",
+          "structureKind": "branch",
+          "predicate": "if (team)",
+          "branchOutcomes": ["team provided", "owner provided without team", "neither owner nor team provided"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 85, "endLine": 110 }
+        },
+        {
+          "name": "shouldHideBrandingForEvent",
+          "intent": "Fetch missing owner profile and delegate event branding resolution.",
+          "structureKind": "branch",
+          "predicate": "if (team)",
+          "branchOutcomes": [
+            "team provided: delegate to team event resolver",
+            "owner provided: optionally fetch profile and delegate to user event resolver",
+            "neither owner nor team provided: log and return false"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 116, "endLine": 153 }
+        },
+        {
+          "name": "shouldHideBrandingForTeamEvent",
+          "intent": "Delegate team event branding resolution with no owner.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 158, "endLine": 164 }
+        },
+        {
+          "name": "shouldHideBrandingForUserEvent",
+          "intent": "Delegate user event branding resolution with no team.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 169, "endLine": 181 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "resolveHideBranding",
+          "signature": "function resolveHideBranding(options: {\n  entityHideBranding: boolean | null;\n  organizationHideBranding: boolean | null;\n}): boolean",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": false,
+          "anchor": { "startLine": 35, "endLine": 38 }
+        },
+        {
+          "kind": "function",
+          "name": "getHideBranding",
+          "signature": "export async function getHideBranding({\n  userId,\n  teamId,\n}: {\n  userId?: number;\n  teamId?: number;\n}): Promise<boolean>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<boolean>",
+          "exported": true,
+          "anchor": { "startLine": 50, "endLine": 56 }
+        },
+        {
+          "kind": "function",
+          "name": "shouldHideBrandingForEventUsingProfile",
+          "signature": "export function shouldHideBrandingForEventUsingProfile({\n  eventTypeId,\n  owner,\n  team,\n}: {\n  owner: UserWithProfile | null;\n  team: Team | null;\n  eventTypeId: number;\n})",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 85, "endLine": 93 }
+        },
+        {
+          "kind": "function",
+          "name": "shouldHideBrandingForEvent",
+          "signature": "export async function shouldHideBrandingForEvent({\n  eventTypeId,\n  team,\n  owner,\n  organizationId,\n}: {\n  eventTypeId: number;\n  team: Team | null;\n  owner: UserWithoutProfile | null;\n  organizationId: number | null;\n})",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 116, "endLine": 126 }
+        },
+        {
+          "kind": "function",
+          "name": "shouldHideBrandingForTeamEvent",
+          "signature": "export function shouldHideBrandingForTeamEvent({ eventTypeId, team }: { eventTypeId: number; team: Team })",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 158, "endLine": 158 }
+        },
+        {
+          "kind": "function",
+          "name": "shouldHideBrandingForUserEvent",
+          "signature": "export function shouldHideBrandingForUserEvent({\n  eventTypeId,\n  owner,\n}: {\n  eventTypeId: number;\n  owner: UserWithProfile;\n})",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 169, "endLine": 175 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "Team",
+          "shape": "{\n  hideBranding: boolean | null;\n  parent: {\n    hideBranding: boolean | null;\n  } | null;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 10, "endLine": 15 }
+        },
+        {
+          "kind": "type",
+          "name": "Profile",
+          "shape": "{\n  organization: {\n    hideBranding: boolean | null;\n  } | null;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 17, "endLine": 21 }
+        },
+        {
+          "kind": "type",
+          "name": "UserWithoutProfile",
+          "shape": "{\n  id: number;\n  hideBranding: boolean | null;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 23, "endLine": 26 }
+        },
+        {
+          "kind": "intersection",
+          "name": "UserWithProfile",
+          "shape": "UserWithoutProfile & {\n  profile: Profile | null;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 28, "endLine": 30 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "teamId and userId are both provided",
+          "handled": true,
+          "behavior": "The truthy teamId branch takes precedence and the user branch is ignored.",
+          "anchor": { "startLine": 57, "endLine": 67 }
+        },
+        {
+          "inputShape": "teamId and userId are absent or falsy, including 0",
+          "handled": true,
+          "behavior": "No repository is queried and the function returns false.",
+          "anchor": { "startLine": 57, "endLine": 79 }
+        },
+        {
+          "inputShape": "Repository returns no team or user",
+          "handled": true,
+          "behavior": "The function returns false.",
+          "anchor": { "startLine": 61, "endLine": 71 }
+        },
+        {
+          "inputShape": "Entity and organization branding settings are null or false",
+          "handled": true,
+          "behavior": "Branding is not hidden and the resolver returns false.",
+          "anchor": { "startLine": 40, "endLine": 44 }
+        },
+        {
+          "inputShape": "Organization branding setting is true",
+          "handled": true,
+          "behavior": "Branding is hidden regardless of the entity setting.",
+          "anchor": { "startLine": 39, "endLine": 44 }
+        },
+        {
+          "inputShape": "Event has neither a team nor an owner",
+          "handled": true,
+          "behavior": "An error is logged with the event type ID and false is returned.",
+          "anchor": { "startLine": 105, "endLine": 108 }
+        },
+        {
+          "inputShape": "User event has a null organizationId",
+          "handled": true,
+          "behavior": "No profile is fetched and the delegated owner has a null profile.",
+          "anchor": { "startLine": 133, "endLine": 147 }
+        }
+      ],
+      "errorHandling": [],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Falsy teamId values select the user-or-neither path rather than the team path.",
+          "anchor": { "startLine": 57, "endLine": 67 }
+        },
+        {
+          "kind": "caller",
+          "description": "User event callers provide organizationId when an organization-specific profile should be loaded.",
+          "anchor": { "startLine": 133, "endLine": 140 }
+        },
+        {
+          "kind": "schema",
+          "description": "Repository results provide the branding fields and nested parent or organization objects accessed by this file.",
+          "anchor": { "startLine": 59, "endLine": 75 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Should the user result expose profile or profiles, since the declared UserWithProfile type has profile but line 75 accesses profiles?",
+          "affects": "shouldHideBrandingForEventUsingProfile user-event behavior and type compatibility",
+          "anchor": { "startLine": 28, "endLine": 30 },
+          "resolution": null
+        },
+        {
+          "question": "What exact null, missing-record, and failure behavior do the repository methods have beyond the checks performed here?",
+          "affects": "getHideBranding and shouldHideBrandingForEvent error and fallback behavior",
+          "anchor": { "startLine": 59, "endLine": 71 },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "organization-branding-overrides-entity",
+          "scenario": "An entity has branding enabled while its organization hides branding.",
+          "given": ["team = { hideBranding: false, parent: { hideBranding: true } }"],
+          "when": "shouldHideBrandingForTeamEvent({ eventTypeId: 1, team })",
+          "then": "result === true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Organization-level branding suppression must take precedence over the entity setting."
+        },
+        {
+          "testId": "null-entity-branding-defaults-false",
+          "scenario": "An entity and its organization do not request branding suppression.",
+          "given": ["team = { hideBranding: null, parent: { hideBranding: null } }"],
+          "when": "shouldHideBrandingForTeamEvent({ eventTypeId: 1, team })",
+          "then": "result === false",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Null settings resolve to the default visible-branding behavior."
+        },
+        {
+          "testId": "missing-user-or-team-returns-false",
+          "scenario": "An event has neither an owner nor a team.",
+          "given": ["owner = null", "team = null"],
+          "when": "shouldHideBrandingForEventUsingProfile({ eventTypeId: 1, owner, team })",
+          "then": "result === false",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The function must fail closed without a branding source."
+        },
+        {
+          "testId": "missing-repository-entity-returns-false",
+          "scenario": "A requested user or team cannot be found by its repository.",
+          "given": ["teamRepository.findTeamWithParentHideBranding({ teamId }) returns null"],
+          "when": "await getHideBranding({ teamId })",
+          "then": "result === false",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Missing persisted entities must not cause branding to be hidden."
+        },
+        {
+          "testId": "team-event-avoids-profile-lookup",
+          "scenario": "A team event is evaluated through the wrapper that can fetch user profiles.",
+          "given": ["team !== null", "owner === null"],
+          "when": "await shouldHideBrandingForEvent({ eventTypeId: 1, team, owner, organizationId })",
+          "then": "shouldHideBrandingForTeamEvent is used and ProfileRepository.findByUserIdAndOrgSlug is not called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Team events use team organization data and must not perform an unnecessary owner profile lookup."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "log",
+        "teamRepository",
+        "userRepository",
+        "Team",
+        "Profile",
+        "UserWithoutProfile",
+        "UserWithProfile",
+        "resolveHideBranding",
+        "getHideBranding",
+        "shouldHideBrandingForEventUsingProfile",
+        "shouldHideBrandingForEvent",
+        "shouldHideBrandingForTeamEvent",
+        "shouldHideBrandingForUserEvent"
+      ],
+      "moduleLevelCode": "import { TeamRepository } from \"@calcom/features/ee/teams/repositories/TeamRepository\";\nimport { ProfileRepository } from \"@calcom/features/profile/repositories/ProfileRepository\";\nimport { UserRepository } from \"@calcom/features/users/repositories/UserRepository\";\nimport logger from \"@calcom/lib/logger\";\nimport { prisma } from \"@calcom/prisma\";",
+      "exports": [
+        { "name": "getHideBranding", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "shouldHideBrandingForEventUsingProfile", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "shouldHideBrandingForEvent", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "shouldHideBrandingForTeamEvent", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "shouldHideBrandingForUserEvent", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "TeamRepository",
+          "module": "@calcom/features/ee/teams/repositories/TeamRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ProfileRepository",
+          "module": "@calcom/features/profile/repositories/ProfileRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "UserRepository",
+          "module": "@calcom/features/users/repositories/UserRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "logger", "module": "@calcom/lib/logger", "alias": null, "kind": "external" },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [
+        { "name": "log", "value": "logger.getSubLogger({ name: \"hideBranding\" })", "kind": "const" },
+        { "name": "teamRepository", "value": "new TeamRepository(prisma)", "kind": "const" },
+        { "name": "userRepository", "value": "new UserRepository(prisma)", "kind": "const" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__Team_1#type_alias:Team",
+        "unitKind": "type_alias",
+        "name": "Team",
+        "qualifiedName": "Team",
+        "parentUnitId": null,
+        "startLine": 10,
+        "endLine": 15,
+        "isBehavioral": false,
+        "source": "type Team = {\n  hideBranding: boolean | null;\n  parent: {\n    hideBranding: boolean | null;\n  } | null;\n};",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__Team_1#type_alias:Team",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__Team_1",
+          "unitKind": "type_alias",
+          "name": "Team",
+          "qualifiedName": "Team",
+          "parentUnitId": null,
+          "startLine": 10,
+          "endLine": 15,
+          "signature": "type Team = {\n  hideBranding: boolean | null;\n  parent: {\n    hideBranding: boolean | null;\n  } | null;\n};",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [
+            "hideBranding is either a boolean or null.",
+            "parent is either null or an object whose hideBranding is either a boolean or null."
+          ],
+          "edgeCases": [
+            "A null hideBranding value is valid.",
+            "A null parent value is valid.",
+            "A non-null parent must contain a hideBranding property with a boolean or null value."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["boolean"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the team branding configuration shape, including an optional team-level setting and an optional parent setting.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "131b5829cf9c794131774baf228a09017227969d9a89ab544555888abaeab37d"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__Profile_2#type_alias:Profile",
+        "unitKind": "type_alias",
+        "name": "Profile",
+        "qualifiedName": "Profile",
+        "parentUnitId": null,
+        "startLine": 17,
+        "endLine": 21,
+        "isBehavioral": false,
+        "source": "type Profile = {\n  organization: {\n    hideBranding: boolean | null;\n  } | null;\n};",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__Profile_2#type_alias:Profile",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__Profile_2",
+          "unitKind": "type_alias",
+          "name": "Profile",
+          "qualifiedName": "Profile",
+          "parentUnitId": null,
+          "startLine": 17,
+          "endLine": 21,
+          "signature": "type Profile = {\n  organization: {\n    hideBranding: boolean | null;\n  } | null;\n};",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the profile shape, including an optional organization and its nullable hide-branding setting.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "288d2e6c851a8168408ac2ac0b5039083e5cb7ee59be017aa6800461c2a30dce"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__UserWithoutProfile_3#type_alias:UserWithoutProfile",
+        "unitKind": "type_alias",
+        "name": "UserWithoutProfile",
+        "qualifiedName": "UserWithoutProfile",
+        "parentUnitId": null,
+        "startLine": 23,
+        "endLine": 26,
+        "isBehavioral": false,
+        "source": "type UserWithoutProfile = {\n  id: number;\n  hideBranding: boolean | null;\n};",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__UserWithoutProfile_3#type_alias:UserWithoutProfile",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__UserWithoutProfile_3",
+          "unitKind": "type_alias",
+          "name": "UserWithoutProfile",
+          "qualifiedName": "UserWithoutProfile",
+          "parentUnitId": null,
+          "startLine": 23,
+          "endLine": 26,
+          "signature": "type UserWithoutProfile = {\n  id: number;\n  hideBranding: boolean | null;\n};",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "id",
+              "kind": "property",
+              "type": "number",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "hideBranding",
+              "kind": "property",
+              "type": "boolean | null",
+              "default": null,
+              "visibility": null,
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the user data shape used when profile data is absent, including the user's numeric identifier and nullable branding preference.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "6759a73b7943250a0c18849ee7375017799142f422219a9da78673e6fb63c1e5"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__UserWithProfile_4#type_alias:UserWithProfile",
+        "unitKind": "type_alias",
+        "name": "UserWithProfile",
+        "qualifiedName": "UserWithProfile",
+        "parentUnitId": null,
+        "startLine": 28,
+        "endLine": 30,
+        "isBehavioral": false,
+        "source": "type UserWithProfile = UserWithoutProfile & {\n  profile: Profile | null;\n};",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__UserWithProfile_4#type_alias:UserWithProfile",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__UserWithProfile_4",
+          "unitKind": "type_alias",
+          "name": "UserWithProfile",
+          "qualifiedName": "UserWithProfile",
+          "parentUnitId": null,
+          "startLine": 28,
+          "endLine": 30,
+          "signature": "type UserWithProfile = UserWithoutProfile & {\n  profile: Profile | null;\n};",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["UserWithoutProfile", "Profile"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines a user shape that combines UserWithoutProfile with a nullable profile association.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "d270062a4c44bf00f755fa952b7a370378fde9843c786f9680de4b85d32f3981"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__resolveHideBranding_5#function:resolveHideBranding",
+        "unitKind": "function",
+        "name": "resolveHideBranding",
+        "qualifiedName": "resolveHideBranding",
+        "parentUnitId": null,
+        "startLine": 35,
+        "endLine": 45,
+        "isBehavioral": true,
+        "source": "function resolveHideBranding(options: {\n  entityHideBranding: boolean | null;\n  organizationHideBranding: boolean | null;\n}): boolean {\n  // If the organization has branding hidden, we should hide branding for the entity regardless of its own setting\n  if (options.organizationHideBranding) {\n    return true;\n  }\n\n  return options.entityHideBranding ?? false;\n}",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__resolveHideBranding_5#function:resolveHideBranding",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__resolveHideBranding_5",
+          "unitKind": "function",
+          "name": "resolveHideBranding",
+          "qualifiedName": "resolveHideBranding",
+          "parentUnitId": null,
+          "startLine": 35,
+          "endLine": 45,
+          "signature": "function resolveHideBranding(options: {\n  entityHideBranding: boolean | null;\n  organizationHideBranding: boolean | null;\n}): boolean",
+          "parameters": [
+            {
+              "name": "options",
+              "type": "{\n  entityHideBranding: boolean | null;\n  organizationHideBranding: boolean | null;\n}",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "options is provided with boolean or null values for entityHideBranding and organizationHideBranding."
+          ],
+          "postconditions": [
+            "Returns true when organizationHideBranding is true.",
+            "Otherwise returns entityHideBranding when it is non-null, or false when it is null."
+          ],
+          "invariants": [
+            "A true organizationHideBranding value always produces true regardless of entityHideBranding."
+          ],
+          "edgeCases": [
+            "When organizationHideBranding is true and entityHideBranding is false or null, returns true.",
+            "When organizationHideBranding is false or null and entityHideBranding is true, returns true.",
+            "When both settings are false or null, returns false."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Resolves whether branding should be hidden from entity and organization settings. An organization-level hidden-branding setting overrides the entity setting.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "resolveHideBranding is called",
+              "then": "It returns true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "resolveHideBranding is called",
+              "then": "It returns true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "resolveHideBranding is called",
+              "then": "It returns false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "sourceHash": "",
+          "semanticFingerprint": "1a7ad660c5bfc999bd0272561ce1f486d74d1ced504fc62c3da34702f7b95c0e"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__getHideBranding_6#function:getHideBranding",
+        "unitKind": "function",
+        "name": "getHideBranding",
+        "qualifiedName": "getHideBranding",
+        "parentUnitId": null,
+        "startLine": 50,
+        "endLine": 80,
+        "isBehavioral": true,
+        "source": "export async function getHideBranding({\n  userId,\n  teamId,\n}: {\n  userId?: number;\n  teamId?: number;\n}): Promise<boolean> {\n  if (teamId) {\n    // Get team data with parent organization\n    const team = await teamRepository.findTeamWithParentHideBranding({ teamId });\n\n    if (!team) return false;\n\n    return resolveHideBranding({\n      entityHideBranding: team.hideBranding,\n      organizationHideBranding: team.parent?.hideBranding ?? null,\n    });\n  } else if (userId) {\n    // Get user data with profile and organization\n    const user = await userRepository.findUserWithHideBranding({ userId });\n\n    if (!user) return false;\n\n    return resolveHideBranding({\n      entityHideBranding: user.hideBranding,\n      organizationHideBranding: user.profiles?.[0]?.organization?.hideBranding,\n    });\n  }\n\n  return false;\n}",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__getHideBranding_6#function:getHideBranding",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__getHideBranding_6",
+          "unitKind": "function",
+          "name": "getHideBranding",
+          "qualifiedName": "getHideBranding",
+          "parentUnitId": null,
+          "startLine": 50,
+          "endLine": 80,
+          "signature": "export async function getHideBranding({\n  userId,\n  teamId,\n}: {\n  userId?: number;\n  teamId?: number;\n}): Promise<boolean>",
+          "parameters": [
+            { "name": "userId", "type": "number", "default": null, "optional": true, "variadic": false, "order": 0 },
+            { "name": "teamId", "type": "number", "default": null, "optional": true, "variadic": false, "order": 1 }
+          ],
+          "returnType": "Promise<boolean>",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The argument is an object whose optional userId and teamId values are numbers when provided.",
+            "The referenced repositories and resolveHideBranding dependency are available."
+          ],
+          "postconditions": [
+            "Resolves to a boolean.",
+            "If a truthy teamId is provided, the result is based on the team and its parent organization's hide-branding values.",
+            "Otherwise, if a truthy userId is provided, the result is based on the user and the first profile's organization hide-branding value.",
+            "Resolves to false when no applicable entity is found or neither identifier is truthy."
+          ],
+          "invariants": [
+            "A truthy teamId is evaluated before userId and prevents the user lookup path.",
+            "Repository lookup failures are not converted into a boolean result by this function."
+          ],
+          "edgeCases": [
+            "When teamId is truthy and the team lookup returns no team, resolves to false.",
+            "When userId is truthy, teamId is falsy, and the user lookup returns no user, resolves to false.",
+            "When both identifiers are absent or falsy, performs no repository lookup and resolves to false.",
+            "When both identifiers are truthy, only the team lookup path is used."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Any error rejected by teamRepository.findTeamWithParentHideBranding or userRepository.findUserWithHideBranding",
+              "Any error thrown by resolveHideBranding"
+            ],
+            "reverts": [],
+            "onInvalidInput": "Falsy or absent identifiers are treated as having no applicable target and produce false.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "teamRepository.findTeamWithParentHideBranding", "source": "teamRepository", "kind": "external" },
+            { "name": "userRepository.findUserWithHideBranding", "source": "userRepository", "kind": "external" },
+            { "name": "resolveHideBranding", "source": "local function", "kind": "internal" }
+          ],
+          "symbolReferences": ["teamRepository", "userRepository", "resolveHideBranding"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Asynchronously determines whether branding should be hidden for a team or user. Team lookup takes precedence when a truthy teamId is supplied, and missing entities or identifiers produce false.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getHideBranding is called.",
+              "then": "It performs the team lookup path, does not require the user lookup path, and resolves to false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getHideBranding is called.",
+              "then": "It resolves to false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getHideBranding is called.",
+              "then": "It performs no entity lookup and resolves to false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "sourceHash": "",
+          "semanticFingerprint": "88906500d6ea730386c8cae003b1e442e1b614a2bc00b4fe7b95b9053ab1d4ff"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForEventUsingProfile_7#function:shouldHideBrandingForEventUsingProfile",
+        "unitKind": "function",
+        "name": "shouldHideBrandingForEventUsingProfile",
+        "qualifiedName": "shouldHideBrandingForEventUsingProfile",
+        "parentUnitId": null,
+        "startLine": 85,
+        "endLine": 110,
+        "isBehavioral": true,
+        "source": "export function shouldHideBrandingForEventUsingProfile({\n  eventTypeId,\n  owner,\n  team,\n}: {\n  owner: UserWithProfile | null;\n  team: Team | null;\n  eventTypeId: number;\n}) {\n  let hideBranding;\n  if (team) {\n    hideBranding = resolveHideBranding({\n      entityHideBranding: team.hideBranding ?? null,\n      organizationHideBranding: team.parent?.hideBranding ?? null,\n    });\n  } else if (owner) {\n    hideBranding = resolveHideBranding({\n      entityHideBranding: owner.hideBranding ?? null,\n      organizationHideBranding: owner.profile?.organization?.hideBranding ?? null,\n    });\n  } else {\n    log.error(`No owner or team found for event: ${eventTypeId}`);\n    return false;\n  }\n  return hideBranding;\n}",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForEventUsingProfile_7#function:shouldHideBrandingForEventUsingProfile",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForEventUsingProfile_7",
+          "unitKind": "function",
+          "name": "shouldHideBrandingForEventUsingProfile",
+          "qualifiedName": "shouldHideBrandingForEventUsingProfile",
+          "parentUnitId": null,
+          "startLine": 85,
+          "endLine": 110,
+          "signature": "export function shouldHideBrandingForEventUsingProfile({ eventTypeId, owner, team }: { owner: UserWithProfile | null; team: Team | null; eventTypeId: number })",
+          "parameters": [
+            {
+              "name": "{ eventTypeId, owner, team }",
+              "type": "{ owner: UserWithProfile | null; team: Team | null; eventTypeId: number }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The argument is an object containing numeric eventTypeId and nullable owner and team properties."
+          ],
+          "postconditions": [
+            "If team is truthy, the result is the value returned by resolveHideBranding using team-level and parent-level hideBranding values.",
+            "If no team is present and owner is truthy, the result is the value returned by resolveHideBranding using owner-level and profile-organization-level hideBranding values.",
+            "If neither team nor owner is present, false is returned and an error is logged."
+          ],
+          "invariants": [
+            "A provided team takes precedence over a provided owner.",
+            "Nullish hideBranding values are converted to null before being passed to resolveHideBranding.",
+            "The function does not mutate owner, team, or eventTypeId."
+          ],
+          "edgeCases": [
+            "When both team and owner are provided, only team and team.parent hideBranding values are used.",
+            "When team is absent and owner is provided, owner.hideBranding and owner.profile?.organization?.hideBranding are used.",
+            "When both team and owner are null or otherwise falsy, the function logs the event-specific error and returns false.",
+            "When a selected hideBranding value is undefined, it is passed to resolveHideBranding as null."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "If neither team nor owner is available, log an error and return false.",
+            "returnsOnError": "false"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "resolveHideBranding", "source": null, "kind": "internal" },
+            { "name": "log.error", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["UserWithProfile", "Team"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether branding should be hidden for an event using the event's team or owner's profile settings. If neither a team nor an owner is available, it logs an error and returns false.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "No owner or team found for event: ${eventTypeId}",
+              "role": "Error log format used when neither owner nor team is available."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "shouldHideBrandingForEventUsingProfile is called",
+              "then": "it logs `No owner or team found for event: 42` and returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "sourceHash": "",
+          "semanticFingerprint": "37fe76c526906eb5be550ccf2b205eeae9c6a84d98a8d8c690596f7a0d85ede8"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForEvent_8#function:shouldHideBrandingForEvent",
+        "unitKind": "function",
+        "name": "shouldHideBrandingForEvent",
+        "qualifiedName": "shouldHideBrandingForEvent",
+        "parentUnitId": null,
+        "startLine": 116,
+        "endLine": 153,
+        "isBehavioral": true,
+        "source": "export async function shouldHideBrandingForEvent({\n  eventTypeId,\n  team,\n  owner,\n  organizationId,\n}: {\n  eventTypeId: number;\n  team: Team | null;\n  owner: UserWithoutProfile | null;\n  organizationId: number | null;\n}) {\n  let ownerProfile = null;\n  if (team) {\n    return shouldHideBrandingForTeamEvent({\n      team,\n      eventTypeId,\n    });\n  } else if (owner) {\n    // Needed only for User events, not for Team events\n    ownerProfile = organizationId\n      ? await ProfileRepository.findByUserIdAndOrgSlug({\n          userId: owner.id,\n          organizationId,\n        })\n      : null;\n\n    return shouldHideBrandingForUserEvent({\n      eventTypeId,\n      owner: {\n        ...owner,\n        profile: ownerProfile,\n      },\n    });\n  } else {\n    log.error(`No owner or team found for event: ${eventTypeId}`);\n    return false;\n  }\n}",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForEvent_8#function:shouldHideBrandingForEvent",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForEvent_8",
+          "unitKind": "function",
+          "name": "shouldHideBrandingForEvent",
+          "qualifiedName": "shouldHideBrandingForEvent",
+          "parentUnitId": null,
+          "startLine": 116,
+          "endLine": 153,
+          "signature": "export async function shouldHideBrandingForEvent({\n  eventTypeId,\n  team,\n  owner,\n  organizationId,\n}: {\n  eventTypeId: number;\n  team: Team | null;\n  owner: UserWithoutProfile | null;\n  organizationId: number | null;\n})",
+          "parameters": [
+            {
+              "name": "eventTypeId",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "team",
+              "type": "Team | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "owner",
+              "type": "UserWithoutProfile | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "organizationId",
+              "type": "number | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "Promise<boolean>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The input object contains an eventTypeId, team, owner, and organizationId matching their declared types."
+          ],
+          "postconditions": [
+            "Resolves to the boolean result returned by the applicable team-event or user-event helper.",
+            "If neither a team nor an owner is provided, resolves to false."
+          ],
+          "invariants": [
+            "When both team and owner are provided, the team-event path is selected and the owner path is not evaluated.",
+            "The owner profile lookup is performed only on the owner path and when organizationId is truthy.",
+            "The owner-event helper receives the owner data augmented with the retrieved profile or null."
+          ],
+          "edgeCases": [
+            "When team is non-null, delegates to shouldHideBrandingForTeamEvent with team and eventTypeId without consulting the owner or profile repository.",
+            "When team is null, owner is non-null, and organizationId is truthy, asynchronously retrieves the profile by user ID and organization ID before delegating to shouldHideBrandingForUserEvent.",
+            "When team is null, owner is non-null, and organizationId is null or otherwise falsy, skips profile lookup and delegates with a null profile.",
+            "When both team and owner are null, logs an error containing the event type ID and resolves to false."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "No owner or team results in an error log and a false result; no other invalid-input behavior is defined.",
+            "returnsOnError": "false when neither team nor owner is present"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "shouldHideBrandingForTeamEvent", "source": null, "kind": "internal" },
+            { "name": "ProfileRepository.findByUserIdAndOrgSlug", "source": null, "kind": "external" },
+            { "name": "shouldHideBrandingForUserEvent", "source": null, "kind": "internal" },
+            { "name": "log.error", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": [
+            "Team",
+            "UserWithoutProfile",
+            "ProfileRepository",
+            "shouldHideBrandingForTeamEvent",
+            "shouldHideBrandingForUserEvent",
+            "log"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether branding should be hidden for an event based on its team or user owner. Team ownership takes precedence; user ownership may require loading the owner's organization profile.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "shouldHideBrandingForEvent is called",
+              "then": "It delegates to the team-event helper with the team and eventTypeId, and resolves to that helper's boolean result without performing a profile lookup.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "shouldHideBrandingForEvent is called",
+              "then": "It looks up the owner's profile using owner.id and organizationId, augments the owner with that profile, and resolves to the user-event helper's boolean result.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "shouldHideBrandingForEvent is called",
+              "then": "It logs an error for the eventTypeId and resolves to false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "sourceHash": "",
+          "semanticFingerprint": "5aeb3d85b093745bc72b47d6638ae36d8fe57cb0307c9dc6dfbe0b17e6199edb"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForTeamEvent_9#function:shouldHideBrandingForTeamEvent",
+        "unitKind": "function",
+        "name": "shouldHideBrandingForTeamEvent",
+        "qualifiedName": "shouldHideBrandingForTeamEvent",
+        "parentUnitId": null,
+        "startLine": 158,
+        "endLine": 164,
+        "isBehavioral": true,
+        "source": "export function shouldHideBrandingForTeamEvent({ eventTypeId, team }: { eventTypeId: number; team: Team }) {\n  return shouldHideBrandingForEventUsingProfile({\n    owner: null,\n    team,\n    eventTypeId,\n  });\n}",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForTeamEvent_9#function:shouldHideBrandingForTeamEvent",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForTeamEvent_9",
+          "unitKind": "function",
+          "name": "shouldHideBrandingForTeamEvent",
+          "qualifiedName": "shouldHideBrandingForTeamEvent",
+          "parentUnitId": null,
+          "startLine": 158,
+          "endLine": 164,
+          "signature": "export function shouldHideBrandingForTeamEvent({ eventTypeId, team }: { eventTypeId: number; team: Team })",
+          "parameters": [
+            {
+              "name": "eventTypeId",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "team", "type": "Team", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["eventTypeId is a number.", "team satisfies the Team shape."],
+          "postconditions": [
+            "Returns the result of shouldHideBrandingForEventUsingProfile with owner set to null, the supplied team, and the supplied eventTypeId."
+          ],
+          "invariants": [
+            "The supplied team is passed through unchanged.",
+            "The supplied eventTypeId is passed through unchanged.",
+            "The owner argument passed to the delegated evaluator is always null."
+          ],
+          "edgeCases": [
+            "Any numeric eventTypeId, including boundary or otherwise unrecognized values, is delegated unchanged to shouldHideBrandingForEventUsingProfile.",
+            "The function does not independently validate or transform the team; behavior for malformed values is determined by the delegated evaluator."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "No local validation or fallback is specified; delegated evaluation determines behavior.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "shouldHideBrandingForEventUsingProfile",
+              "source": "packages/features/profile/lib/hideBranding.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["Team"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether branding should be hidden for a team event by evaluating the event with the team as its owner context and no profile owner.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "shouldHideBrandingForTeamEvent is called with those values.",
+              "then": "The result is exactly the result of shouldHideBrandingForEventUsingProfile called with owner: null, the same team, and the same eventTypeId.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "sourceHash": "",
+          "semanticFingerprint": "03480e860dacc67d31157fb56206c0a52b23c3f17bcbefa4375db6d952628eae"
+        }
+      },
+      {
+        "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForUserEvent_10#function:shouldHideBrandingForUserEvent",
+        "unitKind": "function",
+        "name": "shouldHideBrandingForUserEvent",
+        "qualifiedName": "shouldHideBrandingForUserEvent",
+        "parentUnitId": null,
+        "startLine": 169,
+        "endLine": 181,
+        "isBehavioral": true,
+        "source": "export function shouldHideBrandingForUserEvent({\n  eventTypeId,\n  owner,\n}: {\n  eventTypeId: number;\n  owner: UserWithProfile;\n}) {\n  return shouldHideBrandingForEventUsingProfile({\n    owner,\n    team: null,\n    eventTypeId,\n  });\n}",
+        "detail": {
+          "unitId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForUserEvent_10#function:shouldHideBrandingForUserEvent",
+          "fileId": "packages/features/profile/lib/hideBranding.ts__shouldHideBrandingForUserEvent_10",
+          "unitKind": "function",
+          "name": "shouldHideBrandingForUserEvent",
+          "qualifiedName": "shouldHideBrandingForUserEvent",
+          "parentUnitId": null,
+          "startLine": 169,
+          "endLine": 181,
+          "signature": "export function shouldHideBrandingForUserEvent({\n  eventTypeId,\n  owner,\n}: {\n  eventTypeId: number;\n  owner: UserWithProfile;\n})",
+          "parameters": [
+            {
+              "name": "eventTypeId",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "owner",
+              "type": "UserWithProfile",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["eventTypeId is a number.", "owner conforms to UserWithProfile."],
+          "postconditions": [
+            "Returns the result of shouldHideBrandingForEventUsingProfile with the supplied owner and eventTypeId and with team set to null."
+          ],
+          "invariants": [
+            "The user event is evaluated without a team context.",
+            "The input owner and eventTypeId are passed through unchanged to the delegated evaluation."
+          ],
+          "edgeCases": [
+            "Any numeric eventTypeId, including boundary values, is delegated without local validation or transformation.",
+            "The absence of a team context is represented by passing null.",
+            "Errors from the delegated evaluation are not handled locally."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "shouldHideBrandingForEventUsingProfile",
+              "source": "packages/features/profile/lib/hideBranding.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["UserWithProfile"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether branding should be hidden for a user-owned event by evaluating the event with the supplied profile owner and no team context.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "8d7bfd671a90768b5537a552b9b2b2cba4cb8421745d01559eb4f8319aaeddf3"
+        }
+      }
+    ]
+  },
+  "out": [],
+  "in": [],
+  "externals": [
+    "@calcom/features/ee/teams/repositories/TeamRepository",
+    "@calcom/features/profile/repositories/ProfileRepository",
+    "@calcom/features/users/repositories/UserRepository",
+    "@calcom/lib/logger",
+    "@calcom/prisma"
+  ],
+  "impact": { "seeds": 10, "callers": 5, "impactedFiles": [] }
+}

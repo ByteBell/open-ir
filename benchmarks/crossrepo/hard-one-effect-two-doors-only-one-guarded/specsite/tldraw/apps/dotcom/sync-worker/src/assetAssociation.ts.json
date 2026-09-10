@@ -1,0 +1,781 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "apps/dotcom/sync-worker/src/assetAssociation.ts",
+    "language": "typescript",
+    "sizeBytes": 2745,
+    "tokenCount": 686,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:28:20.541Z",
+    "module": {
+      "purpose": "Provides the asset-association planning logic used by the sync worker to identify uploads that require URL migration or object copying into user-content storage.",
+      "summary": "This module analyzes arbitrary records, filters them to valid asset records, derives their uploads-bucket object names, and produces two change plans. Assets already associated with the target slug can receive a URL-only migration, while assets associated elsewhere can be copied to newly generated object names unless their missing objects were previously recorded. Invalid, unsupported, or bookmark assets are ignored.",
+      "businessContext": "Supports migration and synchronization of user-uploaded assets between storage URL formats and ownership namespaces. Incorrect planning can leave assets inaccessible, duplicate objects, or repeatedly retry missing uploads.",
+      "classes": [
+        "AssetToReplace (~L4-9): Describes an asset requiring object copying and URL replacement",
+        "AssetToMigrate (~L11-14): Describes an asset requiring only a source URL migration"
+      ],
+      "functions": [
+        "getUploadObjectName (~L21-31): Extracts and validates an uploads-bucket object name",
+        "collectAssetAssociationChanges (~L39-82): Builds replacement and migration plans from asset records"
+      ],
+      "keywords": [
+        "R2 object name",
+        "asset association",
+        "uploads bucket",
+        "URL migration",
+        "object copying",
+        "user content URL",
+        "bookmark assets",
+        "skip object names"
+      ],
+      "ontologyConcepts": [
+        "asset migration",
+        "storage association",
+        "object-name validation",
+        "change planning",
+        "record filtering",
+        "URL rewriting"
+      ],
+      "businessEntities": ["Asset", "Uploads Object", "User Content", "Asset Record", "Slug"],
+      "systemCapabilities": [
+        "Validate upload object references",
+        "Plan asset URL migrations",
+        "Plan storage object replacements",
+        "Skip unsupported asset records",
+        "Avoid retries for known missing objects"
+      ],
+      "configDependencies": [],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["uniqueId"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/worker-shared",
+          "symbols": ["isValidR2ObjectName"],
+          "package": "@tldraw/worker-shared",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "AssetToReplace",
+          "shape": "export interface AssetToReplace {\n\tobjectName: string\n\tnewObjectName: string\n\tnewSrc: string\n\tassetId: string\n}",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "AssetToMigrate",
+          "shape": "export interface AssetToMigrate {\n\tassetId: string\n\tnewSrc: string\n}",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getUploadObjectName",
+          "shape": "export function getUploadObjectName(asset: {\n\ttype?: string\n\tprops?: { src?: string | null }\n}): string | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "collectAssetAssociationChanges",
+          "shape": "export function collectAssetAssociationChanges(\n\trecords: Iterable<unknown>,\n\t{\n\t\tslug,\n\t\tuserContentUrl,\n\t\tskipObjectNames,\n\t}: {\n\t\tslug: string\n\t\tuserContentUrl: string\n\t\tskipObjectNames?: ReadonlySet<string>\n\t}\n): { assetsToReplace: AssetToReplace[]; assetsToMigrate: AssetToMigrate[] }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "uniqueId", "shape": "uniqueId()", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "isValidR2ObjectName",
+          "shape": "isValidR2ObjectName(objectName)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "object-name extraction",
+          "intent": "Reject unsupported assets and return a validated uploads object name",
+          "structureKind": "branch",
+          "predicate": "asset.type === 'bookmark'",
+          "branchOutcomes": ["bookmark asset returns null", "non-bookmark asset continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 21, "endLine": 31 }
+        },
+        {
+          "name": "record association scan",
+          "intent": "Iterate through records and classify actionable asset associations",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "records",
+          "terminationCondition": null,
+          "anchor": { "startLine": 52, "endLine": 80 }
+        },
+        {
+          "name": "record filtering",
+          "intent": "Ignore records that are not asset records or lack valid object names",
+          "structureKind": "branch",
+          "predicate": "(record as any).typeName !== 'asset'",
+          "branchOutcomes": ["non-asset record continues to next record", "asset record is inspected"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 53, "endLine": 55 }
+        },
+        {
+          "name": "URL migration classification",
+          "intent": "Create URL-only migrations for same-slug assets using old URL formats",
+          "structureKind": "branch",
+          "predicate": "meta?.fileId === slug && !src.startsWith(userContentUrl)",
+          "branchOutcomes": ["same-slug old-format asset is migrated", "asset continues to replacement checks"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 59, "endLine": 64 }
+        },
+        {
+          "name": "replacement eligibility",
+          "intent": "Skip already associated or previously missing objects before copying",
+          "structureKind": "branch",
+          "predicate": "meta?.fileId === slug",
+          "branchOutcomes": ["already associated asset is skipped", "unassociated asset continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 66, "endLine": 68 }
+        },
+        {
+          "name": "replacement naming",
+          "intent": "Generate a unique destination object name while preserving file suffixes",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 70, "endLine": 79 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "AssetToReplace",
+          "signature": "export interface AssetToReplace {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        },
+        {
+          "kind": "interface",
+          "name": "AssetToMigrate",
+          "signature": "export interface AssetToMigrate {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 11, "endLine": 11 }
+        },
+        {
+          "kind": "function",
+          "name": "getUploadObjectName",
+          "signature": "export function getUploadObjectName(asset: {\n\ttype?: string\n\tprops?: { src?: string | null }\n}): string | null {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string | null",
+          "exported": true,
+          "anchor": { "startLine": 21, "endLine": 24 }
+        },
+        {
+          "kind": "function",
+          "name": "collectAssetAssociationChanges",
+          "signature": "export function collectAssetAssociationChanges(\n\trecords: Iterable<unknown>,\n\t{\n\t\tslug,\n\t\tuserContentUrl,\n\t\tskipObjectNames,\n\t}: {\n\t\tslug: string\n\t\tuserContentUrl: string\n\t\tskipObjectNames?: ReadonlySet<string>\n\t}\n): { assetsToReplace: AssetToReplace[]; assetsToMigrate: AssetToMigrate[] } {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "{ assetsToReplace: AssetToReplace[]; assetsToMigrate: AssetToMigrate[] }",
+          "exported": true,
+          "anchor": { "startLine": 39, "endLine": 49 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "AssetToReplace",
+          "shape": "{\n\tobjectName: string\n\tnewObjectName: string\n\tnewSrc: string\n\tassetId: string\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 4, "endLine": 9 }
+        },
+        {
+          "kind": "interface",
+          "name": "AssetToMigrate",
+          "shape": "{\n\tassetId: string\n\tnewSrc: string\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 11, "endLine": 14 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "bookmark asset",
+          "handled": true,
+          "behavior": "Returns null and excludes the asset from association changes.",
+          "anchor": { "startLine": 25, "endLine": 25 }
+        },
+        {
+          "inputShape": "missing, empty, or non-http source",
+          "handled": true,
+          "behavior": "Returns null and skips the asset.",
+          "anchor": { "startLine": 26, "endLine": 27 }
+        },
+        {
+          "inputShape": "invalid R2 object name or URL without a final segment",
+          "handled": true,
+          "behavior": "Returns null and skips the asset.",
+          "anchor": { "startLine": 28, "endLine": 30 }
+        },
+        {
+          "inputShape": "non-asset record",
+          "handled": true,
+          "behavior": "Skips the record without inspecting asset fields.",
+          "anchor": { "startLine": 53, "endLine": 53 }
+        },
+        {
+          "inputShape": "same-slug asset using old-format URL",
+          "handled": true,
+          "behavior": "Adds a URL migration and does not schedule an object copy.",
+          "anchor": { "startLine": 59, "endLine": 63 }
+        },
+        {
+          "inputShape": "same-slug asset already using configured URL",
+          "handled": true,
+          "behavior": "Skips the asset because no change is required.",
+          "anchor": { "startLine": 66, "endLine": 66 }
+        },
+        {
+          "inputShape": "object name listed in skipObjectNames",
+          "handled": true,
+          "behavior": "Skips replacement planning while leaving URL migration behavior unaffected.",
+          "anchor": { "startLine": 68, "endLine": 68 }
+        },
+        {
+          "inputShape": "object name without a hyphenated suffix",
+          "handled": true,
+          "behavior": "Uses only the generated identifier as the destination object name.",
+          "anchor": { "startLine": 71, "endLine": 73 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "(record as any).typeName",
+          "right": "'asset'",
+          "inclusive": true,
+          "intent": "Determines whether the current record is an asset.",
+          "anchor": { "startLine": 53, "endLine": 53 }
+        },
+        {
+          "operator": "==",
+          "left": "meta?.fileId",
+          "right": "slug",
+          "inclusive": true,
+          "intent": "Identifies assets already associated with the target slug.",
+          "anchor": { "startLine": 59, "endLine": 59 }
+        },
+        {
+          "operator": "==",
+          "left": "meta?.fileId",
+          "right": "slug",
+          "inclusive": true,
+          "intent": "Skips assets that already belong to the target slug.",
+          "anchor": { "startLine": 66, "endLine": 66 }
+        },
+        {
+          "operator": ">",
+          "left": "split.length",
+          "right": "1",
+          "inclusive": false,
+          "intent": "Detects whether the object name contains a suffix segment.",
+          "anchor": { "startLine": 71, "endLine": 71 }
+        }
+      ],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "postcondition",
+          "description": "The extraction helper returns only valid R2 object names or null.",
+          "anchor": { "startLine": 28, "endLine": 30 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Every planned migration targets the configured user-content URL and extracted object name.",
+          "anchor": { "startLine": 60, "endLine": 62 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Every replacement receives a newly generated object name and corresponding destination URL.",
+          "anchor": { "startLine": 72, "endLine": 78 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Output arrays preserve the input iteration order of eligible records.",
+          "anchor": { "startLine": 52, "endLine": 79 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "Asset records expose id, props.src, type, and optional meta.fileId fields.",
+          "anchor": { "startLine": 54, "endLine": 56 }
+        },
+        {
+          "kind": "caller",
+          "description": "The caller supplies a userContentUrl suitable for concatenating with object names.",
+          "anchor": { "startLine": 60, "endLine": 62 }
+        },
+        {
+          "kind": "caller",
+          "description": "The caller provides skipObjectNames containing objects previously found missing from storage.",
+          "anchor": { "startLine": 68, "endLine": 68 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the caller guarantee that asset.props.src is a string after getUploadObjectName succeeds?",
+          "affects": "collectAssetAssociationChanges source handling",
+          "anchor": { "startLine": 55, "endLine": 59 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Functions are synchronous and keep no shared mutable state; generated identifiers may vary between calls."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-bookmark-assets",
+          "scenario": "A bookmark asset is passed to getUploadObjectName.",
+          "given": ["const asset = { type: 'bookmark', props: { src: 'https://example.com/page' } }"],
+          "when": "getUploadObjectName(asset)",
+          "then": "expect(...).toBe(null)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Bookmark URLs do not identify uploads-bucket objects."
+        },
+        {
+          "testId": "rejects-non-http-sources",
+          "scenario": "An asset source is missing or does not start with HTTP.",
+          "given": ["const asset = { props: { src: 'data:image/png;base64,abc' } }"],
+          "when": "getUploadObjectName(asset)",
+          "then": "expect(...).toBe(null)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Only HTTP asset sources are eligible for association."
+        },
+        {
+          "testId": "extracts-valid-upload-object-name",
+          "scenario": "An asset has an HTTP source whose final path segment is a valid R2 object name.",
+          "given": ["const asset = { type: 'image', props: { src: 'https://uploads.example/a-valid-object' } }"],
+          "when": "getUploadObjectName(asset)",
+          "then": "expect(...).toBe('a-valid-object')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The association pass keys records by the final URL path segment."
+        },
+        {
+          "testId": "migrates-old-format-url",
+          "scenario": "An asset belongs to the current slug but uses an old HTTP source host.",
+          "given": [
+            "const records = [{ typeName: 'asset', id: 'asset-1', type: 'image', meta: { fileId: 'doc-slug' }, props: { src: 'https://old.example/object-1' } }]"
+          ],
+          "when": "collectAssetAssociationChanges(records, { slug: 'doc-slug', userContentUrl: 'https://content.example' })",
+          "then": "expect(...).toEqual({ assetsToReplace: [], assetsToMigrate: [{ assetId: 'asset-1', newSrc: 'https://content.example/object-1' }] })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "URL migration rewrites the source without scheduling an object copy."
+        },
+        {
+          "testId": "skips-known-missing-objects-only-for-copy",
+          "scenario": "A non-current asset references an object previously found missing from the uploads bucket.",
+          "given": [
+            "const records = [{ typeName: 'asset', id: 'asset-1', type: 'image', meta: { fileId: 'other-slug' }, props: { src: 'https://old.example/object-1' } }]",
+            "const skipObjectNames = new Set(['object-1'])"
+          ],
+          "when": "collectAssetAssociationChanges(records, { slug: 'doc-slug', userContentUrl: 'https://content.example', skipObjectNames })",
+          "then": "expect(...).toEqual({ assetsToReplace: [], assetsToMigrate: [] })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Previously missing objects must not trigger repeated copy attempts."
+        },
+        {
+          "testId": "creates-replacement-for-foreign-asset",
+          "scenario": "A valid asset belongs to another slug and is not skipped.",
+          "given": [
+            "const records = [{ typeName: 'asset', id: 'asset-1', type: 'image', meta: { fileId: 'other-slug' }, props: { src: 'https://old.example/object-1-png' } }]"
+          ],
+          "when": "collectAssetAssociationChanges(records, { slug: 'doc-slug', userContentUrl: 'https://content.example' })",
+          "then": "expect(...).toMatchObject({ assetsToMigrate: [], assetsToReplace: [{ objectName: 'object-1-png', assetId: 'asset-1', newSrc: expect.stringMatching(/^https:\\/\\/content\\.example\\/[A-Za-z0-9_-]+-png$/) }] })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Foreign assets receive a newly generated object name while preserving the file-type suffix."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import uniqueId from @tldraw/utils",
+        "import isValidR2ObjectName from @tldraw/worker-shared",
+        "interface AssetToReplace",
+        "interface AssetToMigrate",
+        "function getUploadObjectName",
+        "function collectAssetAssociationChanges"
+      ],
+      "moduleLevelCode": "import { uniqueId } from '@tldraw/utils'\nimport { isValidR2ObjectName } from '@tldraw/worker-shared'",
+      "exports": [
+        { "name": "AssetToReplace", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "AssetToMigrate", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getUploadObjectName", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "collectAssetAssociationChanges", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "uniqueId", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "isValidR2ObjectName", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/dotcom/sync-worker/src/assetAssociation.ts__getUploadObjectName#function:getUploadObjectName",
+        "unitKind": "function",
+        "name": "getUploadObjectName",
+        "qualifiedName": "getUploadObjectName",
+        "parentUnitId": null,
+        "startLine": 21,
+        "endLine": 31,
+        "isBehavioral": true,
+        "source": " */\nexport function getUploadObjectName(asset: {\n\ttype?: string\n\tprops?: { src?: string | null }\n}): string | null {\n\tif (asset.type === 'bookmark') return null\n\tconst src = asset.props?.src\n\tif (!src || !src.startsWith('http')) return null\n\tconst objectName = src.split('/').pop()\n\tif (!objectName || !isValidR2ObjectName(objectName)) return null\n\treturn objectName",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/assetAssociation.ts__getUploadObjectName#function:getUploadObjectName",
+          "fileId": "apps/dotcom/sync-worker/src/assetAssociation.ts__getUploadObjectName",
+          "unitKind": "function",
+          "name": "getUploadObjectName",
+          "qualifiedName": "getUploadObjectName",
+          "parentUnitId": null,
+          "startLine": 21,
+          "endLine": 31,
+          "signature": "export function getUploadObjectName(asset: { type?: string; props?: { src?: string | null } }): string | null",
+          "parameters": [
+            {
+              "name": "asset",
+              "type": "{ type?: string; props?: { src?: string | null } }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "string | null",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The asset argument is an object compatible with the declared asset shape."],
+          "postconditions": [
+            "Returns null when asset.type is 'bookmark'.",
+            "Returns null when props.src is absent, null, empty, or does not start with 'http'.",
+            "For an eligible source, returns the final slash-delimited segment only when it is a valid R2 object name; otherwise returns null."
+          ],
+          "invariants": [
+            "Source-prefix matching is case-sensitive and requires the source to start with 'http'.",
+            "The candidate object name is obtained from the final segment of src split on '/'.",
+            "The function does not mutate the input asset."
+          ],
+          "edgeCases": [
+            "A bookmark asset returns null without using its source.",
+            "An asset without props or with a null, empty, or otherwise falsy src returns null.",
+            "A source not beginning with 'http' returns null.",
+            "A source ending in '/' produces no usable object name and returns null.",
+            "A source whose final segment fails R2 object-name validation returns null.",
+            "A source with a valid final segment returns that segment, excluding preceding slash-delimited components."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns null for unsupported asset types, missing or non-HTTP sources, missing final path segments, and invalid R2 object names.",
+            "returnsOnError": "null"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "isValidR2ObjectName",
+              "source": "apps/dotcom/sync-worker/src/assetAssociation.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["isValidR2ObjectName"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Derives an upload object name from an asset source URL when the asset is eligible and the extracted name is a valid R2 object name. Returns null for bookmarks, missing or non-HTTP sources, missing path segments, and invalid object names.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "bookmark",
+              "role": "Asset type that is excluded from upload object-name derivation."
+            },
+            {
+              "kind": "enum-value",
+              "value": "http",
+              "role": "Case-sensitive prefix required for a source to be considered."
+            },
+            {
+              "kind": "magic-number",
+              "value": "/",
+              "role": "Delimiter used to split the source and select its final path segment."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling getUploadObjectName(asset)",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling getUploadObjectName(asset)",
+              "then": "The result is null because the source does not start with 'http'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling getUploadObjectName(asset)",
+              "then": "The result is null because no source is present.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "281066a7d3fa6b05adbaae01c3971b34eb1092da7c61839a717ae4e04a359151"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/assetAssociation.ts__collectAssetAssociationChanges#function:collectAssetAssociationChanges",
+        "unitKind": "function",
+        "name": "collectAssetAssociationChanges",
+        "qualifiedName": "collectAssetAssociationChanges",
+        "parentUnitId": null,
+        "startLine": 39,
+        "endLine": 82,
+        "isBehavioral": true,
+        "source": " */\nexport function collectAssetAssociationChanges(\n\trecords: Iterable<unknown>,\n\t{\n\t\tslug,\n\t\tuserContentUrl,\n\t\tskipObjectNames,\n\t}: {\n\t\tslug: string\n\t\tuserContentUrl: string\n\t\tskipObjectNames?: ReadonlySet<string>\n\t}\n): { assetsToReplace: AssetToReplace[]; assetsToMigrate: AssetToMigrate[] } {\n\tconst assetsToReplace: AssetToReplace[] = []\n\tconst assetsToMigrate: AssetToMigrate[] = []\n\tfor (const record of records) {\n\t\tif ((record as any).typeName !== 'asset') continue\n\t\tconst asset = record as any\n\t\tconst objectName = getUploadObjectName(asset)\n\t\tif (!objectName) continue\n\t\tconst meta = asset.meta\n\t\tconst src = asset.props.src\n\n\t\t// Migrate old-format HTTP URLs to tldrawusercontent.com (same R2 bucket, no copy needed)\n\t\tif (meta?.fileId === slug && !src.startsWith(userContentUrl)) {\n\t\t\tassetsToMigrate.push({\n\t\t\t\tassetId: asset.id,\n\t\t\t\tnewSrc: `${userContentUrl}/${objectName}`,\n\t\t\t})\n\t\t\tcontinue\n\t\t}\n\n\t\tif (meta?.fileId === slug) continue\n\t\tif (skipObjectNames?.has(objectName)) continue\n\n\t\tconst split = objectName.split('-')\n\t\tconst fileType = split.length > 1 ? split.pop() : null\n\t\tconst id = uniqueId()\n\t\tconst newObjectName = fileType ? `${id}-${fileType}` : id\n\t\tassetsToReplace.push({\n\t\t\tobjectName,\n\t\t\tnewObjectName,\n\t\t\tassetId: asset.id,\n\t\t\tnewSrc: `${userContentUrl}/${newObjectName}`,",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/assetAssociation.ts__collectAssetAssociationChanges#function:collectAssetAssociationChanges",
+          "fileId": "apps/dotcom/sync-worker/src/assetAssociation.ts__collectAssetAssociationChanges",
+          "unitKind": "function",
+          "name": "collectAssetAssociationChanges",
+          "qualifiedName": "collectAssetAssociationChanges",
+          "parentUnitId": null,
+          "startLine": 39,
+          "endLine": 82,
+          "signature": "export function collectAssetAssociationChanges(\n\trecords: Iterable<unknown>,\n\t{\n\t\tslug,\n\t\tuserContentUrl,\n\t\tskipObjectNames,\n\t}: {\n\t\tslug: string\n\t\tuserContentUrl: string\n\t\tskipObjectNames?: ReadonlySet<string>\n\t}\n): { assetsToReplace: AssetToReplace[]; assetsToMigrate: AssetToMigrate[] }",
+          "parameters": [
+            {
+              "name": "records",
+              "type": "Iterable<unknown>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "slug", "type": "string", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "userContentUrl",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "skipObjectNames",
+              "type": "ReadonlySet<string>",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "{ assetsToReplace: AssetToReplace[]; assetsToMigrate: AssetToMigrate[] }",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "records is iterable.",
+            "Each processed asset record provides the properties required by getUploadObjectName, including id, meta, and props.src.",
+            "slug and userContentUrl are strings."
+          ],
+          "postconditions": [
+            "Returns an object with assetsToReplace and assetsToMigrate arrays.",
+            "Only records whose typeName is exactly asset and for which getUploadObjectName returns a truthy object name can contribute to either output.",
+            "Assets already associated with slug and whose source starts with userContentUrl are excluded from both outputs.",
+            "Replacement entries receive a generated object name and a new source URL rooted at userContentUrl.",
+            "Migration entries preserve the asset id and use the existing object name under userContentUrl."
+          ],
+          "invariants": [
+            "Input records are processed in iteration order, and each output preserves the relative order of records contributing to that output.",
+            "A record is added to at most one output array.",
+            "The returned arrays are newly created for each invocation."
+          ],
+          "edgeCases": [
+            "An empty records iterable returns empty assetsToReplace and assetsToMigrate arrays.",
+            "Records whose typeName is not exactly asset are ignored.",
+            "Asset records for which getUploadObjectName returns a falsy value are ignored.",
+            "An asset with meta.fileId equal to slug and a source not starting with userContentUrl is added to assetsToMigrate and not assetsToReplace.",
+            "An asset with meta.fileId equal to slug and a source starting with userContentUrl is ignored.",
+            "An asset with a nonmatching meta.fileId is skipped when skipObjectNames contains its object name.",
+            "An asset with a nonmatching meta.fileId and an object name not in skipObjectNames is added to assetsToReplace; its replacement name preserves the suffix after the final hyphen when one exists.",
+            "If a processed asset lacks a usable source value supporting startsWith, evaluation may throw rather than returning a result."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Propagates exceptions thrown while iterating records, resolving upload object names, generating unique ids, or evaluating required asset properties."
+            ],
+            "reverts": [],
+            "onInvalidInput": "No explicit validation or recovery is performed; malformed processed asset records can cause a runtime exception.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Mutates only invocation-local assetsToReplace and assetsToMigrate arrays; no caller-visible input, global, or persistent state is intentionally mutated."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "getUploadObjectName",
+              "source": "apps/dotcom/sync-worker/src/assetAssociation.ts",
+              "kind": "internal"
+            },
+            { "name": "uniqueId", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["AssetToReplace", "AssetToMigrate"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns { assetsToReplace: AssetToReplace[]; assetsToMigrate: AssetToMigrate[] }. Migration entries have assetId and newSrc set to `${userContentUrl}/${objectName}`. Replacement entries have objectName, newObjectName, assetId, and newSrc set to `${userContentUrl}/${newObjectName}`.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Classifies asset records into assets requiring source migration and assets requiring replacement with newly generated object names. Non-asset, unresolvable, already-associated, and explicitly skipped records are excluded from replacement output.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "asset", "role": "Exact record typeName required for asset processing." },
+            {
+              "kind": "format-string",
+              "value": "${userContentUrl}/${objectName}",
+              "role": "Constructs the new source URL for migrated assets."
+            },
+            {
+              "kind": "format-string",
+              "value": "${userContentUrl}/${newObjectName}",
+              "role": "Constructs the new source URL for replacement assets."
+            },
+            {
+              "kind": "magic-number",
+              "value": "-",
+              "role": "Separates generated object ids from an existing file-type suffix in object names."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "collectAssetAssociationChanges is called with that record.",
+              "then": "The result contains one assetsToMigrate entry with the asset id and newSrc equal to `${userContentUrl}/${objectName}`, and contains no replacement entry for the record.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "collectAssetAssociationChanges is called with that record.",
+              "then": "The result contains one assetsToReplace entry whose objectName and assetId match the record, whose newObjectName is a generated id optionally followed by the original suffix after the final hyphen, and whose newSrc uses userContentUrl and that new object name.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "collectAssetAssociationChanges is called.",
+              "then": "None of those records contributes to either output array.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f81cdfbb8f6d92e90a9e9f077b003cde12308aa1175fe2f551781409df0747d3"
+        }
+      }
+    ]
+  },
+  "out": [],
+  "in": ["apps/dotcom/sync-worker/src/assetAssociation.test.ts", "apps/dotcom/sync-worker/src/adminRoutes.ts"],
+  "externals": ["@tldraw/utils", "@tldraw/worker-shared"],
+  "impact": { "seeds": 2, "callers": 2, "impactedFiles": ["apps/dotcom/sync-worker/src/assetAssociation.test.ts"] }
+}

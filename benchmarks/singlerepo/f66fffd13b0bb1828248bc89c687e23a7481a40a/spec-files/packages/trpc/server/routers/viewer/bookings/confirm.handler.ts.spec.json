@@ -1,0 +1,1606 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts",
+    "language": "typescript",
+    "sizeBytes": 19640,
+    "tokenCount": 4910,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-09-04T07:27:03.832Z",
+    "module": {
+      "purpose": "This file implements the authenticated booking decision workflow, coordinating confirmation or rejection, persistence, payments, notifications, webhooks, audit events, and rejection workflows across the scheduling system.",
+      "summary": "The handler retrieves a booking with its event, organizer, attendees, payment, recurring-event, and assignment data, then verifies organizer access and validates request state. Confirmation builds a calendar event payload, resolves credentials, and delegates calendar-related processing. Rejection updates one or multiple recurring bookings, refunds payments when applicable, sends declined communications, emits audit and webhook events, and schedules workflow actions. Translation caching, tracing, feature checks, and platform-client metadata support the surrounding integrations.",
+      "businessContext": "This supports appointment and meeting approval operations in a scheduling platform. Failure can leave bookings incorrectly confirmed or rejected, payments unresolved, attendees uninformed, or downstream integrations unsynchronized.",
+      "classes": [
+        "ConfirmOptions (~L42-51): Defines authenticated request context and booking confirmation or rejection parameters"
+      ],
+      "functions": [
+        "fireRejectionEvent (~L53-108): Emits single or bulk rejection audit events with failure logging",
+        "confirmHandler (~L112-578): Authorizes booking decisions and coordinates confirmation or rejection side effects"
+      ],
+      "keywords": [
+        "booking confirmation",
+        "booking rejection",
+        "recurring bookings",
+        "payment refund",
+        "booking audit",
+        "declined email and SMS",
+        "booking webhooks",
+        "workflow triggers",
+        "conference credentials",
+        "TRPC authorization"
+      ],
+      "ontologyConcepts": [
+        "Booking lifecycle",
+        "Authorization",
+        "Payment settlement",
+        "Notification",
+        "Webhook integration",
+        "Workflow automation",
+        "Audit trail",
+        "Recurring scheduling"
+      ],
+      "businessEntities": [
+        "Booking",
+        "Event type",
+        "Attendee",
+        "Organizer",
+        "Payment",
+        "Recurring event",
+        "Workflow",
+        "Organization"
+      ],
+      "systemCapabilities": [
+        "Authorize booking decisions",
+        "Confirm scheduled appointments",
+        "Reject individual or recurring appointments",
+        "Refund rejected bookings",
+        "Notify attendees of rejection",
+        "Synchronize downstream booking integrations"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../../../types",
+          "symbols": ["TrpcSessionUser"],
+          "anchor": { "startLine": 35, "endLine": 35 },
+          "resolvedRelativePath": "packages/trpc/server/types.ts",
+          "resolvedFileId": "packages/trpc/server/types.ts",
+          "resolvedHint": "packages/trpc/server/types.ts"
+        },
+        {
+          "spec": "./confirm.schema",
+          "symbols": ["TConfirmInputSchema"],
+          "anchor": { "startLine": 36, "endLine": 36 },
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/bookings/confirm.schema.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/bookings/confirm.schema.ts",
+          "resolvedHint": "packages/trpc/server/routers/viewer/bookings/confirm.schema.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@calcom/app-store/delegationCredential",
+          "symbols": ["getUsersCredentialsIncludeServiceAccountKey"],
+          "package": "@calcom/app-store",
+          "subpath": "delegationCredential",
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@calcom/app-store/locations",
+          "symbols": ["LocationObject", "getLocationValueForDB"],
+          "package": "@calcom/app-store",
+          "subpath": "locations",
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 3 }
+        },
+        {
+          "spec": "@calcom/emails/email-manager",
+          "symbols": ["sendDeclinedEmailsAndSMS"],
+          "package": "@calcom/emails",
+          "subpath": "email-manager",
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        },
+        {
+          "spec": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "symbols": ["getBookingEventHandlerService"],
+          "package": "@calcom/features",
+          "subpath": "bookings/di/BookingEventHandlerService.container",
+          "isBuiltin": false,
+          "anchor": { "startLine": 5, "endLine": 5 }
+        },
+        {
+          "spec": "@calcom/features/di/containers/FeaturesRepository",
+          "symbols": ["getFeaturesRepository"],
+          "package": "@calcom/features",
+          "subpath": "di/containers/FeaturesRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 6, "endLine": 6 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "symbols": ["getAllCredentialsIncludeServiceAccountKey"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "isBuiltin": false,
+          "anchor": { "startLine": 7, "endLine": 7 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getAssignmentReasonCategory",
+          "symbols": ["getAssignmentReasonCategory"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/getAssignmentReasonCategory",
+          "isBuiltin": false,
+          "anchor": { "startLine": 8, "endLine": 8 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getCalEventResponses",
+          "symbols": ["getCalEventResponses"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/getCalEventResponses",
+          "isBuiltin": false,
+          "anchor": { "startLine": 9, "endLine": 9 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/handleConfirmation",
+          "symbols": ["handleConfirmation"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/handleConfirmation",
+          "isBuiltin": false,
+          "anchor": { "startLine": 10, "endLine": 10 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/handleWebhookTrigger",
+          "symbols": ["handleWebhookTrigger"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/handleWebhookTrigger",
+          "isBuiltin": false,
+          "anchor": { "startLine": 11, "endLine": 11 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/payment/processPaymentRefund",
+          "symbols": ["processPaymentRefund"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/payment/processPaymentRefund",
+          "isBuiltin": false,
+          "anchor": { "startLine": 12, "endLine": 12 }
+        },
+        {
+          "spec": "@calcom/features/bookings/services/BookingAccessService",
+          "symbols": ["BookingAccessService"],
+          "package": "@calcom/features",
+          "subpath": "bookings/services/BookingAccessService",
+          "isBuiltin": false,
+          "anchor": { "startLine": 13, "endLine": 13 }
+        },
+        {
+          "spec": "@calcom/features/ee/billing/credit-service",
+          "symbols": ["CreditService"],
+          "package": "@calcom/features",
+          "subpath": "ee/billing/credit-service",
+          "isBuiltin": false,
+          "anchor": { "startLine": 14, "endLine": 14 }
+        },
+        {
+          "spec": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "symbols": ["getBookerBaseUrl"],
+          "package": "@calcom/features",
+          "subpath": "ee/organizations/lib/getBookerUrlServer",
+          "isBuiltin": false,
+          "anchor": { "startLine": 15, "endLine": 15 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/getAllWorkflows",
+          "symbols": ["workflowSelect"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/getAllWorkflows",
+          "isBuiltin": false,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "symbols": ["getAllWorkflowsFromEventType"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/getAllWorkflowsFromEventType",
+          "isBuiltin": false,
+          "anchor": { "startLine": 17, "endLine": 17 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "symbols": ["WorkflowService"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/service/WorkflowService",
+          "isBuiltin": false,
+          "anchor": { "startLine": 18, "endLine": 18 }
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/getWebhooks",
+          "symbols": ["GetSubscriberOptions"],
+          "package": "@calcom/features",
+          "subpath": "webhooks/lib/getWebhooks",
+          "isBuiltin": false,
+          "anchor": { "startLine": 19, "endLine": 19 }
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/sendPayload",
+          "symbols": ["EventPayloadType", "EventTypeInfo"],
+          "package": "@calcom/features",
+          "subpath": "webhooks/lib/sendPayload",
+          "isBuiltin": false,
+          "anchor": { "startLine": 20, "endLine": 20 }
+        },
+        {
+          "spec": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "symbols": ["getOrgIdFromMemberOrTeamId"],
+          "package": "@calcom/lib",
+          "subpath": "getOrgIdFromMemberOrTeamId",
+          "isBuiltin": false,
+          "anchor": { "startLine": 21, "endLine": 21 }
+        },
+        {
+          "spec": "@calcom/lib/getTeamIdFromEventType",
+          "symbols": ["getTeamIdFromEventType"],
+          "package": "@calcom/lib",
+          "subpath": "getTeamIdFromEventType",
+          "isBuiltin": false,
+          "anchor": { "startLine": 22, "endLine": 22 }
+        },
+        {
+          "spec": "@calcom/lib/isPrismaObj",
+          "symbols": ["isPrismaObjOrUndefined"],
+          "package": "@calcom/lib",
+          "subpath": "isPrismaObj",
+          "isBuiltin": false,
+          "anchor": { "startLine": 23, "endLine": 23 }
+        },
+        {
+          "spec": "@calcom/lib/isRecurringEvent",
+          "symbols": ["parseRecurringEvent"],
+          "package": "@calcom/lib",
+          "subpath": "isRecurringEvent",
+          "isBuiltin": false,
+          "anchor": { "startLine": 24, "endLine": 24 }
+        },
+        {
+          "spec": "@calcom/lib/server/i18n",
+          "symbols": ["getTranslation"],
+          "package": "@calcom/lib",
+          "subpath": "server/i18n",
+          "isBuiltin": false,
+          "anchor": { "startLine": 25, "endLine": 25 }
+        },
+        {
+          "spec": "@calcom/lib/timeFormat",
+          "symbols": ["getTimeFormatStringFromUserTimeFormat"],
+          "package": "@calcom/lib",
+          "subpath": "timeFormat",
+          "isBuiltin": false,
+          "anchor": { "startLine": 26, "endLine": 26 }
+        },
+        {
+          "spec": "@calcom/lib/tracing",
+          "symbols": ["TraceContext"],
+          "package": "@calcom/lib",
+          "subpath": "tracing",
+          "isBuiltin": false,
+          "anchor": { "startLine": 27, "endLine": 27 }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 28, "endLine": 28 }
+        },
+        {
+          "spec": "@calcom/prisma/client",
+          "symbols": ["Prisma"],
+          "package": "@calcom/prisma",
+          "subpath": "client",
+          "isBuiltin": false,
+          "anchor": { "startLine": 29, "endLine": 29 }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["BookingStatus", "WebhookTriggerEvents", "WorkflowTriggerEvents"],
+          "package": "@calcom/prisma",
+          "subpath": "enums",
+          "isBuiltin": false,
+          "anchor": { "startLine": 30, "endLine": 30 }
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["EventTypeMetadata"],
+          "package": "@calcom/prisma",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": { "startLine": 31, "endLine": 31 }
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["CalendarEvent"],
+          "package": "@calcom/types",
+          "subpath": "Calendar",
+          "isBuiltin": false,
+          "anchor": { "startLine": 32, "endLine": 32 }
+        },
+        {
+          "spec": "@trpc/server",
+          "symbols": ["TRPCError"],
+          "package": "@trpc/server",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 33, "endLine": 33 }
+        },
+        {
+          "spec": "uuid",
+          "symbols": ["v4"],
+          "package": "uuid",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 34, "endLine": 34 }
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/types/actionSource",
+          "symbols": ["ValidActionSource"],
+          "package": "@calcom/features",
+          "subpath": "booking-audit/lib/types/actionSource",
+          "isBuiltin": false,
+          "anchor": { "startLine": 37, "endLine": 37 }
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/dto/types",
+          "symbols": ["Actor"],
+          "package": "@calcom/features",
+          "subpath": "booking-audit/lib/dto/types",
+          "isBuiltin": false,
+          "anchor": { "startLine": 38, "endLine": 38 }
+        },
+        {
+          "spec": "@calcom/features/di/shared/services/logger.service",
+          "symbols": ["ISimpleLogger"],
+          "package": "@calcom/features",
+          "subpath": "di/shared/services/logger.service",
+          "isBuiltin": false,
+          "anchor": { "startLine": 39, "endLine": 39 }
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "package": "@calcom/lib",
+          "subpath": "safeStringify",
+          "isBuiltin": false,
+          "anchor": { "startLine": 40, "endLine": 40 }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": { "startLine": 41, "endLine": 41 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads the booking, profile, recurring bookings, credentials, workflows, and feature configuration from persistence.",
+          "Updates booking statuses and rejection reasons in persistence.",
+          "Processes payment refunds for rejected non-recurring paid bookings."
+        ],
+        "network": [
+          "Sends declined booking emails and SMS when emailsEnabled is true.",
+          "Invokes booking confirmation handling and rejection webhook delivery.",
+          "Schedules BOOKING_REJECTED workflow reminders."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [
+          "Logs rejection-event failures through the tracing logger.",
+          "Writes workflow scheduling failures to console.error."
+        ],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "event",
+          "role": "provides",
+          "address": "BOOKING_REJECTED",
+          "payloadRef": "EventPayloadType",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "confirmHandler",
+          "shape": "export const confirmHandler = async ({ ctx, input }: ConfirmOptions)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "booking confirmation result",
+          "shape": "{ message: \"Booking confirmed\", status: BookingStatus.ACCEPTED }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "booking rejection result",
+          "shape": "{ message: \"Booking rejected\", status: BookingStatus.REJECTED }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TConfirmInputSchema",
+          "shape": "TConfirmInputSchema & { actionSource: ValidActionSource; actor: Actor }",
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/bookings/confirm.schema.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/bookings/confirm.schema.ts"
+        },
+        { "name": "CalendarEvent", "shape": "CalendarEvent", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "BookingStatus",
+          "shape": "BookingStatus.ACCEPTED | BookingStatus.REJECTED | BookingStatus.PENDING",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EventPayloadType",
+          "shape": "EventPayloadType",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "EventTypeInfo", "shape": "EventTypeInfo", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "GetSubscriberOptions",
+          "shape": "GetSubscriberOptions",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "booking access authorization",
+          "shape": "bookingAccessService.doesUserIdHaveAccessToBooking({ userId: ctx.user.id, bookingId: bookingId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "booking confirmation handler",
+          "shape": "handleConfirmation({ user, evt, recurringEventId, prisma, bookingId, booking, emailsEnabled, platformClientParams, traceContext, actionSource, actor })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "booking rejected webhook",
+          "shape": "handleWebhookTrigger({ subscriberOptions, eventTrigger, webhookData, traceContext })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "fireRejectionEvent",
+          "intent": "Emit bulk or single booking rejection audit events.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 53, "endLine": 108 }
+        },
+        {
+          "name": "loadAndAuthorizeBooking",
+          "intent": "Load the booking and enforce organizer and authorization checks.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 112, "endLine": 243 }
+        },
+        {
+          "name": "unpaidConfirmationShortcut",
+          "intent": "Accept an unpaid payment-required booking without confirmation side effects.",
+          "structureKind": "branch",
+          "predicate": "confirmed && booking.payment.length > 0 && !booking.paid",
+          "branchOutcomes": ["payment-required and unpaid", "all other cases"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 245, "endLine": 257 }
+        },
+        {
+          "name": "buildCalendarEvent",
+          "intent": "Build the calendar event payload and localized attendee data.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 259, "endLine": 350 }
+        },
+        {
+          "name": "validateAndAdjustRecurringEvent",
+          "intent": "Validate recurring booking ownership and refresh event count.",
+          "structureKind": "branch",
+          "predicate": "recurringEventId",
+          "branchOutcomes": [
+            "recurring event id supplied and belongs to booking",
+            "recurring event id supplied but does not belong to booking",
+            "no recurring event id supplied"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 352, "endLine": 394 }
+        },
+        {
+          "name": "confirmBooking",
+          "intent": "Resolve credentials and execute booking confirmation handling.",
+          "structureKind": "branch",
+          "predicate": "confirmed",
+          "branchOutcomes": ["confirmed", "rejected"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 396, "endLine": 424 }
+        },
+        {
+          "name": "rejectBooking",
+          "intent": "Reject bookings, refund payments, notify systems, and schedule workflows.",
+          "structureKind": "branch",
+          "predicate": "recurringEventId",
+          "branchOutcomes": ["recurring booking", "single booking"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 425, "endLine": 571 }
+        },
+        {
+          "name": "returnStatus",
+          "intent": "Return the confirmation or rejection message and status.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 574, "endLine": 577 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "ConfirmOptions",
+          "signature": "type ConfirmOptions = {\n  ctx: {\n    user: Pick<\n      NonNullable<TrpcSessionUser>,\n      \"id\" | \"uuid\" | \"email\" | \"username\" | \"role\" | \"destinationCalendar\"\n    >;\n    traceContext: TraceContext;\n  };\n  input: TConfirmInputSchema & { actionSource: ValidActionSource; actor: Actor };\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 42, "endLine": 51 }
+        },
+        {
+          "kind": "function",
+          "name": "fireRejectionEvent",
+          "signature": "async function fireRejectionEvent({\n  actor,\n  organizationId,\n  actionSource,\n  rejectedBookings,\n  rejectionReason,\n  isBookingAuditEnabled,\n  tracingLogger,\n}: {\n  actor: Actor;\n  organizationId: number | null;\n  rejectionReason: string | null;\n  actionSource: ValidActionSource;\n  rejectedBookings: {\n    uid: string;\n    oldStatus: BookingStatus;\n  }[];\n  isBookingAuditEnabled: boolean;\n  tracingLogger: ISimpleLogger;\n}): Promise<void> {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "anchor": { "startLine": 53, "endLine": 72 }
+        },
+        {
+          "kind": "function",
+          "name": "confirmHandler",
+          "signature": "export const confirmHandler = async ({ ctx, input }: ConfirmOptions) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 112, "endLine": 112 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "alias",
+          "name": "ConfirmOptions",
+          "shape": "{\n  ctx: {\n    user: Pick<\n      NonNullable<TrpcSessionUser>,\n      \"id\" | \"uuid\" | \"email\" | \"username\" | \"role\" | \"destinationCalendar\"\n    >;\n    traceContext: TraceContext;\n  };\n  input: TConfirmInputSchema & { actionSource: ValidActionSource; actor: Actor };\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 42, "endLine": 51 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Booking has no organizer user",
+          "handled": true,
+          "behavior": "Throws a BAD_REQUEST TRPCError with message \"Booking must have an organizer\".",
+          "anchor": { "startLine": 221, "endLine": 224 }
+        },
+        {
+          "inputShape": "Caller lacks access to the booking",
+          "handled": true,
+          "behavior": "Throws an UNAUTHORIZED TRPCError with message \"User is not authorized to confirm this booking\".",
+          "anchor": { "startLine": 226, "endLine": 237 }
+        },
+        {
+          "inputShape": "Booking status is already ACCEPTED",
+          "handled": true,
+          "behavior": "Throws a BAD_REQUEST TRPCError with message \"Booking already confirmed\" after authorization.",
+          "anchor": { "startLine": 239, "endLine": 243 }
+        },
+        {
+          "inputShape": "confirmed is true for a booking with unpaid payment",
+          "handled": true,
+          "behavior": "Updates the booking to ACCEPTED and returns { message: \"Booking confirmed\", status: BookingStatus.ACCEPTED } without running the normal confirmation flow.",
+          "anchor": { "startLine": 245, "endLine": 257 }
+        },
+        {
+          "inputShape": "recurringEventId does not belong to the booking",
+          "handled": true,
+          "behavior": "Throws an UNAUTHORIZED TRPCError with message \"Recurring event id doesn't belong to the booking\".",
+          "anchor": { "startLine": 353, "endLine": 370 }
+        },
+        {
+          "inputShape": "Recurring rejection with no pending bookings",
+          "handled": true,
+          "behavior": "Performs an updateMany with an empty UID list, emits no rejection audit event, and continues with notifications and workflow handling.",
+          "anchor": { "startLine": 432, "endLine": 461 }
+        },
+        {
+          "inputShape": "Rejection of a paid non-recurring booking",
+          "handled": true,
+          "behavior": "Processes a payment refund before updating the booking to REJECTED.",
+          "anchor": { "startLine": 462, "endLine": 480 }
+        },
+        {
+          "inputShape": "emailsEnabled is false during rejection",
+          "handled": true,
+          "behavior": "Skips declined email and SMS delivery while continuing rejection processing.",
+          "anchor": { "startLine": 490, "endLine": 492 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "TRPCError({ code: \"BAD_REQUEST\", message: \"Booking must have an organizer\" })",
+          "caught": null,
+          "action": "Aborts confirmation.",
+          "fallback": null,
+          "anchor": { "startLine": 222, "endLine": 224 }
+        },
+        {
+          "thrown": "TRPCError({ code: \"UNAUTHORIZED\", message: \"User is not authorized to confirm this booking\" })",
+          "caught": null,
+          "action": "Aborts confirmation.",
+          "fallback": null,
+          "anchor": { "startLine": 232, "endLine": 237 }
+        },
+        {
+          "thrown": "TRPCError({ code: \"BAD_REQUEST\", message: \"Booking already confirmed\" })",
+          "caught": null,
+          "action": "Aborts confirmation.",
+          "fallback": null,
+          "anchor": { "startLine": 241, "endLine": 243 }
+        },
+        {
+          "thrown": "TRPCError({ code: \"UNAUTHORIZED\", message: \"Recurring event id doesn't belong to the booking\" })",
+          "caught": null,
+          "action": "Aborts confirmation.",
+          "fallback": null,
+          "anchor": { "startLine": 365, "endLine": 370 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs \"Error firing booking rejection event\" with the serialized error and suppresses it.",
+          "fallback": null,
+          "anchor": { "startLine": 105, "endLine": 107 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs workflow scheduling failure and suppresses the error.",
+          "fallback": "Workflow scheduling failure is silently ignored.",
+          "anchor": { "startLine": 565, "endLine": 571 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies an authorized ctx.user together with actionSource and actor in input.",
+          "anchor": { "startLine": 42, "endLine": 50 }
+        },
+        {
+          "kind": "schema",
+          "description": "The booking identifier and confirmation inputs conform to TConfirmInputSchema.",
+          "anchor": { "startLine": 50, "endLine": 50 }
+        },
+        {
+          "kind": "init-order",
+          "description": "The Prisma client and imported services are initialized before confirmHandler executes.",
+          "anchor": { "startLine": 28, "endLine": 41 }
+        },
+        {
+          "kind": "platform",
+          "description": "Booking timestamps are Date-like values supporting toISOString().",
+          "anchor": { "startLine": 305, "endLine": 307 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact side effects and failure semantics are performed inside handleConfirmation, processPaymentRefund, handleWebhookTrigger, and WorkflowService.scheduleWorkflowsFilteredByTriggerEvent?",
+          "affects": "side_effects and error_handling",
+          "anchor": { "startLine": 412, "endLine": 424 },
+          "resolution": null
+        },
+        {
+          "question": "What does findUniqueOrThrow do when bookingId does not identify a booking?",
+          "affects": "edge_cases and error_handling",
+          "anchor": { "startLine": 125, "endLine": 219 },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-unauthorized-confirmation",
+          "scenario": "A user without access attempts to confirm a booking.",
+          "given": ["isUserAuthorizedToConfirmBooking === false"],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "throws new TRPCError({ code: \"UNAUTHORIZED\", message: \"User is not authorized to confirm this booking\" })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents unauthorized users from changing booking state."
+        },
+        {
+          "testId": "rejects-already-confirmed-booking",
+          "scenario": "An authorized user attempts to confirm a booking already in ACCEPTED status.",
+          "given": ["booking.status === BookingStatus.ACCEPTED"],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "throws new TRPCError({ code: \"BAD_REQUEST\", message: \"Booking already confirmed\" })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Confirmation is not idempotently reprocessed after acceptance."
+        },
+        {
+          "testId": "confirms-unpaid-booking-with-payment",
+          "scenario": "A booking requiring payment is confirmed before payment is marked paid.",
+          "given": ["confirmed === true", "booking.payment.length > 0", "!booking.paid"],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "returns { message: \"Booking confirmed\", status: BookingStatus.ACCEPTED }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the special early confirmation path for unpaid bookings."
+        },
+        {
+          "testId": "rejects-invalid-recurring-event-id",
+          "scenario": "A recurring event identifier does not belong to the booking being confirmed or rejected.",
+          "given": ["recurringEventId is truthy", "prisma.booking.findFirst(...) returns null"],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "throws new TRPCError({ code: \"UNAUTHORIZED\", message: \"Recurring event id doesn't belong to the booking\" })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents cross-booking recurring-event manipulation."
+        },
+        {
+          "testId": "rejects-recurring-bookings-together",
+          "scenario": "A pending recurring booking is rejected using its recurring event identifier.",
+          "given": [
+            "confirmed === false",
+            "recurringEventId is truthy",
+            "unconfirmedRecurringBookings contains pending bookings"
+          ],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "all bookings with the recurringEventId and BookingStatus.PENDING are updated to BookingStatus.REJECTED with rejectionReason",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins bulk rejection semantics for recurring bookings."
+        },
+        {
+          "testId": "refunds-paid-booking-on-rejection",
+          "scenario": "A non-recurring booking with a payment is rejected.",
+          "given": ["confirmed === false", "!recurringEventId", "booking.payment.length"],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "processPaymentRefund({ booking: booking, teamId: booking.eventType?.teamId }) is awaited before the booking is marked REJECTED",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures rejection does not leave a paid booking without refund processing."
+        },
+        {
+          "testId": "emits-rejection-notifications",
+          "scenario": "A booking is rejected with email and SMS notifications enabled.",
+          "given": ["confirmed === false", "emailsEnabled === true"],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "sendDeclinedEmailsAndSMS(evt, booking.eventType?.metadata as EventTypeMetadata) is awaited",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the notification side effect for rejected bookings."
+        },
+        {
+          "testId": "emits-booking-rejected-webhook",
+          "scenario": "A booking rejection completes webhook payload construction.",
+          "given": ["confirmed === false"],
+          "when": "confirmHandler({ ctx, input })",
+          "then": "handleWebhookTrigger is called with eventTrigger WebhookTriggerEvents.BOOKING_REJECTED and webhookData.status BookingStatus.REJECTED",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the external webhook event and rejected status payload."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": ["ConfirmOptions", "fireRejectionEvent", "confirmHandler"],
+      "moduleLevelCode": "import { getUsersCredentialsIncludeServiceAccountKey } from \"@calcom/app-store/delegationCredential\";\nimport type { LocationObject } from \"@calcom/app-store/locations\";\nimport { getLocationValueForDB } from \"@calcom/app-store/locations\";\nimport { sendDeclinedEmailsAndSMS } from \"@calcom/emails/email-manager\";\nimport { getBookingEventHandlerService } from \"@calcom/features/bookings/di/BookingEventHandlerService.container\";\nimport { getFeaturesRepository } from \"@calcom/features/di/containers/FeaturesRepository\";\nimport { getAllCredentialsIncludeServiceAccountKey } from \"@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials\";\nimport { getAssignmentReasonCategory } from \"@calcom/features/bookings/lib/getAssignmentReasonCategory\";\nimport { getCalEventResponses } from \"@calcom/features/bookings/lib/getCalEventResponses\";\nimport { handleConfirmation } from \"@calcom/features/bookings/lib/handleConfirmation\";\nimport { handleWebhookTrigger } from \"@calcom/features/bookings/lib/handleWebhookTrigger\";\nimport { processPaymentRefund } from \"@calcom/features/bookings/lib/payment/processPaymentRefund\";\nimport { BookingAccessService } from \"@calcom/features/bookings/services/BookingAccessService\";\nimport { CreditService } from \"@calcom/features/ee/billing/credit-service\";\nimport { getBookerBaseUrl } from \"@calcom/features/ee/organizations/lib/getBookerUrlServer\";\nimport { workflowSelect } from \"@calcom/features/ee/workflows/lib/getAllWorkflows\";\nimport { getAllWorkflowsFromEventType } from \"@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType\";\nimport { WorkflowService } from \"@calcom/features/ee/workflows/lib/service/WorkflowService\";\nimport type { GetSubscriberOptions } from \"@calcom/features/webhooks/lib/getWebhooks\";\nimport type { EventPayloadType, EventTypeInfo } from \"@calcom/features/webhooks/lib/sendPayload\";\nimport getOrgIdFromMemberOrTeamId from \"@calcom/lib/getOrgIdFromMemberOrTeamId\";\nimport { getTeamIdFromEventType } from \"@calcom/lib/getTeamIdFromEventType\";\nimport { isPrismaObjOrUndefined } from \"@calcom/lib/isPrismaObj\";\nimport { parseRecurringEvent } from \"@calcom/lib/isRecurringEvent\";\nimport { getTranslation } from \"@calcom/lib/server/i18n\";\nimport { getTimeFormatStringFromUserTimeFormat } from \"@calcom/lib/timeFormat\";\nimport type { TraceContext } from \"@calcom/lib/tracing\";\nimport { prisma } from \"@calcom/prisma\";\nimport { Prisma } from \"@calcom/prisma/client\";\nimport { BookingStatus, WebhookTriggerEvents, WorkflowTriggerEvents } from \"@calcom/prisma/enums\";\nimport type { EventTypeMetadata } from \"@calcom/prisma/zod-utils\";\nimport type { CalendarEvent } from \"@calcom/types/Calendar\";\nimport { TRPCError } from \"@trpc/server\";\nimport { v4 as uuidv4 } from \"uuid\";\nimport type { TrpcSessionUser } from \"../../../types\";\nimport type { TConfirmInputSchema } from \"./confirm.schema\";\nimport type { ValidActionSource } from \"@calcom/features/booking-audit/lib/types/actionSource\";\nimport type { Actor } from \"@calcom/features/booking-audit/lib/dto/types\";\nimport type { ISimpleLogger } from \"@calcom/features/di/shared/services/logger.service\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport logger from \"@calcom/lib/logger\";",
+      "exports": [{ "name": "confirmHandler", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        {
+          "symbol": "getUsersCredentialsIncludeServiceAccountKey",
+          "module": "@calcom/app-store/delegationCredential",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "LocationObject", "module": "@calcom/app-store/locations", "alias": null, "kind": "external" },
+        {
+          "symbol": "getLocationValueForDB",
+          "module": "@calcom/app-store/locations",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "sendDeclinedEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBookingEventHandlerService",
+          "module": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getFeaturesRepository",
+          "module": "@calcom/features/di/containers/FeaturesRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getAllCredentialsIncludeServiceAccountKey",
+          "module": "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getAssignmentReasonCategory",
+          "module": "@calcom/features/bookings/lib/getAssignmentReasonCategory",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getCalEventResponses",
+          "module": "@calcom/features/bookings/lib/getCalEventResponses",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "handleConfirmation",
+          "module": "@calcom/features/bookings/lib/handleConfirmation",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "handleWebhookTrigger",
+          "module": "@calcom/features/bookings/lib/handleWebhookTrigger",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "processPaymentRefund",
+          "module": "@calcom/features/bookings/lib/payment/processPaymentRefund",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingAccessService",
+          "module": "@calcom/features/bookings/services/BookingAccessService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CreditService",
+          "module": "@calcom/features/ee/billing/credit-service",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBookerBaseUrl",
+          "module": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "workflowSelect",
+          "module": "@calcom/features/ee/workflows/lib/getAllWorkflows",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getAllWorkflowsFromEventType",
+          "module": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "GetSubscriberOptions",
+          "module": "@calcom/features/webhooks/lib/getWebhooks",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventPayloadType",
+          "module": "@calcom/features/webhooks/lib/sendPayload",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventTypeInfo",
+          "module": "@calcom/features/webhooks/lib/sendPayload",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getOrgIdFromMemberOrTeamId",
+          "module": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getTeamIdFromEventType",
+          "module": "@calcom/lib/getTeamIdFromEventType",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "isPrismaObjOrUndefined", "module": "@calcom/lib/isPrismaObj", "alias": null, "kind": "external" },
+        {
+          "symbol": "parseRecurringEvent",
+          "module": "@calcom/lib/isRecurringEvent",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "getTranslation", "module": "@calcom/lib/server/i18n", "alias": null, "kind": "external" },
+        {
+          "symbol": "getTimeFormatStringFromUserTimeFormat",
+          "module": "@calcom/lib/timeFormat",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "TraceContext", "module": "@calcom/lib/tracing", "alias": null, "kind": "external" },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "external" },
+        { "symbol": "Prisma", "module": "@calcom/prisma/client", "alias": null, "kind": "external" },
+        { "symbol": "BookingStatus", "module": "@calcom/prisma/enums", "alias": null, "kind": "external" },
+        { "symbol": "WebhookTriggerEvents", "module": "@calcom/prisma/enums", "alias": null, "kind": "external" },
+        { "symbol": "WorkflowTriggerEvents", "module": "@calcom/prisma/enums", "alias": null, "kind": "external" },
+        { "symbol": "EventTypeMetadata", "module": "@calcom/prisma/zod-utils", "alias": null, "kind": "external" },
+        { "symbol": "CalendarEvent", "module": "@calcom/types/Calendar", "alias": null, "kind": "external" },
+        { "symbol": "TRPCError", "module": "@trpc/server", "alias": null, "kind": "external" },
+        { "symbol": "v4", "module": "uuid", "alias": "uuidv4", "kind": "external" },
+        { "symbol": "TrpcSessionUser", "module": "../../../types", "alias": null, "kind": "internal" },
+        { "symbol": "TConfirmInputSchema", "module": "./confirm.schema", "alias": null, "kind": "internal" },
+        {
+          "symbol": "ValidActionSource",
+          "module": "@calcom/features/booking-audit/lib/types/actionSource",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Actor",
+          "module": "@calcom/features/booking-audit/lib/dto/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ISimpleLogger",
+          "module": "@calcom/features/di/shared/services/logger.service",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "safeStringify", "module": "@calcom/lib/safeStringify", "alias": null, "kind": "external" },
+        { "symbol": "logger", "module": "@calcom/lib/logger", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__ConfirmOptions_1#type_alias:ConfirmOptions",
+        "unitKind": "type_alias",
+        "name": "ConfirmOptions",
+        "qualifiedName": "ConfirmOptions",
+        "parentUnitId": null,
+        "startLine": 42,
+        "endLine": 51,
+        "isBehavioral": false,
+        "source": "type ConfirmOptions = {\n  ctx: {\n    user: Pick<\n      NonNullable<TrpcSessionUser>,\n      \"id\" | \"uuid\" | \"email\" | \"username\" | \"role\" | \"destinationCalendar\"\n    >;\n    traceContext: TraceContext;\n  };\n  input: TConfirmInputSchema & { actionSource: ValidActionSource; actor: Actor };\n};",
+        "detail": {
+          "unitId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__ConfirmOptions_1#type_alias:ConfirmOptions",
+          "fileId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__ConfirmOptions_1",
+          "unitKind": "type_alias",
+          "name": "ConfirmOptions",
+          "qualifiedName": "ConfirmOptions",
+          "parentUnitId": null,
+          "startLine": 42,
+          "endLine": 51,
+          "signature": "type ConfirmOptions = {\n  ctx: {\n    user: Pick<\n      NonNullable<TrpcSessionUser>,\n      \"id\" | \"uuid\" | \"email\" | \"username\" | \"role\" | \"destinationCalendar\"\n    >;\n    traceContext: TraceContext;\n  };\n  input: TConfirmInputSchema & { actionSource: ValidActionSource; actor: Actor };\n};",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["TrpcSessionUser", "TraceContext", "TConfirmInputSchema", "ValidActionSource", "Actor"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "ctx",
+              "kind": "property",
+              "type": "{ user: Pick<NonNullable<TrpcSessionUser>, \"id\" | \"uuid\" | \"email\" | \"username\" | \"role\" | \"destinationCalendar\">; traceContext: TraceContext }",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "input",
+              "kind": "property",
+              "type": "TConfirmInputSchema & { actionSource: ValidActionSource; actor: Actor }",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Structural input contract for the confirm handler invocation: pairs the authenticated TRPC session context (user identity fields plus trace context) with the validated booking confirmation payload (schema-derived input augmented with action source and actor metadata).",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "ae5937b69f70958d575542e67c67047d35fb7fd98aa99f389ba5b4e853787899"
+        }
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__fireRejectionEvent_2#function:fireRejectionEvent",
+        "unitKind": "function",
+        "name": "fireRejectionEvent",
+        "qualifiedName": "fireRejectionEvent",
+        "parentUnitId": null,
+        "startLine": 53,
+        "endLine": 108,
+        "isBehavioral": true,
+        "source": "async function fireRejectionEvent({\n  actor,\n  organizationId,\n  actionSource,\n  rejectedBookings,\n  rejectionReason,\n  isBookingAuditEnabled,\n  tracingLogger,\n}: {\n  actor: Actor;\n  organizationId: number | null;\n  rejectionReason: string | null;\n  actionSource: ValidActionSource;\n  rejectedBookings: {\n    uid: string;\n    oldStatus: BookingStatus;\n  }[];\n  isBookingAuditEnabled: boolean;\n  tracingLogger: ISimpleLogger;\n}): Promise<void> {\n  try {\n    const bookingEventHandlerService = getBookingEventHandlerService();\n    if (rejectedBookings.length > 1) {\n      const operationId = uuidv4();\n      await bookingEventHandlerService.onBulkBookingsRejected({\n        bookings: rejectedBookings.map((booking) => ({\n          bookingUid: booking.uid,\n          auditData: {\n            rejectionReason,\n            status: { old: booking.oldStatus, new: BookingStatus.REJECTED },\n          },\n        })),\n        actor,\n        organizationId,\n        operationId,\n        source: actionSource,\n        isBookingAuditEnabled,\n      });\n    } else if (rejectedBookings.length === 1) {\n      const booking = rejectedBookings[0];\n      await bookingEventHandlerService.onBookingRejected({\n        bookingUid: booking.uid,\n        actor,\n        organizationId,\n        auditData: {\n          rejectionReason,\n          status: { old: booking.oldStatus, new: BookingStatus.REJECTED },\n        },\n        source: actionSource,\n        isBookingAuditEnabled,\n      });\n    }\n  } catch (error) {\n    tracingLogger.error(\"Error firing booking rejection event\", safeStringify(error));\n  }\n}",
+        "detail": {
+          "unitId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__fireRejectionEvent_2#function:fireRejectionEvent",
+          "fileId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__fireRejectionEvent_2",
+          "unitKind": "function",
+          "name": "fireRejectionEvent",
+          "qualifiedName": "fireRejectionEvent",
+          "parentUnitId": null,
+          "startLine": 53,
+          "endLine": 108,
+          "signature": "async function fireRejectionEvent({ actor, organizationId, actionSource, rejectedBookings, rejectionReason, isBookingAuditEnabled, tracingLogger, }: { actor: Actor; organizationId: number | null; rejectionReason: string | null; actionSource: ValidActionSource; rejectedBookings: { uid: string; oldStatus: BookingStatus; }[]; isBookingAuditEnabled: boolean; tracingLogger: ISimpleLogger; }): Promise<void>",
+          "parameters": [
+            { "name": "actor", "type": "Actor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "organizationId",
+              "type": "number | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "actionSource",
+              "type": "ValidActionSource",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "rejectedBookings",
+              "type": "{ uid: string; oldStatus: BookingStatus; }[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "rejectionReason",
+              "type": "string | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            },
+            {
+              "name": "isBookingAuditEnabled",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 5
+            },
+            {
+              "name": "tracingLogger",
+              "type": "ISimpleLogger",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 6
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "rejectedBookings is an array (possibly empty) of objects with uid:string and oldStatus:BookingStatus.",
+            "tracingLogger is provided for error reporting on failure.",
+            "actionSource is a ValidActionSource value."
+          ],
+          "postconditions": [
+            "If rejectedBookings.length > 1, bookingEventHandlerService.onBulkBookingsRejected has been awaited with mapped booking payloads and a fresh uuidv4 operationId.",
+            "If rejectedBookings.length === 1, bookingEventHandlerService.onBookingRejected has been awaited for that single booking.",
+            "If rejectedBookings is empty, no handler call is made.",
+            "The returned promise resolves to undefined regardless of internal handler success/failure (errors are swallowed and logged)."
+          ],
+          "invariants": [
+            "For each rejected booking, the audit status always transitions from oldStatus to BookingStatus.REJECTED.",
+            "The bulk path generates a single shared uuidv4 operationId covering all bookings in that call.",
+            "Actor and organizationId are passed through to the handler unchanged."
+          ],
+          "edgeCases": [
+            "rejectedBookings.length === 0: no handler is invoked; function returns undefined.",
+            "rejectedBookings.length === 1: invokes single-booking onBookingRejected using rejectedBookings[0].",
+            "rejectedBookings.length > 1: invokes bulk onBulkBookingsRejected; each booking.uid is mapped to bookingUid and each oldStatus to auditData.status.old.",
+            "Any thrown error from getBookingEventHandlerService or from the handler service calls is caught and the promise still fulfills; the error is logged via tracingLogger.error with message 'Error firing booking rejection event' and a safeStringify-serialized error payload."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "No validation/throw on input shape; handlers may throw internally but exceptions are caught and logged via tracingLogger.error.",
+            "returnsOnError": "Promise<void> — always resolves; internal failures are swallowed and recorded via tracingLogger.error."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [
+            "onBulkBookingsRejected (when rejectedBookings.length > 1)",
+            "onBookingRejected (when rejectedBookings.length === 1)",
+            "tracingLogger.error('Error firing booking rejection event', safeStringify(error)) on caught exceptions"
+          ],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "getBookingEventHandlerService",
+              "source": "booking-event-handler service module",
+              "kind": "internal"
+            },
+            {
+              "name": "bookingEventHandlerService.onBulkBookingsRejected",
+              "source": "booking-event-handler service",
+              "kind": "internal"
+            },
+            {
+              "name": "bookingEventHandlerService.onBookingRejected",
+              "source": "booking-event-handler service",
+              "kind": "internal"
+            },
+            { "name": "uuidv4", "source": "uuid", "kind": "internal" },
+            { "name": "safeStringify", "source": "safe-stringify utility", "kind": "internal" },
+            { "name": "tracingLogger.error", "source": "ISimpleLogger", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "Actor",
+            "BookingStatus",
+            "ValidActionSource",
+            "ISimpleLogger",
+            "BookingStatus.REJECTED"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Dispatches a booking-rejected audit/notification event to the booking event handler service, routing to the bulk handler when multiple bookings are rejected and to the single handler otherwise; all errors are caught and logged via the supplied tracingLogger.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "BookingStatus.REJECTED",
+              "role": "new status assigned to all rejected bookings in audit data"
+            },
+            {
+              "kind": "format-string",
+              "value": "Error firing booking rejection event",
+              "role": "contractual log message emitted via tracingLogger.error when an exception is caught"
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "threshold separating single-booking path from bulk path (rejectedBookings.length > 1)"
+            },
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "boundary case: empty rejectedBookings skips both handler calls"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "e8b77bc4a63b1429b75331d922e0842facef036d428d4a1414f55485b14c5885"
+        }
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__confirmHandler_3#function:confirmHandler",
+        "unitKind": "function",
+        "name": "confirmHandler",
+        "qualifiedName": "confirmHandler",
+        "parentUnitId": null,
+        "startLine": 112,
+        "endLine": 578,
+        "isBehavioral": true,
+        "source": "export const confirmHandler = async ({ ctx, input }: ConfirmOptions) => {\n  const log = logger.getSubLogger({ prefix: [\"confirmHandler\"] });\n  const {\n    bookingId,\n    recurringEventId,\n    reason: rejectionReason,\n    confirmed,\n    emailsEnabled,\n    platformClientParams,\n    actionSource,\n    actor,\n  } = input;\n\n  const booking = await prisma.booking.findUniqueOrThrow({\n    where: {\n      id: bookingId,\n    },\n    select: {\n      title: true,\n      description: true,\n      customInputs: true,\n      startTime: true,\n      endTime: true,\n      attendees: true,\n      eventTypeId: true,\n      responses: true,\n      metadata: true,\n      userPrimaryEmail: true,\n      eventType: {\n        select: {\n          id: true,\n          owner: true,\n          teamId: true,\n          recurringEvent: true,\n          title: true,\n          slug: true,\n          requiresConfirmation: true,\n          currency: true,\n          length: true,\n          description: true,\n          price: true,\n          bookingFields: true,\n          hideOrganizerEmail: true,\n          hideCalendarNotes: true,\n          hideCalendarEventDetails: true,\n          disableGuests: true,\n          customReplyToEmail: true,\n          seatsPerTimeSlot: true,\n          seatsShowAttendees: true,\n          metadata: true,\n          locations: true,\n          team: {\n            select: {\n              id: true,\n              name: true,\n              parentId: true,\n            },\n          },\n          workflows: {\n            select: {\n              workflow: {\n                select: workflowSelect,\n              },\n            },\n          },\n          customInputs: true,\n          parentId: true,\n          parent: {\n            select: {\n              teamId: true,\n            },\n          },\n        },\n      },\n      location: true,\n      userId: true,\n      user: {\n        select: {\n          id: true,\n          username: true,\n          email: true,\n          timeZone: true,\n          timeFormat: true,\n          name: true,\n          destinationCalendar: true,\n          locale: true,\n        },\n      },\n      id: true,\n      uid: true,\n      payment: true,\n      destinationCalendar: true,\n      paid: true,\n      recurringEventId: true,\n      status: true,\n      smsReminderNumber: true,\n      assignmentReason: {\n        select: {\n          reasonEnum: true,\n          reasonString: true,\n        },\n        orderBy: {\n          createdAt: \"desc\" as const,\n        },\n        take: 1,\n      },\n    },\n  });\n\n  const user = booking.user;\n  if (!user) {\n    throw new TRPCError({ code: \"BAD_REQUEST\", message: \"Booking must have an organizer\" });\n  }\n\n  const bookingAccessService = new BookingAccessService(prisma);\n  const isUserAuthorizedToConfirmBooking = await bookingAccessService.doesUserIdHaveAccessToBooking({\n    userId: ctx.user.id,\n    bookingId: bookingId,\n  });\n\n  if (!isUserAuthorizedToConfirmBooking) {\n    throw new TRPCError({\n      code: \"UNAUTHORIZED\",\n      message: \"User is not authorized to confirm this booking\",\n    });\n  }\n\n  // Do not move this before authorization check.\n  // This is done to avoid exposing extra information to the requester.\n  if (booking.status === BookingStatus.ACCEPTED) {\n    throw new TRPCError({ code: \"BAD_REQUEST\", message: \"Booking already confirmed\" });\n  }\n\n  // If booking requires payment and is not paid, we don't allow confirmation\n  if (confirmed && booking.payment.length > 0 && !booking.paid) {\n    await prisma.booking.update({\n      where: {\n        id: bookingId,\n      },\n      data: {\n        status: BookingStatus.ACCEPTED,\n      },\n    });\n\n    return { message: \"Booking confirmed\", status: BookingStatus.ACCEPTED };\n  }\n\n  // Cache translations to avoid requesting multiple times.\n  const translations = new Map();\n  const attendeesListPromises = booking.attendees.map(async (attendee) => {\n    const locale = attendee.locale ?? \"en\";\n    let translate = translations.get(locale);\n    if (!translate) {\n      translate = await getTranslation(locale, \"common\");\n      translations.set(locale, translate);\n    }\n    return {\n      name: attendee.name,\n      email: attendee.email,\n      timeZone: attendee.timeZone,\n      phoneNumber: attendee.phoneNumber,\n      language: {\n        translate,\n        locale,\n      },\n    };\n  });\n\n  const organizerOrganizationProfile = await prisma.profile.findFirst({\n    where: {\n      userId: user.id,\n    },\n  });\n\n  const organizerOrganizationId = organizerOrganizationProfile?.organizationId;\n\n  const bookerUrl = await getBookerBaseUrl(\n    booking.eventType?.team?.parentId ?? organizerOrganizationId ?? null\n  );\n\n  const attendeesList = await Promise.all(attendeesListPromises);\n  const tOrganizer = await getTranslation(booking.user?.locale ?? \"en\", \"common\");\n\n  const evt: CalendarEvent = {\n    type: booking?.eventType?.slug as string,\n    title: booking.title,\n    description: booking.description,\n    bookerUrl,\n    // TODO: Remove the usage of `bookingFields` in computing responses. We can do that by storing `label` with the response. Also, this would allow us to correctly show the label for a field even after the Event Type has been deleted.\n    ...getCalEventResponses({\n      bookingFields: booking.eventType?.bookingFields ?? null,\n      booking,\n    }),\n    customInputs: isPrismaObjOrUndefined(booking.customInputs),\n    startTime: booking.startTime.toISOString(),\n    endTime: booking.endTime.toISOString(),\n    organizer: {\n      id: booking.user?.id,\n      email: booking?.userPrimaryEmail || booking.user?.email || \"Email-less\",\n      name: booking.user?.name || \"Nameless\",\n      username: booking.user?.username || undefined,\n      usernameInOrg: organizerOrganizationProfile?.username || undefined,\n      timeZone: booking.user?.timeZone || \"Europe/London\",\n      timeFormat: getTimeFormatStringFromUserTimeFormat(booking.user?.timeFormat),\n      language: { translate: tOrganizer, locale: booking.user?.locale ?? \"en\" },\n    },\n    attendees: attendeesList,\n    location: booking.location ?? \"\",\n    uid: booking.uid,\n    destinationCalendar: booking.destinationCalendar\n      ? [booking.destinationCalendar]\n      : booking.user?.destinationCalendar\n        ? [booking.user?.destinationCalendar]\n        : [],\n    requiresConfirmation: booking?.eventType?.requiresConfirmation ?? false,\n    hideOrganizerEmail: booking.eventType?.hideOrganizerEmail,\n    hideCalendarNotes: booking.eventType?.hideCalendarNotes,\n    hideCalendarEventDetails: booking.eventType?.hideCalendarEventDetails,\n    eventTypeId: booking.eventType?.id,\n    customReplyToEmail: booking.eventType?.customReplyToEmail,\n    seatsPerTimeSlot: booking.eventType?.seatsPerTimeSlot,\n    seatsShowAttendees: booking.eventType?.seatsShowAttendees,\n    team: booking.eventType?.team\n      ? {\n          name: booking.eventType.team.name,\n          id: booking.eventType.team.id,\n          members: [],\n        }\n      : undefined,\n    ...(platformClientParams ? platformClientParams : {}),\n    organizationId: organizerOrganizationId ?? booking.eventType?.team?.parentId ?? null,\n    additionalNotes: booking.description,\n    assignmentReason: booking.assignmentReason?.[0]?.reasonEnum\n      ? {\n          category: getAssignmentReasonCategory(booking.assignmentReason[0].reasonEnum),\n          details: booking.assignmentReason[0].reasonString ?? null,\n        }\n      : null,\n  };\n\n  const recurringEvent = parseRecurringEvent(booking.eventType?.recurringEvent);\n  if (recurringEventId) {\n    if (\n      !(await prisma.booking.findFirst({\n        where: {\n          recurringEventId,\n          id: booking.id,\n        },\n        select: {\n          id: true,\n        },\n      }))\n    ) {\n      // FIXME: It might be best to retrieve recurringEventId from the booking itself.\n      throw new TRPCError({\n        code: \"UNAUTHORIZED\",\n        message: \"Recurring event id doesn't belong to the booking\",\n      });\n    }\n  }\n  const traceContext = {\n    ...ctx.traceContext,\n    bookingUid: booking.uid || \"unknown\",\n    confirmed: String(confirmed),\n    eventTypeId: booking.eventType?.id?.toString() || \"null\",\n    userId: user.id.toString(),\n    teamId: booking.eventType?.teamId?.toString() || \"null\",\n  };\n\n  if (recurringEventId && recurringEvent) {\n    const groupedRecurringBookings = await prisma.booking.groupBy({\n      where: {\n        recurringEventId: booking.recurringEventId,\n      },\n      by: [Prisma.BookingScalarFieldEnum.recurringEventId],\n      _count: true,\n    });\n    // Overriding the recurring event configuration count to be the actual number of events booked for\n    // the recurring event (equal or less than recurring event configuration count)\n    recurringEvent.count = groupedRecurringBookings[0]._count;\n    // count changed, parsing again to get the new value in\n    evt.recurringEvent = parseRecurringEvent(recurringEvent);\n  }\n\n  if (confirmed) {\n    const credentials = await getUsersCredentialsIncludeServiceAccountKey(user);\n    const userWithCredentials = {\n      ...user,\n      credentials,\n    };\n    const allCredentials = await getAllCredentialsIncludeServiceAccountKey(userWithCredentials, {\n      ...booking.eventType,\n      metadata: booking.eventType?.metadata as EventTypeMetadata,\n    });\n    const conferenceCredentialId = getLocationValueForDB(\n      booking.location ?? \"\",\n      (booking.eventType?.locations as LocationObject[]) || []\n    );\n    evt.conferenceCredentialId = conferenceCredentialId.conferenceCredentialId;\n\n    await handleConfirmation({\n      user: { ...user, credentials: allCredentials },\n      evt,\n      recurringEventId,\n      prisma,\n      bookingId,\n      booking,\n      emailsEnabled,\n      platformClientParams,\n      traceContext,\n      actionSource,\n      actor,\n    });\n  } else {\n    evt.rejectionReason = rejectionReason;\n    let rejectedBookings: {\n      uid: string;\n      oldStatus: BookingStatus;\n    }[] = [];\n\n    if (recurringEventId) {\n      // The booking to reject is a recurring event and comes from /booking/upcoming, proceeding to mark all related\n      // bookings as rejected.\n      const unconfirmedRecurringBookings = await prisma.booking.findMany({\n        where: {\n          recurringEventId,\n          status: BookingStatus.PENDING,\n        },\n        select: {\n          uid: true,\n          status: true,\n        },\n      });\n\n      await prisma.booking.updateMany({\n        where: {\n          uid: {\n            in: unconfirmedRecurringBookings.map((booking) => booking.uid),\n          },\n        },\n        data: {\n          status: BookingStatus.REJECTED,\n          rejectionReason,\n        },\n      });\n\n      rejectedBookings = unconfirmedRecurringBookings.map((recurringBooking) => ({\n        uid: recurringBooking.uid,\n        oldStatus: recurringBooking.status,\n      }));\n    } else {\n      // handle refunds\n      if (booking.payment.length) {\n        await processPaymentRefund({\n          booking: booking,\n          teamId: booking.eventType?.teamId,\n        });\n      }\n      // end handle refunds.\n\n      await prisma.booking.update({\n        where: {\n          id: bookingId,\n        },\n        data: {\n          status: BookingStatus.REJECTED,\n          rejectionReason,\n        },\n      });\n\n      rejectedBookings = [\n        {\n          uid: booking.uid,\n          oldStatus: booking.status,\n        },\n      ];\n    }\n\n    if (emailsEnabled) {\n      await sendDeclinedEmailsAndSMS(evt, booking.eventType?.metadata as EventTypeMetadata);\n    }\n\n    const teamId = await getTeamIdFromEventType({\n      eventType: {\n        team: { id: booking.eventType?.teamId ?? null },\n        parentId: booking?.eventType?.parentId ?? null,\n      },\n    });\n\n    const orgId = await getOrgIdFromMemberOrTeamId({ memberId: booking.userId, teamId });\n\n    const featuresRepository = getFeaturesRepository();\n    const isBookingAuditEnabled = orgId\n      ? await featuresRepository.checkIfTeamHasFeature(orgId, \"booking-audit\")\n      : false;\n\n    await fireRejectionEvent({\n      actor,\n      actionSource,\n      organizationId: orgId ?? null,\n      rejectionReason: rejectionReason ?? null,\n      rejectedBookings,\n      isBookingAuditEnabled,\n      tracingLogger: log,\n    });\n\n    // send BOOKING_REJECTED webhooks\n    const subscriberOptions: GetSubscriberOptions = {\n      userId: booking.userId,\n      eventTypeId: booking.eventTypeId,\n      triggerEvent: WebhookTriggerEvents.BOOKING_REJECTED,\n      teamId,\n      orgId,\n      oAuthClientId: platformClientParams?.platformClientId,\n    };\n    const eventTrigger: WebhookTriggerEvents = WebhookTriggerEvents.BOOKING_REJECTED;\n    const eventTypeInfo: EventTypeInfo = {\n      eventTitle: booking.eventType?.title,\n      eventDescription: booking.eventType?.description,\n      requiresConfirmation: booking.eventType?.requiresConfirmation || null,\n      price: booking.eventType?.price,\n      currency: booking.eventType?.currency,\n      length: booking.eventType?.length,\n    };\n    const webhookData: EventPayloadType = {\n      ...evt,\n      ...eventTypeInfo,\n      bookingId,\n      eventTypeId: booking.eventType?.id,\n      status: BookingStatus.REJECTED,\n      smsReminderNumber: booking.smsReminderNumber || undefined,\n    };\n    await handleWebhookTrigger({ subscriberOptions, eventTrigger, webhookData, traceContext });\n\n    const workflows = await getAllWorkflowsFromEventType(booking.eventType, user.id);\n    try {\n      const creditService = new CreditService();\n\n      await WorkflowService.scheduleWorkflowsFilteredByTriggerEvent({\n        workflows,\n        smsReminderNumber: booking.smsReminderNumber,\n        calendarEvent: {\n          ...evt,\n          bookerUrl: bookerUrl,\n          eventType: {\n            ...eventTypeInfo,\n            slug: booking.eventType?.slug as string,\n          },\n        },\n        hideBranding: !!booking.eventType?.owner?.hideBranding,\n        triggers: [WorkflowTriggerEvents.BOOKING_REJECTED],\n        creditCheckFn: creditService.hasAvailableCredits.bind(creditService),\n      });\n    } catch (error) {\n      // Silently fail\n      console.error(\n        \"Error while scheduling workflow reminders for BOOKING_REJECTED:\",\n        error instanceof Error ? error.message : String(error)\n      );\n    }\n  }\n\n  const message = confirmed ? \"Booking confirmed\" : \"Booking rejected\";\n  const status = confirmed ? BookingStatus.ACCEPTED : BookingStatus.REJECTED;\n\n  return { message, status };\n};",
+        "detail": {
+          "unitId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__confirmHandler_3#function:confirmHandler",
+          "fileId": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts__confirmHandler_3",
+          "unitKind": "function",
+          "name": "confirmHandler",
+          "qualifiedName": "confirmHandler",
+          "parentUnitId": null,
+          "startLine": 112,
+          "endLine": 578,
+          "signature": "export const confirmHandler = async ({ ctx, input }: ConfirmOptions) =>",
+          "parameters": [
+            { "name": "ctx", "type": "Ctx", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "input",
+              "type": "ConfirmOptions['input']",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "{ message: string; status: BookingStatus }",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "ctx.user.id is defined (authenticated caller)",
+            "input.bookingId is a valid booking id",
+            "input.confirmed is a boolean",
+            "prisma is connected and BookingAccessService is instantiable"
+          ],
+          "postconditions": [
+            "On confirmed path with unpaid payment: booking status is updated to BookingStatus.ACCEPTED and { message: 'Booking confirmed', status: BookingStatus.ACCEPTED } is returned",
+            "On confirmed path with paid/no-payment: handleConfirmation is invoked with built CalendarEvent and credentials; returns { message: 'Booking confirmed', status: BookingStatus.ACCEPTED }",
+            "On rejection path: booking status is updated to BookingStatus.REJECTED (single or bulk for recurring), refunds processed if payment exists, decline emails/SMS sent if emailsEnabled, rejection audit event fired, BOOKING_REJECTED webhook triggered, and BOOKING_REJECTED workflows scheduled; returns { message: 'Booking rejected', status: BookingStatus.REJECTED }",
+            "On already-accepted booking: throws before any mutation"
+          ],
+          "invariants": [
+            "Authorization check (doesUserIdHaveAccessToBooking) always runs before status-reveal checks",
+            "Already-accepted guard runs after authorization but before any state change",
+            "Recurring event id validation (if provided) runs before confirmation/rejection side effects",
+            "Translations are cached per locale within a single invocation via a Map"
+          ],
+          "edgeCases": [
+            "Booking has no user (user is null): throws TRPCError { code: 'BAD_REQUEST', message: 'Booking must have an organizer' }",
+            "Caller is not authorized for the booking: throws TRPCError { code: 'UNAUTHORIZED', message: 'User is not authorized to confirm this booking' }",
+            "Booking status is already BookingStatus.ACCEPTED: throws TRPCError { code: 'BAD_REQUEST', message: 'Booking already confirmed' }",
+            "confirmed=true with payment.length>0 and !paid: skips full confirmation pipeline, updates status to ACCEPTED directly, returns early",
+            "recurringEventId provided but no booking matches both recurringEventId and booking.id: throws TRPCError { code: 'UNAUTHORIZED', message: 'Recurring event id doesn't belong to the booking' }",
+            "booking.location is empty/null: getLocationValueForDB receives empty string fallback",
+            "booking.userPrimaryEmail and booking.user.email both missing: organizer email falls back to 'Email-less'",
+            "booking.user.name missing: organizer name falls back to 'Nameless'",
+            "booking.user.timeZone missing: falls back to 'Europe/London'",
+            "booking.user.locale missing: translation locale falls back to 'en'",
+            "booking.eventType is null/undefined: many eventType fields default to undefined/false/null gracefully",
+            "workflows scheduling throws: caught and logged via console.error, execution continues"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["TRPCError"],
+            "reverts": [],
+            "onInvalidInput": "Throws TRPCError with code 'BAD_REQUEST' when booking has no organizer or is already confirmed; throws TRPCError with code 'UNAUTHORIZED' when caller lacks booking access or recurringEventId does not belong to the booking",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "prisma.booking.update({ where: { id: bookingId }, data: { status: BookingStatus.ACCEPTED } }) — when confirmed && payment.length>0 && !paid",
+            "prisma.booking.update({ where: { id: bookingId }, data: { status: BookingStatus.REJECTED, rejectionReason } }) — single booking rejection path",
+            "prisma.booking.updateMany({ where: { uid: { in: ... } }, data: { status: BookingStatus.REJECTED, rejectionReason } }) — recurring event rejection path",
+            "prisma.booking.groupBy — read-only, used to recompute recurringEvent.count",
+            "handleConfirmation(...) — internal side effects (booking/payment/external calendar state)",
+            "sendDeclinedEmailsAndSMS(...) — emits email/SMS",
+            "fireRejectionEvent(...) — emits audit/rejection event",
+            "handleWebhookTrigger(...) — dispatches BOOKING_REJECTED webhook",
+            "WorkflowService.scheduleWorkflowsFilteredByTriggerEvent(...) — schedules BOOKING_REJECTED workflows"
+          ],
+          "eventsEmitted": [
+            "fireRejectionEvent (rejection audit event, when confirmed=false)",
+            "BOOKING_REJECTED webhook via handleWebhookTrigger (when confirmed=false)",
+            "BOOKING_REJECTED workflow triggers via WorkflowService (when confirmed=false)"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "prisma", "source": "external", "kind": "external" },
+            { "name": "logger.getSubLogger", "source": "internal-local", "kind": "internal" },
+            { "name": "BookingAccessService", "source": "internal-local", "kind": "internal" },
+            { "name": "getTranslation", "source": "internal-local", "kind": "internal" },
+            { "name": "getBookerBaseUrl", "source": "internal-local", "kind": "internal" },
+            { "name": "getCalEventResponses", "source": "internal-local", "kind": "internal" },
+            { "name": "isPrismaObjOrUndefined", "source": "internal-local", "kind": "internal" },
+            { "name": "getTimeFormatStringFromUserTimeFormat", "source": "internal-local", "kind": "internal" },
+            { "name": "parseRecurringEvent", "source": "internal-local", "kind": "internal" },
+            { "name": "getUsersCredentialsIncludeServiceAccountKey", "source": "internal-local", "kind": "internal" },
+            { "name": "getAllCredentialsIncludeServiceAccountKey", "source": "internal-local", "kind": "internal" },
+            { "name": "getLocationValueForDB", "source": "internal-local", "kind": "internal" },
+            { "name": "handleConfirmation", "source": "internal-local", "kind": "internal" },
+            { "name": "sendDeclinedEmailsAndSMS", "source": "internal-local", "kind": "internal" },
+            { "name": "getTeamIdFromEventType", "source": "internal-local", "kind": "internal" },
+            { "name": "getOrgIdFromMemberOrTeamId", "source": "internal-local", "kind": "internal" },
+            { "name": "getFeaturesRepository", "source": "internal-local", "kind": "internal" },
+            { "name": "fireRejectionEvent", "source": "internal-local", "kind": "internal" },
+            { "name": "handleWebhookTrigger", "source": "internal-local", "kind": "internal" },
+            { "name": "getAllWorkflowsFromEventType", "source": "internal-local", "kind": "internal" },
+            {
+              "name": "WorkflowService.scheduleWorkflowsFilteredByTriggerEvent",
+              "source": "internal-local",
+              "kind": "internal"
+            },
+            { "name": "CreditService", "source": "internal-local", "kind": "internal" },
+            { "name": "processPaymentRefund", "source": "internal-local", "kind": "internal" },
+            { "name": "console.error", "source": "external", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "TRPCError",
+            "BookingStatus",
+            "CalendarEvent",
+            "WebhookTriggerEvents.BOOKING_REJECTED",
+            "WorkflowTriggerEvents.BOOKING_REJECTED",
+            "EventTypeInfo",
+            "EventPayloadType",
+            "GetSubscriberOptions",
+            "Prisma.BookingScalarFieldEnum.recurringEventId",
+            "LocationObject",
+            "EventTypeMetadata"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "tRPC router handler. Input: ConfirmOptions { ctx: TRPCContext (with user.id, traceContext), input: { bookingId: string, recurringEventId?: string, reason?: string, confirmed: boolean, emailsEnabled?: boolean, platformClientParams?: PlatformClientParams, actionSource?: string, actor?: string } }. Output: Promise<{ message: string, status: BookingStatus }>. Errors: throws TRPCError.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Given a ConfirmOptions payload, this handler either confirms or rejects a booking: it authorizes the caller, validates the booking state, and routes to confirmation (with credential/wallet handling) or rejection (with refund, email/SMS, audit event, webhook, and workflow dispatch), returning a message and final BookingStatus.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Booking must have an organizer",
+              "role": "Thrown by TRPCError({ code: 'BAD_REQUEST' }) when booking.user is null"
+            },
+            {
+              "kind": "error-message",
+              "value": "User is not authorized to confirm this booking",
+              "role": "Thrown by TRPCError({ code: 'UNAUTHORIZED' }) when doesUserIdHaveAccessToBooking returns false"
+            },
+            {
+              "kind": "error-message",
+              "value": "Booking already confirmed",
+              "role": "Thrown by TRPCError({ code: 'BAD_REQUEST' }) when booking.status === BookingStatus.ACCEPTED"
+            },
+            {
+              "kind": "error-message",
+              "value": "Recurring event id doesn't belong to the booking",
+              "role": "Thrown by TRPCError({ code: 'UNAUTHORIZED' }) when recurringEventId is provided but no booking matches both recurringEventId and booking.id"
+            },
+            {
+              "kind": "enum-value",
+              "value": "BookingStatus.ACCEPTED",
+              "role": "Status set on direct-payment confirmation path and returned as status on confirmed path"
+            },
+            {
+              "kind": "enum-value",
+              "value": "BookingStatus.REJECTED",
+              "role": "Status set on rejection path (single and bulk) and returned as status on rejected path"
+            },
+            {
+              "kind": "enum-value",
+              "value": "BookingStatus.PENDING",
+              "role": "Filter value used to find unconfirmed recurring bookings for bulk rejection"
+            },
+            {
+              "kind": "enum-value",
+              "value": "WebhookTriggerEvents.BOOKING_REJECTED",
+              "role": "Trigger event used for BOOKING_REJECTED webhook dispatch"
+            },
+            {
+              "kind": "enum-value",
+              "value": "WorkflowTriggerEvents.BOOKING_REJECTED",
+              "role": "Trigger event used for BOOKING_REJECTED workflow scheduling"
+            },
+            {
+              "kind": "format-string",
+              "value": "Error while scheduling workflow reminders for BOOKING_REJECTED:",
+              "role": "Prefix of console.error message when workflow scheduling fails (silently caught)"
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "take limit for assignmentReason query (most recent assignment reason)"
+            },
+            {
+              "kind": "format-string",
+              "value": "common",
+              "role": "Translation namespace used for attendee and organizer translations"
+            },
+            {
+              "kind": "format-string",
+              "value": "Europe/London",
+              "role": "Default organizer timeZone when booking.user.timeZone is missing"
+            },
+            {
+              "kind": "format-string",
+              "value": "Nameless",
+              "role": "Default organizer name when booking.user.name is missing"
+            },
+            {
+              "kind": "format-string",
+              "value": "Email-less",
+              "role": "Default organizer email when both userPrimaryEmail and user.email are missing"
+            },
+            {
+              "kind": "format-string",
+              "value": "unknown",
+              "role": "Fallback bookingUid in traceContext when booking.uid is falsy"
+            },
+            {
+              "kind": "format-string",
+              "value": "null",
+              "role": "Fallback string for eventTypeId and teamId in traceContext when missing"
+            },
+            {
+              "kind": "format-string",
+              "value": "booking-audit",
+              "role": "Feature flag key checked via featuresRepository.checkIfTeamHasFeature to determine isBookingAuditEnabled"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "confirmHandler is invoked with any ConfirmOptions (confirmed true or false)",
+              "then": "Throws TRPCError({ code: 'BAD_REQUEST', message: 'Booking already confirmed' }) and no state mutations occur",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "confirmHandler is invoked",
+              "then": "prisma.booking.update sets status to BookingStatus.ACCEPTED and the handler returns { message: 'Booking confirmed', status: BookingStatus.ACCEPTED } without invoking handleConfirmation or building the full CalendarEvent pipeline",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "confirmHandler is invoked with a rejection reason",
+              "then": "prisma.booking.updateMany sets status to BookingStatus.REJECTED with the rejectionReason for all pending bookings sharing that recurringEventId; sendDeclinedEmailsAndSMS, fireRejectionEvent, handleWebhookTrigger (BOOKING_REJECTED), and WorkflowService scheduling are all invoked",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "sourceHash": "",
+          "semanticFingerprint": "f4cdd8b1875013b47ad2b612badc951088e130a16189f9c84c0eec5b27c39895"
+        }
+      }
+    ]
+  },
+  "out": ["packages/trpc/server/types.ts", "packages/trpc/server/routers/viewer/bookings/confirm.schema.ts"],
+  "in": ["packages/trpc/server/routers/viewer/bookings/_router.tsx"],
+  "externals": [
+    "@calcom/app-store/delegationCredential",
+    "@calcom/app-store/locations",
+    "@calcom/emails/email-manager",
+    "@calcom/features/bookings/di/BookingEventHandlerService.container",
+    "@calcom/features/di/containers/FeaturesRepository",
+    "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+    "@calcom/features/bookings/lib/getAssignmentReasonCategory",
+    "@calcom/features/bookings/lib/getCalEventResponses",
+    "@calcom/features/bookings/lib/handleConfirmation",
+    "@calcom/features/bookings/lib/handleWebhookTrigger",
+    "@calcom/features/bookings/lib/payment/processPaymentRefund",
+    "@calcom/features/bookings/services/BookingAccessService",
+    "@calcom/features/ee/billing/credit-service",
+    "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+    "@calcom/features/ee/workflows/lib/getAllWorkflows",
+    "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+    "@calcom/features/ee/workflows/lib/service/WorkflowService",
+    "@calcom/features/webhooks/lib/getWebhooks",
+    "@calcom/features/webhooks/lib/sendPayload",
+    "@calcom/lib/getOrgIdFromMemberOrTeamId",
+    "@calcom/lib/getTeamIdFromEventType",
+    "@calcom/lib/isPrismaObj",
+    "@calcom/lib/isRecurringEvent",
+    "@calcom/lib/server/i18n",
+    "@calcom/lib/timeFormat",
+    "@calcom/lib/tracing",
+    "@calcom/prisma",
+    "@calcom/prisma/client",
+    "@calcom/prisma/enums",
+    "@calcom/prisma/zod-utils",
+    "@calcom/types/Calendar",
+    "@trpc/server",
+    "uuid",
+    "@calcom/features/booking-audit/lib/types/actionSource",
+    "@calcom/features/booking-audit/lib/dto/types",
+    "@calcom/features/di/shared/services/logger.service",
+    "@calcom/lib/safeStringify",
+    "@calcom/lib/logger"
+  ],
+  "impact": { "seeds": 3, "callers": 1, "impactedFiles": [] }
+}

@@ -1,0 +1,1183 @@
+{
+  "relativePath": "packages/features/bookings/lib/handleConfirmation.ts",
+  "language": "typescript",
+  "sha256": "f999c3df6dab6c837c9faab3c55c9c6bb5297e1ec825891404ff1b5aa18af080",
+  "sizeBytes": 19908,
+  "tokenCount": 4977,
+  "lineCount": 605,
+  "analysedAt": "2026-09-04T07:29:16.115Z",
+  "analysis": {
+    "module": {
+      "purpose": "This file completes booking confirmation by creating the calendar event, marking one or more bookings accepted, recording audit events, scheduling reminders and workflows, and notifying webhook subscribers.",
+      "summary": "The confirmation pipeline coordinates calendar event creation, booking persistence, recurring-booking updates, meeting URL propagation, confirmation communications, workflow scheduling, no-show triggers, audit events, and webhook delivery. It derives organization and team context, applies email and platform settings, enriches event payloads with booking responses, and isolates downstream notification failures through tracing and error handling.",
+      "businessContext": "This supports Cal.com appointment confirmation across calendars, reminders, workflows, audits, and integrations. Failure can leave bookings unconfirmed, meetings unscheduled, or participants and external systems uninformed.",
+      "classes": [],
+      "functions": [
+        "fireBookingAcceptedEvent (~L42-93): Records accepted booking audit events for single or bulk confirmations.",
+        "handleConfirmation (~L95-604): Confirms bookings, creates meetings, schedules workflows, and dispatches notifications and webhooks."
+      ],
+      "keywords": [
+        "booking confirmation",
+        "recurring bookings",
+        "booking audit",
+        "calendar event creation",
+        "mandatory reminders",
+        "workflow scheduling",
+        "webhook triggers",
+        "no-show triggers",
+        "platform client",
+        "distributed tracing"
+      ],
+      "ontologyConcepts": [
+        "Booking confirmation",
+        "Calendar event",
+        "Recurring appointment",
+        "Workflow automation",
+        "Notification delivery",
+        "Webhook subscription",
+        "Audit event",
+        "Organizational tenancy"
+      ],
+      "businessEntities": [
+        "Booking",
+        "Event type",
+        "Calendar event",
+        "Workflow",
+        "Attendee",
+        "Organization",
+        "Team",
+        "Webhook subscriber"
+      ],
+      "systemCapabilities": [
+        "Confirm single and recurring bookings",
+        "Create calendar meetings",
+        "Schedule reminders and booking workflows",
+        "Record booking acceptance audits",
+        "Dispatch booking lifecycle webhooks",
+        "Schedule no-show automation"
+      ],
+      "configDependencies": [
+        "areCalendarEventsEnabled",
+        "platformClientId",
+        "disableStandardEmails.confirmation.host",
+        "disableStandardEmails.confirmation.attendee",
+        "disableStandardEmails.all.attendee"
+      ],
+      "importsInternal": [
+        {
+          "spec": "./getCalEventResponses",
+          "symbols": ["getCalEventResponses"],
+          "anchor": {
+            "startLine": 36,
+            "endLine": 36
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/getCalEventResponses.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getCalEventResponses.ts",
+          "resolvedHint": "packages/features/bookings/lib/getCalEventResponses.ts"
+        },
+        {
+          "spec": "./handleNewBooking/scheduleNoShowTriggers",
+          "symbols": ["scheduleNoShowTriggers"],
+          "anchor": {
+            "startLine": 37,
+            "endLine": 37
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/scheduleNoShowTriggers.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/scheduleNoShowTriggers.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/scheduleNoShowTriggers.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@calcom/app-store/zod-utils",
+          "symbols": ["eventTypeAppMetadataOptionalSchema"],
+          "package": "@calcom/app-store",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          }
+        },
+        {
+          "spec": "@calcom/ee/workflows/lib/reminders/scheduleMandatoryReminder",
+          "symbols": ["scheduleMandatoryReminder"],
+          "package": "@calcom/ee",
+          "subpath": "workflows/lib/reminders/scheduleMandatoryReminder",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "spec": "@calcom/emails/email-manager",
+          "symbols": ["sendScheduledEmailsAndSMS"],
+          "package": "@calcom/emails",
+          "subpath": "email-manager",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/dto/types",
+          "symbols": ["Actor"],
+          "package": "@calcom/features",
+          "subpath": "booking-audit/lib/dto/types",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 4,
+            "endLine": 4
+          }
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/types/actionSource",
+          "symbols": ["ActionSource"],
+          "package": "@calcom/features",
+          "subpath": "booking-audit/lib/types/actionSource",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 5,
+            "endLine": 5
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "symbols": ["getBookingEventHandlerService"],
+          "package": "@calcom/features",
+          "subpath": "bookings/di/BookingEventHandlerService.container",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 6,
+            "endLine": 6
+          }
+        },
+        {
+          "spec": "@calcom/features/di/containers/FeaturesRepository",
+          "symbols": ["getFeaturesRepository"],
+          "package": "@calcom/features",
+          "subpath": "di/containers/FeaturesRepository",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 7,
+            "endLine": 7
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/EventManager",
+          "symbols": ["EventManagerUser", "EventManager", "placeholderCreatedEvent"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/EventManager",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 8,
+            "endLine": 9
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/billing/credit-service",
+          "symbols": ["CreditService"],
+          "package": "@calcom/features",
+          "subpath": "ee/billing/credit-service",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "symbols": ["getBookerBaseUrl"],
+          "package": "@calcom/features",
+          "subpath": "ee/organizations/lib/getBookerUrlServer",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/allowDisablingStandardEmails",
+          "symbols": ["allowDisablingAttendeeConfirmationEmails", "allowDisablingHostConfirmationEmails"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/allowDisablingStandardEmails",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 12,
+            "endLine": 14
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "symbols": ["getAllWorkflowsFromEventType"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/getAllWorkflowsFromEventType",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "symbols": ["WorkflowService"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/service/WorkflowService",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 15,
+            "endLine": 15
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/types",
+          "symbols": ["Workflow"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/types",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 16,
+            "endLine": 16
+          }
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/getWebhooks",
+          "symbols": ["getWebhooks"],
+          "package": "@calcom/features",
+          "subpath": "webhooks/lib/getWebhooks",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          }
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/scheduleTrigger",
+          "symbols": ["scheduleTrigger"],
+          "package": "@calcom/features",
+          "subpath": "webhooks/lib/scheduleTrigger",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 18,
+            "endLine": 18
+          }
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/sendOrSchedulePayload",
+          "symbols": ["sendPayload"],
+          "package": "@calcom/features",
+          "subpath": "webhooks/lib/sendOrSchedulePayload",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 19,
+            "endLine": 19
+          }
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/sendPayload",
+          "symbols": ["EventPayloadType", "EventTypeInfo"],
+          "package": "@calcom/features",
+          "subpath": "webhooks/lib/sendPayload",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 20,
+            "endLine": 20
+          }
+        },
+        {
+          "spec": "@calcom/lib/CalEventParser",
+          "symbols": ["getVideoCallUrlFromCalEvent"],
+          "package": "@calcom/lib",
+          "subpath": "CalEventParser",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 21,
+            "endLine": 21
+          }
+        },
+        {
+          "spec": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "symbols": ["getOrgIdFromMemberOrTeamId"],
+          "package": "@calcom/lib",
+          "subpath": "getOrgIdFromMemberOrTeamId",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 22,
+            "endLine": 22
+          }
+        },
+        {
+          "spec": "@calcom/lib/getTeamIdFromEventType",
+          "symbols": ["getTeamIdFromEventType"],
+          "package": "@calcom/lib",
+          "subpath": "getTeamIdFromEventType",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 23,
+            "endLine": 23
+          }
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "package": "@calcom/lib",
+          "subpath": "safeStringify",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 24,
+            "endLine": 24
+          }
+        },
+        {
+          "spec": "@calcom/lib/tracing",
+          "symbols": ["TraceContext", "distributedTracing"],
+          "package": "@calcom/lib",
+          "subpath": "tracing",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 25,
+            "endLine": 26
+          }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["PrismaClient"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 27,
+            "endLine": 27
+          }
+        },
+        {
+          "spec": "@calcom/prisma/client",
+          "symbols": ["Prisma"],
+          "package": "@calcom/prisma",
+          "subpath": "client",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 28,
+            "endLine": 28
+          }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["SchedulingType", "BookingStatus", "WebhookTriggerEvents"],
+          "package": "@calcom/prisma",
+          "subpath": "enums",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 29,
+            "endLine": 30
+          }
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["PlatformClientParams", "EventTypeMetaDataSchema"],
+          "package": "@calcom/prisma",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 31,
+            "endLine": 32
+          }
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["AdditionalInformation", "CalendarEvent"],
+          "package": "@calcom/types",
+          "subpath": "Calendar",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 33,
+            "endLine": 33
+          }
+        },
+        {
+          "spec": "uuid",
+          "symbols": ["v4"],
+          "package": "uuid",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 34,
+            "endLine": 34
+          }
+        },
+        {
+          "spec": "@calcom/features/di/shared/services/logger.service",
+          "symbols": ["ISimpleLogger"],
+          "package": "@calcom/features",
+          "subpath": "di/shared/services/logger.service",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 38,
+            "endLine": 38
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Logs booking-creation failures through tracingLogger.error.",
+          "Logs email, webhook, and accepted-event errors through tracingLogger.error.",
+          "Logs workflow and webhook setup errors through console.error."
+        ],
+        "network": [
+          "Creates calendar events through EventManager.create.",
+          "Sends scheduled confirmation emails and SMS messages.",
+          "Schedules workflow reminders and no-show triggers.",
+          "Retrieves webhook subscribers and schedules or sends webhook payloads."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "event",
+          "role": "consumes",
+          "address": "BOOKING_CREATED",
+          "payloadRef": "EventPayloadType",
+          "rawKind": null
+        },
+        {
+          "kind": "event",
+          "role": "consumes",
+          "address": "MEETING_STARTED",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "event",
+          "role": "consumes",
+          "address": "MEETING_ENDED",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "booking",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "handleConfirmation",
+          "shape": "export async function handleConfirmation(args: { user: EventManagerUser & { username: string | null }; evt: CalendarEvent; recurringEventId?: string; prisma: PrismaClient; bookingId: number; booking: { ... }; paid?: boolean; emailsEnabled?: boolean; platformClientParams?: PlatformClientParams; traceContext: TraceContext; actionSource: ActionSource; actor: Actor }): Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "EventManager.create",
+          "shape": "eventManager.create(evt, { skipCalendarEvent: !areCalendarEventsEnabled })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Prisma booking acceptance",
+          "shape": "prisma.booking.update({ data: { status: BookingStatus.ACCEPTED, references: { create: scheduleResult.referencesToCreate } } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Booking accepted audit event",
+          "shape": "bookingEventHandlerService.onBookingAccepted({ bookingUid, actor, organizationId, auditData: { status: { old: acceptedBooking.oldStatus, new: BookingStatus.ACCEPTED } }, source: actionSource, isBookingAuditEnabled })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BOOKING_CREATED webhook payload",
+          "shape": "sendPayload(sub.secret, WebhookTriggerEvents.BOOKING_CREATED, new Date().toISOString(), sub, payload)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "MEETING_STARTED webhook trigger",
+          "shape": "scheduleTrigger({ booking, subscriberUrl: subscriber.subscriberUrl, subscriber, triggerEvent: WebhookTriggerEvents.MEETING_STARTED })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "MEETING_ENDED webhook trigger",
+          "shape": "scheduleTrigger({ booking, subscriberUrl: subscriber.subscriberUrl, subscriber, triggerEvent: WebhookTriggerEvents.MEETING_ENDED })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "fireBookingAcceptedEvent",
+          "intent": "Emit bulk or single booking acceptance audit events and suppress failures.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 42,
+            "endLine": 93
+          }
+        },
+        {
+          "name": "event setup and calendar creation",
+          "intent": "Parse metadata, initialize EventManager, create the calendar event, and load workflows.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 140,
+            "endLine": 166
+          }
+        },
+        {
+          "name": "meeting result handling and confirmation emails",
+          "intent": "Log failed meeting creation or send confirmation emails with generated meeting metadata.",
+          "structureKind": "branch",
+          "predicate": "results.length > 0 && results.every((res) => !res.success)",
+          "branchOutcomes": ["all meeting creation results fail", "at least one result succeeds or no results exist"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 168,
+            "endLine": 213
+          }
+        },
+        {
+          "name": "booking persistence",
+          "intent": "Accept recurring pending bookings in bulk or accept the specified booking.",
+          "structureKind": "branch",
+          "predicate": "recurringEventId",
+          "branchOutcomes": ["recurring event", "non-recurring event"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 254,
+            "endLine": 403
+          }
+        },
+        {
+          "name": "booking acceptance audit setup",
+          "intent": "Resolve team, organization, audit feature state, booker URL, and emit acceptance events.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 405,
+            "endLine": 432
+          }
+        },
+        {
+          "name": "confirmed booking workflows",
+          "intent": "Schedule mandatory reminders and workflows for each updated booking.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "let index = 0; index < updatedBookings.length; index++",
+          "terminationCondition": "index < updatedBookings.length",
+          "anchor": {
+            "startLine": 434,
+            "endLine": 482
+          }
+        },
+        {
+          "name": "webhook and no-show processing",
+          "intent": "Dispatch booking webhooks, schedule no-show triggers, and suppress processing failures.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 484,
+            "endLine": 603
+          }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "fireBookingAcceptedEvent",
+          "signature": "async function fireBookingAcceptedEvent({\n  actor,\n  organizationId,\n  actionSource,\n  acceptedBookings,\n  isBookingAuditEnabled,\n  tracingLogger,\n}: {\n  actor: Actor;\n  organizationId: number | null;\n  actionSource: ActionSource;\n  acceptedBookings: {\n    uid: string;\n    oldStatus: BookingStatus;\n  }[];\n  isBookingAuditEnabled: boolean;\n  tracingLogger: ISimpleLogger;\n}) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 42,
+            "endLine": 59
+          }
+        },
+        {
+          "kind": "function",
+          "name": "handleConfirmation",
+          "signature": "export async function handleConfirmation(args: {\n  user: EventManagerUser & { username: string | null };\n  evt: CalendarEvent;\n  recurringEventId?: string;\n  prisma: PrismaClient;\n  bookingId: number;\n  booking: {\n    startTime: Date;\n    id: number;\n    uid: string;\n    eventType: {\n      currency: string;\n      description: string | null;\n      id: number;\n      length: number;\n      price: number;\n      requiresConfirmation: boolean;\n      metadata?: Prisma.JsonValue;\n      title: string;\n      team?: {\n        parentId: number | null;\n      } | null;\n      teamId?: number | null;\n      parentId?: number | null;\n      parent?: {\n        teamId: number | null;\n      } | null;\n      workflows?: {\n        workflow: Workflow;\n      }[];\n    } | null;\n    metadata?: Prisma.JsonValue;\n    eventTypeId: number | null;\n    smsReminderNumber: string | null;\n    userId: number | null;\n    location: string | null;\n    status: BookingStatus;\n  };\n  paid?: boolean;\n  emailsEnabled?: boolean;\n  platformClientParams?: PlatformClientParams;\n  traceContext: TraceContext;\n  actionSource: ActionSource;\n  actor: Actor;\n}) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 95,
+            "endLine": 139
+          }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "event creation returns a non-empty results array where every result has success false",
+          "handled": true,
+          "behavior": "Logs a BookingCreatingMeetingFailed error and skips confirmation email sending, then continues to booking persistence.",
+          "anchor": {
+            "startLine": 168,
+            "endLine": 175
+          }
+        },
+        {
+          "inputShape": "event creation returns an empty results array",
+          "handled": true,
+          "behavior": "Does not populate meeting metadata, still attempts confirmation email sending, and continues processing.",
+          "anchor": {
+            "startLine": 175,
+            "endLine": 181
+          }
+        },
+        {
+          "inputShape": "recurringEventId is provided but no pending recurring bookings match",
+          "handled": true,
+          "behavior": "Updates no bookings, produces an empty accepted-bookings list, and skips per-booking workflow scheduling.",
+          "anchor": {
+            "startLine": 258,
+            "endLine": 335
+          }
+        },
+        {
+          "inputShape": "recurringEventId is absent",
+          "handled": true,
+          "behavior": "Accepts the booking identified by bookingId and records its previous status for the acceptance event.",
+          "anchor": {
+            "startLine": 336,
+            "endLine": 403
+          }
+        },
+        {
+          "inputShape": "acceptedBookings has zero, one, or more than one item",
+          "handled": true,
+          "behavior": "Emits no audit event for zero items, a single-booking event for one item, or a bulk event with a generated operation ID for multiple items.",
+          "anchor": {
+            "startLine": 62,
+            "endLine": 89
+          }
+        },
+        {
+          "inputShape": "emailsEnabled is false",
+          "handled": true,
+          "behavior": "Skips confirmation email and SMS sending while continuing reminder and workflow processing.",
+          "anchor": {
+            "startLine": 201,
+            "endLine": 209
+          }
+        },
+        {
+          "inputShape": "eventType metadata is malformed",
+          "handled": false,
+          "behavior": "EventTypeMetaDataSchema.parse throws before the function's local error handlers run.",
+          "anchor": {
+            "startLine": 154,
+            "endLine": 156
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "error",
+          "caught": "error",
+          "action": "Logs the accepted-event failure through tracingLogger.error and returns without rethrowing.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 90,
+            "endLine": 92
+          }
+        },
+        {
+          "thrown": "error",
+          "caught": "error",
+          "action": "Logs the email or SMS scheduling error through tracingLogger.error and continues.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 210,
+            "endLine": 212
+          }
+        },
+        {
+          "thrown": "error",
+          "caught": "error",
+          "action": "Logs workflow scheduling errors with console.error and continues without rethrowing.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 479,
+            "endLine": 482
+          }
+        },
+        {
+          "thrown": "e",
+          "caught": "e",
+          "action": "Logs the individual booking-created webhook error through tracingLogger.error; the caught promise resolves.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 591,
+            "endLine": 597
+          }
+        },
+        {
+          "thrown": "error",
+          "caught": "error",
+          "action": "Logs webhook retrieval, scheduling, or sending errors with console.error and suppresses them.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 600,
+            "endLine": 603
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a Prisma client and booking data consistent with the selected booking or recurring bookings.",
+          "anchor": {
+            "startLine": 95,
+            "endLine": 139
+          }
+        },
+        {
+          "kind": "config",
+          "description": "Calendar events are enabled by default when platformClientParams.areCalendarEventsEnabled is absent.",
+          "anchor": {
+            "startLine": 158,
+            "endLine": 159
+          }
+        },
+        {
+          "kind": "config",
+          "description": "Confirmation emails and SMS are enabled by default when emailsEnabled is absent.",
+          "anchor": {
+            "startLine": 147,
+            "endLine": 149
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "eventType metadata and app metadata must satisfy their respective parsing schemas.",
+          "anchor": {
+            "startLine": 154,
+            "endLine": 156
+          }
+        },
+        {
+          "kind": "init-order",
+          "description": "The booking is persisted as accepted before reminders, workflows, and webhooks are scheduled.",
+          "anchor": {
+            "startLine": 337,
+            "endLine": 348
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What external side effects and persistence guarantees do EventManager, workflow, reminder, and webhook services provide when their calls fail?",
+          "affects": "side_effects,error_handling",
+          "anchor": {
+            "startLine": 159,
+            "endLine": 162
+          },
+          "resolution": null
+        },
+        {
+          "question": "What exact metadata shapes are accepted by EventTypeMetaDataSchema and eventTypeAppMetadataOptionalSchema?",
+          "affects": "edge_cases,assumptions",
+          "anchor": {
+            "startLine": 154,
+            "endLine": 156
+          },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "confirms-single-booking",
+          "scenario": "A non-recurring pending booking is confirmed successfully.",
+          "given": [
+            "recurringEventId is undefined",
+            "booking.status is BookingStatus.PENDING",
+            "scheduleResult.referencesToCreate is defined"
+          ],
+          "when": "await handleConfirmation(args)",
+          "then": "prisma.booking.update is called with status: BookingStatus.ACCEPTED and the booking metadata contains videoCallUrl",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the core confirmation transition and preservation of the generated meeting URL."
+        },
+        {
+          "testId": "confirms-all-recurring-bookings",
+          "scenario": "A recurring booking confirmation processes every related pending booking.",
+          "given": [
+            "recurringEventId is defined",
+            "prisma.booking.findMany returns multiple bookings with status: BookingStatus.PENDING"
+          ],
+          "when": "await handleConfirmation(args)",
+          "then": "each returned recurring booking is updated with status: BookingStatus.ACCEPTED",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the special recurring-event behavior that confirms all pending related bookings."
+        },
+        {
+          "testId": "skips-confirmation-emails-when-disabled",
+          "scenario": "Confirmation handling runs with email delivery disabled.",
+          "given": ["emailsEnabled is false"],
+          "when": "await handleConfirmation(args)",
+          "then": "sendScheduledEmailsAndSMS is not called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures platform-level email suppression is respected."
+        },
+        {
+          "testId": "emits-booking-created-webhook",
+          "scenario": "A confirmed booking has registered BOOKING_CREATED webhook subscribers.",
+          "given": ["getWebhooks returns subscribers for WebhookTriggerEvents.BOOKING_CREATED"],
+          "when": "await handleConfirmation(args)",
+          "then": "sendPayload is called for each subscriber with WebhookTriggerEvents.BOOKING_CREATED and status: \"ACCEPTED\"",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the outbound webhook event and accepted-status payload contract."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": ["fireBookingAcceptedEvent", "handleConfirmation"],
+      "moduleLevelCode": "import { eventTypeAppMetadataOptionalSchema } from \"@calcom/app-store/zod-utils\";\nimport { scheduleMandatoryReminder } from \"@calcom/ee/workflows/lib/reminders/scheduleMandatoryReminder\";\nimport { sendScheduledEmailsAndSMS } from \"@calcom/emails/email-manager\";\nimport type { Actor } from \"@calcom/features/booking-audit/lib/dto/types\";\nimport type { ActionSource } from \"@calcom/features/booking-audit/lib/types/actionSource\";\nimport { getBookingEventHandlerService } from \"@calcom/features/bookings/di/BookingEventHandlerService.container\";\nimport { getFeaturesRepository } from \"@calcom/features/di/containers/FeaturesRepository\";\nimport type { EventManagerUser } from \"@calcom/features/bookings/lib/EventManager\";\nimport EventManager, { placeholderCreatedEvent } from \"@calcom/features/bookings/lib/EventManager\";\nimport { CreditService } from \"@calcom/features/ee/billing/credit-service\";\nimport { getBookerBaseUrl } from \"@calcom/features/ee/organizations/lib/getBookerUrlServer\";\nimport {\n  allowDisablingAttendeeConfirmationEmails,\n  allowDisablingHostConfirmationEmails,\n} from \"@calcom/features/ee/workflows/lib/allowDisablingStandardEmails\";\nimport { getAllWorkflowsFromEventType } from \"@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType\";\nimport { WorkflowService } from \"@calcom/features/ee/workflows/lib/service/WorkflowService\";\nimport type { Workflow } from \"@calcom/features/ee/workflows/lib/types\";\nimport getWebhooks from \"@calcom/features/webhooks/lib/getWebhooks\";\nimport { scheduleTrigger } from \"@calcom/features/webhooks/lib/scheduleTrigger\";\nimport sendPayload from \"@calcom/features/webhooks/lib/sendOrSchedulePayload\";\nimport type { EventPayloadType, EventTypeInfo } from \"@calcom/features/webhooks/lib/sendPayload\";\nimport { getVideoCallUrlFromCalEvent } from \"@calcom/lib/CalEventParser\";\nimport getOrgIdFromMemberOrTeamId from \"@calcom/lib/getOrgIdFromMemberOrTeamId\";\nimport { getTeamIdFromEventType } from \"@calcom/lib/getTeamIdFromEventType\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport type { TraceContext } from \"@calcom/lib/tracing\";\nimport { distributedTracing } from \"@calcom/lib/tracing/factory\";\nimport type { PrismaClient } from \"@calcom/prisma\";\nimport type { Prisma } from \"@calcom/prisma/client\";\nimport type { SchedulingType } from \"@calcom/prisma/enums\";\nimport { BookingStatus, WebhookTriggerEvents } from \"@calcom/prisma/enums\";\nimport type { PlatformClientParams } from \"@calcom/prisma/zod-utils\";\nimport { EventTypeMetaDataSchema } from \"@calcom/prisma/zod-utils\";\nimport type { AdditionalInformation, CalendarEvent } from \"@calcom/types/Calendar\";\nimport { v4 as uuidv4 } from \"uuid\";\n\nimport { getCalEventResponses } from \"./getCalEventResponses\";\nimport { scheduleNoShowTriggers } from \"./handleNewBooking/scheduleNoShowTriggers\";\nimport type { ISimpleLogger } from \"@calcom/features/di/shared/services/logger.service\";",
+      "exports": [
+        {
+          "name": "handleConfirmation",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "eventTypeAppMetadataOptionalSchema",
+          "module": "@calcom/app-store/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "scheduleMandatoryReminder",
+          "module": "@calcom/ee/workflows/lib/reminders/scheduleMandatoryReminder",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "sendScheduledEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Actor",
+          "module": "@calcom/features/booking-audit/lib/dto/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ActionSource",
+          "module": "@calcom/features/booking-audit/lib/types/actionSource",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBookingEventHandlerService",
+          "module": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getFeaturesRepository",
+          "module": "@calcom/features/di/containers/FeaturesRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventManagerUser",
+          "module": "@calcom/features/bookings/lib/EventManager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventManager",
+          "module": "@calcom/features/bookings/lib/EventManager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "placeholderCreatedEvent",
+          "module": "@calcom/features/bookings/lib/EventManager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CreditService",
+          "module": "@calcom/features/ee/billing/credit-service",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBookerBaseUrl",
+          "module": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "allowDisablingAttendeeConfirmationEmails",
+          "module": "@calcom/features/ee/workflows/lib/allowDisablingStandardEmails",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "allowDisablingHostConfirmationEmails",
+          "module": "@calcom/features/ee/workflows/lib/allowDisablingStandardEmails",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getAllWorkflowsFromEventType",
+          "module": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Workflow",
+          "module": "@calcom/features/ee/workflows/lib/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getWebhooks",
+          "module": "@calcom/features/webhooks/lib/getWebhooks",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "scheduleTrigger",
+          "module": "@calcom/features/webhooks/lib/scheduleTrigger",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "sendPayload",
+          "module": "@calcom/features/webhooks/lib/sendOrSchedulePayload",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventPayloadType",
+          "module": "@calcom/features/webhooks/lib/sendPayload",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventTypeInfo",
+          "module": "@calcom/features/webhooks/lib/sendPayload",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getVideoCallUrlFromCalEvent",
+          "module": "@calcom/lib/CalEventParser",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getOrgIdFromMemberOrTeamId",
+          "module": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getTeamIdFromEventType",
+          "module": "@calcom/lib/getTeamIdFromEventType",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "safeStringify",
+          "module": "@calcom/lib/safeStringify",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "TraceContext",
+          "module": "@calcom/lib/tracing",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "distributedTracing",
+          "module": "@calcom/lib/tracing/factory",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "PrismaClient",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Prisma",
+          "module": "@calcom/prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "SchedulingType",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingStatus",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WebhookTriggerEvents",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "PlatformClientParams",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventTypeMetaDataSchema",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "AdditionalInformation",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CalendarEvent",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "v4",
+          "module": "uuid",
+          "alias": "uuidv4",
+          "kind": "external"
+        },
+        {
+          "symbol": "getCalEventResponses",
+          "module": "./getCalEventResponses",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "scheduleNoShowTriggers",
+          "module": "./handleNewBooking/scheduleNoShowTriggers",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "ISimpleLogger",
+          "module": "@calcom/features/di/shared/services/logger.service",
+          "alias": null,
+          "kind": "external"
+        }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/bookings/lib/handleConfirmation.ts__fireBookingAcceptedEvent_1#function:fireBookingAcceptedEvent",
+        "unitKind": "function",
+        "name": "fireBookingAcceptedEvent",
+        "qualifiedName": "fireBookingAcceptedEvent",
+        "parentUnitId": null,
+        "startLine": 42,
+        "endLine": 93,
+        "isBehavioral": true,
+        "source": "async function fireBookingAcceptedEvent({\n  actor,\n  organizationId,\n  actionSource,\n  acceptedBookings,\n  isBookingAuditEnabled,\n  tracingLogger,\n}: {\n  actor: Actor;\n  organizationId: number | null;\n  actionSource: ActionSource;\n  acceptedBookings: {\n    uid: string;\n    oldStatus: BookingStatus;\n  }[];\n  isBookingAuditEnabled: boolean;\n  tracingLogger: ISimpleLogger;\n}) {\n  try {\n    const bookingEventHandlerService = getBookingEventHandlerService();\n    if (acceptedBookings.length > 1) {\n      const operationId = uuidv4();\n      await bookingEventHandlerService.onBulkBookingsAccepted({\n        bookings: acceptedBookings.map((acceptedBooking) => ({\n          bookingUid: acceptedBooking.uid,\n          auditData: {\n            status: { old: acceptedBooking.oldStatus, new: BookingStatus.ACCEPTED },\n          },\n        })),\n        actor,\n        organizationId,\n        operationId,\n        source: actionSource,\n        isBookingAuditEnabled,\n      });\n    } else if (acceptedBookings.length === 1) {\n      const acceptedBooking = acceptedBookings[0];\n      await bookingEventHandlerService.onBookingAccepted({\n        bookingUid: acceptedBooking.uid,\n        actor,\n        organizationId,\n        auditData: {\n          status: { old: acceptedBooking.oldStatus, new: BookingStatus.ACCEPTED },\n        },\n        source: actionSource,\n        isBookingAuditEnabled,\n      });\n    }\n  } catch (error) {\n    tracingLogger.error(\"Error firing booking accepted event\", safeStringify(error));\n  }\n}"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleConfirmation.ts__handleConfirmation_2#function:handleConfirmation",
+        "unitKind": "function",
+        "name": "handleConfirmation",
+        "qualifiedName": "handleConfirmation",
+        "parentUnitId": null,
+        "startLine": 95,
+        "endLine": 604,
+        "isBehavioral": true,
+        "source": "export async function handleConfirmation(args: {\n  user: EventManagerUser & { username: string | null };\n  evt: CalendarEvent;\n  recurringEventId?: string;\n  prisma: PrismaClient;\n  bookingId: number;\n  booking: {\n    startTime: Date;\n    id: number;\n    uid: string;\n    eventType: {\n      currency: string;\n      description: string | null;\n      id: number;\n      length: number;\n      price: number;\n      requiresConfirmation: boolean;\n      metadata?: Prisma.JsonValue;\n      title: string;\n      team?: {\n        parentId: number | null;\n      } | null;\n      teamId?: number | null;\n      parentId?: number | null;\n      parent?: {\n        teamId: number | null;\n      } | null;\n      workflows?: {\n        workflow: Workflow;\n      }[];\n    } | null;\n    metadata?: Prisma.JsonValue;\n    eventTypeId: number | null;\n    smsReminderNumber: string | null;\n    userId: number | null;\n    location: string | null;\n    status: BookingStatus;\n  };\n  paid?: boolean;\n  emailsEnabled?: boolean;\n  platformClientParams?: PlatformClientParams;\n  traceContext: TraceContext;\n  actionSource: ActionSource;\n  actor: Actor;\n}) {\n  const {\n    user,\n    evt,\n    recurringEventId,\n    prisma,\n    bookingId,\n    booking,\n    paid,\n    emailsEnabled = true,\n    platformClientParams,\n    traceContext,\n    actionSource,\n    actor,\n  } = args;\n  const eventType = booking.eventType;\n  const eventTypeMetadata = EventTypeMetaDataSchema.parse(eventType?.metadata || {});\n  const apps = eventTypeAppMetadataOptionalSchema.parse(eventTypeMetadata?.apps);\n  const eventManager = new EventManager(user, apps);\n  const areCalendarEventsEnabled = platformClientParams?.areCalendarEventsEnabled ?? true;\n  const scheduleResult = await eventManager.create(evt, { skipCalendarEvent: !areCalendarEventsEnabled });\n  const results = scheduleResult.results;\n  const metadata: AdditionalInformation = {};\n  const workflows = await getAllWorkflowsFromEventType(eventType, booking.userId);\n\n  const spanContext = distributedTracing.createSpan(traceContext, \"handle_confirmation\");\n\n  const tracingLogger = distributedTracing.getTracingLogger(spanContext);\n\n  if (results.length > 0 && results.every((res) => !res.success)) {\n    const error = {\n      errorCode: \"BookingCreatingMeetingFailed\",\n      message: \"Booking failed\",\n    };\n\n    tracingLogger.error(`Booking ${user.username} failed`, safeStringify({ error, results }));\n  } else {\n    if (results.length) {\n      // TODO: Handle created event metadata more elegantly\n      metadata.hangoutLink = results[0].createdEvent?.hangoutLink;\n      metadata.conferenceData = results[0].createdEvent?.conferenceData;\n      metadata.entryPoints = results[0].createdEvent?.entryPoints;\n    }\n    try {\n      let isHostConfirmationEmailsDisabled = false;\n      let isAttendeeConfirmationEmailDisabled = false;\n\n      if (workflows) {\n        isHostConfirmationEmailsDisabled =\n          eventTypeMetadata?.disableStandardEmails?.confirmation?.host || false;\n        isAttendeeConfirmationEmailDisabled =\n          eventTypeMetadata?.disableStandardEmails?.confirmation?.attendee || false;\n\n        if (isHostConfirmationEmailsDisabled) {\n          isHostConfirmationEmailsDisabled = allowDisablingHostConfirmationEmails(workflows);\n        }\n\n        if (isAttendeeConfirmationEmailDisabled) {\n          isAttendeeConfirmationEmailDisabled = allowDisablingAttendeeConfirmationEmails(workflows);\n        }\n      }\n\n      if (emailsEnabled) {\n        await sendScheduledEmailsAndSMS(\n          { ...evt, additionalInformation: metadata },\n          undefined,\n          isHostConfirmationEmailsDisabled,\n          isAttendeeConfirmationEmailDisabled,\n          eventTypeMetadata\n        );\n      }\n    } catch (error) {\n      tracingLogger.error(error);\n    }\n  }\n  let updatedBookings: {\n    id: number;\n    status: BookingStatus;\n    description: string | null;\n    location: string | null;\n    attendees: {\n      name: string;\n      email: string;\n      phoneNumber?: string | null;\n    }[];\n    startTime: Date;\n    endTime: Date;\n    uid: string;\n    smsReminderNumber: string | null;\n    cancellationReason?: string | null;\n    metadata: Prisma.JsonValue | null;\n    customInputs: Prisma.JsonValue;\n    title: string;\n    responses: Prisma.JsonValue;\n    eventType: {\n      bookingFields: Prisma.JsonValue | null;\n      slug: string;\n      schedulingType: SchedulingType | null;\n      hosts: {\n        user: {\n          email: string;\n          destinationCalendar?: {\n            primaryEmail: string | null;\n          } | null;\n        };\n      }[];\n      owner: {\n        hideBranding?: boolean | null;\n      } | null;\n    } | null;\n  }[] = [];\n\n  const videoCallUrl = metadata.hangoutLink ? metadata.hangoutLink : evt.videoCallData?.url || \"\";\n  const meetingUrl = getVideoCallUrlFromCalEvent(evt) || videoCallUrl;\n\n  let acceptedBookings: {\n    oldStatus: BookingStatus;\n    uid: string;\n  }[];\n  if (recurringEventId) {\n    // The booking to confirm is a recurring event and comes from /booking/recurring, proceeding to mark all related\n    // bookings as confirmed. Prisma updateMany does not support relations, so doing this in two steps for now.\n    const unconfirmedRecurringBookings = await prisma.booking.findMany({\n      where: {\n        recurringEventId,\n        status: BookingStatus.PENDING,\n      },\n    });\n\n    acceptedBookings = unconfirmedRecurringBookings.map((booking) => ({\n      oldStatus: booking.status,\n      uid: booking.uid,\n    }));\n\n    const updateBookingsPromise = unconfirmedRecurringBookings.map((recurringBooking) =>\n      prisma.booking.update({\n        where: {\n          id: recurringBooking.id,\n        },\n        data: {\n          status: BookingStatus.ACCEPTED,\n          references: {\n            create: scheduleResult.referencesToCreate,\n          },\n          paid,\n          metadata: {\n            ...(typeof recurringBooking.metadata === \"object\" ? recurringBooking.metadata : {}),\n            videoCallUrl: meetingUrl,\n          },\n        },\n        select: {\n          eventType: {\n            select: {\n              slug: true,\n              bookingFields: true,\n              schedulingType: true,\n              hosts: {\n                select: {\n                  user: {\n                    select: {\n                      email: true,\n                      destinationCalendar: {\n                        select: {\n                          primaryEmail: true,\n                        },\n                      },\n                    },\n                  },\n                },\n              },\n              owner: {\n                select: {\n                  hideBranding: true,\n                },\n              },\n            },\n          },\n          status: true,\n          description: true,\n          cancellationReason: true,\n          attendees: true,\n          responses: true,\n          location: true,\n          title: true,\n          uid: true,\n          startTime: true,\n          metadata: true,\n          endTime: true,\n          smsReminderNumber: true,\n          customInputs: true,\n          id: true,\n        },\n      })\n    );\n\n    const updatedBookingsResult = await Promise.all(updateBookingsPromise);\n    updatedBookings = updatedBookings.concat(updatedBookingsResult);\n  } else {\n    // @NOTE: be careful with this as if any error occurs before this booking doesn't get confirmed\n    // Should perform update on booking (confirm) -> then trigger the rest handlers\n    const updatedBooking = await prisma.booking.update({\n      where: {\n        id: bookingId,\n      },\n      data: {\n        status: BookingStatus.ACCEPTED,\n        references: {\n          create: scheduleResult.referencesToCreate,\n        },\n        metadata: {\n          ...(typeof booking.metadata === \"object\" ? booking.metadata : {}),\n          videoCallUrl: meetingUrl,\n        },\n      },\n      select: {\n        eventType: {\n          select: {\n            slug: true,\n            bookingFields: true,\n            schedulingType: true,\n            owner: {\n              select: {\n                hideBranding: true,\n              },\n            },\n            hosts: {\n              select: {\n                user: {\n                  select: {\n                    email: true,\n                    destinationCalendar: {\n                      select: {\n                        primaryEmail: true,\n                      },\n                    },\n                  },\n                },\n              },\n            },\n          },\n        },\n        uid: true,\n        status: true,\n        startTime: true,\n        responses: true,\n        title: true,\n        metadata: true,\n        cancellationReason: true,\n        endTime: true,\n        smsReminderNumber: true,\n        description: true,\n        attendees: true,\n        location: true,\n        customInputs: true,\n        id: true,\n      },\n    });\n    updatedBookings.push(updatedBooking);\n    acceptedBookings = [\n      {\n        oldStatus: booking.status,\n        uid: booking.uid,\n      },\n    ];\n  }\n\n  const teamId = await getTeamIdFromEventType({\n    eventType: {\n      team: { id: eventType?.teamId ?? null },\n      parentId: eventType?.parentId ?? null,\n    },\n  });\n\n  const triggerForUser = !teamId || (teamId && eventType?.parentId);\n\n  const userId = triggerForUser ? booking.userId : null;\n\n  const orgId = await getOrgIdFromMemberOrTeamId({ memberId: userId, teamId });\n\n  const featuresRepository = getFeaturesRepository();\n  const isBookingAuditEnabled = orgId\n    ? await featuresRepository.checkIfTeamHasFeature(orgId, \"booking-audit\")\n    : false;\n\n  const bookerUrl = await getBookerBaseUrl(orgId ?? null);\n\n  await fireBookingAcceptedEvent({\n    actor,\n    acceptedBookings,\n    organizationId: orgId ?? null,\n    actionSource,\n    isBookingAuditEnabled,\n    tracingLogger,\n  });\n\n  //Workflows - set reminders for confirmed events\n  try {\n    for (let index = 0; index < updatedBookings.length; index++) {\n      const eventTypeSlug = updatedBookings[index].eventType?.slug || \"\";\n      const evtOfBooking = {\n        ...evt,\n        rescheduleReason: updatedBookings[index].cancellationReason || null,\n        metadata: { videoCallUrl: meetingUrl },\n        eventType: {\n          slug: eventTypeSlug,\n          schedulingType: updatedBookings[index].eventType?.schedulingType,\n          hosts: updatedBookings[index].eventType?.hosts,\n        },\n        bookerUrl,\n      };\n      evtOfBooking.startTime = updatedBookings[index].startTime.toISOString();\n      evtOfBooking.endTime = updatedBookings[index].endTime.toISOString();\n      evtOfBooking.uid = updatedBookings[index].uid;\n      const isFirstBooking = index === 0;\n\n      if (!eventTypeMetadata?.disableStandardEmails?.all?.attendee) {\n        await scheduleMandatoryReminder({\n          evt: evtOfBooking,\n          workflows,\n          requiresConfirmation: false,\n          hideBranding: !!updatedBookings[index].eventType?.owner?.hideBranding,\n          seatReferenceUid: evt.attendeeSeatId,\n          isPlatformNoEmail: !emailsEnabled && Boolean(platformClientParams?.platformClientId),\n          traceContext: spanContext,\n        });\n      }\n\n      const creditService = new CreditService();\n\n      await WorkflowService.scheduleWorkflowsForNewBooking({\n        workflows,\n        smsReminderNumber: updatedBookings[index].smsReminderNumber,\n        calendarEvent: evtOfBooking,\n        hideBranding: !!updatedBookings[index].eventType?.owner?.hideBranding,\n        isConfirmedByDefault: true,\n        isNormalBookingOrFirstRecurringSlot: isFirstBooking,\n        isRescheduleEvent: false,\n        creditCheckFn: creditService.hasAvailableCredits.bind(creditService),\n      });\n    }\n  } catch (error) {\n    // Silently fail\n    console.error(error);\n  }\n\n  try {\n    const subscribersBookingCreated = await getWebhooks({\n      userId,\n      eventTypeId: booking.eventTypeId,\n      triggerEvent: WebhookTriggerEvents.BOOKING_CREATED,\n      teamId,\n      orgId,\n      oAuthClientId: platformClientParams?.platformClientId,\n    });\n    const subscribersMeetingStarted = await getWebhooks({\n      userId,\n      eventTypeId: booking.eventTypeId,\n      triggerEvent: WebhookTriggerEvents.MEETING_STARTED,\n      teamId: eventType?.teamId,\n      orgId,\n      oAuthClientId: platformClientParams?.platformClientId,\n    });\n    const subscribersMeetingEnded = await getWebhooks({\n      userId,\n      eventTypeId: booking.eventTypeId,\n      triggerEvent: WebhookTriggerEvents.MEETING_ENDED,\n      teamId: eventType?.teamId,\n      orgId,\n      oAuthClientId: platformClientParams?.platformClientId,\n    });\n\n    const scheduleTriggerPromises: Promise<unknown>[] = [];\n\n    const updatedBookingsWithCalEventResponses = updatedBookings.map((booking) => {\n      return {\n        ...booking,\n        ...getCalEventResponses({\n          bookingFields: booking.eventType?.bookingFields ?? null,\n          booking,\n        }),\n      };\n    });\n\n    subscribersMeetingStarted.forEach((subscriber) => {\n      updatedBookingsWithCalEventResponses.forEach((booking) => {\n        scheduleTriggerPromises.push(\n          scheduleTrigger({\n            booking,\n            subscriberUrl: subscriber.subscriberUrl,\n            subscriber,\n            triggerEvent: WebhookTriggerEvents.MEETING_STARTED,\n          })\n        );\n      });\n    });\n    subscribersMeetingEnded.forEach((subscriber) => {\n      updatedBookingsWithCalEventResponses.forEach((booking) => {\n        scheduleTriggerPromises.push(\n          scheduleTrigger({\n            booking,\n            subscriberUrl: subscriber.subscriberUrl,\n            subscriber,\n            triggerEvent: WebhookTriggerEvents.MEETING_ENDED,\n          })\n        );\n      });\n    });\n\n    await Promise.all(scheduleTriggerPromises);\n\n    await scheduleNoShowTriggers({\n      booking: {\n        startTime: booking.startTime,\n        id: booking.id,\n        location: booking.location,\n        uid: booking.uid,\n      },\n      triggerForUser,\n      organizerUser: { id: booking.userId },\n      eventTypeId: booking.eventTypeId,\n      teamId,\n      orgId,\n      oAuthClientId: platformClientParams?.platformClientId,\n    });\n\n    const eventTypeInfo: EventTypeInfo = {\n      eventTitle: eventType?.title,\n      eventDescription: eventType?.description,\n      requiresConfirmation: eventType?.requiresConfirmation || null,\n      price: eventType?.price,\n      currency: eventType?.currency,\n      length: eventType?.length,\n    };\n\n    const payload: EventPayloadType = {\n      ...evt,\n      ...eventTypeInfo,\n      bookingId,\n      eventTypeId: eventType?.id,\n      status: \"ACCEPTED\",\n      smsReminderNumber: booking.smsReminderNumber || undefined,\n      metadata: meetingUrl ? { videoCallUrl: meetingUrl } : undefined,\n      ...(platformClientParams ? platformClientParams : {}),\n    };\n\n    const promises = subscribersBookingCreated.map((sub) =>\n      sendPayload(\n        sub.secret,\n        WebhookTriggerEvents.BOOKING_CREATED,\n        new Date().toISOString(),\n        sub,\n        payload\n      ).catch((e) => {\n        tracingLogger.error(\n          `Error executing webhook for event: ${WebhookTriggerEvents.BOOKING_CREATED}, URL: ${sub.subscriberUrl}, bookingId: ${evt.bookingId}, bookingUid: ${evt.uid}, platformClientId: ${platformClientParams?.platformClientId}`,\n          safeStringify(e)\n        );\n      })\n    );\n\n    await Promise.all(promises);\n  } catch (error) {\n    // Silently fail\n    console.error(error);\n  }\n}"
+      }
+    ],
+    "extractedUnitCount": 2,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 32653,
+    "outputTokens": 13150,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

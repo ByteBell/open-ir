@@ -1,0 +1,71 @@
+{
+  "duration_api_ms": 260261,
+  "stop_reason": "end_turn",
+  "session_id": "56915a71-9908-4123-a8a5-b8f44c49ffec",
+  "total_cost_usd": 12.720335000000002,
+  "usage": {
+    "input_tokens": 2444172,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 19979,
+    "output_tokens_details": { "thinking_tokens": 9721 },
+    "server_tool_use": { "web_search_requests": 0, "web_fetch_requests": 0 },
+    "service_tier": "standard",
+    "cache_creation": { "ephemeral_1h_input_tokens": 0, "ephemeral_5m_input_tokens": 0 },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 154428,
+        "output_tokens": 2764,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_creation": { "ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0 },
+        "type": "message"
+      }
+    ],
+    "speed": "standard"
+  },
+  "modelUsage": {
+    "claude-opus-5": {
+      "inputTokens": 2444172,
+      "outputTokens": 19979,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 12.720335000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000,
+      "canonicalModel": "claude-opus-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "extra_usage_disabled",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": { "background": 0, "foreground": 0, "unset": 0 },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": { "parent": 0, "user": 0, "system": 0 },
+    "refused": { "depth_limit": 0, "concurrency_limit": 0, "budget": 0 },
+    "by_type": {}
+  },
+  "is_error": false,
+  "num_turns": 32,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "{\n  \"contract\": \"Every surface that renders or schedules an outbound message on behalf of an event owner must derive its branding-suppression decision from the same single resolver — packages/features/profile/lib/hideBranding.ts — which for a team event reads the team's hideBranding with the parent organization's setting overriding it, and for a personal event reads the owner's hideBranding with that owner's organization profile overriding it. A booking's branding state is a property of the event's owning entity (team-or-user, plus its org), not of the event's owner column alone and not of the platform/OAuth client; any code path that recomputes that state inline, reads only eventType.owner.hideBranding, or hard-codes the suppression to a non-branding condition breaks the contract, because the same paid customer then gets an unbranded booking page and a branded message, and a team event and a personal event resolve differently for identical settings.\",\n  \"defect_location\": {\n    \"repo\": \"calcom/cal.com\",\n    \"summary\": \"The resolver exists and is correct: packages/features/profile/lib/hideBranding.ts:35-45 defines resolveHideBranding (organization setting wins, else the entity's own), :85-110 splits team vs owner, :116-181 exposes shouldHideBrandingForEvent / ...ForTeamEvent / ...ForUserEvent, and :50-80 getHideBranding by id. Only the booking-page surfaces consume it — apps/web/lib/team/[slug]/[type]/getServerSideProps.tsx:208, apps/web/server/lib/[user]/[type]/getServerSideProps.ts:311, apps/web/lib/d/[link]/[slug]/getServerSideProps.tsx:61,104, apps/web/app/(booking-page-wrapper)/team/[slug]/[type]/pageWithCachedData.tsx:36, apps/web/modules/bookings/views/bookings-single-view.getServerSideProps.tsx:251-253 and packages/features/ee/payments/pages/payment.tsx — which is exactly why the booking page honours the plan and nothing else does. (1) Emails: the Cal.com wordmark is rendered by packages/emails/src/components/EmailBodyLogo.tsx:8-9,49-65 and gated in packages/emails/src/components/BaseEmailHtml.tsx:26,200 by a single hideLogo prop. A repository-wide search for hideLogo returns 3 hits in 2 files; the only site that ever passes it is packages/emails/src/templates/BaseScheduledEmail.tsx:68, hideLogo={Boolean(props.calEvent.platformClientId)} — a platform/OAuth condition, never hideBranding. Every confirmation, reminder, reschedule and no-show-fee email built on that template is therefore branded for a self-serve paid customer. (2) The pre-booking code email: packages/emails/src/templates/VerifyEmailByCode.tsx:10-13 mounts BaseEmailHtml with no hideLogo at all, and its payload type packages/emails/lib/types/email-types.ts:15-23 (EmailVerifyCode) carries no branding field, so neither the template nor its sender class packages/emails/templates/attendee-verify-email.ts can express suppression. (3) Team-vs-personal divergence: the booking and payment pipelines recompute the flag inline from the owner column only — packages/features/bookings/lib/service/RegularBookingService.ts:2620,2804,2819 (!!eventType.owner?.hideBranding || !!platformClientId), packages/features/bookings/lib/handleConfirmation.ts:458,471, packages/features/bookings/lib/handleBookingRequested.ts:103, packages/features/bookings/lib/handleCancelBooking.ts:464, packages/features/handleMarkNoShow.ts:404, and after a paid booking packages/app-store/_utils/payments/handlePaymentSuccess.ts:231 (hideBranding: !!booking.eventType?.owner?.hideBranding). A team event has no eventType.owner, so all of these evaluate false for teams regardless of the team's setting. (4) A second, competing rule lives in packages/features/ee/workflows/api/scheduleEmailReminders.ts:519-534, a private shouldHideBranding(booking) that returns booking.eventType.team.hideBranding when a team exists and booking.user.hideBranding otherwise, with no organization inheritance — the opposite branch order from the correct arm at packages/features/ee/workflows/lib/service/EmailWorkflowService.ts:97,264 and WorkflowService.ts:133, which do call getHideBranding. The Prisma selects feeding these paths (packages/prisma/selects/payment.ts:55,62,65, packages/features/bookings/lib/payment/getBooking.ts:40, packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts:111, packages/features/bookings/lib/getBookingToDelete.ts:57, packages/features/bookings/repositories/BookingRepository.ts:462) fetch only the owner's hideBranding and must widen to team + parent for the resolver to be usable there. packages/types/Calendar.d.ts is named because BaseScheduledEmail.tsx:6,68 reads the flag off CalendarEvent, which today exposes platformClientId but no branding field; that file's contents are the one claim I could not read verbatim, because the plumbline server dropped its connection (ConnectionRefused) after the evidence above was collected — the index was confirmed live at 4081d11fbec98a4267f6946877cc138a1a24505b for every citation given, and this session was fresh, never resumed or re-attempted.\",\n    \"answer\": [\n      \"packages/features/profile/lib/hideBranding.ts\",\n      \"packages/emails/src/templates/BaseScheduledEmail.tsx\",\n      \"packages/app-store/_utils/payments/handlePaymentSuccess.ts\",\n      \"packages/features/bookings/lib/service/RegularBookingService.ts\",\n      \"packages/features/bookings/lib/handleConfirmation.ts\",\n      \"packages/emails/src/templates/VerifyEmailByCode.tsx\",\n      \"packages/features/ee/workflows/api/scheduleEmailReminders.ts\",\n      \"packages/emails/templates/attendee-verify-email.ts\",\n      \"packages/emails/lib/types/email-types.ts\",\n      \"packages/emails/src/components/BaseEmailHtml.tsx\",\n      \"packages/features/bookings/lib/handleBookingRequested.ts\",\n      \"packages/features/bookings/lib/handleCancelBooking.ts\",\n      \"packages/types/Calendar.d.ts\",\n      \"packages/features/handleMarkNoShow.ts\",\n      \"packages/emails/auth-email-service.ts\",\n      \"packages/prisma/selects/payment.ts\",\n      \"packages/features/bookings/lib/payment/getBooking.ts\",\n      \"packages/features/ee/workflows/lib/service/EmailWorkflowService.ts\",\n      \"packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts\",\n      \"packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts\",\n      \"packages/emails/src/components/V2BaseEmailHtml.tsx\",\n      \"packages/features/ee/workflows/lib/reminders/reminderScheduler.ts\",\n      \"packages/features/ee/workflows/lib/service/WorkflowService.ts\",\n      \"packages/features/bookings/lib/getBookingToDelete.ts\",\n      \"packages/emails/src/templates/AttendeeScheduledEmail.tsx\",\n      \"packages/emails/src/templates/OrganizerScheduledEmail.tsx\",\n      \"packages/features/bookings/repositories/BookingRepository.ts\",\n      \"packages/features/ee/workflows/lib/reminders/emailReminderManager.ts\",\n      \"apps/web/lib/isBrandingHidden.tsx\",\n      \"packages/emails/src/components/EmailBodyLogo.tsx\"\n    ]\n  }\n}",
+  "ttft_ms": 1736,
+  "type": "result",
+  "duration_ms": 410660,
+  "uuid": "de973018-3789-4159-aacb-554741042651",
+  "ttft_stream_ms": 1106,
+  "time_to_request_ms": 16,
+  "queued_turn_count": 0
+}

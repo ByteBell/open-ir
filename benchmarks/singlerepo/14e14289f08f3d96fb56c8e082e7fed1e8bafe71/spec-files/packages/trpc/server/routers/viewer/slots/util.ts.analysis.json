@@ -1,0 +1,2374 @@
+{
+  "relativePath": "packages/trpc/server/routers/viewer/slots/util.ts",
+  "language": "typescript",
+  "sha256": "bbd1702312161a666a6ece3d161c7f2d116aded14db4e6216b16d94aa65b1016",
+  "sizeBytes": 50352,
+  "tokenCount": 12588,
+  "lineCount": 1389,
+  "analysedAt": "2026-09-03T22:33:49.371Z",
+  "analysis": {
+    "module": {
+      "purpose": "Provides the scheduling service that resolves event types, hosts, calendars, booking constraints, reservations, and timezone rules into bookable slot responses for the viewer slots router.",
+      "summary": "This file implements the availability calculation pipeline for regular, team, round-robin, collective, and dynamic bookings. It retrieves event types and users through repositories, evaluates calendar busy times, out-of-office dates, booking and duration limits, team limits, reserved seats, restriction schedules, routing forms, fallback hosts, and rolling-window boundaries. The service aggregates host availability, filters conflicts and invalid times, groups slots by localized date, and optionally produces troubleshooting data or no-slot notifications.",
+      "businessContext": "This supports appointment scheduling by showing customers accurate, bookable times across hosts, teams, calendars, and routing rules. Failures can expose unavailable times, violate booking limits, overbook seats, or prevent customers from booking.",
+      "classes": [
+        "GetAvailabilityUserWithDelegationCredentials (~L67-69): Represents an availability user with delegated calendar service credentials.",
+        "IGetAvailableSlots (~L71-86): Defines grouped slot output and optional troubleshooting information.",
+        "GetAvailableSlotsResponse (~L88-90): Derives the asynchronous available-slots service response type.",
+        "IAvailableSlotsService (~L92-101): Defines repository dependencies required by the availability service.",
+        "AvailableSlotsService (~L103-1388): Orchestrates event resolution, availability calculation, slot filtering, and response construction."
+      ],
+      "functions": [
+        "constructor (~L104-104): Stores repository dependencies for subsequent availability calculations.",
+        "_getReservedSlotsAndCleanupExpired (~L106-135): Finds active reservations and removes expired selected slots.",
+        "_cleanupExpiredSlots (~L132-134): Deletes expired selected slots for an event type.",
+        "_getDynamicEventType (~L137-173): Builds a dynamic event type from eligible organization users.",
+        "getDynamicEventType (~L174-174): Wraps dynamic event resolution with reporting instrumentation.",
+        "applyOccupiedSeatsToCurrentSeats (~L176-196): Adds reserved seat counts to current seat availability.",
+        "_getEventType (~L198-223): Resolves and loads a regular event type for scheduling.",
+        "getEventType (~L225-225): Wraps event type resolution with reporting instrumentation.",
+        "doesRangeStartFromToday (~L227-229): Identifies rolling period types that begin from the current day.",
+        "_getAllDatesWithBookabilityStatus (~L231-246): Marks every date between available range boundaries as bookable or unavailable.",
+        "getAllDatesWithBookabilityStatus (~L248-251): Wraps date bookability mapping with reporting instrumentation.",
+        "getUserIdFromUsername (~L253-265): Finds a user identifier within the applicable organization domain.",
+        "getEventTypeId (~L267-299): Resolves event type identifiers for users or teams.",
+        "getTeamIdFromSlug (~L301-314): Finds a team identifier using slug and organization context.",
+        "_getBusyTimesFromLimitsForUsers (~L316-496): Converts user booking and duration limits into busy periods.",
+        "getBusyTimesFromLimitsForUsers (~L498-501): Wraps user limit busy-time calculation with reporting instrumentation.",
+        "_getBusyTimesFromTeamLimitsForUsers (~L503-642): Calculates busy periods from team-wide booking limits.",
+        "getBusyTimesFromTeamLimitsForUsers (~L643-646): Wraps team limit calculation with reporting instrumentation.",
+        "_getOOODates (~L648-650): Retrieves out-of-office dates for users across a requested interval.",
+        "getOOODates (~L651-651): Wraps out-of-office date retrieval with reporting instrumentation.",
+        "_getUsersWithCredentials (~L653-662): Extracts availability users and delegated credentials from hosts.",
+        "getUsersWithCredentials (~L664-667): Wraps host credential extraction with reporting instrumentation.",
+        "getStartTime (~L669-674): Normalizes requested start time against timezone and booking notice.",
+        "calculateHostsAndAvailabilities (~L675-856): Loads host bookings, limits, calendars, and aggregated availability data.",
+        "_enrichUsersWithData (~L788-803): Attaches bookings and out-of-office data to availability users.",
+        "enrichUsersWithData (~L804-804): Wraps user enrichment with reporting instrumentation.",
+        "_getRegularOrDynamicEventType (~L858-866): Selects regular or dynamic event resolution based on participant input.",
+        "getRegularOrDynamicEventType (~L868-871): Wraps event resolution selection with reporting instrumentation.",
+        "getAvailableSlots (~L873-873): Wraps the main slot retrieval operation with reporting instrumentation.",
+        "_getAvailableSlots (~L875-1387): Computes, filters, groups, and returns bookable scheduling slots.",
+        "_mapSlotsToDate (~L1226-1267): Groups available times by localized date with seat metadata.",
+        "mapSlotsToDate (~L1269-1269): Wraps slot grouping with reporting instrumentation.",
+        "_mapWithinBoundsSlotsToDate (~L1297-1333): Removes slots violating period and booking-time boundaries."
+      ],
+      "keywords": [
+        "dynamic booking",
+        "round-robin scheduling",
+        "booking limits",
+        "duration limits",
+        "delegation credentials",
+        "restriction schedules",
+        "out-of-office availability",
+        "reserved seats",
+        "routing form response",
+        "rolling window"
+      ],
+      "ontologyConcepts": [
+        "availability",
+        "booking constraint",
+        "reservation",
+        "conflict detection",
+        "host assignment",
+        "time interval",
+        "timezone normalization",
+        "fallback routing"
+      ],
+      "businessEntities": [
+        "EventType",
+        "User",
+        "Team",
+        "Booking",
+        "Schedule",
+        "SelectedSlot",
+        "RoutingFormResponse",
+        "Credential"
+      ],
+      "systemCapabilities": [
+        "Resolve regular and dynamic event types",
+        "Calculate multi-host calendar availability",
+        "Enforce booking and duration limits",
+        "Apply reservations and seat capacity",
+        "Filter slots by schedules and time boundaries",
+        "Return localized availability with troubleshooting data"
+      ],
+      "configDependencies": ["INTEGRATION_TEST_MODE"],
+      "importsInternal": [
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["Dayjs", "dayjs"],
+          "anchor": {
+            "startLine": 5,
+            "endLine": 6
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/ee/organizations/lib/orgDomains",
+          "symbols": ["orgDomainConfig"],
+          "anchor": {
+            "startLine": 7,
+            "endLine": 7
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/conflictChecker/checkForConflicts",
+          "symbols": ["checkForConflicts"],
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/isEventTypeLoggingEnabled",
+          "symbols": ["isEventTypeLoggingEnabled"],
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/calendar-cache/lib/getShouldServeCache",
+          "symbols": ["getShouldServeCache"],
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials",
+          "symbols": ["findQualifiedHostsWithDelegationCredentials"],
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/bookings/routing/utils",
+          "symbols": ["shouldIgnoreContactOwner"],
+          "anchor": {
+            "startLine": 12,
+            "endLine": 12
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/constants",
+          "symbols": ["RESERVED_SUBDOMAINS"],
+          "anchor": {
+            "startLine": 13,
+            "endLine": 13
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/date-ranges",
+          "symbols": ["buildDateRanges"],
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/dayjs",
+          "symbols": ["getUTCOffsetByTimezone"],
+          "anchor": {
+            "startLine": 15,
+            "endLine": 15
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/defaultEvents",
+          "symbols": ["getDefaultEvent"],
+          "anchor": {
+            "startLine": 16,
+            "endLine": 16
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/getAggregatedAvailability",
+          "symbols": ["getAggregatedAvailability"],
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/getBusyTimes",
+          "symbols": ["getBusyTimesForLimitChecks", "getStartEndDateforLimitCheck"],
+          "anchor": {
+            "startLine": 18,
+            "endLine": 18
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/getUserAvailability",
+          "symbols": ["CurrentSeats", "EventType", "GetAvailabilityUser", "IFromUser", "IToUser"],
+          "anchor": {
+            "startLine": 19,
+            "endLine": 25
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/getUserAvailability",
+          "symbols": ["getPeriodStartDatesBetween", "getUsersAvailability"],
+          "anchor": {
+            "startLine": 26,
+            "endLine": 26
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/intervalLimit",
+          "symbols": ["descendingLimitKeys", "intervalLimitKeyToUnit"],
+          "anchor": {
+            "startLine": 27,
+            "endLine": 27
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/intervalLimitSchema",
+          "symbols": ["IntervalLimit"],
+          "anchor": {
+            "startLine": 28,
+            "endLine": 28
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/isBookingLimits",
+          "symbols": ["parseBookingLimit"],
+          "anchor": {
+            "startLine": 29,
+            "endLine": 29
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/isDurationLimits",
+          "symbols": ["parseDurationLimit"],
+          "anchor": {
+            "startLine": 30,
+            "endLine": 30
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/limitManager",
+          "symbols": ["LimitManager"],
+          "anchor": {
+            "startLine": 31,
+            "endLine": 31
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/server/checkBookingLimits",
+          "symbols": ["checkBookingLimit"],
+          "anchor": {
+            "startLine": 32,
+            "endLine": 32
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/utils",
+          "symbols": ["isBookingWithinPeriod"],
+          "anchor": {
+            "startLine": 33,
+            "endLine": 33
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/isOutOfBounds",
+          "symbols": ["calculatePeriodLimits", "isTimeOutOfBounds", "isTimeViolatingFutureLimit"],
+          "anchor": {
+            "startLine": 34,
+            "endLine": 38
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "anchor": {
+            "startLine": 39,
+            "endLine": 39
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/restrictionSchedule",
+          "symbols": ["isRestrictionScheduleEnabled"],
+          "anchor": {
+            "startLine": 40,
+            "endLine": 40
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "anchor": {
+            "startLine": 41,
+            "endLine": 41
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/sentryWrapper",
+          "symbols": ["withReporting"],
+          "anchor": {
+            "startLine": 42,
+            "endLine": 42
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/queries/booking",
+          "symbols": ["getTotalBookingDuration"],
+          "anchor": {
+            "startLine": 43,
+            "endLine": 43
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/booking",
+          "symbols": ["BookingRepository"],
+          "anchor": {
+            "startLine": 44,
+            "endLine": 44
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/eventType",
+          "symbols": ["EventTypeRepository"],
+          "anchor": {
+            "startLine": 45,
+            "endLine": 45
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/formResponse",
+          "symbols": ["RoutingFormResponseRepository"],
+          "anchor": {
+            "startLine": 46,
+            "endLine": 46
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/ooo",
+          "symbols": ["PrismaOOORepository"],
+          "anchor": {
+            "startLine": 47,
+            "endLine": 47
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/schedule",
+          "symbols": ["ScheduleRepository"],
+          "anchor": {
+            "startLine": 48,
+            "endLine": 48
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/selectedSlots",
+          "symbols": ["SelectedSlotsRepository"],
+          "anchor": {
+            "startLine": 49,
+            "endLine": 49
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/team",
+          "symbols": ["TeamRepository"],
+          "anchor": {
+            "startLine": 50,
+            "endLine": 50
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/user",
+          "symbols": ["UserRepository", "withSelectedCalendars"],
+          "anchor": {
+            "startLine": 51,
+            "endLine": 51
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/slots",
+          "symbols": ["getSlots"],
+          "anchor": {
+            "startLine": 52,
+            "endLine": 52
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/client",
+          "symbols": ["PeriodType"],
+          "anchor": {
+            "startLine": 53,
+            "endLine": 53
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["SchedulingType"],
+          "anchor": {
+            "startLine": 54,
+            "endLine": 54
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["EventBusyDate", "EventBusyDetails"],
+          "anchor": {
+            "startLine": 55,
+            "endLine": 55
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/types/Credential",
+          "symbols": ["CredentialForCalendarService"],
+          "anchor": {
+            "startLine": 56,
+            "endLine": 56
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "./getSchedule.schema",
+          "symbols": ["TGetScheduleInputSchema"],
+          "anchor": {
+            "startLine": 58,
+            "endLine": 58
+          },
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/slots/getSchedule.schema.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/slots/getSchedule.schema.ts",
+          "resolvedHint": "packages/trpc/server/routers/viewer/slots/getSchedule.schema.ts"
+        },
+        {
+          "spec": "./handleNotificationWhenNoSlots",
+          "symbols": ["handleNotificationWhenNoSlots"],
+          "anchor": {
+            "startLine": 59,
+            "endLine": 59
+          },
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/slots/handleNotificationWhenNoSlots.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/slots/handleNotificationWhenNoSlots.ts",
+          "resolvedHint": "packages/trpc/server/routers/viewer/slots/handleNotificationWhenNoSlots.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": ["GetScheduleOptions"],
+          "anchor": {
+            "startLine": 60,
+            "endLine": 60
+          },
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/slots/types.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/slots/types.ts",
+          "resolvedHint": "packages/trpc/server/routers/viewer/slots/types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "tslog",
+          "symbols": ["Logger"],
+          "package": "tslog",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "spec": "uuid",
+          "symbols": ["v4 as uuid"],
+          "package": "uuid",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "spec": "@trpc/server",
+          "symbols": ["TRPCError"],
+          "package": "@trpc/server",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 52,
+            "endLine": 52
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Logs event-type lookup, availability details, slot results, and notification errors.",
+          "Reads and writes selected-slot records through selectedSlotsRepo.",
+          "Reads users, teams, event types, bookings, schedules, out-of-office dates, and routing form responses through repositories."
+        ],
+        "network": [],
+        "env": ["Reads process.env.INTEGRATION_TEST_MODE."],
+        "fs": [],
+        "process": [
+          "Mutates logger.settings.minLevel to 2 when integration-test mode or event-type logging is enabled."
+        ],
+        "mutationOfArg": ["Appends generated occupied-seat entries to the currentSeats argument."]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "IGetAvailableSlots",
+          "shape": "export interface IGetAvailableSlots",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "GetAvailableSlotsResponse",
+          "shape": "export type GetAvailableSlotsResponse = Awaited<ReturnType<(typeof AvailableSlotsService)[\"prototype\"][\"_getAvailableSlots\"]>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "IAvailableSlotsService",
+          "shape": "export interface IAvailableSlotsService",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "AvailableSlotsService",
+          "shape": "export class AvailableSlotsService",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "AvailableSlotsService._getAvailableSlots",
+          "shape": "async _getAvailableSlots({ input, ctx }: GetScheduleOptions): Promise<IGetAvailableSlots>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "AvailableSlotsService.getAvailableSlots",
+          "shape": "getAvailableSlots = withReporting(this._getAvailableSlots.bind(this), \"getAvailableSlots\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "GetScheduleOptions",
+          "shape": "GetScheduleOptions",
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/slots/types.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/slots/types.ts"
+        },
+        {
+          "name": "TGetScheduleInputSchema",
+          "shape": "TGetScheduleInputSchema",
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/slots/getSchedule.schema.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/slots/getSchedule.schema.ts"
+        },
+        {
+          "name": "IAvailableSlotsService",
+          "shape": "IAvailableSlotsService",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CredentialForCalendarService",
+          "shape": "CredentialForCalendarService[]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EventType",
+          "shape": "NonNullable<EventType>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "IntervalLimit",
+          "shape": "IntervalLimit | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "AvailableSlotsService initialization",
+          "intent": "Stores repository dependencies for later availability operations.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 103,
+            "endLine": 104
+          }
+        },
+        {
+          "name": "Reserved slot retrieval and cleanup",
+          "intent": "Finds unexpired reservations, excludes the current booker, and deletes expired records.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 106,
+            "endLine": 135
+          }
+        },
+        {
+          "name": "Dynamic event type resolution",
+          "intent": "Builds a dynamic event type from eligible users and their selected calendars.",
+          "structureKind": "branch",
+          "predicate": "!input.eventTypeSlug",
+          "branchOutcomes": ["throw BAD_REQUEST", "resolve users and return dynamic event type"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 137,
+            "endLine": 173
+          }
+        },
+        {
+          "name": "Booking and duration limit busy-time calculation",
+          "intent": "Marks periods unavailable when user or global booking limits are reached.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const key of descendingLimitKeys)",
+          "terminationCondition": "for (const user of users)",
+          "anchor": {
+            "startLine": 316,
+            "endLine": 496
+          }
+        },
+        {
+          "name": "Host availability calculation",
+          "intent": "Loads bookings, limits, out-of-office data, and per-user availability for hosts.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 675,
+            "endLine": 856
+          }
+        },
+        {
+          "name": "Available slots orchestration",
+          "intent": "Resolves event data, hosts, availability, reservations, and final slot results.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 875,
+            "endLine": 1387
+          }
+        },
+        {
+          "name": "Restriction schedule filtering",
+          "intent": "Keeps slots whose full duration fits within the restriction schedule ranges.",
+          "structureKind": "branch",
+          "predicate": "eventType.restrictionScheduleId && isRestrictionScheduleFeatureEnabled",
+          "branchOutcomes": ["filter slots against restriction ranges", "use all generated slots"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 1077,
+            "endLine": 1136
+          }
+        },
+        {
+          "name": "Period-bound slot filtering",
+          "intent": "Removes slots outside booking bounds and stops future dates after rolling-limit violation.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const [date, slots] of Object.entries(slotsMappedToDate))",
+          "terminationCondition": "foundAFutureLimitViolation && doesStartFromToday",
+          "anchor": {
+            "startLine": 1297,
+            "endLine": 1338
+          }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "GetAvailabilityUserWithDelegationCredentials",
+          "signature": "type GetAvailabilityUserWithDelegationCredentials = Omit<GetAvailabilityUser, \"credentials\"> & {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 67,
+            "endLine": 67
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IGetAvailableSlots",
+          "signature": "export interface IGetAvailableSlots {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 71,
+            "endLine": 71
+          }
+        },
+        {
+          "kind": "type",
+          "name": "GetAvailableSlotsResponse",
+          "signature": "export type GetAvailableSlotsResponse = Awaited<",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 88,
+            "endLine": 88
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IAvailableSlotsService",
+          "signature": "export interface IAvailableSlotsService {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 92,
+            "endLine": 92
+          }
+        },
+        {
+          "kind": "class",
+          "name": "AvailableSlotsService",
+          "signature": "export class AvailableSlotsService {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 103,
+            "endLine": 103
+          }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "constructor(private readonly dependencies: IAvailableSlotsService) {}",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 104,
+            "endLine": 104
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getReservedSlotsAndCleanupExpired",
+          "signature": "private async _getReservedSlotsAndCleanupExpired({",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 106,
+            "endLine": 114
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getDynamicEventType",
+          "signature": "private async _getDynamicEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 137,
+            "endLine": 140
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getDynamicEventType",
+          "signature": "private getDynamicEventType = withReporting(this._getDynamicEventType.bind(this), \"getDynamicEventType\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 174,
+            "endLine": 174
+          }
+        },
+        {
+          "kind": "method",
+          "name": "applyOccupiedSeatsToCurrentSeats",
+          "signature": "private applyOccupiedSeatsToCurrentSeats(\n    currentSeats: CurrentSeats,\n    occupiedSeats: { slotUtcStartDate: Date }[]\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 176,
+            "endLine": 179
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getEventType",
+          "signature": "private async _getEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 198,
+            "endLine": 201
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getEventType",
+          "signature": "private getEventType = withReporting(this._getEventType.bind(this), \"getEventType\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 225,
+            "endLine": 225
+          }
+        },
+        {
+          "kind": "method",
+          "name": "doesRangeStartFromToday",
+          "signature": "private doesRangeStartFromToday(periodType: PeriodType)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 227,
+            "endLine": 227
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getAllDatesWithBookabilityStatus",
+          "signature": "private _getAllDatesWithBookabilityStatus(availableDates: string[])",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 231,
+            "endLine": 231
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getAllDatesWithBookabilityStatus",
+          "signature": "private getAllDatesWithBookabilityStatus = withReporting(\n    this._getAllDatesWithBookabilityStatus.bind(this),\n    \"getAllDatesWithBookabilityStatus\"\n  );",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 248,
+            "endLine": 251
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getUserIdFromUsername",
+          "signature": "private async getUserIdFromUsername(\n    username: string,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 253,
+            "endLine": 256
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getEventTypeId",
+          "signature": "private async getEventTypeId({\n    slug,\n    eventTypeSlug,\n    isTeamEvent,\n    organizationDetails,\n  }: {\n    slug?: string;\n    eventTypeSlug?: string;\n    isTeamEvent: boolean;\n    organizationDetails?: { currentOrgDomain: string | null; isValidOrgDomain: boolean };\n  })",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 267,
+            "endLine": 277
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getTeamIdFromSlug",
+          "signature": "private async getTeamIdFromSlug(\n    slug: string,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 301,
+            "endLine": 304
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getBusyTimesFromLimitsForUsers",
+          "signature": "private async _getBusyTimesFromLimitsForUsers(\n    users: { id: number; email: string }[],\n    bookingLimits: IntervalLimit | null,\n    durationLimits: IntervalLimit | null,\n    dateFrom: Dayjs,\n    dateTo: Dayjs,\n    duration: number | undefined,\n    eventType: NonNullable<EventType>,\n    timeZone: string,\n    rescheduleUid?: string\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 316,
+            "endLine": 326
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getBusyTimesFromLimitsForUsers",
+          "signature": "private getBusyTimesFromLimitsForUsers = withReporting(\n    this._getBusyTimesFromLimitsForUsers.bind(this),\n    \"getBusyTimesFromLimitsForUsers\"\n  );",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 498,
+            "endLine": 501
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getBusyTimesFromTeamLimitsForUsers",
+          "signature": "private async _getBusyTimesFromTeamLimitsForUsers(\n    users: { id: number; email: string }[],\n    bookingLimits: IntervalLimit,\n    dateFrom: Dayjs,\n    dateTo: Dayjs,\n    teamId: number,\n    includeManagedEvents: boolean,\n    timeZone: string,\n    rescheduleUid?: string\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 503,
+            "endLine": 512
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getBusyTimesFromTeamLimitsForUsers",
+          "signature": "private getBusyTimesFromTeamLimitsForUsers = withReporting(\n    this._getBusyTimesFromTeamLimitsForUsers.bind(this),\n    \"getBusyTimesFromTeamLimitsForUsers\"\n  );",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 643,
+            "endLine": 646
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getOOODates",
+          "signature": "private async _getOOODates(startTimeDate: Date, endTimeDate: Date, allUserIds: number[])",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 648,
+            "endLine": 648
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getOOODates",
+          "signature": "private getOOODates = withReporting(this._getOOODates.bind(this), \"getOOODates\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 651,
+            "endLine": 651
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getUsersWithCredentials",
+          "signature": "private _getUsersWithCredentials({\n    hosts,\n  }: {\n    hosts: {\n      isFixed?: boolean;\n      user: GetAvailabilityUserWithDelegationCredentials;\n    }[];\n  })",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 653,
+            "endLine": 660
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getUsersWithCredentials",
+          "signature": "private getUsersWithCredentials = withReporting(\n    this._getUsersWithCredentials.bind(this),\n    \"getUsersWithCredentials\"\n  );",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 664,
+            "endLine": 667
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getStartTime",
+          "signature": "private getStartTime(startTimeInput: string, timeZone?: string, minimumBookingNotice?: number)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 669,
+            "endLine": 669
+          }
+        },
+        {
+          "kind": "method",
+          "name": "calculateHostsAndAvailabilities",
+          "signature": "private async calculateHostsAndAvailabilities({",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 675,
+            "endLine": 699
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getRegularOrDynamicEventType",
+          "signature": "private async _getRegularOrDynamicEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  )",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 858,
+            "endLine": 861
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getRegularOrDynamicEventType",
+          "signature": "private getRegularOrDynamicEventType = withReporting(\n    this._getRegularOrDynamicEventType.bind(this),\n    \"getRegularOrDynamicEventType\"\n  );",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 868,
+            "endLine": 871
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getAvailableSlots",
+          "signature": "getAvailableSlots = withReporting(this._getAvailableSlots.bind(this), \"getAvailableSlots\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 873,
+            "endLine": 873
+          }
+        },
+        {
+          "kind": "method",
+          "name": "_getAvailableSlots",
+          "signature": "async _getAvailableSlots({ input, ctx }: GetScheduleOptions): Promise<IGetAvailableSlots>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<IGetAvailableSlots>",
+          "exported": false,
+          "anchor": {
+            "startLine": 875,
+            "endLine": 875
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "alias",
+          "name": "GetAvailabilityUserWithDelegationCredentials",
+          "shape": "{\n  credentials: CredentialForCalendarService[];\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 67,
+            "endLine": 69
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IGetAvailableSlots",
+          "shape": "{\n  slots: Record<\n    string,\n    {\n      time: string;\n      attendees?: number | undefined;\n      bookingUid?: string | undefined;\n      away?: boolean | undefined;\n      fromUser?: IFromUser | undefined;\n      toUser?: IToUser | undefined;\n      reason?: string | undefined;\n      emoji?: string | undefined;\n    }[]\n  >;\n  troubleshooter?: any;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 71,
+            "endLine": 86
+          }
+        },
+        {
+          "kind": "alias",
+          "name": "GetAvailableSlotsResponse",
+          "shape": "Awaited<\n  ReturnType<(typeof AvailableSlotsService)[\"prototype\"][\"_getAvailableSlots\"]>\n>",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 88,
+            "endLine": 90
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IAvailableSlotsService",
+          "shape": "{\n  oooRepo: PrismaOOORepository;\n  scheduleRepo: ScheduleRepository;\n  selectedSlotsRepo: SelectedSlotsRepository;\n  teamRepo: TeamRepository;\n  userRepo: UserRepository;\n  bookingRepo: BookingRepository;\n  eventTypeRepo: EventTypeRepository;\n  routingFormResponseRepo: RoutingFormResponseRepository;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 92,
+            "endLine": 101
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "Dynamic booking input without eventTypeSlug",
+          "handled": true,
+          "behavior": "Throws TRPCError with code BAD_REQUEST and message \"eventTypeSlug is required for dynamic booking\".",
+          "anchor": {
+            "startLine": 143,
+            "endLine": 147
+          }
+        },
+        {
+          "inputShape": "Dynamic booking users where at least one user disallows dynamic booking",
+          "handled": true,
+          "behavior": "Throws TRPCError with code UNAUTHORIZED.",
+          "anchor": {
+            "startLine": 163,
+            "endLine": 168
+          }
+        },
+        {
+          "inputShape": "Missing event type identifier or unresolved event type",
+          "handled": true,
+          "behavior": "Returns null when no identifier is available; otherwise throws TRPCError with code NOT_FOUND when repository lookup fails.",
+          "anchor": {
+            "startLine": 267,
+            "endLine": 298
+          }
+        },
+        {
+          "inputShape": "Past start time for a rolling-window event",
+          "handled": true,
+          "behavior": "Uses the supplied start time without subtracting one month.",
+          "anchor": {
+            "startLine": 906,
+            "endLine": 916
+          }
+        },
+        {
+          "inputShape": "Invalid start or end time",
+          "handled": true,
+          "behavior": "Throws TRPCError with code BAD_REQUEST and message \"Invalid time range given.\".",
+          "anchor": {
+            "startLine": 923,
+            "endLine": 933
+          }
+        },
+        {
+          "inputShape": "Empty routedTeamMemberIds array",
+          "handled": true,
+          "behavior": "Normalizes it to an empty array so it behaves as if the input was not provided.",
+          "anchor": {
+            "startLine": 934,
+            "endLine": 937
+          }
+        },
+        {
+          "inputShape": "Restriction schedule without a timezone when booker timezone is not used",
+          "handled": true,
+          "behavior": "Throws TRPCError with code BAD_REQUEST.",
+          "anchor": {
+            "startLine": 1081,
+            "endLine": 1087
+          }
+        },
+        {
+          "inputShape": "No slots remain for a single targeted username",
+          "handled": true,
+          "behavior": "Attempts no-slot notification and catches notification failures so availability still returns.",
+          "anchor": {
+            "startLine": 1340,
+            "endLine": 1359
+          }
+        },
+        {
+          "inputShape": "Event type configured with onlyShowFirstAvailableSlot",
+          "handled": true,
+          "behavior": "Keeps only the first slot for each formatted calendar date.",
+          "anchor": {
+            "startLine": 1249,
+            "endLine": 1253
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "TRPCError({ message: \"eventTypeSlug is required for dynamic booking\", code: \"BAD_REQUEST\" })",
+          "caught": null,
+          "action": "Aborts dynamic event type resolution.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 143,
+            "endLine": 147
+          }
+        },
+        {
+          "thrown": "TRPCError({ message: \"Some of the users in this group do not allow dynamic booking\", code: \"UNAUTHORIZED\" })",
+          "caught": null,
+          "action": "Aborts dynamic event type resolution.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 163,
+            "endLine": 168
+          }
+        },
+        {
+          "thrown": "TRPCError({ code: \"NOT_FOUND\" })",
+          "caught": null,
+          "action": "Aborts event type ID resolution when no matching event type exists.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 293,
+            "endLine": 298
+          }
+        },
+        {
+          "thrown": "Error from checkBookingLimit",
+          "caught": "catch (_)",
+          "action": "Marks the corresponding period busy and may stop processing when every period is busy.",
+          "fallback": "The period is treated as unavailable.",
+          "anchor": {
+            "startLine": 397,
+            "endLine": 417
+          }
+        },
+        {
+          "thrown": "Error from checkBookingLimit",
+          "caught": "catch (_)",
+          "action": "Marks the corresponding team-limit period busy and returns when every period is busy.",
+          "fallback": "The period is treated as unavailable.",
+          "anchor": {
+            "startLine": 597,
+            "endLine": 618
+          }
+        },
+        {
+          "thrown": "TRPCError({ code: \"NOT_FOUND\" })",
+          "caught": null,
+          "action": "Aborts if the event type is unexpectedly absent during bounds mapping.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 1297,
+            "endLine": 1301
+          }
+        },
+        {
+          "thrown": "TRPCError({ message: \"Invalid time range given.\", code: \"BAD_REQUEST\" })",
+          "caught": null,
+          "action": "Aborts availability calculation for invalid parsed times.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 931,
+            "endLine": 933
+          }
+        },
+        {
+          "thrown": "TRPCError({ message: \"No timezone is set for the restricted schedule\", code: \"BAD_REQUEST\" })",
+          "caught": null,
+          "action": "Aborts restriction schedule filtering.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 1081,
+            "endLine": 1087
+          }
+        },
+        {
+          "thrown": "Error from handleNotificationWhenNoSlots",
+          "caught": "catch (e)",
+          "action": "Logs an error explaining that notification failure must not block availability.",
+          "fallback": "Returns availability results without propagating the notification error.",
+          "anchor": {
+            "startLine": 1354,
+            "endLine": 1359
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a schema-valid GetScheduleOptions input and dependency context.",
+          "anchor": {
+            "startLine": 875,
+            "endLine": 882
+          }
+        },
+        {
+          "kind": "env",
+          "description": "INTEGRATION_TEST_MODE may be present and the exact string \"true\" enables verbose logger settings.",
+          "anchor": {
+            "startLine": 890,
+            "endLine": 892
+          }
+        },
+        {
+          "kind": "platform",
+          "description": "Date parsing and formatting use Dayjs timezone behavior and Intl.DateTimeFormat with the requested timezone.",
+          "anchor": {
+            "startLine": 669,
+            "endLine": 673
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Event types provide period, duration, scheduling, timezone, host, and restriction-related properties consumed by this service.",
+          "anchor": {
+            "startLine": 1059,
+            "endLine": 1072
+          }
+        },
+        {
+          "kind": "init-order",
+          "description": "Repository dependencies are initialized before any service method performs availability work.",
+          "anchor": {
+            "startLine": 92,
+            "endLine": 104
+          }
+        }
+      ],
+      "ambiguities": [],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [],
+      "language": "typescript",
+      "moduleLayout": [
+        "import type { Logger } from \"tslog\";",
+        "import { v4 as uuid } from \"uuid\";",
+        "import type { Dayjs } from \"@calcom/dayjs\";",
+        "import dayjs from \"@calcom/dayjs\";",
+        "import { orgDomainConfig } from \"@calcom/ee/organizations/lib/orgDomains\";",
+        "import { checkForConflicts } from \"@calcom/features/bookings/lib/conflictChecker/checkForConflicts\";",
+        "import { isEventTypeLoggingEnabled } from \"@calcom/features/bookings/lib/isEventTypeLoggingEnabled\";",
+        "import { getShouldServeCache } from \"@calcom/features/calendar-cache/lib/getShouldServeCache\";",
+        "import { findQualifiedHostsWithDelegationCredentials } from \"@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials\";",
+        "import { shouldIgnoreContactOwner } from \"@calcom/lib/bookings/routing/utils\";",
+        "import { RESERVED_SUBDOMAINS } from \"@calcom/lib/constants\";",
+        "import { buildDateRanges } from \"@calcom/lib/date-ranges\";",
+        "import { getUTCOffsetByTimezone } from \"@calcom/lib/dayjs\";",
+        "import { getDefaultEvent } from \"@calcom/lib/defaultEvents\";",
+        "import { getAggregatedAvailability } from \"@calcom/lib/getAggregatedAvailability\";",
+        "import { getBusyTimesForLimitChecks, getStartEndDateforLimitCheck } from \"@calcom/lib/getBusyTimes\";",
+        "import type { CurrentSeats, EventType, GetAvailabilityUser, IFromUser, IToUser } from \"@calcom/lib/getUserAvailability\";",
+        "import { getPeriodStartDatesBetween, getUsersAvailability } from \"@calcom/lib/getUserAvailability\";",
+        "import { descendingLimitKeys, intervalLimitKeyToUnit } from \"@calcom/lib/intervalLimits/intervalLimit\";",
+        "import type { IntervalLimit } from \"@calcom/lib/intervalLimits/intervalLimitSchema\";",
+        "import { parseBookingLimit } from \"@calcom/lib/intervalLimits/isBookingLimits\";",
+        "import { parseDurationLimit } from \"@calcom/lib/intervalLimits/isDurationLimits\";",
+        "import LimitManager from \"@calcom/lib/intervalLimits/limitManager\";",
+        "import { checkBookingLimit } from \"@calcom/lib/intervalLimits/server/checkBookingLimits\";",
+        "import { isBookingWithinPeriod } from \"@calcom/lib/intervalLimits/utils\";",
+        "import { calculatePeriodLimits, isTimeOutOfBounds, isTimeViolatingFutureLimit } from \"@calcom/lib/isOutOfBounds\";",
+        "import logger from \"@calcom/lib/logger\";",
+        "import { isRestrictionScheduleEnabled } from \"@calcom/lib/restrictionSchedule\";",
+        "import { safeStringify } from \"@calcom/lib/safeStringify\";",
+        "import { withReporting } from \"@calcom/lib/sentryWrapper\";",
+        "import { getTotalBookingDuration } from \"@calcom/lib/server/queries/booking\";",
+        "import type { BookingRepository } from \"@calcom/lib/server/repository/booking\";",
+        "import type { EventTypeRepository } from \"@calcom/lib/server/repository/eventType\";",
+        "import type { RoutingFormResponseRepository } from \"@calcom/lib/server/repository/formResponse\";",
+        "import type { PrismaOOORepository } from \"@calcom/lib/server/repository/ooo\";",
+        "import type { ScheduleRepository } from \"@calcom/lib/server/repository/schedule\";",
+        "import type { SelectedSlotsRepository } from \"@calcom/lib/server/repository/selectedSlots\";",
+        "import type { TeamRepository } from \"@calcom/lib/server/repository/team\";",
+        "import type { UserRepository } from \"@calcom/lib/server/repository/user\";",
+        "import { withSelectedCalendars } from \"@calcom/lib/server/repository/user\";",
+        "import getSlots from \"@calcom/lib/slots\";",
+        "import { PeriodType } from \"@calcom/prisma/client\";",
+        "import { SchedulingType } from \"@calcom/prisma/enums\";",
+        "import type { EventBusyDate, EventBusyDetails } from \"@calcom/types/Calendar\";",
+        "import type { CredentialForCalendarService } from \"@calcom/types/Credential\";",
+        "import { TRPCError } from \"@trpc/server\";",
+        "import type { TGetScheduleInputSchema } from \"./getSchedule.schema\";",
+        "import { handleNotificationWhenNoSlots } from \"./handleNotificationWhenNoSlots\";",
+        "import type { GetScheduleOptions } from \"./types\";",
+        "const log = logger.getSubLogger({ prefix: [\"[slots/util]\"] });",
+        "type GetAvailabilityUserWithDelegationCredentials",
+        "interface IGetAvailableSlots",
+        "type GetAvailableSlotsResponse",
+        "interface IAvailableSlotsService",
+        "class AvailableSlotsService"
+      ],
+      "moduleLevelCode": "// eslint-disable-next-line no-restricted-imports\nimport type { Logger } from \"tslog\";\nimport { v4 as uuid } from \"uuid\";\n\nimport type { Dayjs } from \"@calcom/dayjs\";\nimport dayjs from \"@calcom/dayjs\";\nimport { orgDomainConfig } from \"@calcom/ee/organizations/lib/orgDomains\";\nimport { checkForConflicts } from \"@calcom/features/bookings/lib/conflictChecker/checkForConflicts\";\nimport { isEventTypeLoggingEnabled } from \"@calcom/features/bookings/lib/isEventTypeLoggingEnabled\";\nimport { getShouldServeCache } from \"@calcom/features/calendar-cache/lib/getShouldServeCache\";\nimport { findQualifiedHostsWithDelegationCredentials } from \"@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials\";\nimport { shouldIgnoreContactOwner } from \"@calcom/lib/bookings/routing/utils\";\nimport { RESERVED_SUBDOMAINS } from \"@calcom/lib/constants\";\nimport { buildDateRanges } from \"@calcom/lib/date-ranges\";\nimport { getUTCOffsetByTimezone } from \"@calcom/lib/dayjs\";\nimport { getDefaultEvent } from \"@calcom/lib/defaultEvents\";\nimport { getAggregatedAvailability } from \"@calcom/lib/getAggregatedAvailability\";\nimport { getBusyTimesForLimitChecks, getStartEndDateforLimitCheck } from \"@calcom/lib/getBusyTimes\";\nimport type {\n  CurrentSeats,\n  EventType,\n  GetAvailabilityUser,\n  IFromUser,\n  IToUser,\n} from \"@calcom/lib/getUserAvailability\";\nimport { getPeriodStartDatesBetween, getUsersAvailability } from \"@calcom/lib/getUserAvailability\";\nimport { descendingLimitKeys, intervalLimitKeyToUnit } from \"@calcom/lib/intervalLimits/intervalLimit\";\nimport type { IntervalLimit } from \"@calcom/lib/intervalLimits/intervalLimitSchema\";\nimport { parseBookingLimit } from \"@calcom/lib/intervalLimits/isBookingLimits\";\nimport { parseDurationLimit } from \"@calcom/lib/intervalLimits/isDurationLimits\";\nimport LimitManager from \"@calcom/lib/intervalLimits/limitManager\";\nimport { checkBookingLimit } from \"@calcom/lib/intervalLimits/server/checkBookingLimits\";\nimport { isBookingWithinPeriod } from \"@calcom/lib/intervalLimits/utils\";\nimport {\n  calculatePeriodLimits,\n  isTimeOutOfBounds,\n  isTimeViolatingFutureLimit,\n} from \"@calcom/lib/isOutOfBounds\";\nimport logger from \"@calcom/lib/logger\";\nimport { isRestrictionScheduleEnabled } from \"@calcom/lib/restrictionSchedule\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport { withReporting } from \"@calcom/lib/sentryWrapper\";\nimport { getTotalBookingDuration } from \"@calcom/lib/server/queries/booking\";\nimport type { BookingRepository } from \"@calcom/lib/server/repository/booking\";\nimport type { EventTypeRepository } from \"@calcom/lib/server/repository/eventType\";\nimport type { RoutingFormResponseRepository } from \"@calcom/lib/server/repository/formResponse\";\nimport type { PrismaOOORepository } from \"@calcom/lib/server/repository/ooo\";\nimport type { ScheduleRepository } from \"@calcom/lib/server/repository/schedule\";\nimport type { SelectedSlotsRepository } from \"@calcom/lib/server/repository/selectedSlots\";\nimport type { TeamRepository } from \"@calcom/lib/server/repository/team\";\nimport type { UserRepository } from \"@calcom/lib/server/repository/user\";\nimport { withSelectedCalendars } from \"@calcom/lib/server/repository/user\";\nimport getSlots from \"@calcom/lib/slots\";\nimport { PeriodType } from \"@calcom/prisma/client\";\nimport { SchedulingType } from \"@calcom/prisma/enums\";\nimport type { EventBusyDate, EventBusyDetails } from \"@calcom/types/Calendar\";\nimport type { CredentialForCalendarService } from \"@calcom/types/Credential\";\n\nimport { TRPCError } from \"@trpc/server\";\n\nimport type { TGetScheduleInputSchema } from \"./getSchedule.schema\";\nimport { handleNotificationWhenNoSlots } from \"./handleNotificationWhenNoSlots\";\nimport type { GetScheduleOptions } from \"./types\";",
+      "exports": [
+        {
+          "name": "IGetAvailableSlots",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "GetAvailableSlotsResponse",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "IAvailableSlotsService",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "AvailableSlotsService",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "Logger",
+          "module": "tslog",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "v4",
+          "module": "uuid",
+          "alias": "uuid",
+          "kind": "external"
+        },
+        {
+          "symbol": "Dayjs",
+          "module": "@calcom/dayjs",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "dayjs",
+          "module": "@calcom/dayjs",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "orgDomainConfig",
+          "module": "@calcom/ee/organizations/lib/orgDomains",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "checkForConflicts",
+          "module": "@calcom/features/bookings/lib/conflictChecker/checkForConflicts",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "isEventTypeLoggingEnabled",
+          "module": "@calcom/features/bookings/lib/isEventTypeLoggingEnabled",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getShouldServeCache",
+          "module": "@calcom/features/calendar-cache/lib/getShouldServeCache",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "findQualifiedHostsWithDelegationCredentials",
+          "module": "@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "shouldIgnoreContactOwner",
+          "module": "@calcom/lib/bookings/routing/utils",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "RESERVED_SUBDOMAINS",
+          "module": "@calcom/lib/constants",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "buildDateRanges",
+          "module": "@calcom/lib/date-ranges",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getUTCOffsetByTimezone",
+          "module": "@calcom/lib/dayjs",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getDefaultEvent",
+          "module": "@calcom/lib/defaultEvents",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getAggregatedAvailability",
+          "module": "@calcom/lib/getAggregatedAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBusyTimesForLimitChecks",
+          "module": "@calcom/lib/getBusyTimes",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getStartEndDateforLimitCheck",
+          "module": "@calcom/lib/getBusyTimes",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "CurrentSeats",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventType",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "GetAvailabilityUser",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "IFromUser",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "IToUser",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getPeriodStartDatesBetween",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getUsersAvailability",
+          "module": "@calcom/lib/getUserAvailability",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "descendingLimitKeys",
+          "module": "@calcom/lib/intervalLimits/intervalLimit",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "intervalLimitKeyToUnit",
+          "module": "@calcom/lib/intervalLimits/intervalLimit",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "IntervalLimit",
+          "module": "@calcom/lib/intervalLimits/intervalLimitSchema",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "parseBookingLimit",
+          "module": "@calcom/lib/intervalLimits/isBookingLimits",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "parseDurationLimit",
+          "module": "@calcom/lib/intervalLimits/isDurationLimits",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "LimitManager",
+          "module": "@calcom/lib/intervalLimits/limitManager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "checkBookingLimit",
+          "module": "@calcom/lib/intervalLimits/server/checkBookingLimits",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "isBookingWithinPeriod",
+          "module": "@calcom/lib/intervalLimits/utils",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "calculatePeriodLimits",
+          "module": "@calcom/lib/isOutOfBounds",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "isTimeOutOfBounds",
+          "module": "@calcom/lib/isOutOfBounds",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "isTimeViolatingFutureLimit",
+          "module": "@calcom/lib/isOutOfBounds",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "isRestrictionScheduleEnabled",
+          "module": "@calcom/lib/restrictionSchedule",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "safeStringify",
+          "module": "@calcom/lib/safeStringify",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "withReporting",
+          "module": "@calcom/lib/sentryWrapper",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTotalBookingDuration",
+          "module": "@calcom/lib/server/queries/booking",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "BookingRepository",
+          "module": "@calcom/lib/server/repository/booking",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventTypeRepository",
+          "module": "@calcom/lib/server/repository/eventType",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "RoutingFormResponseRepository",
+          "module": "@calcom/lib/server/repository/formResponse",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "PrismaOOORepository",
+          "module": "@calcom/lib/server/repository/ooo",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "ScheduleRepository",
+          "module": "@calcom/lib/server/repository/schedule",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "SelectedSlotsRepository",
+          "module": "@calcom/lib/server/repository/selectedSlots",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "TeamRepository",
+          "module": "@calcom/lib/server/repository/team",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "UserRepository",
+          "module": "@calcom/lib/server/repository/user",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "withSelectedCalendars",
+          "module": "@calcom/lib/server/repository/user",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getSlots",
+          "module": "@calcom/lib/slots",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "PeriodType",
+          "module": "@calcom/prisma/client",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "SchedulingType",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventBusyDate",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventBusyDetails",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "CredentialForCalendarService",
+          "module": "@calcom/types/Credential",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "TRPCError",
+          "module": "@trpc/server",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "TGetScheduleInputSchema",
+          "module": "./getSchedule.schema",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "handleNotificationWhenNoSlots",
+          "module": "./handleNotificationWhenNoSlots",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "GetScheduleOptions",
+          "module": "./types",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        {
+          "name": "log",
+          "value": "logger.getSubLogger({ prefix: [\"[slots/util]\"] })",
+          "kind": "expression"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__GetAvailabilityUserWithDelegationCredentials_1#type_alias:GetAvailabilityUserWithDelegationCredentials",
+        "unitKind": "type_alias",
+        "name": "GetAvailabilityUserWithDelegationCredentials",
+        "qualifiedName": "GetAvailabilityUserWithDelegationCredentials",
+        "parentUnitId": null,
+        "startLine": 67,
+        "endLine": 69,
+        "isBehavioral": false,
+        "source": "type GetAvailabilityUserWithDelegationCredentials = Omit<GetAvailabilityUser, \"credentials\"> & {\n  credentials: CredentialForCalendarService[];\n};"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__IGetAvailableSlots_2#interface:IGetAvailableSlots",
+        "unitKind": "interface",
+        "name": "IGetAvailableSlots",
+        "qualifiedName": "IGetAvailableSlots",
+        "parentUnitId": null,
+        "startLine": 71,
+        "endLine": 86,
+        "isBehavioral": false,
+        "source": "export interface IGetAvailableSlots {\n  slots: Record<\n    string,\n    {\n      time: string;\n      attendees?: number | undefined;\n      bookingUid?: string | undefined;\n      away?: boolean | undefined;\n      fromUser?: IFromUser | undefined;\n      toUser?: IToUser | undefined;\n      reason?: string | undefined;\n      emoji?: string | undefined;\n    }[]\n  >;\n  troubleshooter?: any;\n}"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__GetAvailableSlotsResponse_3#type_alias:GetAvailableSlotsResponse",
+        "unitKind": "type_alias",
+        "name": "GetAvailableSlotsResponse",
+        "qualifiedName": "GetAvailableSlotsResponse",
+        "parentUnitId": null,
+        "startLine": 88,
+        "endLine": 89,
+        "isBehavioral": false,
+        "source": "export type GetAvailableSlotsResponse = Awaited<\n  ReturnType<(typeof AvailableSlotsService)[\"prototype\"][\"_getAvailableSlots\"]>"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__IAvailableSlotsService_4#interface:IAvailableSlotsService",
+        "unitKind": "interface",
+        "name": "IAvailableSlotsService",
+        "qualifiedName": "IAvailableSlotsService",
+        "parentUnitId": null,
+        "startLine": 92,
+        "endLine": 101,
+        "isBehavioral": false,
+        "source": "export interface IAvailableSlotsService {\n  oooRepo: PrismaOOORepository;\n  scheduleRepo: ScheduleRepository;\n  selectedSlotsRepo: SelectedSlotsRepository;\n  teamRepo: TeamRepository;\n  userRepo: UserRepository;\n  bookingRepo: BookingRepository;\n  eventTypeRepo: EventTypeRepository;\n  routingFormResponseRepo: RoutingFormResponseRepository;\n}"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "unitKind": "class",
+        "name": "AvailableSlotsService",
+        "qualifiedName": "AvailableSlotsService",
+        "parentUnitId": null,
+        "startLine": 103,
+        "endLine": 1388,
+        "isBehavioral": false,
+        "source": "export class AvailableSlotsService {\n  constructor(private readonly dependencies: IAvailableSlotsService) {}\n\n  private async _getReservedSlotsAndCleanupExpired({\n    bookerClientUid,\n    usersWithCredentials,\n    eventTypeId,\n  }: {\n    bookerClientUid: string | undefined;\n    usersWithCredentials: GetAvailabilityUser[];\n    eventTypeId: number;\n  }) {\n    const currentTimeInUtc = dayjs.utc().format();\n    const slotsRepo = this.dependencies.selectedSlotsRepo;\n\n    const unexpiredSelectedSlots =\n      (await slotsRepo.findManyUnexpiredSlots({\n        userIds: usersWithCredentials.map((user) => user.id),\n        currentTimeInUtc,\n      })) || [];\n\n    const slotsSelectedByOtherUsers = unexpiredSelectedSlots.filter((slot) => slot.uid !== bookerClientUid);\n\n    await _cleanupExpiredSlots({ eventTypeId });\n\n    const reservedSlots = slotsSelectedByOtherUsers;\n\n    return reservedSlots;\n\n    async function _cleanupExpiredSlots({ eventTypeId }: { eventTypeId: number }) {\n      await slotsRepo.deleteManyExpiredSlots({ eventTypeId, currentTimeInUtc });\n    }\n  }\n\n  private async _getDynamicEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  ) {\n    const { currentOrgDomain, isValidOrgDomain } = organizationDetails;\n    // For dynamic booking, we need to get and update user credentials, schedule and availability in the eventTypeObject as they're required in the new availability logic\n    if (!input.eventTypeSlug) {\n      throw new TRPCError({\n        message: \"eventTypeSlug is required for dynamic booking\",\n        code: \"BAD_REQUEST\",\n      });\n    }\n    const dynamicEventType = getDefaultEvent(input.eventTypeSlug);\n\n    const userRepo = this.dependencies.userRepo;\n    const usersForDynamicEventType = await userRepo.findManyUsersForDynamicEventType({\n      currentOrgDomain: isValidOrgDomain ? currentOrgDomain : null,\n      usernameList: Array.isArray(input.usernameList)\n        ? input.usernameList\n        : input.usernameList\n        ? [input.usernameList]\n        : [],\n    });\n\n    const usersWithOldSelectedCalendars = usersForDynamicEventType.map((user) => withSelectedCalendars(user));\n\n    const isDynamicAllowed = !usersWithOldSelectedCalendars.some((user) => !user.allowDynamicBooking);\n    if (!isDynamicAllowed) {\n      throw new TRPCError({\n        message: \"Some of the users in this group do not allow dynamic booking\",\n        code: \"UNAUTHORIZED\",\n      });\n    }\n    return Object.assign({}, dynamicEventType, {\n      users: usersWithOldSelectedCalendars,\n    });\n  }\n  private getDynamicEventType = withReporting(this._getDynamicEventType.bind(this), \"getDynamicEventType\");\n\n  private applyOccupiedSeatsToCurrentSeats(\n    currentSeats: CurrentSeats,\n    occupiedSeats: { slotUtcStartDate: Date }[]\n  ) {\n    const occupiedSeatsMap = new Map<string, number>();\n\n    occupiedSeats.forEach((item) => {\n      const dateKey = item.slotUtcStartDate.toISOString();\n      occupiedSeatsMap.set(dateKey, (occupiedSeatsMap.get(dateKey) || 0) + 1);\n    });\n\n    occupiedSeatsMap.forEach((count, date) => {\n      currentSeats.push({\n        uid: uuid(),\n        startTime: dayjs(date).toDate(),\n        _count: { attendees: count },\n      });\n    });\n\n    return currentSeats;\n  }\n\n  private async _getEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  ) {\n    const { eventTypeSlug, usernameList, isTeamEvent } = input;\n    log.info(\n      \"getEventType\",\n      safeStringify({ usernameList, eventTypeSlug, isTeamEvent, organizationDetails })\n    );\n    const eventTypeId =\n      input.eventTypeId ||\n      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion\n      (await this.getEventTypeId({\n        slug: usernameList?.[0],\n        eventTypeSlug: eventTypeSlug,\n        isTeamEvent,\n        organizationDetails,\n      }));\n\n    if (!eventTypeId) {\n      return null;\n    }\n\n    const eventTypeRepo = this.dependencies.eventTypeRepo;\n    return await eventTypeRepo.findForSlots({ id: eventTypeId });\n  }\n\n  private getEventType = withReporting(this._getEventType.bind(this), \"getEventType\");\n\n  private doesRangeStartFromToday(periodType: PeriodType) {\n    return periodType === PeriodType.ROLLING_WINDOW || periodType === PeriodType.ROLLING;\n  }\n\n  private _getAllDatesWithBookabilityStatus(availableDates: string[]) {\n    const availableDatesSet = new Set(availableDates);\n    const firstDate = dayjs(availableDates[0]);\n    const lastDate = dayjs(availableDates[availableDates.length - 1]);\n    const allDates: Record<string, { isBookable: boolean }> = {};\n\n    let currentDate = firstDate;\n    while (currentDate <= lastDate) {\n      allDates[currentDate.format(\"YYYY-MM-DD\")] = {\n        isBookable: availableDatesSet.has(currentDate.format(\"YYYY-MM-DD\")),\n      };\n\n      currentDate = currentDate.add(1, \"day\");\n    }\n    return allDates;\n  }\n\n  private getAllDatesWithBookabilityStatus = withReporting(\n    this._getAllDatesWithBookabilityStatus.bind(this),\n    \"getAllDatesWithBookabilityStatus\"\n  );\n\n  private async getUserIdFromUsername(\n    username: string,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  ) {\n    const { currentOrgDomain, isValidOrgDomain } = organizationDetails;\n    log.info(\"getUserIdFromUsername\", safeStringify({ organizationDetails, username }));\n    const userRepo = this.dependencies.userRepo;\n    const [user] = await userRepo.findUsersByUsername({\n      usernameList: [username],\n      orgSlug: isValidOrgDomain ? currentOrgDomain : null,\n    });\n    return user?.id;\n  }\n\n  private async getEventTypeId({\n    slug,\n    eventTypeSlug,\n    isTeamEvent,\n    organizationDetails,\n  }: {\n    slug?: string;\n    eventTypeSlug?: string;\n    isTeamEvent: boolean;\n    organizationDetails?: { currentOrgDomain: string | null; isValidOrgDomain: boolean };\n  }) {\n    if (!eventTypeSlug || !slug) return null;\n\n    let teamId;\n    let userId;\n    if (isTeamEvent) {\n      teamId = await this.getTeamIdFromSlug(\n        slug,\n        organizationDetails ?? { currentOrgDomain: null, isValidOrgDomain: false }\n      );\n    } else {\n      userId = await this.getUserIdFromUsername(\n        slug,\n        organizationDetails ?? { currentOrgDomain: null, isValidOrgDomain: false }\n      );\n    }\n    const eventTypeRepo = this.dependencies.eventTypeRepo;\n    const eventType = await eventTypeRepo.findFirstEventTypeId({ slug: eventTypeSlug, teamId, userId });\n    if (!eventType) {\n      throw new TRPCError({ code: \"NOT_FOUND\" });\n    }\n    return eventType?.id;\n  }\n\n  private async getTeamIdFromSlug(\n    slug: string,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  ) {\n    const { currentOrgDomain, isValidOrgDomain } = organizationDetails;\n    const teamRepo = this.dependencies.teamRepo;\n    const team = await teamRepo.findFirstBySlugAndParentSlug({\n      slug,\n      parentSlug: isValidOrgDomain && currentOrgDomain ? currentOrgDomain : null,\n      select: { id: true },\n    });\n\n    return team?.id;\n  }\n\n  private async _getBusyTimesFromLimitsForUsers(\n    users: { id: number; email: string }[],\n    bookingLimits: IntervalLimit | null,\n    durationLimits: IntervalLimit | null,\n    dateFrom: Dayjs,\n    dateTo: Dayjs,\n    duration: number | undefined,\n    eventType: NonNullable<EventType>,\n    timeZone: string,\n    rescheduleUid?: string\n  ) {\n    const userBusyTimesMap = new Map<number, EventBusyDetails[]>();\n\n    if (!bookingLimits && !durationLimits) {\n      return userBusyTimesMap;\n    }\n\n    const { limitDateFrom, limitDateTo } = getStartEndDateforLimitCheck(\n      dateFrom.toISOString(),\n      dateTo.toISOString(),\n      bookingLimits || durationLimits\n    );\n\n    const busyTimesFromLimitsBookings = await getBusyTimesForLimitChecks({\n      userIds: users.map((user) => user.id),\n      eventTypeId: eventType.id,\n      startDate: limitDateFrom.format(),\n      endDate: limitDateTo.format(),\n      rescheduleUid,\n      bookingLimits,\n      durationLimits,\n    });\n\n    const globalLimitManager = new LimitManager();\n\n    if (bookingLimits) {\n      for (const key of descendingLimitKeys) {\n        const limit = bookingLimits?.[key];\n        if (!limit) continue;\n\n        const unit = intervalLimitKeyToUnit(key);\n        const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n        for (const periodStart of periodStartDates) {\n          if (globalLimitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n          const periodEnd = periodStart.endOf(unit);\n          let totalBookings = 0;\n\n          for (const booking of busyTimesFromLimitsBookings) {\n            if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n              continue;\n            }\n\n            totalBookings++;\n            if (totalBookings >= limit) {\n              globalLimitManager.addBusyTime(periodStart, unit, timeZone);\n              break;\n            }\n          }\n        }\n      }\n    }\n\n    for (const user of users) {\n      const userBookings = busyTimesFromLimitsBookings.filter((booking) => booking.userId === user.id);\n      const limitManager = new LimitManager();\n\n      limitManager.mergeBusyTimes(globalLimitManager);\n\n      if (bookingLimits) {\n        for (const key of descendingLimitKeys) {\n          const limit = bookingLimits?.[key];\n          if (!limit) continue;\n\n          const unit = intervalLimitKeyToUnit(key);\n          const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n          for (const periodStart of periodStartDates) {\n            if (limitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n            if (unit === \"year\") {\n              try {\n                // TODO: DI checkBookingLimit\n                await checkBookingLimit({\n                  eventStartDate: periodStart.toDate(),\n                  limitingNumber: limit,\n                  eventId: eventType.id,\n                  key,\n                  user,\n                  rescheduleUid,\n                  timeZone,\n                });\n              } catch (_) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                if (\n                  periodStartDates.every((start: Dayjs) => limitManager.isAlreadyBusy(start, unit, timeZone))\n                ) {\n                  break;\n                }\n              }\n              continue;\n            }\n\n            const periodEnd = periodStart.endOf(unit);\n            let totalBookings = 0;\n\n            for (const booking of userBookings) {\n              if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n                continue;\n              }\n\n              totalBookings++;\n              if (totalBookings >= limit) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                break;\n              }\n            }\n          }\n        }\n      }\n\n      if (durationLimits) {\n        for (const key of descendingLimitKeys) {\n          const limit = durationLimits?.[key];\n          if (!limit) continue;\n\n          const unit = intervalLimitKeyToUnit(key);\n          const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n          for (const periodStart of periodStartDates) {\n            if (limitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n            const selectedDuration = (duration || eventType.length) ?? 0;\n\n            if (selectedDuration > limit) {\n              limitManager.addBusyTime(periodStart, unit, timeZone);\n              continue;\n            }\n\n            if (unit === \"year\") {\n              // TODO: DI getTotalBookingDuration\n              const totalYearlyDuration = await getTotalBookingDuration({\n                eventId: eventType.id,\n                startDate: periodStart.toDate(),\n                endDate: periodStart.endOf(unit).toDate(),\n                rescheduleUid,\n              });\n              if (totalYearlyDuration + selectedDuration > limit) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                if (\n                  periodStartDates.every((start: Dayjs) => limitManager.isAlreadyBusy(start, unit, timeZone))\n                ) {\n                  break;\n                }\n              }\n              continue;\n            }\n\n            const periodEnd = periodStart.endOf(unit);\n            let totalDuration = selectedDuration;\n\n            for (const booking of userBookings) {\n              if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n                continue;\n              }\n              totalDuration += dayjs(booking.end).diff(dayjs(booking.start), \"minute\");\n              if (totalDuration > limit) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                break;\n              }\n            }\n          }\n        }\n      }\n\n      userBusyTimesMap.set(user.id, limitManager.getBusyTimes());\n    }\n\n    return userBusyTimesMap;\n  }\n\n  private getBusyTimesFromLimitsForUsers = withReporting(\n    this._getBusyTimesFromLimitsForUsers.bind(this),\n    \"getBusyTimesFromLimitsForUsers\"\n  );\n\n  private async _getBusyTimesFromTeamLimitsForUsers(\n    users: { id: number; email: string }[],\n    bookingLimits: IntervalLimit,\n    dateFrom: Dayjs,\n    dateTo: Dayjs,\n    teamId: number,\n    includeManagedEvents: boolean,\n    timeZone: string,\n    rescheduleUid?: string\n  ) {\n    const { limitDateFrom, limitDateTo } = getStartEndDateforLimitCheck(\n      dateFrom.toISOString(),\n      dateTo.toISOString(),\n      bookingLimits\n    );\n\n    const bookingRepo = this.dependencies.bookingRepo;\n    const bookings = await bookingRepo.getAllAcceptedTeamBookingsOfUsers({\n      users,\n      teamId,\n      startDate: limitDateFrom.toDate(),\n      endDate: limitDateTo.toDate(),\n      excludedUid: rescheduleUid,\n      includeManagedEvents,\n    });\n\n    const busyTimes = bookings.map(({ id, startTime, endTime, eventTypeId, title, userId }) => ({\n      start: dayjs(startTime).toDate(),\n      end: dayjs(endTime).toDate(),\n      title,\n      source: `eventType-${eventTypeId}-booking-${id}`,\n      userId,\n    }));\n\n    const globalLimitManager = new LimitManager();\n\n    for (const key of descendingLimitKeys) {\n      const limit = bookingLimits?.[key];\n      if (!limit) continue;\n\n      const unit = intervalLimitKeyToUnit(key);\n      const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n      for (const periodStart of periodStartDates) {\n        if (globalLimitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n        const periodEnd = periodStart.endOf(unit);\n        let totalBookings = 0;\n\n        for (const booking of busyTimes) {\n          if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n            continue;\n          }\n\n          totalBookings++;\n          if (totalBookings >= limit) {\n            globalLimitManager.addBusyTime(periodStart, unit, timeZone);\n            break;\n          }\n        }\n      }\n    }\n\n    const userBusyTimesMap = new Map();\n\n    for (const user of users) {\n      const userBusyTimes = busyTimes.filter((busyTime) => busyTime.userId === user.id);\n      const limitManager = new LimitManager();\n\n      limitManager.mergeBusyTimes(globalLimitManager);\n\n      const bookingLimitsParams = {\n        bookings: userBusyTimes,\n        bookingLimits,\n        dateFrom,\n        dateTo,\n        limitManager,\n        rescheduleUid,\n        teamId,\n        user,\n        includeManagedEvents,\n        timeZone,\n      };\n\n      for (const key of descendingLimitKeys) {\n        const limit = bookingLimits?.[key];\n        if (!limit) continue;\n\n        const unit = intervalLimitKeyToUnit(key);\n        const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n        for (const periodStart of periodStartDates) {\n          if (limitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n          if (unit === \"year\") {\n            try {\n              // TODO: DI checkBookingLimit\n              await checkBookingLimit({\n                eventStartDate: periodStart.toDate(),\n                limitingNumber: limit,\n                key,\n                teamId,\n                user,\n                rescheduleUid,\n                includeManagedEvents,\n                timeZone,\n              });\n            } catch (_) {\n              limitManager.addBusyTime(periodStart, unit, timeZone);\n              if (\n                periodStartDates.every((start: Dayjs) => limitManager.isAlreadyBusy(start, unit, timeZone))\n              ) {\n                return;\n              }\n            }\n            continue;\n          }\n\n          const periodEnd = periodStart.endOf(unit);\n          let totalBookings = 0;\n\n          for (const booking of userBusyTimes) {\n            if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n              continue;\n            }\n\n            totalBookings++;\n            if (totalBookings >= limit) {\n              limitManager.addBusyTime(periodStart, unit, timeZone);\n              break;\n            }\n          }\n        }\n      }\n\n      userBusyTimesMap.set(user.id, limitManager.getBusyTimes());\n    }\n\n    return userBusyTimesMap;\n  }\n  private getBusyTimesFromTeamLimitsForUsers = withReporting(\n    this._getBusyTimesFromTeamLimitsForUsers.bind(this),\n    \"getBusyTimesFromTeamLimitsForUsers\"\n  );\n\n  private async _getOOODates(startTimeDate: Date, endTimeDate: Date, allUserIds: number[]) {\n    return this.dependencies.oooRepo.findManyOOO({ startTimeDate, endTimeDate, allUserIds });\n  }\n  private getOOODates = withReporting(this._getOOODates.bind(this), \"getOOODates\");\n\n  private _getUsersWithCredentials({\n    hosts,\n  }: {\n    hosts: {\n      isFixed?: boolean;\n      user: GetAvailabilityUserWithDelegationCredentials;\n    }[];\n  }) {\n    return hosts.map(({ isFixed, user }) => ({ isFixed, ...user }));\n  }\n\n  private getUsersWithCredentials = withReporting(\n    this._getUsersWithCredentials.bind(this),\n    \"getUsersWithCredentials\"\n  );\n\n  private getStartTime(startTimeInput: string, timeZone?: string, minimumBookingNotice?: number) {\n    const startTimeMin = dayjs.utc().add(minimumBookingNotice || 1, \"minutes\");\n    const startTime = timeZone === \"Etc/GMT\" ? dayjs.utc(startTimeInput) : dayjs(startTimeInput).tz(timeZone);\n\n    return startTimeMin.isAfter(startTime) ? startTimeMin.tz(timeZone) : startTime;\n  }\n  private async calculateHostsAndAvailabilities({\n    input,\n    eventType,\n    hosts,\n    loggerWithEventDetails,\n    startTime,\n    endTime,\n    bypassBusyCalendarTimes,\n    shouldServeCache,\n  }: {\n    input: TGetScheduleInputSchema;\n    eventType: Exclude<\n      Awaited<ReturnType<(typeof AvailableSlotsService)[\"prototype\"][\"getRegularOrDynamicEventType\"]>>,\n      null\n    >;\n    hosts: {\n      isFixed?: boolean;\n      user: GetAvailabilityUserWithDelegationCredentials;\n    }[];\n    loggerWithEventDetails: Logger<unknown>;\n    startTime: ReturnType<(typeof AvailableSlotsService)[\"prototype\"][\"getStartTime\"]>;\n    endTime: Dayjs;\n    bypassBusyCalendarTimes: boolean;\n    shouldServeCache?: boolean;\n  }) {\n    const usersWithCredentials = this.getUsersWithCredentials({\n      hosts,\n    });\n\n    loggerWithEventDetails.debug(\"Using users\", {\n      usersWithCredentials: usersWithCredentials.map((user) => user.email),\n    });\n\n    const durationToUse = input.duration || 0;\n    let currentSeats: CurrentSeats | undefined;\n\n    const startTimeDate =\n      input.rescheduleUid && durationToUse\n        ? startTime.subtract(durationToUse, \"minute\").toDate()\n        : startTime.toDate();\n\n    const endTimeDate =\n      input.rescheduleUid && durationToUse ? endTime.add(durationToUse, \"minute\").toDate() : endTime.toDate();\n\n    const userIdAndEmailMap = new Map(usersWithCredentials.map((user) => [user.id, user.email]));\n    const allUserIds = Array.from(userIdAndEmailMap.keys());\n\n    const bookingRepo = this.dependencies.bookingRepo;\n    const [currentBookingsAllUsers, outOfOfficeDaysAllUsers] = await Promise.all([\n      bookingRepo.findAllExistingBookingsForEventTypeBetween({\n        startDate: startTimeDate,\n        endDate: endTimeDate,\n        eventTypeId: eventType.id,\n        seatedEvent: Boolean(eventType.seatsPerTimeSlot),\n        userIdAndEmailMap,\n      }),\n      this.getOOODates(startTimeDate, endTimeDate, allUserIds),\n    ]);\n\n    const bookingLimits = parseBookingLimit(eventType?.bookingLimits);\n    const durationLimits = parseDurationLimit(eventType?.durationLimits);\n    let busyTimesFromLimitsBookingsAllUsers: Awaited<ReturnType<typeof getBusyTimesForLimitChecks>> = [];\n\n    if (eventType && (bookingLimits || durationLimits)) {\n      // TODO: DI getBusyTimesForLimitChecks\n      busyTimesFromLimitsBookingsAllUsers = await getBusyTimesForLimitChecks({\n        userIds: allUserIds,\n        eventTypeId: eventType.id,\n        startDate: startTime.format(),\n        endDate: endTime.format(),\n        rescheduleUid: input.rescheduleUid,\n        bookingLimits,\n        durationLimits,\n      });\n    }\n\n    let busyTimesFromLimitsMap: Map<number, EventBusyDetails[]> | undefined = undefined;\n    if (eventType && (bookingLimits || durationLimits)) {\n      const usersForLimits = usersWithCredentials.map((user) => ({ id: user.id, email: user.email }));\n      busyTimesFromLimitsMap = await this.getBusyTimesFromLimitsForUsers(\n        usersForLimits,\n        bookingLimits,\n        durationLimits,\n        startTime,\n        endTime,\n        typeof input.duration === \"number\" ? input.duration : undefined,\n        eventType,\n        usersWithCredentials[0]?.timeZone || \"UTC\",\n        input.rescheduleUid || undefined\n      );\n    }\n\n    const teamForBookingLimits =\n      eventType?.team ??\n      (eventType?.parent?.team?.includeManagedEventsInLimits ? eventType?.parent?.team : null);\n\n    const teamBookingLimits = parseBookingLimit(teamForBookingLimits?.bookingLimits);\n\n    let teamBookingLimitsMap: Map<number, EventBusyDetails[]> | undefined = undefined;\n    if (teamForBookingLimits && teamBookingLimits) {\n      const usersForTeamLimits = usersWithCredentials.map((user) => ({ id: user.id, email: user.email }));\n      teamBookingLimitsMap = await this.getBusyTimesFromTeamLimitsForUsers(\n        usersForTeamLimits,\n        teamBookingLimits,\n        startTime,\n        endTime,\n        teamForBookingLimits.id,\n        teamForBookingLimits.includeManagedEventsInLimits,\n        usersWithCredentials[0]?.timeZone || \"UTC\",\n        input.rescheduleUid || undefined\n      );\n    }\n\n    function _enrichUsersWithData() {\n      return usersWithCredentials.map((currentUser) => {\n        return {\n          ...currentUser,\n          currentBookings: currentBookingsAllUsers\n            .filter(\n              (b) => b.userId === currentUser.id || b.attendees?.some((a) => a.email === currentUser.email)\n            )\n            .map((bookings) => {\n              const { attendees: _attendees, ...bookingWithoutAttendees } = bookings;\n              return bookingWithoutAttendees;\n            }),\n          outOfOfficeDays: outOfOfficeDaysAllUsers.filter((o) => o.user.id === currentUser.id),\n        };\n      });\n    }\n    const enrichUsersWithData = withReporting(_enrichUsersWithData.bind(this), \"enrichUsersWithData\");\n    const users = enrichUsersWithData();\n\n    // TODO: DI getUsersAvailability\n    const premappedUsersAvailability = await getUsersAvailability({\n      users,\n      query: {\n        dateFrom: startTime.format(),\n        dateTo: endTime.format(),\n        eventTypeId: eventType.id,\n        afterEventBuffer: eventType.afterEventBuffer,\n        beforeEventBuffer: eventType.beforeEventBuffer,\n        duration: input.duration || 0,\n        returnDateOverrides: false,\n        bypassBusyCalendarTimes,\n        shouldServeCache,\n      },\n      initialData: {\n        eventType,\n        currentSeats,\n        rescheduleUid: input.rescheduleUid,\n        busyTimesFromLimitsBookings: busyTimesFromLimitsBookingsAllUsers,\n        busyTimesFromLimits: busyTimesFromLimitsMap,\n        eventTypeForLimits: eventType && (bookingLimits || durationLimits) ? eventType : null,\n        teamBookingLimits: teamBookingLimitsMap,\n        teamForBookingLimits: teamForBookingLimits,\n      },\n    });\n    /* We get all users working hours and busy slots */\n    const allUsersAvailability = premappedUsersAvailability.map(\n      (\n        { busy, dateRanges, oooExcludedDateRanges, currentSeats: _currentSeats, timeZone, datesOutOfOffice },\n        index\n      ) => {\n        const currentUser = users[index];\n        if (!currentSeats && _currentSeats) currentSeats = _currentSeats;\n        return {\n          timeZone,\n          dateRanges,\n          oooExcludedDateRanges,\n          busy,\n          user: currentUser,\n          datesOutOfOffice,\n        };\n      }\n    );\n\n    return {\n      allUsersAvailability,\n      usersWithCredentials,\n      currentSeats,\n    };\n  }\n\n  private async _getRegularOrDynamicEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }\n  ) {\n    const isDynamicBooking = input.usernameList && input.usernameList.length > 1;\n    return isDynamicBooking\n      ? await this.getDynamicEventType(input, organizationDetails)\n      : await this.getEventType(input, organizationDetails);\n  }\n\n  private getRegularOrDynamicEventType = withReporting(\n    this._getRegularOrDynamicEventType.bind(this),\n    \"getRegularOrDynamicEventType\"\n  );\n\n  getAvailableSlots = withReporting(this._getAvailableSlots.bind(this), \"getAvailableSlots\");\n\n  async _getAvailableSlots({ input, ctx }: GetScheduleOptions): Promise<IGetAvailableSlots> {\n    const {\n      _enableTroubleshooter: enableTroubleshooter = false,\n      _bypassCalendarBusyTimes: bypassBusyCalendarTimes = false,\n      _shouldServeCache,\n      routingFormResponseId,\n      queuedFormResponseId,\n    } = input;\n    const orgDetails = input?.orgSlug\n      ? {\n          currentOrgDomain: input.orgSlug,\n          isValidOrgDomain: !!input.orgSlug && !RESERVED_SUBDOMAINS.includes(input.orgSlug),\n        }\n      : orgDomainConfig(ctx?.req);\n\n    if (process.env.INTEGRATION_TEST_MODE === \"true\") {\n      logger.settings.minLevel = 2;\n    }\n\n    const eventType = await this.getRegularOrDynamicEventType(input, orgDetails);\n\n    if (!eventType) {\n      throw new TRPCError({ code: \"NOT_FOUND\" });\n    }\n\n    // TODO: DI getShouldServeCache\n    const shouldServeCache = await getShouldServeCache(_shouldServeCache, eventType.team?.id);\n    if (isEventTypeLoggingEnabled({ eventTypeId: eventType.id })) {\n      logger.settings.minLevel = 2;\n    }\n\n    const isRollingWindowPeriodType = eventType.periodType === PeriodType.ROLLING_WINDOW;\n    const startTimeAsIsoString = input.startTime;\n    const isStartTimeInPast = dayjs(startTimeAsIsoString).isBefore(dayjs().subtract(1, \"day\").startOf(\"day\"));\n\n    // If startTime is already sent in the past, we don't need to adjust it.\n    // We assume that the client is already sending startTime as per their requirement.\n    // Note: We could optimize it further to go back 1 month in past only for the 2nd month because that is what we are putting a hard limit at.\n    const startTimeAdjustedForRollingWindowComputation =\n      isStartTimeInPast || !isRollingWindowPeriodType\n        ? startTimeAsIsoString\n        : dayjs(startTimeAsIsoString).subtract(1, \"month\").toISOString();\n\n    const loggerWithEventDetails = logger.getSubLogger({\n      type: \"json\",\n      prefix: [\"getAvailableSlots\", `${eventType.id}:${input.usernameList}/${input.eventTypeSlug}`],\n    });\n\n    const startTime = this.getStartTime(\n      startTimeAdjustedForRollingWindowComputation,\n      input.timeZone,\n      eventType.minimumBookingNotice\n    );\n    const endTime =\n      input.timeZone === \"Etc/GMT\" ? dayjs.utc(input.endTime) : dayjs(input.endTime).utc().tz(input.timeZone);\n\n    if (!startTime.isValid() || !endTime.isValid()) {\n      throw new TRPCError({ message: \"Invalid time range given.\", code: \"BAD_REQUEST\" });\n    }\n    // when an empty array is given we should prefer to have it handled as if this wasn't given at all\n    // we don't want to return no availability in this case.\n    const routedTeamMemberIds = input.routedTeamMemberIds ?? [];\n    const contactOwnerEmailFromInput = input.teamMemberEmail ?? null;\n\n    const skipContactOwner = shouldIgnoreContactOwner({\n      skipContactOwner: input.skipContactOwner ?? null,\n      rescheduleUid: input.rescheduleUid ?? null,\n      routedTeamMemberIds: input.routedTeamMemberIds ?? null,\n    });\n\n    const contactOwnerEmail = skipContactOwner ? null : contactOwnerEmailFromInput;\n\n    let routingFormResponse = null;\n    if (routingFormResponseId) {\n      const formResponseRepo = this.dependencies.routingFormResponseRepo;\n      routingFormResponse = await formResponseRepo.findFormResponseIncludeForm({\n        routingFormResponseId,\n      });\n    } else if (queuedFormResponseId) {\n      const formResponseRepo = this.dependencies.routingFormResponseRepo;\n      routingFormResponse = await formResponseRepo.findQueuedFormResponseIncludeForm({\n        queuedFormResponseId,\n      });\n    }\n\n    // TODO: DI findQualifiedHostsWithDelegationCredentials\n    const { qualifiedRRHosts, allFallbackRRHosts, fixedHosts } =\n      await findQualifiedHostsWithDelegationCredentials({\n        eventType,\n        rescheduleUid: input.rescheduleUid ?? null,\n        routedTeamMemberIds,\n        contactOwnerEmail,\n        routingFormResponse,\n      });\n\n    const allHosts = [...qualifiedRRHosts, ...fixedHosts];\n\n    const twoWeeksFromNow = dayjs().add(2, \"week\");\n\n    const hasFallbackRRHosts = allFallbackRRHosts && allFallbackRRHosts.length > qualifiedRRHosts.length;\n\n    let { allUsersAvailability, usersWithCredentials, currentSeats } =\n      await this.calculateHostsAndAvailabilities({\n        input,\n        eventType,\n        hosts: allHosts,\n        loggerWithEventDetails,\n        // adjust start time so we can check for available slots in the first two weeks\n        startTime:\n          hasFallbackRRHosts && startTime.isBefore(twoWeeksFromNow)\n            ? this.getStartTime(dayjs().format(), input.timeZone, eventType.minimumBookingNotice)\n            : startTime,\n        // adjust end time so we can check for available slots in the first two weeks\n        endTime:\n          hasFallbackRRHosts && endTime.isBefore(twoWeeksFromNow)\n            ? this.getStartTime(twoWeeksFromNow.format(), input.timeZone, eventType.minimumBookingNotice)\n            : endTime,\n        bypassBusyCalendarTimes,\n        shouldServeCache,\n      });\n\n    let aggregatedAvailability = getAggregatedAvailability(allUsersAvailability, eventType.schedulingType);\n\n    // Fairness and Contact Owner have fallbacks because we check for within 2 weeks\n    if (hasFallbackRRHosts) {\n      let diff = 0;\n      if (startTime.isBefore(twoWeeksFromNow)) {\n        //check if first two week have availability\n        diff =\n          aggregatedAvailability.length > 0\n            ? aggregatedAvailability[0].start.diff(twoWeeksFromNow, \"day\")\n            : 1; // no aggregatedAvailability so we diff to +1\n      } else {\n        // if start time is not within first two weeks, check if there are any available slots\n        if (!aggregatedAvailability.length) {\n          // if no available slots check if first two weeks are available, otherwise fallback\n          const firstTwoWeeksAvailabilities = await this.calculateHostsAndAvailabilities({\n            input,\n            eventType,\n            hosts: [...qualifiedRRHosts, ...fixedHosts],\n            loggerWithEventDetails,\n            startTime: dayjs(),\n            endTime: twoWeeksFromNow,\n            bypassBusyCalendarTimes,\n            shouldServeCache,\n          });\n          if (\n            !getAggregatedAvailability(\n              firstTwoWeeksAvailabilities.allUsersAvailability,\n              eventType.schedulingType\n            ).length\n          ) {\n            diff = 1;\n          }\n        }\n      }\n\n      if (input.email) {\n        loggerWithEventDetails.info({\n          email: input.email,\n          contactOwnerEmail,\n          qualifiedRRHosts: qualifiedRRHosts.map((host) => host.user.id),\n          fallbackRRHosts: allFallbackRRHosts.map((host) => host.user.id),\n          fallBackActive: diff > 0,\n        });\n      }\n\n      if (diff > 0) {\n        // if the first available slot is more than 2 weeks from now, round robin as normal\n        ({ allUsersAvailability, usersWithCredentials, currentSeats } =\n          await this.calculateHostsAndAvailabilities({\n            input,\n            eventType,\n            hosts: [...allFallbackRRHosts, ...fixedHosts],\n            loggerWithEventDetails,\n            startTime,\n            endTime,\n            bypassBusyCalendarTimes,\n            shouldServeCache,\n          }));\n        aggregatedAvailability = getAggregatedAvailability(allUsersAvailability, eventType.schedulingType);\n      }\n    }\n\n    const isTeamEvent =\n      eventType.schedulingType === SchedulingType.COLLECTIVE ||\n      eventType.schedulingType === SchedulingType.ROUND_ROBIN ||\n      allUsersAvailability.length > 1;\n\n    const timeSlots = getSlots({\n      inviteeDate: startTime,\n      eventLength: input.duration || eventType.length,\n      offsetStart: eventType.offsetStart,\n      dateRanges: aggregatedAvailability,\n      minimumBookingNotice: eventType.minimumBookingNotice,\n      frequency: eventType.slotInterval || input.duration || eventType.length,\n      datesOutOfOffice: !isTeamEvent ? allUsersAvailability[0]?.datesOutOfOffice : undefined,\n    });\n\n    let availableTimeSlots: typeof timeSlots = [];\n    const bookerClientUid = ctx?.req?.cookies?.uid;\n    // TODO: DI isRestrictionScheduleEnabled\n    const isRestrictionScheduleFeatureEnabled = await isRestrictionScheduleEnabled(eventType.team?.id);\n    if (eventType.restrictionScheduleId && isRestrictionScheduleFeatureEnabled) {\n      const restrictionSchedule = await this.dependencies.scheduleRepo.findScheduleByIdForBuildDateRanges({\n        scheduleId: eventType.restrictionScheduleId,\n      });\n      if (restrictionSchedule) {\n        if (!eventType.useBookerTimezone && !restrictionSchedule.timeZone) {\n          throw new TRPCError({\n            message: \"No timezone is set for the restricted schedule\",\n            code: \"BAD_REQUEST\",\n          });\n        }\n\n        const restrictionTimezone = eventType.useBookerTimezone\n          ? input.timeZone\n          : restrictionSchedule.timeZone!;\n        const eventLength = input.duration || eventType.length;\n\n        const restrictionAvailability = restrictionSchedule.availability.map((rule) => ({\n          days: rule.days,\n          startTime: rule.startTime,\n          endTime: rule.endTime,\n          date: rule.date,\n        }));\n\n        // Include travel schedules if restriction schedule is the user's default schedule\n        const isDefaultSchedule = restrictionSchedule.user.defaultScheduleId === restrictionSchedule.id;\n        const travelSchedules =\n          isDefaultSchedule && !eventType.useBookerTimezone\n            ? restrictionSchedule.user.travelSchedules.map((schedule) => ({\n                startDate: dayjs(schedule.startDate),\n                endDate: schedule.endDate ? dayjs(schedule.endDate) : undefined,\n                timeZone: schedule.timeZone,\n              }))\n            : [];\n\n        const { dateRanges: restrictionRanges } = buildDateRanges({\n          availability: restrictionAvailability,\n          timeZone: restrictionTimezone || \"UTC\",\n          dateFrom: startTime,\n          dateTo: endTime,\n          travelSchedules,\n        });\n\n        availableTimeSlots = timeSlots.filter((slot) => {\n          const slotStart = slot.time;\n          const slotEnd = slot.time.add(eventLength, \"minute\");\n\n          return restrictionRanges.some(\n            (range) =>\n              (slotStart.isAfter(range.start) || slotStart.isSame(range.start)) &&\n              (slotEnd.isBefore(range.end) || slotEnd.isSame(range.end))\n          );\n        });\n      } else {\n        availableTimeSlots = timeSlots;\n      }\n    } else {\n      availableTimeSlots = timeSlots;\n    }\n\n    const reservedSlots = await this._getReservedSlotsAndCleanupExpired({\n      bookerClientUid,\n      eventTypeId: eventType.id,\n      usersWithCredentials,\n    });\n\n    const availabilityCheckProps = {\n      eventLength: input.duration || eventType.length,\n      currentSeats,\n    };\n\n    if (reservedSlots?.length > 0) {\n      let occupiedSeats: typeof reservedSlots = reservedSlots.filter(\n        (item) => item.isSeat && item.eventTypeId === eventType.id\n      );\n      if (occupiedSeats?.length) {\n        const addedToCurrentSeats: string[] = [];\n        if (typeof availabilityCheckProps.currentSeats !== \"undefined\") {\n          availabilityCheckProps.currentSeats = availabilityCheckProps.currentSeats.map((item) => {\n            const attendees =\n              occupiedSeats.filter(\n                (seat) => seat.slotUtcStartDate.toISOString() === item.startTime.toISOString()\n              )?.length || 0;\n            if (attendees) addedToCurrentSeats.push(item.startTime.toISOString());\n            return {\n              ...item,\n              _count: {\n                attendees: item._count.attendees + attendees,\n              },\n            };\n          });\n          occupiedSeats = occupiedSeats.filter(\n            (item) => !addedToCurrentSeats.includes(item.slotUtcStartDate.toISOString())\n          );\n        }\n\n        availabilityCheckProps.currentSeats = this.applyOccupiedSeatsToCurrentSeats(\n          availabilityCheckProps.currentSeats || [],\n          occupiedSeats\n        );\n\n        currentSeats = availabilityCheckProps.currentSeats;\n      }\n      const busySlotsFromReservedSlots = reservedSlots.reduce<EventBusyDate[]>((r, c) => {\n        if (!c.isSeat) {\n          r.push({ start: c.slotUtcStartDate, end: c.slotUtcEndDate });\n        }\n        return r;\n      }, []);\n\n      availableTimeSlots = availableTimeSlots\n        .map((slot) => {\n          if (\n            !checkForConflicts({\n              time: slot.time,\n              busy: busySlotsFromReservedSlots,\n              ...availabilityCheckProps,\n            })\n          ) {\n            return slot;\n          }\n          return undefined;\n        })\n        .filter(\n          (\n            item:\n              | {\n                  time: dayjs.Dayjs;\n                  userIds?: number[] | undefined;\n                }\n              | undefined\n          ): item is {\n            time: dayjs.Dayjs;\n            userIds?: number[] | undefined;\n          } => {\n            return !!item;\n          }\n        );\n    }\n\n    // fr-CA uses YYYY-MM-DD\n    const formatter = new Intl.DateTimeFormat(\"fr-CA\", {\n      year: \"numeric\",\n      month: \"2-digit\",\n      day: \"2-digit\",\n      timeZone: input.timeZone,\n    });\n\n    function _mapSlotsToDate() {\n      const currentSeatsMap = new Map();\n\n      if (currentSeats && currentSeats.length > 0) {\n        currentSeats.forEach((booking) => {\n          const timeKey = booking.startTime.toISOString();\n          currentSeatsMap.set(timeKey, {\n            attendees: booking._count.attendees,\n            uid: booking.uid,\n          });\n        });\n      }\n\n      return availableTimeSlots.reduce(\n        (\n          r: Record<string, { time: string; attendees?: number; bookingUid?: string }[]>,\n          { time, ...passThroughProps }\n        ) => {\n          // This used to be _time.tz(input.timeZone) but Dayjs tz() is slow.\n          // toLocaleDateString slugish, using Intl.DateTimeFormat we get the desired speed results.\n          const dateString = formatter.format(time.toDate());\n          const timeISO = time.toISOString();\n\n          r[dateString] = r[dateString] || [];\n          if (eventType?.onlyShowFirstAvailableSlot && r[dateString].length > 0) {\n            return r;\n          }\n\n          const existingBooking = currentSeatsMap.get(timeISO);\n\n          r[dateString].push({\n            ...passThroughProps,\n            time: timeISO,\n            ...(existingBooking && {\n              attendees: existingBooking.attendees,\n              bookingUid: existingBooking.uid,\n            }),\n          });\n          return r;\n        },\n        Object.create(null)\n      );\n    }\n    const mapSlotsToDate = withReporting(_mapSlotsToDate.bind(this), \"mapSlotsToDate\");\n    const slotsMappedToDate = mapSlotsToDate();\n\n    loggerWithEventDetails.debug({ slotsMappedToDate });\n\n    const availableDates = Object.keys(slotsMappedToDate);\n    const allDatesWithBookabilityStatus = this.getAllDatesWithBookabilityStatus(availableDates);\n    loggerWithEventDetails.debug({ availableDates });\n\n    // timeZone isn't directly set on eventType now(So, it is legacy)\n    // schedule is always expected to be set for an eventType now so it must never fallback to allUsersAvailability[0].timeZone(fallback is again legacy behavior)\n    // TODO: Also, handleNewBooking only seems to be using eventType?.schedule?.timeZone which seems to confirm that we should simplify it as well.\n    const eventTimeZone =\n      eventType.timeZone || eventType?.schedule?.timeZone || allUsersAvailability?.[0]?.timeZone;\n\n    const eventUtcOffset = getUTCOffsetByTimezone(eventTimeZone) ?? 0;\n    const bookerUtcOffset = input.timeZone ? getUTCOffsetByTimezone(input.timeZone) ?? 0 : 0;\n    const periodLimits = calculatePeriodLimits({\n      periodType: eventType.periodType,\n      periodDays: eventType.periodDays,\n      periodCountCalendarDays: eventType.periodCountCalendarDays,\n      periodStartDate: eventType.periodStartDate,\n      periodEndDate: eventType.periodEndDate,\n      allDatesWithBookabilityStatusInBookerTz: allDatesWithBookabilityStatus,\n      eventUtcOffset,\n      bookerUtcOffset,\n    });\n\n    const _mapWithinBoundsSlotsToDate = () => {\n      let foundAFutureLimitViolation = false;\n      // This should never happen. Just for type safety, we already check in the upper scope\n      if (!eventType) throw new TRPCError({ code: \"NOT_FOUND\" });\n\n      const withinBoundsSlotsMappedToDate = {} as typeof slotsMappedToDate;\n      const doesStartFromToday = this.doesRangeStartFromToday(eventType.periodType);\n\n      for (const [date, slots] of Object.entries(slotsMappedToDate)) {\n        if (foundAFutureLimitViolation && doesStartFromToday) {\n          break; // Instead of continuing the loop, we can break since all future dates will be skipped\n        }\n\n        const filteredSlots = slots.filter((slot) => {\n          const isFutureLimitViolationForTheSlot = isTimeViolatingFutureLimit({\n            time: slot.time,\n            periodLimits,\n          });\n\n          if (isFutureLimitViolationForTheSlot) {\n            foundAFutureLimitViolation = true;\n          }\n\n          return (\n            !isFutureLimitViolationForTheSlot &&\n            // TODO: Perf Optimization: Slots calculation logic already seems to consider the minimum booking notice and past booking time and thus there shouldn't be need to filter out slots here.\n            !isTimeOutOfBounds({ time: slot.time, minimumBookingNotice: eventType.minimumBookingNotice })\n          );\n        });\n\n        if (filteredSlots.length) {\n          withinBoundsSlotsMappedToDate[date] = filteredSlots;\n        }\n      }\n\n      return withinBoundsSlotsMappedToDate;\n    };\n    const mapWithinBoundsSlotsToDate = withReporting(\n      _mapWithinBoundsSlotsToDate.bind(this),\n      \"mapWithinBoundsSlotsToDate\"\n    );\n    const withinBoundsSlotsMappedToDate = mapWithinBoundsSlotsToDate();\n\n    // We only want to run this on single targeted events and not dynamic\n    if (!Object.keys(withinBoundsSlotsMappedToDate).length && input.usernameList?.length === 1) {\n      try {\n        // TODO: DI handleNotificationWhenNoSlots\n        await handleNotificationWhenNoSlots({\n          eventDetails: {\n            username: input.usernameList?.[0],\n            startTime: startTime,\n            endTime: endTime,\n            eventSlug: eventType.slug,\n          },\n          orgDetails,\n          teamId: eventType.team?.id,\n        });\n      } catch (e) {\n        loggerWithEventDetails.error(\n          `Something has gone wrong. Upstash could be down and we have caught the error to not block availability:\n ${e}`\n        );\n      }\n    }\n\n    const troubleshooterData = enableTroubleshooter\n      ? {\n          troubleshooter: {\n            routedTeamMemberIds: routedTeamMemberIds,\n            // One that Salesforce asked for\n            askedContactOwner: contactOwnerEmailFromInput,\n            // One that we used as per Routing skipContactOwner flag\n            consideredContactOwner: contactOwnerEmail,\n            // All hosts that have been checked for availability. If no routedTeamMemberIds are provided, this will be same as hosts.\n            routedHosts: usersWithCredentials.map((user) => {\n              return {\n                userId: user.id,\n              };\n            }),\n            hostsAfterSegmentMatching: allHosts.map((host) => ({\n              userId: host.user.id,\n            })),\n          },\n        }\n      : null;\n\n    return {\n      slots: withinBoundsSlotsMappedToDate,\n      ...troubleshooterData,\n    };\n  }\n}"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.constructor_6#method:AvailableSlotsService.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "AvailableSlotsService.constructor",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 104,
+        "endLine": 104,
+        "isBehavioral": true,
+        "source": "  constructor(private readonly dependencies: IAvailableSlotsService) {}"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getReservedSlotsAndCleanupExpired_7#method:AvailableSlotsService._getReservedSlotsAndCleanupExpired",
+        "unitKind": "method",
+        "name": "_getReservedSlotsAndCleanupExpired",
+        "qualifiedName": "AvailableSlotsService._getReservedSlotsAndCleanupExpired",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 106,
+        "endLine": 135,
+        "isBehavioral": true,
+        "source": "  private async _getReservedSlotsAndCleanupExpired({\n    bookerClientUid,\n    usersWithCredentials,\n    eventTypeId,\n  }: {\n    bookerClientUid: string | undefined;\n    usersWithCredentials: GetAvailabilityUser[];\n    eventTypeId: number;\n  }) {\n    const currentTimeInUtc = dayjs.utc().format();\n    const slotsRepo = this.dependencies.selectedSlotsRepo;\n\n    const unexpiredSelectedSlots =\n      (await slotsRepo.findManyUnexpiredSlots({\n        userIds: usersWithCredentials.map((user) => user.id),\n        currentTimeInUtc,\n      })) || [];\n\n    const slotsSelectedByOtherUsers = unexpiredSelectedSlots.filter((slot) => slot.uid !== bookerClientUid);\n\n    await _cleanupExpiredSlots({ eventTypeId });\n\n    const reservedSlots = slotsSelectedByOtherUsers;\n\n    return reservedSlots;\n\n    async function _cleanupExpiredSlots({ eventTypeId }: { eventTypeId: number }) {\n      await slotsRepo.deleteManyExpiredSlots({ eventTypeId, currentTimeInUtc });\n    }\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getReservedSlotsAndCleanupExpired._cleanupExpiredSlots_8#function:AvailableSlotsService._getReservedSlotsAndCleanupExpired._cleanupExpiredSlots",
+        "unitKind": "function",
+        "name": "_cleanupExpiredSlots",
+        "qualifiedName": "AvailableSlotsService._getReservedSlotsAndCleanupExpired._cleanupExpiredSlots",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getReservedSlotsAndCleanupExpired_7#method:AvailableSlotsService._getReservedSlotsAndCleanupExpired",
+        "startLine": 132,
+        "endLine": 134,
+        "isBehavioral": true,
+        "source": "    async function _cleanupExpiredSlots({ eventTypeId }: { eventTypeId: number }) {\n      await slotsRepo.deleteManyExpiredSlots({ eventTypeId, currentTimeInUtc });\n    }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getDynamicEventType_9#method:AvailableSlotsService._getDynamicEventType",
+        "unitKind": "method",
+        "name": "_getDynamicEventType",
+        "qualifiedName": "AvailableSlotsService._getDynamicEventType",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 137,
+        "endLine": 139,
+        "isBehavioral": true,
+        "source": "  private async _getDynamicEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getDynamicEventType_10#method:AvailableSlotsService.getDynamicEventType",
+        "unitKind": "method",
+        "name": "getDynamicEventType",
+        "qualifiedName": "AvailableSlotsService.getDynamicEventType",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 174,
+        "endLine": 174,
+        "isBehavioral": true,
+        "source": "  private getDynamicEventType = withReporting(this._getDynamicEventType.bind(this), \"getDynamicEventType\");"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.applyOccupiedSeatsToCurrentSeats_11#method:AvailableSlotsService.applyOccupiedSeatsToCurrentSeats",
+        "unitKind": "method",
+        "name": "applyOccupiedSeatsToCurrentSeats",
+        "qualifiedName": "AvailableSlotsService.applyOccupiedSeatsToCurrentSeats",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 176,
+        "endLine": 178,
+        "isBehavioral": true,
+        "source": "  private applyOccupiedSeatsToCurrentSeats(\n    currentSeats: CurrentSeats,\n    occupiedSeats: { slotUtcStartDate: Date }[]"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getEventType_12#method:AvailableSlotsService._getEventType",
+        "unitKind": "method",
+        "name": "_getEventType",
+        "qualifiedName": "AvailableSlotsService._getEventType",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 198,
+        "endLine": 200,
+        "isBehavioral": true,
+        "source": "  private async _getEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getEventType_13#method:AvailableSlotsService.getEventType",
+        "unitKind": "method",
+        "name": "getEventType",
+        "qualifiedName": "AvailableSlotsService.getEventType",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 225,
+        "endLine": 225,
+        "isBehavioral": true,
+        "source": "  private getEventType = withReporting(this._getEventType.bind(this), \"getEventType\");"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.doesRangeStartFromToday_14#method:AvailableSlotsService.doesRangeStartFromToday",
+        "unitKind": "method",
+        "name": "doesRangeStartFromToday",
+        "qualifiedName": "AvailableSlotsService.doesRangeStartFromToday",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 227,
+        "endLine": 229,
+        "isBehavioral": true,
+        "source": "  private doesRangeStartFromToday(periodType: PeriodType) {\n    return periodType === PeriodType.ROLLING_WINDOW || periodType === PeriodType.ROLLING;\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getAllDatesWithBookabilityStatus_15#method:AvailableSlotsService._getAllDatesWithBookabilityStatus",
+        "unitKind": "method",
+        "name": "_getAllDatesWithBookabilityStatus",
+        "qualifiedName": "AvailableSlotsService._getAllDatesWithBookabilityStatus",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 231,
+        "endLine": 246,
+        "isBehavioral": true,
+        "source": "  private _getAllDatesWithBookabilityStatus(availableDates: string[]) {\n    const availableDatesSet = new Set(availableDates);\n    const firstDate = dayjs(availableDates[0]);\n    const lastDate = dayjs(availableDates[availableDates.length - 1]);\n    const allDates: Record<string, { isBookable: boolean }> = {};\n\n    let currentDate = firstDate;\n    while (currentDate <= lastDate) {\n      allDates[currentDate.format(\"YYYY-MM-DD\")] = {\n        isBookable: availableDatesSet.has(currentDate.format(\"YYYY-MM-DD\")),\n      };\n\n      currentDate = currentDate.add(1, \"day\");\n    }\n    return allDates;\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getAllDatesWithBookabilityStatus_16#method:AvailableSlotsService.getAllDatesWithBookabilityStatus",
+        "unitKind": "method",
+        "name": "getAllDatesWithBookabilityStatus",
+        "qualifiedName": "AvailableSlotsService.getAllDatesWithBookabilityStatus",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 248,
+        "endLine": 251,
+        "isBehavioral": true,
+        "source": "  private getAllDatesWithBookabilityStatus = withReporting(\n    this._getAllDatesWithBookabilityStatus.bind(this),\n    \"getAllDatesWithBookabilityStatus\"\n  );"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getUserIdFromUsername_17#method:AvailableSlotsService.getUserIdFromUsername",
+        "unitKind": "method",
+        "name": "getUserIdFromUsername",
+        "qualifiedName": "AvailableSlotsService.getUserIdFromUsername",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 253,
+        "endLine": 255,
+        "isBehavioral": true,
+        "source": "  private async getUserIdFromUsername(\n    username: string,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getEventTypeId_18#method:AvailableSlotsService.getEventTypeId",
+        "unitKind": "method",
+        "name": "getEventTypeId",
+        "qualifiedName": "AvailableSlotsService.getEventTypeId",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 267,
+        "endLine": 299,
+        "isBehavioral": true,
+        "source": "  private async getEventTypeId({\n    slug,\n    eventTypeSlug,\n    isTeamEvent,\n    organizationDetails,\n  }: {\n    slug?: string;\n    eventTypeSlug?: string;\n    isTeamEvent: boolean;\n    organizationDetails?: { currentOrgDomain: string | null; isValidOrgDomain: boolean };\n  }) {\n    if (!eventTypeSlug || !slug) return null;\n\n    let teamId;\n    let userId;\n    if (isTeamEvent) {\n      teamId = await this.getTeamIdFromSlug(\n        slug,\n        organizationDetails ?? { currentOrgDomain: null, isValidOrgDomain: false }\n      );\n    } else {\n      userId = await this.getUserIdFromUsername(\n        slug,\n        organizationDetails ?? { currentOrgDomain: null, isValidOrgDomain: false }\n      );\n    }\n    const eventTypeRepo = this.dependencies.eventTypeRepo;\n    const eventType = await eventTypeRepo.findFirstEventTypeId({ slug: eventTypeSlug, teamId, userId });\n    if (!eventType) {\n      throw new TRPCError({ code: \"NOT_FOUND\" });\n    }\n    return eventType?.id;\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getTeamIdFromSlug_19#method:AvailableSlotsService.getTeamIdFromSlug",
+        "unitKind": "method",
+        "name": "getTeamIdFromSlug",
+        "qualifiedName": "AvailableSlotsService.getTeamIdFromSlug",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 301,
+        "endLine": 303,
+        "isBehavioral": true,
+        "source": "  private async getTeamIdFromSlug(\n    slug: string,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getBusyTimesFromLimitsForUsers_20#method:AvailableSlotsService._getBusyTimesFromLimitsForUsers",
+        "unitKind": "method",
+        "name": "_getBusyTimesFromLimitsForUsers",
+        "qualifiedName": "AvailableSlotsService._getBusyTimesFromLimitsForUsers",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 316,
+        "endLine": 496,
+        "isBehavioral": true,
+        "source": "  private async _getBusyTimesFromLimitsForUsers(\n    users: { id: number; email: string }[],\n    bookingLimits: IntervalLimit | null,\n    durationLimits: IntervalLimit | null,\n    dateFrom: Dayjs,\n    dateTo: Dayjs,\n    duration: number | undefined,\n    eventType: NonNullable<EventType>,\n    timeZone: string,\n    rescheduleUid?: string\n  ) {\n    const userBusyTimesMap = new Map<number, EventBusyDetails[]>();\n\n    if (!bookingLimits && !durationLimits) {\n      return userBusyTimesMap;\n    }\n\n    const { limitDateFrom, limitDateTo } = getStartEndDateforLimitCheck(\n      dateFrom.toISOString(),\n      dateTo.toISOString(),\n      bookingLimits || durationLimits\n    );\n\n    const busyTimesFromLimitsBookings = await getBusyTimesForLimitChecks({\n      userIds: users.map((user) => user.id),\n      eventTypeId: eventType.id,\n      startDate: limitDateFrom.format(),\n      endDate: limitDateTo.format(),\n      rescheduleUid,\n      bookingLimits,\n      durationLimits,\n    });\n\n    const globalLimitManager = new LimitManager();\n\n    if (bookingLimits) {\n      for (const key of descendingLimitKeys) {\n        const limit = bookingLimits?.[key];\n        if (!limit) continue;\n\n        const unit = intervalLimitKeyToUnit(key);\n        const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n        for (const periodStart of periodStartDates) {\n          if (globalLimitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n          const periodEnd = periodStart.endOf(unit);\n          let totalBookings = 0;\n\n          for (const booking of busyTimesFromLimitsBookings) {\n            if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n              continue;\n            }\n\n            totalBookings++;\n            if (totalBookings >= limit) {\n              globalLimitManager.addBusyTime(periodStart, unit, timeZone);\n              break;\n            }\n          }\n        }\n      }\n    }\n\n    for (const user of users) {\n      const userBookings = busyTimesFromLimitsBookings.filter((booking) => booking.userId === user.id);\n      const limitManager = new LimitManager();\n\n      limitManager.mergeBusyTimes(globalLimitManager);\n\n      if (bookingLimits) {\n        for (const key of descendingLimitKeys) {\n          const limit = bookingLimits?.[key];\n          if (!limit) continue;\n\n          const unit = intervalLimitKeyToUnit(key);\n          const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n          for (const periodStart of periodStartDates) {\n            if (limitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n            if (unit === \"year\") {\n              try {\n                // TODO: DI checkBookingLimit\n                await checkBookingLimit({\n                  eventStartDate: periodStart.toDate(),\n                  limitingNumber: limit,\n                  eventId: eventType.id,\n                  key,\n                  user,\n                  rescheduleUid,\n                  timeZone,\n                });\n              } catch (_) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                if (\n                  periodStartDates.every((start: Dayjs) => limitManager.isAlreadyBusy(start, unit, timeZone))\n                ) {\n                  break;\n                }\n              }\n              continue;\n            }\n\n            const periodEnd = periodStart.endOf(unit);\n            let totalBookings = 0;\n\n            for (const booking of userBookings) {\n              if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n                continue;\n              }\n\n              totalBookings++;\n              if (totalBookings >= limit) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                break;\n              }\n            }\n          }\n        }\n      }\n\n      if (durationLimits) {\n        for (const key of descendingLimitKeys) {\n          const limit = durationLimits?.[key];\n          if (!limit) continue;\n\n          const unit = intervalLimitKeyToUnit(key);\n          const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n          for (const periodStart of periodStartDates) {\n            if (limitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n            const selectedDuration = (duration || eventType.length) ?? 0;\n\n            if (selectedDuration > limit) {\n              limitManager.addBusyTime(periodStart, unit, timeZone);\n              continue;\n            }\n\n            if (unit === \"year\") {\n              // TODO: DI getTotalBookingDuration\n              const totalYearlyDuration = await getTotalBookingDuration({\n                eventId: eventType.id,\n                startDate: periodStart.toDate(),\n                endDate: periodStart.endOf(unit).toDate(),\n                rescheduleUid,\n              });\n              if (totalYearlyDuration + selectedDuration > limit) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                if (\n                  periodStartDates.every((start: Dayjs) => limitManager.isAlreadyBusy(start, unit, timeZone))\n                ) {\n                  break;\n                }\n              }\n              continue;\n            }\n\n            const periodEnd = periodStart.endOf(unit);\n            let totalDuration = selectedDuration;\n\n            for (const booking of userBookings) {\n              if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n                continue;\n              }\n              totalDuration += dayjs(booking.end).diff(dayjs(booking.start), \"minute\");\n              if (totalDuration > limit) {\n                limitManager.addBusyTime(periodStart, unit, timeZone);\n                break;\n              }\n            }\n          }\n        }\n      }\n\n      userBusyTimesMap.set(user.id, limitManager.getBusyTimes());\n    }\n\n    return userBusyTimesMap;\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getBusyTimesFromLimitsForUsers_21#method:AvailableSlotsService.getBusyTimesFromLimitsForUsers",
+        "unitKind": "method",
+        "name": "getBusyTimesFromLimitsForUsers",
+        "qualifiedName": "AvailableSlotsService.getBusyTimesFromLimitsForUsers",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 498,
+        "endLine": 501,
+        "isBehavioral": true,
+        "source": "  private getBusyTimesFromLimitsForUsers = withReporting(\n    this._getBusyTimesFromLimitsForUsers.bind(this),\n    \"getBusyTimesFromLimitsForUsers\"\n  );"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getBusyTimesFromTeamLimitsForUsers_22#method:AvailableSlotsService._getBusyTimesFromTeamLimitsForUsers",
+        "unitKind": "method",
+        "name": "_getBusyTimesFromTeamLimitsForUsers",
+        "qualifiedName": "AvailableSlotsService._getBusyTimesFromTeamLimitsForUsers",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 503,
+        "endLine": 642,
+        "isBehavioral": true,
+        "source": "  private async _getBusyTimesFromTeamLimitsForUsers(\n    users: { id: number; email: string }[],\n    bookingLimits: IntervalLimit,\n    dateFrom: Dayjs,\n    dateTo: Dayjs,\n    teamId: number,\n    includeManagedEvents: boolean,\n    timeZone: string,\n    rescheduleUid?: string\n  ) {\n    const { limitDateFrom, limitDateTo } = getStartEndDateforLimitCheck(\n      dateFrom.toISOString(),\n      dateTo.toISOString(),\n      bookingLimits\n    );\n\n    const bookingRepo = this.dependencies.bookingRepo;\n    const bookings = await bookingRepo.getAllAcceptedTeamBookingsOfUsers({\n      users,\n      teamId,\n      startDate: limitDateFrom.toDate(),\n      endDate: limitDateTo.toDate(),\n      excludedUid: rescheduleUid,\n      includeManagedEvents,\n    });\n\n    const busyTimes = bookings.map(({ id, startTime, endTime, eventTypeId, title, userId }) => ({\n      start: dayjs(startTime).toDate(),\n      end: dayjs(endTime).toDate(),\n      title,\n      source: `eventType-${eventTypeId}-booking-${id}`,\n      userId,\n    }));\n\n    const globalLimitManager = new LimitManager();\n\n    for (const key of descendingLimitKeys) {\n      const limit = bookingLimits?.[key];\n      if (!limit) continue;\n\n      const unit = intervalLimitKeyToUnit(key);\n      const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n      for (const periodStart of periodStartDates) {\n        if (globalLimitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n        const periodEnd = periodStart.endOf(unit);\n        let totalBookings = 0;\n\n        for (const booking of busyTimes) {\n          if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n            continue;\n          }\n\n          totalBookings++;\n          if (totalBookings >= limit) {\n            globalLimitManager.addBusyTime(periodStart, unit, timeZone);\n            break;\n          }\n        }\n      }\n    }\n\n    const userBusyTimesMap = new Map();\n\n    for (const user of users) {\n      const userBusyTimes = busyTimes.filter((busyTime) => busyTime.userId === user.id);\n      const limitManager = new LimitManager();\n\n      limitManager.mergeBusyTimes(globalLimitManager);\n\n      const bookingLimitsParams = {\n        bookings: userBusyTimes,\n        bookingLimits,\n        dateFrom,\n        dateTo,\n        limitManager,\n        rescheduleUid,\n        teamId,\n        user,\n        includeManagedEvents,\n        timeZone,\n      };\n\n      for (const key of descendingLimitKeys) {\n        const limit = bookingLimits?.[key];\n        if (!limit) continue;\n\n        const unit = intervalLimitKeyToUnit(key);\n        const periodStartDates = getPeriodStartDatesBetween(dateFrom, dateTo, unit, timeZone);\n\n        for (const periodStart of periodStartDates) {\n          if (limitManager.isAlreadyBusy(periodStart, unit, timeZone)) continue;\n\n          if (unit === \"year\") {\n            try {\n              // TODO: DI checkBookingLimit\n              await checkBookingLimit({\n                eventStartDate: periodStart.toDate(),\n                limitingNumber: limit,\n                key,\n                teamId,\n                user,\n                rescheduleUid,\n                includeManagedEvents,\n                timeZone,\n              });\n            } catch (_) {\n              limitManager.addBusyTime(periodStart, unit, timeZone);\n              if (\n                periodStartDates.every((start: Dayjs) => limitManager.isAlreadyBusy(start, unit, timeZone))\n              ) {\n                return;\n              }\n            }\n            continue;\n          }\n\n          const periodEnd = periodStart.endOf(unit);\n          let totalBookings = 0;\n\n          for (const booking of userBusyTimes) {\n            if (!isBookingWithinPeriod(booking, periodStart, periodEnd, timeZone)) {\n              continue;\n            }\n\n            totalBookings++;\n            if (totalBookings >= limit) {\n              limitManager.addBusyTime(periodStart, unit, timeZone);\n              break;\n            }\n          }\n        }\n      }\n\n      userBusyTimesMap.set(user.id, limitManager.getBusyTimes());\n    }\n\n    return userBusyTimesMap;\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getBusyTimesFromTeamLimitsForUsers_23#method:AvailableSlotsService.getBusyTimesFromTeamLimitsForUsers",
+        "unitKind": "method",
+        "name": "getBusyTimesFromTeamLimitsForUsers",
+        "qualifiedName": "AvailableSlotsService.getBusyTimesFromTeamLimitsForUsers",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 643,
+        "endLine": 646,
+        "isBehavioral": true,
+        "source": "  private getBusyTimesFromTeamLimitsForUsers = withReporting(\n    this._getBusyTimesFromTeamLimitsForUsers.bind(this),\n    \"getBusyTimesFromTeamLimitsForUsers\"\n  );"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getOOODates_24#method:AvailableSlotsService._getOOODates",
+        "unitKind": "method",
+        "name": "_getOOODates",
+        "qualifiedName": "AvailableSlotsService._getOOODates",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 648,
+        "endLine": 650,
+        "isBehavioral": true,
+        "source": "  private async _getOOODates(startTimeDate: Date, endTimeDate: Date, allUserIds: number[]) {\n    return this.dependencies.oooRepo.findManyOOO({ startTimeDate, endTimeDate, allUserIds });\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getOOODates_25#method:AvailableSlotsService.getOOODates",
+        "unitKind": "method",
+        "name": "getOOODates",
+        "qualifiedName": "AvailableSlotsService.getOOODates",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 651,
+        "endLine": 651,
+        "isBehavioral": true,
+        "source": "  private getOOODates = withReporting(this._getOOODates.bind(this), \"getOOODates\");"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getUsersWithCredentials_26#method:AvailableSlotsService._getUsersWithCredentials",
+        "unitKind": "method",
+        "name": "_getUsersWithCredentials",
+        "qualifiedName": "AvailableSlotsService._getUsersWithCredentials",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 653,
+        "endLine": 662,
+        "isBehavioral": true,
+        "source": "  private _getUsersWithCredentials({\n    hosts,\n  }: {\n    hosts: {\n      isFixed?: boolean;\n      user: GetAvailabilityUserWithDelegationCredentials;\n    }[];\n  }) {\n    return hosts.map(({ isFixed, user }) => ({ isFixed, ...user }));\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getUsersWithCredentials_27#method:AvailableSlotsService.getUsersWithCredentials",
+        "unitKind": "method",
+        "name": "getUsersWithCredentials",
+        "qualifiedName": "AvailableSlotsService.getUsersWithCredentials",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 664,
+        "endLine": 667,
+        "isBehavioral": true,
+        "source": "  private getUsersWithCredentials = withReporting(\n    this._getUsersWithCredentials.bind(this),\n    \"getUsersWithCredentials\"\n  );"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getStartTime_28#method:AvailableSlotsService.getStartTime",
+        "unitKind": "method",
+        "name": "getStartTime",
+        "qualifiedName": "AvailableSlotsService.getStartTime",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 669,
+        "endLine": 674,
+        "isBehavioral": true,
+        "source": "  private getStartTime(startTimeInput: string, timeZone?: string, minimumBookingNotice?: number) {\n    const startTimeMin = dayjs.utc().add(minimumBookingNotice || 1, \"minutes\");\n    const startTime = timeZone === \"Etc/GMT\" ? dayjs.utc(startTimeInput) : dayjs(startTimeInput).tz(timeZone);\n\n    return startTimeMin.isAfter(startTime) ? startTimeMin.tz(timeZone) : startTime;\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.calculateHostsAndAvailabilities_29#method:AvailableSlotsService.calculateHostsAndAvailabilities",
+        "unitKind": "method",
+        "name": "calculateHostsAndAvailabilities",
+        "qualifiedName": "AvailableSlotsService.calculateHostsAndAvailabilities",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 675,
+        "endLine": 856,
+        "isBehavioral": true,
+        "source": "  private async calculateHostsAndAvailabilities({\n    input,\n    eventType,\n    hosts,\n    loggerWithEventDetails,\n    startTime,\n    endTime,\n    bypassBusyCalendarTimes,\n    shouldServeCache,\n  }: {\n    input: TGetScheduleInputSchema;\n    eventType: Exclude<\n      Awaited<ReturnType<(typeof AvailableSlotsService)[\"prototype\"][\"getRegularOrDynamicEventType\"]>>,\n      null\n    >;\n    hosts: {\n      isFixed?: boolean;\n      user: GetAvailabilityUserWithDelegationCredentials;\n    }[];\n    loggerWithEventDetails: Logger<unknown>;\n    startTime: ReturnType<(typeof AvailableSlotsService)[\"prototype\"][\"getStartTime\"]>;\n    endTime: Dayjs;\n    bypassBusyCalendarTimes: boolean;\n    shouldServeCache?: boolean;\n  }) {\n    const usersWithCredentials = this.getUsersWithCredentials({\n      hosts,\n    });\n\n    loggerWithEventDetails.debug(\"Using users\", {\n      usersWithCredentials: usersWithCredentials.map((user) => user.email),\n    });\n\n    const durationToUse = input.duration || 0;\n    let currentSeats: CurrentSeats | undefined;\n\n    const startTimeDate =\n      input.rescheduleUid && durationToUse\n        ? startTime.subtract(durationToUse, \"minute\").toDate()\n        : startTime.toDate();\n\n    const endTimeDate =\n      input.rescheduleUid && durationToUse ? endTime.add(durationToUse, \"minute\").toDate() : endTime.toDate();\n\n    const userIdAndEmailMap = new Map(usersWithCredentials.map((user) => [user.id, user.email]));\n    const allUserIds = Array.from(userIdAndEmailMap.keys());\n\n    const bookingRepo = this.dependencies.bookingRepo;\n    const [currentBookingsAllUsers, outOfOfficeDaysAllUsers] = await Promise.all([\n      bookingRepo.findAllExistingBookingsForEventTypeBetween({\n        startDate: startTimeDate,\n        endDate: endTimeDate,\n        eventTypeId: eventType.id,\n        seatedEvent: Boolean(eventType.seatsPerTimeSlot),\n        userIdAndEmailMap,\n      }),\n      this.getOOODates(startTimeDate, endTimeDate, allUserIds),\n    ]);\n\n    const bookingLimits = parseBookingLimit(eventType?.bookingLimits);\n    const durationLimits = parseDurationLimit(eventType?.durationLimits);\n    let busyTimesFromLimitsBookingsAllUsers: Awaited<ReturnType<typeof getBusyTimesForLimitChecks>> = [];\n\n    if (eventType && (bookingLimits || durationLimits)) {\n      // TODO: DI getBusyTimesForLimitChecks\n      busyTimesFromLimitsBookingsAllUsers = await getBusyTimesForLimitChecks({\n        userIds: allUserIds,\n        eventTypeId: eventType.id,\n        startDate: startTime.format(),\n        endDate: endTime.format(),\n        rescheduleUid: input.rescheduleUid,\n        bookingLimits,\n        durationLimits,\n      });\n    }\n\n    let busyTimesFromLimitsMap: Map<number, EventBusyDetails[]> | undefined = undefined;\n    if (eventType && (bookingLimits || durationLimits)) {\n      const usersForLimits = usersWithCredentials.map((user) => ({ id: user.id, email: user.email }));\n      busyTimesFromLimitsMap = await this.getBusyTimesFromLimitsForUsers(\n        usersForLimits,\n        bookingLimits,\n        durationLimits,\n        startTime,\n        endTime,\n        typeof input.duration === \"number\" ? input.duration : undefined,\n        eventType,\n        usersWithCredentials[0]?.timeZone || \"UTC\",\n        input.rescheduleUid || undefined\n      );\n    }\n\n    const teamForBookingLimits =\n      eventType?.team ??\n      (eventType?.parent?.team?.includeManagedEventsInLimits ? eventType?.parent?.team : null);\n\n    const teamBookingLimits = parseBookingLimit(teamForBookingLimits?.bookingLimits);\n\n    let teamBookingLimitsMap: Map<number, EventBusyDetails[]> | undefined = undefined;\n    if (teamForBookingLimits && teamBookingLimits) {\n      const usersForTeamLimits = usersWithCredentials.map((user) => ({ id: user.id, email: user.email }));\n      teamBookingLimitsMap = await this.getBusyTimesFromTeamLimitsForUsers(\n        usersForTeamLimits,\n        teamBookingLimits,\n        startTime,\n        endTime,\n        teamForBookingLimits.id,\n        teamForBookingLimits.includeManagedEventsInLimits,\n        usersWithCredentials[0]?.timeZone || \"UTC\",\n        input.rescheduleUid || undefined\n      );\n    }\n\n    function _enrichUsersWithData() {\n      return usersWithCredentials.map((currentUser) => {\n        return {\n          ...currentUser,\n          currentBookings: currentBookingsAllUsers\n            .filter(\n              (b) => b.userId === currentUser.id || b.attendees?.some((a) => a.email === currentUser.email)\n            )\n            .map((bookings) => {\n              const { attendees: _attendees, ...bookingWithoutAttendees } = bookings;\n              return bookingWithoutAttendees;\n            }),\n          outOfOfficeDays: outOfOfficeDaysAllUsers.filter((o) => o.user.id === currentUser.id),\n        };\n      });\n    }\n    const enrichUsersWithData = withReporting(_enrichUsersWithData.bind(this), \"enrichUsersWithData\");\n    const users = enrichUsersWithData();\n\n    // TODO: DI getUsersAvailability\n    const premappedUsersAvailability = await getUsersAvailability({\n      users,\n      query: {\n        dateFrom: startTime.format(),\n        dateTo: endTime.format(),\n        eventTypeId: eventType.id,\n        afterEventBuffer: eventType.afterEventBuffer,\n        beforeEventBuffer: eventType.beforeEventBuffer,\n        duration: input.duration || 0,\n        returnDateOverrides: false,\n        bypassBusyCalendarTimes,\n        shouldServeCache,\n      },\n      initialData: {\n        eventType,\n        currentSeats,\n        rescheduleUid: input.rescheduleUid,\n        busyTimesFromLimitsBookings: busyTimesFromLimitsBookingsAllUsers,\n        busyTimesFromLimits: busyTimesFromLimitsMap,\n        eventTypeForLimits: eventType && (bookingLimits || durationLimits) ? eventType : null,\n        teamBookingLimits: teamBookingLimitsMap,\n        teamForBookingLimits: teamForBookingLimits,\n      },\n    });\n    /* We get all users working hours and busy slots */\n    const allUsersAvailability = premappedUsersAvailability.map(\n      (\n        { busy, dateRanges, oooExcludedDateRanges, currentSeats: _currentSeats, timeZone, datesOutOfOffice },\n        index\n      ) => {\n        const currentUser = users[index];\n        if (!currentSeats && _currentSeats) currentSeats = _currentSeats;\n        return {\n          timeZone,\n          dateRanges,\n          oooExcludedDateRanges,\n          busy,\n          user: currentUser,\n          datesOutOfOffice,\n        };\n      }\n    );\n\n    return {\n      allUsersAvailability,\n      usersWithCredentials,\n      currentSeats,\n    };\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.calculateHostsAndAvailabilities._enrichUsersWithData_30#function:AvailableSlotsService.calculateHostsAndAvailabilities._enrichUsersWithData",
+        "unitKind": "function",
+        "name": "_enrichUsersWithData",
+        "qualifiedName": "AvailableSlotsService.calculateHostsAndAvailabilities._enrichUsersWithData",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.calculateHostsAndAvailabilities_29#method:AvailableSlotsService.calculateHostsAndAvailabilities",
+        "startLine": 788,
+        "endLine": 803,
+        "isBehavioral": true,
+        "source": "    function _enrichUsersWithData() {\n      return usersWithCredentials.map((currentUser) => {\n        return {\n          ...currentUser,\n          currentBookings: currentBookingsAllUsers\n            .filter(\n              (b) => b.userId === currentUser.id || b.attendees?.some((a) => a.email === currentUser.email)\n            )\n            .map((bookings) => {\n              const { attendees: _attendees, ...bookingWithoutAttendees } = bookings;\n              return bookingWithoutAttendees;\n            }),\n          outOfOfficeDays: outOfOfficeDaysAllUsers.filter((o) => o.user.id === currentUser.id),\n        };\n      });\n    }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getRegularOrDynamicEventType_31#method:AvailableSlotsService._getRegularOrDynamicEventType",
+        "unitKind": "method",
+        "name": "_getRegularOrDynamicEventType",
+        "qualifiedName": "AvailableSlotsService._getRegularOrDynamicEventType",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 858,
+        "endLine": 860,
+        "isBehavioral": true,
+        "source": "  private async _getRegularOrDynamicEventType(\n    input: TGetScheduleInputSchema,\n    organizationDetails: { currentOrgDomain: string | null; isValidOrgDomain: boolean }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getRegularOrDynamicEventType_32#method:AvailableSlotsService.getRegularOrDynamicEventType",
+        "unitKind": "method",
+        "name": "getRegularOrDynamicEventType",
+        "qualifiedName": "AvailableSlotsService.getRegularOrDynamicEventType",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 868,
+        "endLine": 871,
+        "isBehavioral": true,
+        "source": "  private getRegularOrDynamicEventType = withReporting(\n    this._getRegularOrDynamicEventType.bind(this),\n    \"getRegularOrDynamicEventType\"\n  );"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService.getAvailableSlots_33#method:AvailableSlotsService.getAvailableSlots",
+        "unitKind": "method",
+        "name": "getAvailableSlots",
+        "qualifiedName": "AvailableSlotsService.getAvailableSlots",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 873,
+        "endLine": 873,
+        "isBehavioral": true,
+        "source": "  getAvailableSlots = withReporting(this._getAvailableSlots.bind(this), \"getAvailableSlots\");"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getAvailableSlots_34#method:AvailableSlotsService._getAvailableSlots",
+        "unitKind": "method",
+        "name": "_getAvailableSlots",
+        "qualifiedName": "AvailableSlotsService._getAvailableSlots",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService_5#class:AvailableSlotsService",
+        "startLine": 875,
+        "endLine": 1387,
+        "isBehavioral": true,
+        "source": "  async _getAvailableSlots({ input, ctx }: GetScheduleOptions): Promise<IGetAvailableSlots> {\n    const {\n      _enableTroubleshooter: enableTroubleshooter = false,\n      _bypassCalendarBusyTimes: bypassBusyCalendarTimes = false,\n      _shouldServeCache,\n      routingFormResponseId,\n      queuedFormResponseId,\n    } = input;\n    const orgDetails = input?.orgSlug\n      ? {\n          currentOrgDomain: input.orgSlug,\n          isValidOrgDomain: !!input.orgSlug && !RESERVED_SUBDOMAINS.includes(input.orgSlug),\n        }\n      : orgDomainConfig(ctx?.req);\n\n    if (process.env.INTEGRATION_TEST_MODE === \"true\") {\n      logger.settings.minLevel = 2;\n    }\n\n    const eventType = await this.getRegularOrDynamicEventType(input, orgDetails);\n\n    if (!eventType) {\n      throw new TRPCError({ code: \"NOT_FOUND\" });\n    }\n\n    // TODO: DI getShouldServeCache\n    const shouldServeCache = await getShouldServeCache(_shouldServeCache, eventType.team?.id);\n    if (isEventTypeLoggingEnabled({ eventTypeId: eventType.id })) {\n      logger.settings.minLevel = 2;\n    }\n\n    const isRollingWindowPeriodType = eventType.periodType === PeriodType.ROLLING_WINDOW;\n    const startTimeAsIsoString = input.startTime;\n    const isStartTimeInPast = dayjs(startTimeAsIsoString).isBefore(dayjs().subtract(1, \"day\").startOf(\"day\"));\n\n    // If startTime is already sent in the past, we don't need to adjust it.\n    // We assume that the client is already sending startTime as per their requirement.\n    // Note: We could optimize it further to go back 1 month in past only for the 2nd month because that is what we are putting a hard limit at.\n    const startTimeAdjustedForRollingWindowComputation =\n      isStartTimeInPast || !isRollingWindowPeriodType\n        ? startTimeAsIsoString\n        : dayjs(startTimeAsIsoString).subtract(1, \"month\").toISOString();\n\n    const loggerWithEventDetails = logger.getSubLogger({\n      type: \"json\",\n      prefix: [\"getAvailableSlots\", `${eventType.id}:${input.usernameList}/${input.eventTypeSlug}`],\n    });\n\n    const startTime = this.getStartTime(\n      startTimeAdjustedForRollingWindowComputation,\n      input.timeZone,\n      eventType.minimumBookingNotice\n    );\n    const endTime =\n      input.timeZone === \"Etc/GMT\" ? dayjs.utc(input.endTime) : dayjs(input.endTime).utc().tz(input.timeZone);\n\n    if (!startTime.isValid() || !endTime.isValid()) {\n      throw new TRPCError({ message: \"Invalid time range given.\", code: \"BAD_REQUEST\" });\n    }\n    // when an empty array is given we should prefer to have it handled as if this wasn't given at all\n    // we don't want to return no availability in this case.\n    const routedTeamMemberIds = input.routedTeamMemberIds ?? [];\n    const contactOwnerEmailFromInput = input.teamMemberEmail ?? null;\n\n    const skipContactOwner = shouldIgnoreContactOwner({\n      skipContactOwner: input.skipContactOwner ?? null,\n      rescheduleUid: input.rescheduleUid ?? null,\n      routedTeamMemberIds: input.routedTeamMemberIds ?? null,\n    });\n\n    const contactOwnerEmail = skipContactOwner ? null : contactOwnerEmailFromInput;\n\n    let routingFormResponse = null;\n    if (routingFormResponseId) {\n      const formResponseRepo = this.dependencies.routingFormResponseRepo;\n      routingFormResponse = await formResponseRepo.findFormResponseIncludeForm({\n        routingFormResponseId,\n      });\n    } else if (queuedFormResponseId) {\n      const formResponseRepo = this.dependencies.routingFormResponseRepo;\n      routingFormResponse = await formResponseRepo.findQueuedFormResponseIncludeForm({\n        queuedFormResponseId,\n      });\n    }\n\n    // TODO: DI findQualifiedHostsWithDelegationCredentials\n    const { qualifiedRRHosts, allFallbackRRHosts, fixedHosts } =\n      await findQualifiedHostsWithDelegationCredentials({\n        eventType,\n        rescheduleUid: input.rescheduleUid ?? null,\n        routedTeamMemberIds,\n        contactOwnerEmail,\n        routingFormResponse,\n      });\n\n    const allHosts = [...qualifiedRRHosts, ...fixedHosts];\n\n    const twoWeeksFromNow = dayjs().add(2, \"week\");\n\n    const hasFallbackRRHosts = allFallbackRRHosts && allFallbackRRHosts.length > qualifiedRRHosts.length;\n\n    let { allUsersAvailability, usersWithCredentials, currentSeats } =\n      await this.calculateHostsAndAvailabilities({\n        input,\n        eventType,\n        hosts: allHosts,\n        loggerWithEventDetails,\n        // adjust start time so we can check for available slots in the first two weeks\n        startTime:\n          hasFallbackRRHosts && startTime.isBefore(twoWeeksFromNow)\n            ? this.getStartTime(dayjs().format(), input.timeZone, eventType.minimumBookingNotice)\n            : startTime,\n        // adjust end time so we can check for available slots in the first two weeks\n        endTime:\n          hasFallbackRRHosts && endTime.isBefore(twoWeeksFromNow)\n            ? this.getStartTime(twoWeeksFromNow.format(), input.timeZone, eventType.minimumBookingNotice)\n            : endTime,\n        bypassBusyCalendarTimes,\n        shouldServeCache,\n      });\n\n    let aggregatedAvailability = getAggregatedAvailability(allUsersAvailability, eventType.schedulingType);\n\n    // Fairness and Contact Owner have fallbacks because we check for within 2 weeks\n    if (hasFallbackRRHosts) {\n      let diff = 0;\n      if (startTime.isBefore(twoWeeksFromNow)) {\n        //check if first two week have availability\n        diff =\n          aggregatedAvailability.length > 0\n            ? aggregatedAvailability[0].start.diff(twoWeeksFromNow, \"day\")\n            : 1; // no aggregatedAvailability so we diff to +1\n      } else {\n        // if start time is not within first two weeks, check if there are any available slots\n        if (!aggregatedAvailability.length) {\n          // if no available slots check if first two weeks are available, otherwise fallback\n          const firstTwoWeeksAvailabilities = await this.calculateHostsAndAvailabilities({\n            input,\n            eventType,\n            hosts: [...qualifiedRRHosts, ...fixedHosts],\n            loggerWithEventDetails,\n            startTime: dayjs(),\n            endTime: twoWeeksFromNow,\n            bypassBusyCalendarTimes,\n            shouldServeCache,\n          });\n          if (\n            !getAggregatedAvailability(\n              firstTwoWeeksAvailabilities.allUsersAvailability,\n              eventType.schedulingType\n            ).length\n          ) {\n            diff = 1;\n          }\n        }\n      }\n\n      if (input.email) {\n        loggerWithEventDetails.info({\n          email: input.email,\n          contactOwnerEmail,\n          qualifiedRRHosts: qualifiedRRHosts.map((host) => host.user.id),\n          fallbackRRHosts: allFallbackRRHosts.map((host) => host.user.id),\n          fallBackActive: diff > 0,\n        });\n      }\n\n      if (diff > 0) {\n        // if the first available slot is more than 2 weeks from now, round robin as normal\n        ({ allUsersAvailability, usersWithCredentials, currentSeats } =\n          await this.calculateHostsAndAvailabilities({\n            input,\n            eventType,\n            hosts: [...allFallbackRRHosts, ...fixedHosts],\n            loggerWithEventDetails,\n            startTime,\n            endTime,\n            bypassBusyCalendarTimes,\n            shouldServeCache,\n          }));\n        aggregatedAvailability = getAggregatedAvailability(allUsersAvailability, eventType.schedulingType);\n      }\n    }\n\n    const isTeamEvent =\n      eventType.schedulingType === SchedulingType.COLLECTIVE ||\n      eventType.schedulingType === SchedulingType.ROUND_ROBIN ||\n      allUsersAvailability.length > 1;\n\n    const timeSlots = getSlots({\n      inviteeDate: startTime,\n      eventLength: input.duration || eventType.length,\n      offsetStart: eventType.offsetStart,\n      dateRanges: aggregatedAvailability,\n      minimumBookingNotice: eventType.minimumBookingNotice,\n      frequency: eventType.slotInterval || input.duration || eventType.length,\n      datesOutOfOffice: !isTeamEvent ? allUsersAvailability[0]?.datesOutOfOffice : undefined,\n    });\n\n    let availableTimeSlots: typeof timeSlots = [];\n    const bookerClientUid = ctx?.req?.cookies?.uid;\n    // TODO: DI isRestrictionScheduleEnabled\n    const isRestrictionScheduleFeatureEnabled = await isRestrictionScheduleEnabled(eventType.team?.id);\n    if (eventType.restrictionScheduleId && isRestrictionScheduleFeatureEnabled) {\n      const restrictionSchedule = await this.dependencies.scheduleRepo.findScheduleByIdForBuildDateRanges({\n        scheduleId: eventType.restrictionScheduleId,\n      });\n      if (restrictionSchedule) {\n        if (!eventType.useBookerTimezone && !restrictionSchedule.timeZone) {\n          throw new TRPCError({\n            message: \"No timezone is set for the restricted schedule\",\n            code: \"BAD_REQUEST\",\n          });\n        }\n\n        const restrictionTimezone = eventType.useBookerTimezone\n          ? input.timeZone\n          : restrictionSchedule.timeZone!;\n        const eventLength = input.duration || eventType.length;\n\n        const restrictionAvailability = restrictionSchedule.availability.map((rule) => ({\n          days: rule.days,\n          startTime: rule.startTime,\n          endTime: rule.endTime,\n          date: rule.date,\n        }));\n\n        // Include travel schedules if restriction schedule is the user's default schedule\n        const isDefaultSchedule = restrictionSchedule.user.defaultScheduleId === restrictionSchedule.id;\n        const travelSchedules =\n          isDefaultSchedule && !eventType.useBookerTimezone\n            ? restrictionSchedule.user.travelSchedules.map((schedule) => ({\n                startDate: dayjs(schedule.startDate),\n                endDate: schedule.endDate ? dayjs(schedule.endDate) : undefined,\n                timeZone: schedule.timeZone,\n              }))\n            : [];\n\n        const { dateRanges: restrictionRanges } = buildDateRanges({\n          availability: restrictionAvailability,\n          timeZone: restrictionTimezone || \"UTC\",\n          dateFrom: startTime,\n          dateTo: endTime,\n          travelSchedules,\n        });\n\n        availableTimeSlots = timeSlots.filter((slot) => {\n          const slotStart = slot.time;\n          const slotEnd = slot.time.add(eventLength, \"minute\");\n\n          return restrictionRanges.some(\n            (range) =>\n              (slotStart.isAfter(range.start) || slotStart.isSame(range.start)) &&\n              (slotEnd.isBefore(range.end) || slotEnd.isSame(range.end))\n          );\n        });\n      } else {\n        availableTimeSlots = timeSlots;\n      }\n    } else {\n      availableTimeSlots = timeSlots;\n    }\n\n    const reservedSlots = await this._getReservedSlotsAndCleanupExpired({\n      bookerClientUid,\n      eventTypeId: eventType.id,\n      usersWithCredentials,\n    });\n\n    const availabilityCheckProps = {\n      eventLength: input.duration || eventType.length,\n      currentSeats,\n    };\n\n    if (reservedSlots?.length > 0) {\n      let occupiedSeats: typeof reservedSlots = reservedSlots.filter(\n        (item) => item.isSeat && item.eventTypeId === eventType.id\n      );\n      if (occupiedSeats?.length) {\n        const addedToCurrentSeats: string[] = [];\n        if (typeof availabilityCheckProps.currentSeats !== \"undefined\") {\n          availabilityCheckProps.currentSeats = availabilityCheckProps.currentSeats.map((item) => {\n            const attendees =\n              occupiedSeats.filter(\n                (seat) => seat.slotUtcStartDate.toISOString() === item.startTime.toISOString()\n              )?.length || 0;\n            if (attendees) addedToCurrentSeats.push(item.startTime.toISOString());\n            return {\n              ...item,\n              _count: {\n                attendees: item._count.attendees + attendees,\n              },\n            };\n          });\n          occupiedSeats = occupiedSeats.filter(\n            (item) => !addedToCurrentSeats.includes(item.slotUtcStartDate.toISOString())\n          );\n        }\n\n        availabilityCheckProps.currentSeats = this.applyOccupiedSeatsToCurrentSeats(\n          availabilityCheckProps.currentSeats || [],\n          occupiedSeats\n        );\n\n        currentSeats = availabilityCheckProps.currentSeats;\n      }\n      const busySlotsFromReservedSlots = reservedSlots.reduce<EventBusyDate[]>((r, c) => {\n        if (!c.isSeat) {\n          r.push({ start: c.slotUtcStartDate, end: c.slotUtcEndDate });\n        }\n        return r;\n      }, []);\n\n      availableTimeSlots = availableTimeSlots\n        .map((slot) => {\n          if (\n            !checkForConflicts({\n              time: slot.time,\n              busy: busySlotsFromReservedSlots,\n              ...availabilityCheckProps,\n            })\n          ) {\n            return slot;\n          }\n          return undefined;\n        })\n        .filter(\n          (\n            item:\n              | {\n                  time: dayjs.Dayjs;\n                  userIds?: number[] | undefined;\n                }\n              | undefined\n          ): item is {\n            time: dayjs.Dayjs;\n            userIds?: number[] | undefined;\n          } => {\n            return !!item;\n          }\n        );\n    }\n\n    // fr-CA uses YYYY-MM-DD\n    const formatter = new Intl.DateTimeFormat(\"fr-CA\", {\n      year: \"numeric\",\n      month: \"2-digit\",\n      day: \"2-digit\",\n      timeZone: input.timeZone,\n    });\n\n    function _mapSlotsToDate() {\n      const currentSeatsMap = new Map();\n\n      if (currentSeats && currentSeats.length > 0) {\n        currentSeats.forEach((booking) => {\n          const timeKey = booking.startTime.toISOString();\n          currentSeatsMap.set(timeKey, {\n            attendees: booking._count.attendees,\n            uid: booking.uid,\n          });\n        });\n      }\n\n      return availableTimeSlots.reduce(\n        (\n          r: Record<string, { time: string; attendees?: number; bookingUid?: string }[]>,\n          { time, ...passThroughProps }\n        ) => {\n          // This used to be _time.tz(input.timeZone) but Dayjs tz() is slow.\n          // toLocaleDateString slugish, using Intl.DateTimeFormat we get the desired speed results.\n          const dateString = formatter.format(time.toDate());\n          const timeISO = time.toISOString();\n\n          r[dateString] = r[dateString] || [];\n          if (eventType?.onlyShowFirstAvailableSlot && r[dateString].length > 0) {\n            return r;\n          }\n\n          const existingBooking = currentSeatsMap.get(timeISO);\n\n          r[dateString].push({\n            ...passThroughProps,\n            time: timeISO,\n            ...(existingBooking && {\n              attendees: existingBooking.attendees,\n              bookingUid: existingBooking.uid,\n            }),\n          });\n          return r;\n        },\n        Object.create(null)\n      );\n    }\n    const mapSlotsToDate = withReporting(_mapSlotsToDate.bind(this), \"mapSlotsToDate\");\n    const slotsMappedToDate = mapSlotsToDate();\n\n    loggerWithEventDetails.debug({ slotsMappedToDate });\n\n    const availableDates = Object.keys(slotsMappedToDate);\n    const allDatesWithBookabilityStatus = this.getAllDatesWithBookabilityStatus(availableDates);\n    loggerWithEventDetails.debug({ availableDates });\n\n    // timeZone isn't directly set on eventType now(So, it is legacy)\n    // schedule is always expected to be set for an eventType now so it must never fallback to allUsersAvailability[0].timeZone(fallback is again legacy behavior)\n    // TODO: Also, handleNewBooking only seems to be using eventType?.schedule?.timeZone which seems to confirm that we should simplify it as well.\n    const eventTimeZone =\n      eventType.timeZone || eventType?.schedule?.timeZone || allUsersAvailability?.[0]?.timeZone;\n\n    const eventUtcOffset = getUTCOffsetByTimezone(eventTimeZone) ?? 0;\n    const bookerUtcOffset = input.timeZone ? getUTCOffsetByTimezone(input.timeZone) ?? 0 : 0;\n    const periodLimits = calculatePeriodLimits({\n      periodType: eventType.periodType,\n      periodDays: eventType.periodDays,\n      periodCountCalendarDays: eventType.periodCountCalendarDays,\n      periodStartDate: eventType.periodStartDate,\n      periodEndDate: eventType.periodEndDate,\n      allDatesWithBookabilityStatusInBookerTz: allDatesWithBookabilityStatus,\n      eventUtcOffset,\n      bookerUtcOffset,\n    });\n\n    const _mapWithinBoundsSlotsToDate = () => {\n      let foundAFutureLimitViolation = false;\n      // This should never happen. Just for type safety, we already check in the upper scope\n      if (!eventType) throw new TRPCError({ code: \"NOT_FOUND\" });\n\n      const withinBoundsSlotsMappedToDate = {} as typeof slotsMappedToDate;\n      const doesStartFromToday = this.doesRangeStartFromToday(eventType.periodType);\n\n      for (const [date, slots] of Object.entries(slotsMappedToDate)) {\n        if (foundAFutureLimitViolation && doesStartFromToday) {\n          break; // Instead of continuing the loop, we can break since all future dates will be skipped\n        }\n\n        const filteredSlots = slots.filter((slot) => {\n          const isFutureLimitViolationForTheSlot = isTimeViolatingFutureLimit({\n            time: slot.time,\n            periodLimits,\n          });\n\n          if (isFutureLimitViolationForTheSlot) {\n            foundAFutureLimitViolation = true;\n          }\n\n          return (\n            !isFutureLimitViolationForTheSlot &&\n            // TODO: Perf Optimization: Slots calculation logic already seems to consider the minimum booking notice and past booking time and thus there shouldn't be need to filter out slots here.\n            !isTimeOutOfBounds({ time: slot.time, minimumBookingNotice: eventType.minimumBookingNotice })\n          );\n        });\n\n        if (filteredSlots.length) {\n          withinBoundsSlotsMappedToDate[date] = filteredSlots;\n        }\n      }\n\n      return withinBoundsSlotsMappedToDate;\n    };\n    const mapWithinBoundsSlotsToDate = withReporting(\n      _mapWithinBoundsSlotsToDate.bind(this),\n      \"mapWithinBoundsSlotsToDate\"\n    );\n    const withinBoundsSlotsMappedToDate = mapWithinBoundsSlotsToDate();\n\n    // We only want to run this on single targeted events and not dynamic\n    if (!Object.keys(withinBoundsSlotsMappedToDate).length && input.usernameList?.length === 1) {\n      try {\n        // TODO: DI handleNotificationWhenNoSlots\n        await handleNotificationWhenNoSlots({\n          eventDetails: {\n            username: input.usernameList?.[0],\n            startTime: startTime,\n            endTime: endTime,\n            eventSlug: eventType.slug,\n          },\n          orgDetails,\n          teamId: eventType.team?.id,\n        });\n      } catch (e) {\n        loggerWithEventDetails.error(\n          `Something has gone wrong. Upstash could be down and we have caught the error to not block availability:\n ${e}`\n        );\n      }\n    }\n\n    const troubleshooterData = enableTroubleshooter\n      ? {\n          troubleshooter: {\n            routedTeamMemberIds: routedTeamMemberIds,\n            // One that Salesforce asked for\n            askedContactOwner: contactOwnerEmailFromInput,\n            // One that we used as per Routing skipContactOwner flag\n            consideredContactOwner: contactOwnerEmail,\n            // All hosts that have been checked for availability. If no routedTeamMemberIds are provided, this will be same as hosts.\n            routedHosts: usersWithCredentials.map((user) => {\n              return {\n                userId: user.id,\n              };\n            }),\n            hostsAfterSegmentMatching: allHosts.map((host) => ({\n              userId: host.user.id,\n            })),\n          },\n        }\n      : null;\n\n    return {\n      slots: withinBoundsSlotsMappedToDate,\n      ...troubleshooterData,\n    };\n  }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getAvailableSlots._mapSlotsToDate_35#function:AvailableSlotsService._getAvailableSlots._mapSlotsToDate",
+        "unitKind": "function",
+        "name": "_mapSlotsToDate",
+        "qualifiedName": "AvailableSlotsService._getAvailableSlots._mapSlotsToDate",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getAvailableSlots_34#method:AvailableSlotsService._getAvailableSlots",
+        "startLine": 1226,
+        "endLine": 1268,
+        "isBehavioral": true,
+        "source": "    function _mapSlotsToDate() {\n      const currentSeatsMap = new Map();\n\n      if (currentSeats && currentSeats.length > 0) {\n        currentSeats.forEach((booking) => {\n          const timeKey = booking.startTime.toISOString();\n          currentSeatsMap.set(timeKey, {\n            attendees: booking._count.attendees,\n            uid: booking.uid,\n          });\n        });\n      }\n\n      return availableTimeSlots.reduce(\n        (\n          r: Record<string, { time: string; attendees?: number; bookingUid?: string }[]>,\n          { time, ...passThroughProps }\n        ) => {\n          // This used to be _time.tz(input.timeZone) but Dayjs tz() is slow.\n          // toLocaleDateString slugish, using Intl.DateTimeFormat we get the desired speed results.\n          const dateString = formatter.format(time.toDate());\n          const timeISO = time.toISOString();\n\n          r[dateString] = r[dateString] || [];\n          if (eventType?.onlyShowFirstAvailableSlot && r[dateString].length > 0) {\n            return r;\n          }\n\n          const existingBooking = currentSeatsMap.get(timeISO);\n\n          r[dateString].push({\n            ...passThroughProps,\n            time: timeISO,\n            ...(existingBooking && {\n              attendees: existingBooking.attendees,\n              bookingUid: existingBooking.uid,\n            }),\n          });\n          return r;\n        },\n        Object.create(null)\n      );\n    }"
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getAvailableSlots._mapWithinBoundsSlotsToDate_36#function:AvailableSlotsService._getAvailableSlots._mapWithinBoundsSlotsToDate",
+        "unitKind": "function",
+        "name": "_mapWithinBoundsSlotsToDate",
+        "qualifiedName": "AvailableSlotsService._getAvailableSlots._mapWithinBoundsSlotsToDate",
+        "parentUnitId": "packages/trpc/server/routers/viewer/slots/util.ts__AvailableSlotsService._getAvailableSlots_34#method:AvailableSlotsService._getAvailableSlots",
+        "startLine": 1297,
+        "endLine": 1333,
+        "isBehavioral": true,
+        "source": "    const _mapWithinBoundsSlotsToDate = () => {\n      let foundAFutureLimitViolation = false;\n      // This should never happen. Just for type safety, we already check in the upper scope\n      if (!eventType) throw new TRPCError({ code: \"NOT_FOUND\" });\n\n      const withinBoundsSlotsMappedToDate = {} as typeof slotsMappedToDate;\n      const doesStartFromToday = this.doesRangeStartFromToday(eventType.periodType);\n\n      for (const [date, slots] of Object.entries(slotsMappedToDate)) {\n        if (foundAFutureLimitViolation && doesStartFromToday) {\n          break; // Instead of continuing the loop, we can break since all future dates will be skipped\n        }\n\n        const filteredSlots = slots.filter((slot) => {\n          const isFutureLimitViolationForTheSlot = isTimeViolatingFutureLimit({\n            time: slot.time,\n            periodLimits,\n          });\n\n          if (isFutureLimitViolationForTheSlot) {\n            foundAFutureLimitViolation = true;\n          }\n\n          return (\n            !isFutureLimitViolationForTheSlot &&\n            // TODO: Perf Optimization: Slots calculation logic already seems to consider the minimum booking notice and past booking time and thus there shouldn't be need to filter out slots here.\n            !isTimeOutOfBounds({ time: slot.time, minimumBookingNotice: eventType.minimumBookingNotice })\n          );\n        });\n\n        if (filteredSlots.length) {\n          withinBoundsSlotsMappedToDate[date] = filteredSlots;\n        }\n      }\n\n      return withinBoundsSlotsMappedToDate;\n    };"
+      }
+    ],
+    "extractedUnitCount": 36,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 96013,
+    "outputTokens": 25372,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

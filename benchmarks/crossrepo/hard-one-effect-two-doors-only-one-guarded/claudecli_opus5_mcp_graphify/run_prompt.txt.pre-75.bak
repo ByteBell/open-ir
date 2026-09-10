@@ -1,0 +1,116 @@
+You are performing a cross-repository information-retrieval task over the
+React state-management ecosystem.
+
+CASE:       xrepo-v6-3-one-effect-two-doors-only-one-guarded-hard
+ECOSYSTEM:  15 sibling repositories. They are separate products with separate
+            release trains; most of them do not import one another, and there is
+            no monorepo, workspace or shared package graph tying them together.
+CHECKOUTS:  ~/programs/benchmarks/react-ecosystem/<repo>
+            Each repository is checked out at exactly the commit below and at no
+            other revision. The repositories at those commits are the whole world
+            for this task: do not use any other revision, and do not rely on
+            knowledge of these projects' later history.
+
+  repo             commit
+  redux            3aa561f9fc13f3287e6d83764f85fe0e82437c5f
+  redux-toolkit    b1c5130154c454ca8387f55da6122fcb507c560c
+  react-redux      ad5d1e0816d0cb1464b25cf2853f2a7d73433f5b
+  reselect         8d87c27b75f55883629be75d1eae1c27832d907a
+  redux-thunk      184205d49f707c6f203269e0d39ad85824801816
+  react            3a717e42438afac81020cdec297dadb5613a4304
+  jotai            5c4ca26b0db5571114be58393e17854a771f7790
+  zustand          beca84e600e4e250f6b244d22878e72948f331c7
+  db               7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f
+  xyflow           360f5b13e2bc6899ea06b4be1a49b068d86926cf
+  query            46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76
+  table            d08af367e11c539bb7e18c2472aa761149ef6db6
+  tldraw           5590d14d8edd4faab7dc1177b6e1adb28876fd23
+  redux-devtools   f4b4668c30ae08920c59a76cc4629c35c16ef0fa
+  router           3dee5b2e9453d01a3172c73426959007b290b3fc
+
+PROBLEM
+A behaviour-level description of a defect and the contract it belongs to. The
+identifiers used in the code are deliberately withheld, so searching for the
+words below will not find the answer:
+
+Two different entry points reach the same privileged write. One of them checks that the caller is allowed to perform it; the other was built later, for a different transport, and never grew the same check - it validates only that the target exists and that the payload is well formed, then performs the write. So the permission that the first door enforces is not a property of the operation at all, only a property of one route to it, and any caller who knows the second door bypasses it entirely. The check the second door is missing has no shared name yet: at this revision the condition is written out inline at the door that does enforce it, so there is no single helper to look for. The same hazard is answered deliberately elsewhere in the folder, where libraries deliberately funnel every mutating entry point - however many public method names it wears - through one internal chokepoint that validates and applies the change, so that a new public method cannot accidentally acquire fewer guarantees than the old ones. Which files perform the privileged write without the check, which one holds the check that was not shared, and which own the single-chokepoint contract they have to be brought in line with?
+
+TASK
+Identify every file, in every repository listed above, that would have to change
+to satisfy the described contract. The answer spans MULTIPLE repositories that do
+not import one another - do not stop at the first repository that matches, and do
+not assume the repository where the symptom appears is the only one affected.
+
+RULES
+- Use the graphify knowledge-graph MCP tools - query_graph, get_node,
+  get_neighbors, get_community, god_nodes, graph_stats, shortest_path - against a
+  single merged graph spanning all fourteen repositories below. That is your whole
+  surface: no Bash, Read, Grep, Glob, filesystem access, network, or subagents, and
+  --strict-mcp-config keeps every other MCP server out. Every path you name must
+  have been found by querying this graph. A run that reaches the answer by another
+  route is a void measurement, not a faster one.
+- The graph was built by AST extraction only (--code-only --no-cluster): the
+  clustering-derived tools (get_community, god_nodes) reflect no clustering pass
+  and may be sparse or unhelpful. Treat query_graph, get_neighbors and
+  shortest_path as your primary tools. Every node carries a `repo` field and a
+  `source_file` field - source_file is the exact repo-relative path to report,
+  and repo tells you which object in your final answer it belongs to.
+- Do not stop at the first plausible file, and do not stop at the first repository.
+  Work outward from the symptom to the contract: once you can state the rule the
+  defect breaks, find every other file in the roster that defines, enforces,
+  relies on, or violates that same rule.
+- Return repo-relative paths: no leading slash, no repository name prefix.
+  Example: packages/<package-name>/src/<SomeFile>.ts
+- Every path must exist in that repository AT THE PINNED COMMIT. These working
+  trees are NOT clean: they carry untracked files that are not part of the commit
+  and are not part of this task. You have no Bash and cannot run `git cat-file`
+  yourself - the harness has already gated every checkout to the pinned commit
+  before launching you (see CHECKOUT below), so trust what the tool surface shows
+  you and drop anything it does not confirm exists.
+- Name source files only. Ignore tests, docs, examples, fixtures, benchmarks,
+  build output, dependency directories and generated API reports.
+- Prefer the files that define, enforce, or violate the contract over files that
+  merely mention it.
+- Rank most likely first and cap the whole answer at 100 paths across all
+  repositories combined.
+
+RUN CONDITIONS (MANDATORY - this run is invalid if any of these is not met):
+- LAUNCH: one fresh session per run. Prompt caching WITHIN this run is fine -
+  cache this session creates and reads back is expected and costs nothing in
+  comparability. What is forbidden is inheriting cache from an EARLIER session:
+  do not resume or continue a prior session, do not reuse a session across cases
+  or arms, and do not re-attempt a case in a session that already attempted it.
+  A run that starts warm on someone else's context is not a measurement.
+- CHECKOUT: before searching, confirm your surface is actually live for THESE
+  repositories at THESE commits. Verify the revision of every repository you
+  intend to answer from before you trust anything you read out of it. If a
+  repository is missing, or sits at a different revision than the one pinned
+  above, STOP and say so plainly. Do not answer from parametric memory, from
+  another revision, or from a partially materialised tree, and do not return a
+  guessed list. A run against a missing or drifted checkout is a failed run to be
+  relaunched - it is not an empty answer.
+- COST: cost.json must record cache_read and cache_creation next to the USD
+  figure, and both must be attributable to THIS run alone. If the session was
+  resumed, reused, or had already attempted the case, say so plainly in your final
+  message so the run can be marked not-comparable instead of scored against clean runs.
+
+DELIVERABLES - write all three of these into your arm folder before your final
+message. They are the run's evidence; a run missing any of them is scored
+not-comparable, whatever its answer was.
+- commands.log   One line per tool call you made, in order, numbered:
+                 `NN. <tool_name> <compact JSON of the arguments>`. Every call,
+                 including the ones that returned nothing. This is read to verify
+                 which surface the run actually used, so it must be a transcript
+                 of what you did, not a summary of it.
+- output.log     Your working narrative: what you searched for, what came back,
+                 what you concluded, and where you changed direction.
+- raw_response.json  {"session_id": <this session's id>, "answer": <the same JSON
+                 your final message emits>}.
+Write ranked.json too if you have it; otherwise the harness extracts it from your
+final message. Do NOT write result.json - scoring is a separate stage and the gold
+set is held out from you.
+
+FINAL MESSAGE
+Output ONLY a JSON array, most likely first, with no prose and no markdown fence.
+One object per repository you are naming; omit repositories you are not naming:
+[{"repo": "<repo>", "files": ["<path>", "..."]}, ...]

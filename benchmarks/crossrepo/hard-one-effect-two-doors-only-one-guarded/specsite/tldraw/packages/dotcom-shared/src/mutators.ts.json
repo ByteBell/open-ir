@@ -1,0 +1,1970 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/dotcom-shared/src/mutators.ts",
+    "language": "typescript",
+    "sizeBytes": 26354,
+    "tokenCount": 6585,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:16:12.608Z",
+    "module": {
+      "purpose": "Defines Zero database mutators for user, file, comment, and workspace operations, including authorization, validation, timestamp normalization, and transactional persistence.",
+      "summary": "This module builds the authenticated mutation surface for the shared dotcom data model. It combines Zero query and mutation APIs with role-based authorization, immutable-field protection, file and workspace lifecycle rules, comment read tracking, fractional indexing, and server-side checks for operations that cannot be trusted from optimistic clients.",
+      "businessContext": "Supports collaborative workspace and file management in the tldraw dotcom product. Failures can permit unauthorized file access, corrupt workspace membership, or leave files and comments inconsistent.",
+      "classes": [],
+      "functions": [
+        "parseFlags (~L34-36): Splits a nullable flags string into individual nonempty flags.",
+        "userHasFlag (~L39-40): Determines whether a flags string contains a requested flag.",
+        "disallowImmutableMutations (~L42-49): Rejects mutation payloads containing immutable columns.",
+        "ensureSensibleTimestamp (~L53-58): Replaces stale or future timestamps with current server time.",
+        "getRole (~L61-74): Resolves a user's role within a workspace or returns null.",
+        "assertNotHomeWorkspace (~L77-80): Rejects operations targeting a user's private home workspace.",
+        "assertValidId (~L82-86): Validates identifier characters and length constraints.",
+        "assertUserCanAccessFileInternal (~L89-114): Enforces file read or write authorization rules.",
+        "assertUserCanAccessFile (~L117-119): Authorizes read access to a file.",
+        "assertUserCanUpdateFile (~L122-124): Authorizes write access to a file.",
+        "createMutators (~L126-719): Constructs authenticated Zero mutators for application data operations.",
+        "insert (~L130-132): Inserts a user while restricting identity to the authenticated user.",
+        "update (~L133-137): Updates mutable user fields for the authenticated user.",
+        "deleteOrForget (~L142-150): Deletes personal file state and marks owned files deleted.",
+        "update (~L151-159): Updates a file after immutable-field and access checks.",
+        "insert (~L163-174): Upserts file state after validating ownership and server access.",
+        "update (~L175-194): Updates existing file state while ignoring missing rows.",
+        "markRead (~L202-215): Records a comment as read for the current user.",
+        "markManyRead (~L216-248): Batch-records comment reads after deduplicated authorization checks.",
+        "markUnread (~L249-251): Removes the current user's comment-read record.",
+        "init (~L255-275): Initializes a user, home workspace, and owner membership.",
+        "createFile (~L277-351): Creates a workspace-owned file and associated records.",
+        "pinFile (~L353-382): Pins a file using workspace authorization and fractional indexing.",
+        "unpinFile (~L384-395): Removes a file's workspace pin after authorization.",
+        "removeFileFromWorkspace (~L397-418): Removes a file association and marks ownership-deleted files.",
+        "onEnterFile (~L419-463): Records file visitation and creates a home-workspace guest link.",
+        "createWorkspace (~L464-504): Creates a bounded workspace and owner membership.",
+        "updateWorkspace (~L505-516): Renames an authorized workspace.",
+        "regenerateWorkspaceInviteSecret (~L517-529): Replaces an authorized workspace invite secret.",
+        "setWorkspaceInviteLinkEnabled (~L530-543): Enables or disables workspace invite links.",
+        "setWorkspaceMemberRole (~L544-585): Changes a member role while preserving an owner.",
+        "removeWorkspaceMember (~L586-619): Removes an authorized workspace member while preserving ownership.",
+        "leaveWorkspace (~L620-634): Removes the current user unless they are the sole owner.",
+        "deleteWorkspace (~L635-663): Deletes workspace associations, owned files, and workspace state.",
+        "moveFileToWorkspace (~L664-719): Transfers file ownership between authorized workspaces."
+      ],
+      "keywords": [
+        "Zero mutators",
+        "role-based authorization",
+        "fractional indexing",
+        "workspace membership",
+        "file ownership",
+        "comment read state",
+        "optimistic mutations",
+        "immutable columns",
+        "invite links",
+        "home workspace"
+      ],
+      "ontologyConcepts": [
+        "authorization",
+        "ownership",
+        "workspace lifecycle",
+        "membership management",
+        "soft deletion",
+        "transactional mutation",
+        "access control",
+        "state synchronization"
+      ],
+      "businessEntities": [
+        "User",
+        "File",
+        "Workspace",
+        "Comment",
+        "Membership",
+        "Invite",
+        "File state",
+        "Read receipt"
+      ],
+      "systemCapabilities": [
+        "Authorize file access",
+        "Manage collaborative workspaces",
+        "Create and transfer files",
+        "Track comment read state",
+        "Manage workspace membership",
+        "Persist transactional mutations"
+      ],
+      "configDependencies": ["MAX_NUMBER_OF_WORKSPACES", "MAX_WORKSPACE_NAME_LENGTH", "FILE_PREFIX"],
+      "importsInternal": [
+        {
+          "spec": "./constants",
+          "symbols": ["MAX_NUMBER_OF_WORKSPACES", "MAX_WORKSPACE_NAME_LENGTH"],
+          "anchor": { "startLine": 10, "endLine": 10 },
+          "resolvedRelativePath": "packages/dotcom-shared/src/constants.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/constants.ts",
+          "resolvedHint": "packages/dotcom-shared/src/constants.ts"
+        },
+        {
+          "spec": "./roles",
+          "symbols": ["Role", "can", "isRole"],
+          "anchor": { "startLine": 11, "endLine": 11 },
+          "resolvedRelativePath": "packages/dotcom-shared/src/roles.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/roles.ts",
+          "resolvedHint": "packages/dotcom-shared/src/roles.ts"
+        },
+        {
+          "spec": "./routes",
+          "symbols": ["FILE_PREFIX"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/dotcom-shared/src/routes.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/routes.ts",
+          "resolvedHint": "packages/dotcom-shared/src/routes.ts"
+        },
+        {
+          "spec": "./tlaSchema",
+          "symbols": [
+            "immutableColumns",
+            "schema",
+            "TlaFile",
+            "TlaFilePartial",
+            "TlaFileState",
+            "TlaFileStatePartial",
+            "TlaFlags",
+            "TlaGroupFile",
+            "TlaSchema",
+            "TlaUser",
+            "TlaUserPartial"
+          ],
+          "anchor": { "startLine": 13, "endLine": 25 },
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedHint": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": ["ZErrorCode"],
+          "anchor": { "startLine": 26, "endLine": 26 },
+          "resolvedRelativePath": "packages/dotcom-shared/src/types.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/types.ts",
+          "resolvedHint": "packages/dotcom-shared/src/types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@rocicorp/zero",
+          "symbols": ["createBuilder", "CustomMutatorDefs", "Transaction"],
+          "package": "@rocicorp/zero",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["assert", "getIndexBelow", "IndexKey", "sortByIndex", "sortByMaybeIndex", "uniqueId"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 9 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "The workspace creation and update mutators trim and clamp supplied names.",
+          "The initialization mutator replaces the supplied user flags with an empty string.",
+          "The file update mutator spreads the supplied partial file payload into a persisted update."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "parseFlags",
+          "shape": "parseFlags(flags: string | null | undefined): string[]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "userHasFlag",
+          "shape": "userHasFlag(flags: string | null | undefined, flag: TlaFlags): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TlaMutators",
+          "shape": "ReturnType<typeof createMutators>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "createMutators",
+          "shape": "createMutators(userId: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "user.insert",
+          "shape": "insert(tx: Tx, user: TlaUser)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "user.update",
+          "shape": "update(tx: Tx, user: TlaUserPartial)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "file.deleteOrForget",
+          "shape": "deleteOrForget(tx: Tx, { id }: { id: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "file.update",
+          "shape": "update(tx: Tx, _file: TlaFilePartial)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "file_state.insert",
+          "shape": "insert(tx: Tx, fileState: TlaFileState)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "file_state.update",
+          "shape": "update(tx: Tx, props: TlaFileStatePartial)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "comment.markRead",
+          "shape": "markRead(tx: Tx, { commentId, readAt }: { commentId: string; readAt: number })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "comment.markManyRead",
+          "shape": "markManyRead(tx: Tx, { commentIds, readAt }: { commentIds: string[]; readAt: number })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "comment.markUnread",
+          "shape": "markUnread(tx: Tx, { commentId }: { commentId: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "init",
+          "shape": "init(tx: Tx, { user, time }: { user: TlaUser; time: number })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "createFile",
+          "shape": "createFile(tx: Tx, { fileId, workspaceId, name, time, createSource }: { fileId: string; workspaceId: string; name: string; time: number; createSource: string | null })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "pinFile",
+          "shape": "pinFile(tx: Tx, { fileId, workspaceId, index }: { fileId: string; workspaceId: string; index?: IndexKey })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "unpinFile",
+          "shape": "unpinFile(tx: Tx, { fileId, workspaceId }: { fileId: string; workspaceId: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "removeFileFromWorkspace",
+          "shape": "removeFileFromWorkspace(tx: Tx, { fileId, workspaceId }: { fileId: string; workspaceId: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "onEnterFile",
+          "shape": "onEnterFile(tx: Tx, { fileId, time }: { fileId: string; time: number })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "createWorkspace",
+          "shape": "createWorkspace(tx: Tx, { id, name }: { id: string; name: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "updateWorkspace",
+          "shape": "updateWorkspace(tx: Tx, { id, name }: { id: string; name: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "regenerateWorkspaceInviteSecret",
+          "shape": "regenerateWorkspaceInviteSecret(tx: Tx, { id }: { id: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "setWorkspaceInviteLinkEnabled",
+          "shape": "setWorkspaceInviteLinkEnabled(tx: Tx, { id, enabled }: { id: string; enabled: boolean })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "setWorkspaceMemberRole",
+          "shape": "setWorkspaceMemberRole(tx: Tx, { workspaceId, targetUserId, role: Role })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "removeWorkspaceMember",
+          "shape": "removeWorkspaceMember(tx: Tx, { workspaceId, targetUserId }: { workspaceId: string; targetUserId: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "leaveWorkspace",
+          "shape": "leaveWorkspace(tx: Tx, { workspaceId }: { workspaceId: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "deleteWorkspace",
+          "shape": "deleteWorkspace(tx: Tx, { id }: { id: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "moveFileToWorkspace",
+          "shape": "moveFileToWorkspace(tx: Tx, { fileId, workspaceId }: { fileId: string; workspaceId: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "CustomMutatorDefs",
+          "shape": "CustomMutatorDefs",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Transaction",
+          "shape": "Transaction<TlaSchema>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TlaSchema",
+          "shape": "TlaSchema",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "TlaFile",
+          "shape": "TlaFile",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "TlaFilePartial",
+          "shape": "TlaFilePartial",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "TlaFileState",
+          "shape": "TlaFileState",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "TlaFileStatePartial",
+          "shape": "TlaFileStatePartial",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "TlaUser",
+          "shape": "TlaUser",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "TlaUserPartial",
+          "shape": "TlaUserPartial",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "TlaFlags",
+          "shape": "TlaFlags",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "Role",
+          "shape": "Role",
+          "resolvedRelativePath": "packages/dotcom-shared/src/roles.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/roles.ts"
+        },
+        {
+          "name": "can",
+          "shape": "can(role, capability)",
+          "resolvedRelativePath": "packages/dotcom-shared/src/roles.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/roles.ts"
+        },
+        {
+          "name": "isRole",
+          "shape": "isRole(targetRole)",
+          "resolvedRelativePath": "packages/dotcom-shared/src/roles.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/roles.ts"
+        },
+        {
+          "name": "schema",
+          "shape": "schema",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "immutableColumns",
+          "shape": "immutableColumns",
+          "resolvedRelativePath": "packages/dotcom-shared/src/tlaSchema.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/tlaSchema.ts"
+        },
+        {
+          "name": "ZErrorCode",
+          "shape": "ZErrorCode",
+          "resolvedRelativePath": "packages/dotcom-shared/src/types.ts",
+          "resolvedFileId": "packages/dotcom-shared/src/types.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "flag utilities",
+          "intent": "Parse and test nullable comma- or whitespace-separated flags.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 28, "endLine": 40 }
+        },
+        {
+          "name": "authorization helpers",
+          "intent": "Resolve roles and enforce file, workspace, and identifier authorization.",
+          "structureKind": "branch",
+          "predicate": "if (allowGuestAccess && file.shared)",
+          "branchOutcomes": [
+            "shared guest access granted",
+            "legacy owner authorization",
+            "workspace membership authorization",
+            "invalid ownership state rejected"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 60, "endLine": 124 }
+        },
+        {
+          "name": "user and file mutators",
+          "intent": "Persist user, file, and per-user file-state changes transactionally.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 126, "endLine": 194 }
+        },
+        {
+          "name": "comment read mutators",
+          "intent": "Validate and persist individual or batched comment read status.",
+          "structureKind": "loop",
+          "predicate": "for (const fileId of fileIds)",
+          "branchOutcomes": [],
+          "bounds": "fileIds",
+          "terminationCondition": null,
+          "anchor": { "startLine": 202, "endLine": 251 }
+        },
+        {
+          "name": "file and workspace lifecycle",
+          "intent": "Create, organize, visit, rename, delete, and transfer files and workspaces.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 255, "endLine": 719 }
+        },
+        {
+          "name": "workspace deletion",
+          "intent": "Remove workspace links and soft-delete all files owned by the workspace.",
+          "structureKind": "loop",
+          "predicate": "for (const workspaceFile of workspaceFileRows)",
+          "branchOutcomes": [],
+          "bounds": "workspaceFileRows",
+          "terminationCondition": null,
+          "anchor": { "startLine": 635, "endLine": 663 }
+        },
+        {
+          "name": "file transfer",
+          "intent": "Authorize and persist ownership transfer between workspaces.",
+          "structureKind": "branch",
+          "predicate": "if (file.owningGroupId === workspaceId)",
+          "branchOutcomes": ["target workspace already owns file", "ownership transfer performed"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 664, "endLine": 719 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "parseFlags",
+          "signature": "export function parseFlags(flags: string | null | undefined): string[]",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string[]",
+          "exported": true,
+          "anchor": { "startLine": 34, "endLine": 34 }
+        },
+        {
+          "kind": "function",
+          "name": "userHasFlag",
+          "signature": "export function userHasFlag(flags: string | null | undefined, flag: TlaFlags): boolean",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 39, "endLine": 39 }
+        },
+        {
+          "kind": "type_alias",
+          "name": "TlaMutators",
+          "signature": "export type TlaMutators = ReturnType<typeof createMutators>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 51, "endLine": 51 }
+        },
+        {
+          "kind": "function",
+          "name": "createMutators",
+          "signature": "export function createMutators(userId: string)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 126, "endLine": 126 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "null or undefined flags",
+          "handled": true,
+          "behavior": "Returns an empty flag array.",
+          "anchor": { "startLine": 34, "endLine": 36 }
+        },
+        {
+          "inputShape": "stale or future timestamp",
+          "handled": true,
+          "behavior": "Uses Date.now() instead of the supplied timestamp.",
+          "anchor": { "startLine": 53, "endLine": 58 }
+        },
+        {
+          "inputShape": "empty batch of comment ids",
+          "handled": true,
+          "behavior": "Returns without querying or mutating.",
+          "anchor": { "startLine": 216, "endLine": 221 }
+        },
+        {
+          "inputShape": "duplicate comment ids",
+          "handled": true,
+          "behavior": "Deduplicates ids before validation and mutation.",
+          "anchor": { "startLine": 216, "endLine": 218 }
+        },
+        {
+          "inputShape": "missing file state",
+          "handled": true,
+          "behavior": "Returns without creating a file-state row during update.",
+          "anchor": { "startLine": 186, "endLine": 190 }
+        },
+        {
+          "inputShape": "workspace name exceeding configured length",
+          "handled": true,
+          "behavior": "Trims whitespace and clamps the name to MAX_WORKSPACE_NAME_LENGTH.",
+          "anchor": { "startLine": 466, "endLine": 469 }
+        },
+        {
+          "inputShape": "sole workspace owner attempting removal or departure",
+          "handled": true,
+          "behavior": "Rejects the operation to preserve an owner.",
+          "anchor": { "startLine": 575, "endLine": 619 }
+        },
+        {
+          "inputShape": "file already owned by target workspace",
+          "handled": true,
+          "behavior": "Returns without changing associations.",
+          "anchor": { "startLine": 672, "endLine": 675 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<",
+          "left": "time",
+          "right": "now - 5000",
+          "inclusive": false,
+          "intent": "Treat timestamps older than five seconds as invalid.",
+          "anchor": { "startLine": 56, "endLine": 56 }
+        },
+        {
+          "operator": ">",
+          "left": "time",
+          "right": "now",
+          "inclusive": false,
+          "intent": "Treat future timestamps as invalid.",
+          "anchor": { "startLine": 56, "endLine": 56 }
+        },
+        {
+          "operator": "==",
+          "left": "workspaceId",
+          "right": "userId",
+          "inclusive": true,
+          "intent": "Recognize a user's home workspace.",
+          "anchor": { "startLine": 68, "endLine": 68 }
+        },
+        {
+          "operator": "==",
+          "left": "uniqueIds.length",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Skip empty comment-read batches.",
+          "anchor": { "startLine": 220, "endLine": 220 }
+        },
+        {
+          "operator": "<",
+          "left": "existingWorkspaces.length",
+          "right": "MAX_NUMBER_OF_WORKSPACES",
+          "inclusive": false,
+          "intent": "Enforce the maximum workspace count.",
+          "anchor": { "startLine": 475, "endLine": 475 }
+        },
+        {
+          "operator": "==",
+          "left": "owners.length",
+          "right": "1",
+          "inclusive": true,
+          "intent": "Identify a workspace with exactly one owner.",
+          "anchor": { "startLine": 625, "endLine": 625 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "ZErrorCode.forbidden",
+          "caught": null,
+          "action": "Rejects unauthorized identity, role, ownership, or immutable-field mutations.",
+          "fallback": null,
+          "anchor": { "startLine": 42, "endLine": 49 }
+        },
+        {
+          "thrown": "ZErrorCode.bad_request",
+          "caught": null,
+          "action": "Rejects missing, malformed, deleted, duplicate, or invalid records and identifiers.",
+          "fallback": null,
+          "anchor": { "startLine": 82, "endLine": 86 }
+        },
+        {
+          "thrown": "ZErrorCode.max_workspaces_reached",
+          "caught": null,
+          "action": "Rejects workspace creation after the configured workspace limit.",
+          "fallback": null,
+          "anchor": { "startLine": 474, "endLine": 478 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Immutable columns are rejected before user, file, or file-state updates.",
+          "anchor": { "startLine": 42, "endLine": 49 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Home workspaces are identified by a workspace id equal to the owner's user id.",
+          "anchor": { "startLine": 67, "endLine": 74 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Workspace membership operations preserve at least one owner.",
+          "anchor": { "startLine": 575, "endLine": 619 }
+        },
+        {
+          "kind": "ordering",
+          "description": "New workspace and file pins use fractional indexes ordered from lowest to highest.",
+          "anchor": { "startLine": 353, "endLine": 382 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Creating a file inserts file, group-file, and file-state records.",
+          "anchor": { "startLine": 277, "endLine": 351 }
+        },
+        {
+          "kind": "non-null",
+          "description": "Access checks require an existing, non-deleted file.",
+          "anchor": { "startLine": 94, "endLine": 96 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a transaction bound to the authenticated user and appropriate Zero location.",
+          "anchor": { "startLine": 126, "endLine": 126 }
+        },
+        {
+          "kind": "schema",
+          "description": "Zero schema tables and immutable column sets enforce the record shapes used by these mutators.",
+          "anchor": { "startLine": 13, "endLine": 25 }
+        },
+        {
+          "kind": "config",
+          "description": "Workspace limits, name limits, and file URL prefixes are imported from shared configuration modules.",
+          "anchor": { "startLine": 10, "endLine": 12 }
+        },
+        {
+          "kind": "platform",
+          "description": "Server transactions are distinguished from optimistic client transactions through tx.location.",
+          "anchor": { "startLine": 184, "endLine": 188 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does Zero guarantee atomic rollback when a later awaited mutation fails?",
+          "affects": "transactional behaviour",
+          "anchor": { "startLine": 126, "endLine": 126 },
+          "resolution": null
+        },
+        {
+          "question": "Which database triggers populate group membership userName and userColor fields?",
+          "affects": "workspace membership persistence",
+          "anchor": { "startLine": 494, "endLine": 504 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Mutators are asynchronous transaction callbacks. Each operation awaits Zero queries and mutations in source order; transaction atomicity is supplied by the caller and Zero."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "splits-comma-and-space-flags",
+          "scenario": "A flags string contains comma-separated and whitespace-separated values.",
+          "given": ["flags = \"flag1,flag2 flag3\""],
+          "when": "parseFlags(flags)",
+          "then": "returns [\"flag1\", \"flag2\", \"flag3\"]",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "handles-empty-flags",
+          "scenario": "The flags input is null, undefined, or contains only separators.",
+          "given": ["flags = null"],
+          "when": "parseFlags(flags)",
+          "then": "returns []",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "detects-present-flag",
+          "scenario": "A requested flag appears among parsed flags.",
+          "given": ["flags = \"a,b\"", "flag = \"b\""],
+          "when": "userHasFlag(flags, flag)",
+          "then": "returns true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "rejects-foreign-user-update",
+          "scenario": "A user attempts to update another user's record.",
+          "given": ["userId = \"user-a\"", "user = { id: \"user-b\" }"],
+          "when": "createMutators(userId).user.update(tx, user)",
+          "then": "throws ZErrorCode.forbidden",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "User mutations are restricted to the authenticated user."
+        },
+        {
+          "testId": "rejects-immutable-file-fields",
+          "scenario": "A file update includes an immutable column.",
+          "given": ["_file = { id: \"file-id\", ownerId: \"other-user\" }"],
+          "when": "createMutators(userId).file.update(tx, _file)",
+          "then": "throws ZErrorCode.forbidden",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Immutable schema columns cannot be changed through partial updates."
+        },
+        {
+          "testId": "denies-shared-file-write",
+          "scenario": "A user with guest access attempts to update a shared file without ownership or workspace write access.",
+          "given": [
+            "file.shared = true",
+            "file.ownerId !== userId",
+            "getRole(tx, userId, file.owningGroupId) does not allow accessFiles"
+          ],
+          "when": "createMutators(userId).file.update(tx, file)",
+          "then": "throws ZErrorCode.forbidden",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Sharing grants read access but not write access."
+        },
+        {
+          "testId": "deduplicates-bulk-read-marking",
+          "scenario": "A batch contains duplicate comment IDs.",
+          "given": ["commentIds = [\"comment-a\", \"comment-a\", \"comment-b\"]"],
+          "when": "createMutators(userId).comment.markManyRead(tx, { commentIds, readAt })",
+          "then": "each distinct comment is upserted once with the same sensible timestamp",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Bulk marking performs one logical write per distinct comment."
+        },
+        {
+          "testId": "rejects-invalid-file-id",
+          "scenario": "File creation receives an ID shorter than the minimum length.",
+          "given": ["fileId = \"short\""],
+          "when": "createMutators(userId).createFile(tx, { fileId, workspaceId, name, time, createSource: null })",
+          "then": "throws ZErrorCode.bad_request",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "File and workspace identifiers must satisfy the validated ID format and length."
+        },
+        {
+          "testId": "clamps-workspace-name",
+          "scenario": "Workspace creation receives a name longer than the configured maximum.",
+          "given": ["name = \"a name longer than MAX_WORKSPACE_NAME_LENGTH\""],
+          "when": "createMutators(userId).createWorkspace(tx, { id, name })",
+          "then": "the inserted group name equals name.trim().slice(0, MAX_WORKSPACE_NAME_LENGTH)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Workspace names are normalized and bounded before persistence."
+        },
+        {
+          "testId": "protects-last-owner",
+          "scenario": "The only workspace owner attempts to leave or be demoted.",
+          "given": ["owners.length === 1", "targetMembership.role === \"owner\""],
+          "when": "createMutators(userId).leaveWorkspace(tx, { workspaceId })",
+          "then": "throws ZErrorCode.forbidden",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "Every workspace must retain at least one owner."
+        },
+        {
+          "testId": "prevents-home-workspace-deletion",
+          "scenario": "A user attempts to delete the workspace whose ID matches an existing user ID.",
+          "given": ["zql.user.where('id', '=', workspaceId).one() returns a user"],
+          "when": "createMutators(userId).deleteWorkspace(tx, { id: workspaceId })",
+          "then": "throws ZErrorCode.forbidden",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Home workspaces are private and cannot be deleted."
+        },
+        {
+          "testId": "creates-home-visit-link",
+          "scenario": "A user enters an accessible file not already linked in their home workspace and the file is not owned by one of their workspaces.",
+          "given": ["alreadyLinkedInHome = null", "ownedByOneOfMyWorkspaces = false"],
+          "when": "createMutators(userId).onEnterFile(tx, { fileId, time })",
+          "then": "inserts a group_file row with groupId equal to userId",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Visited guest files must appear in the user's home workspace."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "Zero query builder",
+        "transaction type alias",
+        "flag utilities",
+        "immutable mutation guard",
+        "timestamp normalization",
+        "workspace and file authorization helpers",
+        "mutator factory",
+        "nested user mutators",
+        "nested file mutators",
+        "nested file-state mutators",
+        "nested comment mutators",
+        "initialization mutator",
+        "file lifecycle mutators",
+        "workspace lifecycle mutators"
+      ],
+      "moduleLevelCode": "import { createBuilder, type CustomMutatorDefs, type Transaction } from '@rocicorp/zero'\nimport {\n\tassert,\n\tgetIndexBelow,\n\tIndexKey,\n\tsortByIndex,\n\tsortByMaybeIndex,\n\tuniqueId,\n} from '@tldraw/utils'\nimport { MAX_NUMBER_OF_WORKSPACES, MAX_WORKSPACE_NAME_LENGTH } from './constants'\nimport { Role, can, isRole } from './roles'\nimport { FILE_PREFIX } from './routes'\nimport {\n\timmutableColumns,\n\tschema,\n\tTlaFile,\n\tTlaFilePartial,\n\tTlaFileState,\n\tTlaFileStatePartial,\n\tTlaFlags,\n\tTlaGroupFile,\n\tTlaSchema,\n\tTlaUser,\n\tTlaUserPartial,\n} from './tlaSchema'\nimport { ZErrorCode } from './types'\n\n/** Query builder for mutators - uses Zero's createBuilder API */\nconst zql = createBuilder(schema)",
+      "exports": [
+        { "name": "TlaMutators", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "parseFlags", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "userHasFlag", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "createMutators", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "createBuilder", "module": "@rocicorp/zero", "alias": null, "kind": "external" },
+        { "symbol": "CustomMutatorDefs", "module": "@rocicorp/zero", "alias": null, "kind": "external" },
+        { "symbol": "Transaction", "module": "@rocicorp/zero", "alias": null, "kind": "external" },
+        { "symbol": "assert", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "getIndexBelow", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "IndexKey", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "sortByIndex", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "sortByMaybeIndex", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "uniqueId", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "MAX_NUMBER_OF_WORKSPACES", "module": "./constants", "alias": null, "kind": "internal" },
+        { "symbol": "MAX_WORKSPACE_NAME_LENGTH", "module": "./constants", "alias": null, "kind": "internal" },
+        { "symbol": "Role", "module": "./roles", "alias": null, "kind": "internal" },
+        { "symbol": "can", "module": "./roles", "alias": null, "kind": "internal" },
+        { "symbol": "isRole", "module": "./roles", "alias": null, "kind": "internal" },
+        { "symbol": "FILE_PREFIX", "module": "./routes", "alias": null, "kind": "internal" },
+        { "symbol": "immutableColumns", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "schema", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaFile", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaFilePartial", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaFileState", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaFileStatePartial", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaFlags", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaGroupFile", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaSchema", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaUser", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "TlaUserPartial", "module": "./tlaSchema", "alias": null, "kind": "internal" },
+        { "symbol": "ZErrorCode", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "zql", "value": "createBuilder(schema)", "kind": "query builder" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__parseFlags#function:parseFlags",
+        "unitKind": "function",
+        "name": "parseFlags",
+        "qualifiedName": "parseFlags",
+        "parentUnitId": null,
+        "startLine": 34,
+        "endLine": 36,
+        "isBehavioral": true,
+        "source": " * Parse a flags string into an array of individual flags.\n * Supports flags separated by commas, spaces, or both.\n * @param flags - The flags string to parse (e.g., \"flag1,flag2\" or \"flag1 flag2\")",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__parseFlags#function:parseFlags",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__parseFlags",
+          "unitKind": "function",
+          "name": "parseFlags",
+          "qualifiedName": "parseFlags",
+          "parentUnitId": null,
+          "startLine": 34,
+          "endLine": 36,
+          "signature": "parseFlags(flags: string): string[]",
+          "parameters": [
+            { "name": "flags", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "string[]",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["flags is a string."],
+          "postconditions": [
+            "Returns an array of individual flags parsed from the input string.",
+            "Comma and space separators are supported."
+          ],
+          "invariants": ["The returned value is an array of strings."],
+          "edgeCases": [
+            "Comma-separated flags are parsed as individual flags.",
+            "Space-separated flags are parsed as individual flags.",
+            "Flags separated by both commas and spaces are parsed as individual flags."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Parses a flags string into an array of individual flag values. Flags may be separated by commas, spaces, or both.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": ",", "role": "Supported flag separator." },
+            { "kind": "enum-value", "value": " ", "role": "Supported flag separator." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "parseFlags is called with the input.",
+              "then": "The result contains the individual flags \"flag1\" and \"flag2\".",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "parseFlags is called with the input.",
+              "then": "The result contains the individual flags \"flag1\" and \"flag2\".",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "parseFlags is called with the input.",
+              "then": "The result contains \"flag1\", \"flag2\", and \"flag3\" as individual flags.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6d8c26ae0ccf08cca2a85a95348602d28f53a132c29d9bcb203bdb52f18b2324"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__userHasFlag#function:userHasFlag",
+        "unitKind": "function",
+        "name": "userHasFlag",
+        "qualifiedName": "userHasFlag",
+        "parentUnitId": null,
+        "startLine": 39,
+        "endLine": 40,
+        "isBehavioral": true,
+        "source": "export function parseFlags(flags: string | null | undefined): string[] {\n\treturn flags?.split(/[,\\s]+/).filter(Boolean) ?? []",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__userHasFlag#function:userHasFlag",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__userHasFlag",
+          "unitKind": "function",
+          "name": "userHasFlag",
+          "qualifiedName": "userHasFlag",
+          "parentUnitId": null,
+          "startLine": 39,
+          "endLine": 40,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The available source excerpt does not define the userHasFlag function, so its intended flag-checking contract cannot be established without speculation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "017626b910cfa6b9be9bc82293c7e6b0abaf280003ca846a8c630eb7aaee9eb4"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__disallowImmutableMutations#function:disallowImmutableMutations",
+        "unitKind": "function",
+        "name": "disallowImmutableMutations",
+        "qualifiedName": "disallowImmutableMutations",
+        "parentUnitId": null,
+        "startLine": 42,
+        "endLine": 49,
+        "isBehavioral": true,
+        "source": "\n/**\n * Check if a flags string contains a specific flag.\n * @param flags - The flags string to check\n * @param flag - The flag to look for\n * @returns true if the flag is present\n */\nexport function userHasFlag(flags: string | null | undefined, flag: TlaFlags): boolean {",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__disallowImmutableMutations#function:disallowImmutableMutations",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__disallowImmutableMutations",
+          "unitKind": "function",
+          "name": "disallowImmutableMutations",
+          "qualifiedName": "disallowImmutableMutations",
+          "parentUnitId": null,
+          "startLine": 42,
+          "endLine": 49,
+          "signature": "export function userHasFlag(flags: string | null | undefined, flag: TlaFlags): boolean",
+          "parameters": [
+            {
+              "name": "flags",
+              "type": "string | null | undefined",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "flag", "type": "TlaFlags", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["Returns a boolean indicating whether the requested flag is present."],
+          "invariants": [],
+          "edgeCases": [
+            "The flags argument may be null or undefined; the observed handling is not specified by the provided source excerpt.",
+            "The flags argument may be an empty string; the observed handling is not specified by the provided source excerpt."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["TlaFlags"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Checks whether a flags string contains a specified TlaFlags value and returns the result as a boolean.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "61782f069dadb796f3689b9fcd27df62929283f4e735c280d671d2aa1944b1b3"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__ensureSensibleTimestamp#function:ensureSensibleTimestamp",
+        "unitKind": "function",
+        "name": "ensureSensibleTimestamp",
+        "qualifiedName": "ensureSensibleTimestamp",
+        "parentUnitId": null,
+        "startLine": 53,
+        "endLine": 58,
+        "isBehavioral": true,
+        "source": "function disallowImmutableMutations<\n\tS extends TlaFilePartial | TlaFileStatePartial | TlaUserPartial,\n>(data: S, immutableColumns: Set<keyof S>) {\n\tfor (const immutableColumn of immutableColumns) {\n\t\tassert(!(immutableColumn in data), ZErrorCode.forbidden)\n\t}",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__ensureSensibleTimestamp#function:ensureSensibleTimestamp",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__ensureSensibleTimestamp",
+          "unitKind": "function",
+          "name": "ensureSensibleTimestamp",
+          "qualifiedName": "ensureSensibleTimestamp",
+          "parentUnitId": null,
+          "startLine": 53,
+          "endLine": 58,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The supplied source does not contain the requested ensureSensibleTimestamp function, so no callable or behavioral contract can be established from the available evidence.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "7f6da54af859d6fed842035561a9c4ffad267c4b21618a471ce9c38cea510716"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__getRole#function:getRole",
+        "unitKind": "function",
+        "name": "getRole",
+        "qualifiedName": "getRole",
+        "parentUnitId": null,
+        "startLine": 61,
+        "endLine": 74,
+        "isBehavioral": true,
+        "source": "export type TlaMutators = ReturnType<typeof createMutators>\n\nfunction ensureSensibleTimestamp(time: number) {\n\t// if a mutation took more than 5 seconds to reach the server, or is in the future, let's use the server's time\n\tconst now = Date.now()\n\tif (time < now - 5000 || time > now) {\n\t\treturn now\n\t}\n\treturn time\n}\n\n/**\n * Resolve the user's role in a workspace, or null if they aren't a member. Pair it\n * with `can` from ./roles: `const role = await getRole(...); assert(can(role, 'x'))`.",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__getRole#function:getRole",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__getRole",
+          "unitKind": "function",
+          "name": "getRole",
+          "qualifiedName": "getRole",
+          "parentUnitId": null,
+          "startLine": 61,
+          "endLine": 74,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "For a workspace member, resolves and returns that user's workspace role.",
+            "For a user who is not a workspace member, returns null."
+          ],
+          "invariants": [
+            "The result represents the user's membership role in the specified workspace.",
+            "Non-members are represented by null rather than a role value."
+          ],
+          "edgeCases": [
+            "A user who is not a member of the workspace produces null.",
+            "A workspace member produces the role associated with that membership."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Resolves a user's role within a workspace. Returns null when the user is not a workspace member, allowing the result to be evaluated with the workspace role authorization rules.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRole is awaited for that user and workspace.",
+              "then": "The user's workspace role is returned.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRole is awaited for that user and workspace.",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "ebb6b1d921e22915b579b8ef3fa37e68f9fa87f1b2bd272f33d022e3937ead8e"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__assertNotHomeWorkspace#function:assertNotHomeWorkspace",
+        "unitKind": "function",
+        "name": "assertNotHomeWorkspace",
+        "qualifiedName": "assertNotHomeWorkspace",
+        "parentUnitId": null,
+        "startLine": 77,
+        "endLine": 80,
+        "isBehavioral": true,
+        "source": "\ttx: Transaction<TlaSchema>,\n\tuserId: string,\n\tworkspaceId: string | null | undefined\n): Promise<Role | null> {",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__assertNotHomeWorkspace#function:assertNotHomeWorkspace",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__assertNotHomeWorkspace",
+          "unitKind": "function",
+          "name": "assertNotHomeWorkspace",
+          "qualifiedName": "assertNotHomeWorkspace",
+          "parentUnitId": null,
+          "startLine": 77,
+          "endLine": 80,
+          "signature": "assertNotHomeWorkspace(tx: Transaction<TlaSchema>, userId: string, workspaceId: string | null | undefined): Promise<Role | null>",
+          "parameters": [
+            {
+              "name": "tx",
+              "type": "Transaction<TlaSchema>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "userId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "workspaceId",
+              "type": "string | null | undefined",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "Promise<Role | null>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Transaction<TlaSchema>", "TlaSchema", "Role"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates the supplied user and workspace context and resolves asynchronously with a workspace role or null.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a2c998726c22c00564d1ee3cec2b48138efb39827be264bed8a2a96a6a3bcb5c"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__assertValidId#function:assertValidId",
+        "unitKind": "function",
+        "name": "assertValidId",
+        "qualifiedName": "assertValidId",
+        "parentUnitId": null,
+        "startLine": 82,
+        "endLine": 86,
+        "isBehavioral": true,
+        "source": "\t// A user's personal/home workspace has an id equal to their userId; they own it.\n\tif (workspaceId === userId) return 'owner'\n\tconst workspaceUser = await tx.run(\n\t\tzql.group_user.where('userId', '=', userId).where('groupId', '=', workspaceId).one()\n\t)",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__assertValidId#function:assertValidId",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__assertValidId",
+          "unitKind": "function",
+          "name": "assertValidId",
+          "qualifiedName": "assertValidId",
+          "parentUnitId": null,
+          "startLine": 82,
+          "endLine": 86,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "workspaceId and userId are available for equality comparison.",
+            "tx provides a run operation and the workspace membership query is supported."
+          ],
+          "postconditions": [
+            "If workspaceId equals userId, the unit returns 'owner' without querying membership.",
+            "Otherwise, the transaction context is used to evaluate whether the user belongs to the workspace."
+          ],
+          "invariants": ["A workspace ID equal to the user ID is classified as owned by the user."],
+          "edgeCases": [
+            "When workspaceId equals userId, returns 'owner' immediately.",
+            "When workspaceId differs from userId, performs a membership query for the user and workspace."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "tx.run", "source": "transaction context", "kind": "external" },
+            { "name": "zql.group_user.where", "source": "zql.group_user", "kind": "external" },
+            { "name": "where", "source": "zql.group_user query builder", "kind": "internal" },
+            { "name": "one", "source": "zql.group_user query builder", "kind": "internal" }
+          ],
+          "symbolReferences": ["tx", "zql.group_user"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The provided unit source treats a workspace whose ID equals the user ID as owned by that user; otherwise it asynchronously queries workspace membership through the transaction context.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "'owner'",
+              "role": "Returned classification for a workspace whose ID equals the user ID."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "bb5e521db3f21ae3444eb3c83cb2483452059b3655ba8f31e419d17454263c7c"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__assertUserCanAccessFileInternal#function:assertUserCanAccessFileInternal",
+        "unitKind": "function",
+        "name": "assertUserCanAccessFileInternal",
+        "qualifiedName": "assertUserCanAccessFileInternal",
+        "parentUnitId": null,
+        "startLine": 89,
+        "endLine": 114,
+        "isBehavioral": true,
+        "source": "\n/**\n * The home workspace (group id === its owner's user id) is private: it can't be\n * invited to, left, deleted, or have its members managed. (It can be renamed.)\n * Throw if `workspaceId` is a home workspace, i.e. a user exists with a matching id.\n */\nasync function assertNotHomeWorkspace(tx: Transaction<TlaSchema>, workspaceId: string) {\n\tconst user = await tx.run(zql.user.where('id', '=', workspaceId).one())\n\tassert(!user, ZErrorCode.forbidden)\n}\n\nfunction assertValidId(id: string) {\n\tassert(id.match(/^[a-zA-Z0-9_-]+$/), ZErrorCode.bad_request)\n\tassert(id.length <= 32, ZErrorCode.bad_request)\n\tassert(id.length >= 16, ZErrorCode.bad_request)\n}\n\n/**\n * Check if a user has the required permissions for a file.\n * @param tx - The transaction\n * @param userId - The user ID to check permissions for\n * @param file - The file to check permissions on\n * @param allowGuestAccess - If true, shared files are accessible even if user isn't owner/member\n */\nasync function assertUserCanAccessFileInternal(\n\ttx: Transaction<TlaSchema>,",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__assertUserCanAccessFileInternal#function:assertUserCanAccessFileInternal",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__assertUserCanAccessFileInternal",
+          "unitKind": "function",
+          "name": "assertUserCanAccessFileInternal",
+          "qualifiedName": "assertUserCanAccessFileInternal",
+          "parentUnitId": null,
+          "startLine": 89,
+          "endLine": 114,
+          "signature": "async function assertUserCanAccessFileInternal(tx: Transaction<TlaSchema>, userId: string, file, allowGuestAccess: boolean)",
+          "parameters": [
+            {
+              "name": "tx",
+              "type": "Transaction<TlaSchema>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "userId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "file", "type": null, "default": null, "optional": false, "variadic": false, "order": 2 },
+            {
+              "name": "allowGuestAccess",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "tx is an active transaction for the TlaSchema schema.",
+            "userId identifies the user whose access is being checked.",
+            "file identifies the file whose access is being checked."
+          ],
+          "postconditions": ["Returns normally only when the user is authorized to access the file."],
+          "invariants": ["An unauthorized access attempt does not return normally."],
+          "edgeCases": [
+            "A shared file with allowGuestAccess enabled may be accessed even when the user is not its owner or a member.",
+            "A user without the required ownership or membership permissions is rejected unless guest access is allowed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["ZErrorCode.forbidden assertion error when access is not permitted"],
+            "reverts": [],
+            "onInvalidInput": "Unauthorized access is rejected.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Transaction<TlaSchema>", "TlaSchema", "ZErrorCode"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Checks whether a user is permitted to access a specified file within a transaction. Shared files may be accessible to users who are neither the owner nor a member when guest access is allowed.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "bbe12467798200938c1affa387e7f0c04b71633d84a4e3143af99fea1e071353"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__assertUserCanAccessFile#function:assertUserCanAccessFile",
+        "unitKind": "function",
+        "name": "assertUserCanAccessFile",
+        "qualifiedName": "assertUserCanAccessFile",
+        "parentUnitId": null,
+        "startLine": 117,
+        "endLine": 119,
+        "isBehavioral": true,
+        "source": "\tallowGuestAccess: boolean\n) {\n\tassert(file, ZErrorCode.bad_request)",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__assertUserCanAccessFile#function:assertUserCanAccessFile",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__assertUserCanAccessFile",
+          "unitKind": "function",
+          "name": "assertUserCanAccessFile",
+          "qualifiedName": "assertUserCanAccessFile",
+          "parentUnitId": null,
+          "startLine": 117,
+          "endLine": 119,
+          "signature": null,
+          "parameters": [
+            {
+              "name": "allowGuestAccess",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The file access request and its associated file value are available to the function.",
+            "allowGuestAccess is a boolean."
+          ],
+          "postconditions": [
+            "If the file value is absent, the function does not complete normally and reports a bad-request assertion failure.",
+            "If validation succeeds, the function completes without violating the file-access policy."
+          ],
+          "invariants": ["A missing file is rejected before successful access validation."],
+          "edgeCases": [
+            "A missing or falsy file value triggers an assertion failure using the bad-request error code.",
+            "A present file is passed through the access-validation path subject to allowGuestAccess."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Assertion error for a missing file"],
+            "reverts": [],
+            "onInvalidInput": "Rejects a missing or falsy file with the bad_request error code.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "assert", "source": null, "kind": "external" },
+            {
+              "name": "assertUserCanAccessFileInternal",
+              "source": "packages/dotcom-shared/src/mutators.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["ZErrorCode.bad_request"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates that a file access request is applicable and asserts the request is invalid when the file value is absent. It participates in enforcing file-access permissions, including guest-access policy.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "bad_request",
+              "role": "Error code used when the required file value is absent."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "8113980cece36543dd0eb05869fdf9a4aba0b14509896179612139180a45d558"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__assertUserCanUpdateFile#function:assertUserCanUpdateFile",
+        "unitKind": "function",
+        "name": "assertUserCanUpdateFile",
+        "qualifiedName": "assertUserCanUpdateFile",
+        "parentUnitId": null,
+        "startLine": 122,
+        "endLine": 124,
+        "isBehavioral": true,
+        "source": "\t// If shared and we allow shared access, grant access immediately\n\tif (allowGuestAccess && file.shared) {\n\t\treturn",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__assertUserCanUpdateFile#function:assertUserCanUpdateFile",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__assertUserCanUpdateFile",
+          "unitKind": "function",
+          "name": "assertUserCanUpdateFile",
+          "qualifiedName": "assertUserCanUpdateFile",
+          "parentUnitId": null,
+          "startLine": 122,
+          "endLine": 124,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The function receives values from which guest-access permission and the file's shared state can be evaluated."
+          ],
+          "postconditions": [
+            "If guest access is allowed and the file is shared, the function returns immediately without raising an error."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "When allowGuestAccess is true and file.shared is true, the function takes the immediate-return path.",
+            "When either allowGuestAccess is false or file.shared is false, this immediate-return condition does not apply."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Checks whether a user may update a file. When guest access is enabled and the file is shared, the function accepts the request immediately.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "assertUserCanUpdateFile is invoked",
+              "then": "The function returns immediately without raising an error.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f377eea6e82aa92d37a3d79e0608efe4c8c25eecae4b2998b756e9bf58ff518e"
+        }
+      },
+      {
+        "unitId": "packages/dotcom-shared/src/mutators.ts__createMutators#function:createMutators",
+        "unitKind": "function",
+        "name": "createMutators",
+        "qualifiedName": "createMutators",
+        "parentUnitId": null,
+        "startLine": 126,
+        "endLine": 719,
+        "isBehavioral": true,
+        "source": "\n\tif (file.ownerId) {\n\t\t// Legacy model: user must own the file\n\t\tassert(file.ownerId === userId, ZErrorCode.forbidden)\n\t} else if (file.owningGroupId) {\n\t\t// New model: user must be a member of the owning workspace\n\t\tconst role = await getRole(tx, userId, file.owningGroupId)\n\t\tassert(can(role, 'accessFiles'), ZErrorCode.forbidden)\n\t} else {\n\t\t// File has neither ownerId nor owningGroupId - invalid state\n\t\tassert(false, ZErrorCode.bad_request)\n\t}\n}\n\n/**\n * Check if a user can access (read) a file.\n * A user can access a file if:\n * - They own it (legacy model: file.ownerId matches userId)\n * - They are a member of the owning workspace (new model: user is in file.owningGroupId)\n * - The file is shared (regardless of ownership model)\n */\nasync function assertUserCanAccessFile(tx: Transaction<TlaSchema>, userId: string, file: TlaFile) {\n\tawait assertUserCanAccessFileInternal(tx, userId, file, true)\n}\n\n/**\n * Check if a user can update (write to) a file.\n * A user can update a file if:\n * - They own it (legacy model: file.ownerId matches userId)\n * - They are a member of the owning workspace (new model: user is in file.owningGroupId)\n * Note: Sharing only grants read access, not write access\n */\nasync function assertUserCanUpdateFile(tx: Transaction<TlaSchema>, userId: string, file: TlaFile) {\n\tawait assertUserCanAccessFileInternal(tx, userId, file, false)\n}\n\nexport function createMutators(userId: string) {\n\tconst mutators = {\n\t\tuser: {\n\t\t\t/** @deprecated */\n\t\t\tinsert: async (tx: Tx, user: TlaUser) => {\n\t\t\t\tassert(userId === user.id, ZErrorCode.forbidden)\n\t\t\t\tawait tx.mutate.user.insert(user)\n\t\t\t},\n\t\t\tupdate: async (tx: Tx, user: TlaUserPartial) => {\n\t\t\t\tassert(userId === user.id, ZErrorCode.forbidden)\n\t\t\t\tdisallowImmutableMutations(user, immutableColumns.user)\n\t\t\t\tawait tx.mutate.user.update(user)\n\t\t\t},\n\t\t},\n\t\tfile: {\n\t\t\t/** @deprecated */\n\t\t\tdeleteOrForget: async (tx: Tx, { id }: { id: string }) => {\n\t\t\t\tconst file = await tx.run(zql.file.where('id', '=', id).one())\n\t\t\t\tif (!file) return\n\t\t\t\tawait tx.mutate.file_state.delete({ fileId: id, userId })\n\t\t\t\tif (file.ownerId && file.ownerId === userId) {\n\t\t\t\t\tawait tx.mutate.file.update({\n\t\t\t\t\t\tid: file.id,\n\t\t\t\t\t\townerId: file.ownerId,\n\t\t\t\t\t\tpublishedSlug: file.publishedSlug,\n\t\t\t\t\t\tisDeleted: true,\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t},\n\t\t\tupdate: async (tx: Tx, _file: TlaFilePartial) => {\n\t\t\t\tdisallowImmutableMutations(_file, immutableColumns.file)\n\t\t\t\tconst file = await tx.run(zql.file.where('id', '=', _file.id).one())\n\t\t\t\tawait assertUserCanUpdateFile(tx, userId, file!)\n\n\t\t\t\tawait tx.mutate.file.update({\n\t\t\t\t\t..._file,\n\t\t\t\t\tid: file!.id,\n\t\t\t\t})\n\t\t\t},\n\t\t},\n\t\tfile_state: {\n\t\t\t/** @deprecated now update creates if not exists */\n\t\t\tinsert: async (tx: Tx, fileState: TlaFileState) => {\n\t\t\t\tassert(fileState.userId === userId, ZErrorCode.forbidden)\n\t\t\t\tif (tx.location === 'server') {\n\t\t\t\t\t// Verify the user has access to this file\n\t\t\t\t\tconst file = await tx.run(zql.file.where('id', '=', fileState.fileId).one())\n\t\t\t\t\tawait assertUserCanAccessFile(tx, userId, file!)\n\t\t\t\t}\n\t\t\t\t// use upsert under the hood here for a little fault tolerance\n\t\t\t\tawait tx.mutate.file_state.upsert(fileState)\n\t\t\t},\n\t\t\tupdate: async (tx: Tx, props: TlaFileStatePartial) => {\n\t\t\t\tconst fileState = props\n\n\t\t\t\tassert(fileState.userId === userId, ZErrorCode.forbidden)\n\t\t\t\tdisallowImmutableMutations(fileState, immutableColumns.file_state)\n\t\t\t\tif (tx.location === 'server') {\n\t\t\t\t\t// Verify the user has access to this file\n\t\t\t\t\tconst file = await tx.run(zql.file.where('id', '=', fileState.fileId).one())\n\t\t\t\t\tawait assertUserCanAccessFile(tx, userId, file!)\n\t\t\t\t}\n\t\t\t\tconst exists = await tx.run(\n\t\t\t\t\tzql.file_state.where('fileId', '=', fileState.fileId).where('userId', '=', userId).one()\n\t\t\t\t)\n\n\t\t\t\tif (!exists) {\n\t\t\t\t\t// if the file state does not exist, do nothing\n\t\t\t\t\treturn\n\t\t\t\t}\n\n\t\t\t\tawait tx.mutate.file_state.upsert(fileState)\n\t\t\t},\n\t\t},\n\n\t\tcomment: {\n\t\t\t/**\n\t\t\t * Mark a comment as read by the current user. Row present = read; readAt is stored so\n\t\t\t * an \"edits reset unread\" rule can later be added client-side without a migration.\n\t\t\t */\n\t\t\tmarkRead: async (tx: Tx, { commentId, readAt }: { commentId: string; readAt: number }) => {\n\t\t\t\tif (tx.location === 'server') {\n\t\t\t\t\t// Verify the comment exists and the user can access its file\n\t\t\t\t\tconst comment = await tx.run(zql.comment.where('id', '=', commentId).one())\n\t\t\t\t\tassert(comment, ZErrorCode.bad_request)\n\t\t\t\t\tconst file = await tx.run(zql.file.where('id', '=', comment.fileId).one())\n\t\t\t\t\tawait assertUserCanAccessFile(tx, userId, file!)\n\t\t\t\t}\n\t\t\t\tawait tx.mutate.comment_read.upsert({\n\t\t\t\t\tuserId,\n\t\t\t\t\tcommentId,\n\t\t\t\t\treadAt: ensureSensibleTimestamp(readAt),\n\t\t\t\t})\n\t\t\t},\n\t\t\t/**\n\t\t\t * Mark a batch of comments as read by the current user in one mutation — opening a thread\n\t\t\t * or \"mark all read\" would otherwise pay a mutation (comment lookup, file lookup, access\n\t\t\t * check) per comment. One access check per distinct fileId covers the whole batch.\n\t\t\t */\n\t\t\tmarkManyRead: async (\n\t\t\t\ttx: Tx,\n\t\t\t\t{ commentIds, readAt }: { commentIds: string[]; readAt: number }\n\t\t\t) => {\n\t\t\t\tconst uniqueIds = [...new Set(commentIds)]\n\t\t\t\tif (uniqueIds.length === 0) return\n\t\t\t\tif (tx.location === 'server') {\n\t\t\t\t\t// Verify every comment exists and the user can access each involved file\n\t\t\t\t\tconst comments = await tx.run(zql.comment.where('id', 'IN', uniqueIds))\n\t\t\t\t\tassert(comments.length === uniqueIds.length, ZErrorCode.bad_request)\n\t\t\t\t\tconst fileIds = new Set(comments.map((comment) => comment.fileId))\n\t\t\t\t\tfor (const fileId of fileIds) {\n\t\t\t\t\t\tconst file = await tx.run(zql.file.where('id', '=', fileId).one())\n\t\t\t\t\t\tawait assertUserCanAccessFile(tx, userId, file!)\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tconst timestamp = ensureSensibleTimestamp(readAt)\n\t\t\t\tfor (const commentId of uniqueIds) {\n\t\t\t\t\tawait tx.mutate.comment_read.upsert({ userId, commentId, readAt: timestamp })\n\t\t\t\t}\n\t\t\t},\n\t\t\t/** Mark a comment as unread by deleting the current user's read row. Own-row-only by construction. */\n\t\t\tmarkUnread: async (tx: Tx, { commentId }: { commentId: string }) => {\n\t\t\t\tawait tx.mutate.comment_read.delete({ userId, commentId })\n\t\t\t},\n\t\t},\n\n\t\t/** @deprecated */\n\t\tinit: async (tx: Tx, { user, time }: { user: TlaUser; time: number }) => {\n\t\t\tassert(user.id === userId, ZErrorCode.forbidden)\n\t\t\ttime = ensureSensibleTimestamp(time)\n\t\t\tawait tx.mutate.user.insert({ ...user, flags: '' })\n\t\t\tawait tx.mutate.group.insert({\n\t\t\t\tid: userId,\n\t\t\t\tname: user.name,\n\t\t\t\tcreatedAt: time,\n\t\t\t\tupdatedAt: time,\n\t\t\t\tisDeleted: false,\n\t\t\t\tinviteSecret: null,\n\t\t\t\tinviteLinkEnabled: true,\n\t\t\t})\n\t\t\tawait tx.mutate.group_user.insert({\n\t\t\t\tuserId,\n\t\t\t\tgroupId: userId,\n\t\t\t\tcreatedAt: time,\n\t\t\t\tupdatedAt: time,\n\t\t\t\trole: 'owner',\n\t\t\t\tindex: 'a1' as IndexKey,\n\t\t\t\tuserColor: user.color,\n\t\t\t\tuserName: user.name,\n\t\t\t})\n\t\t},\n\n\t\tcreateFile: async (\n\t\t\ttx: Tx,\n\t\t\t{\n\t\t\t\tfileId,\n\t\t\t\tworkspaceId,\n\t\t\t\tname,\n\t\t\t\ttime,\n\t\t\t\tcreateSource,\n\t\t\t}: {\n\t\t\t\tfileId: string\n\t\t\t\tworkspaceId: string\n\t\t\t\tname: string\n\t\t\t\ttime: number\n\t\t\t\tcreateSource: string | null\n\t\t\t}\n\t\t) => {\n\t\t\ttime = ensureSensibleTimestamp(time)\n\n\t\t\t// Security: when a new file is seeded from another app file (the Duplicate\n\t\t\t// action sets `createSource` to `${FILE_PREFIX}/${sourceFileId}`), the user\n\t\t\t// must be able to read that source file. The content copy happens later in\n\t\t\t// the worker (handleFileCreateFromSource), which trusts `createSource`\n\t\t\t// verbatim, so the authorization has to happen here at creation time.\n\t\t\t// Without this, a user who can still see a file they've lost access to — or\n\t\t\t// who merely knows its id — could duplicate it and obtain an owned, editable\n\t\t\t// copy of content they cannot read. Checked on the server only, matching the\n\t\t\t// other file-access checks in this file (the optimistic client run may not\n\t\t\t// have the source file synced). Other `createSource` prefixes (published,\n\t\t\t// legacy rooms, local files) are intentionally not gated here.\n\t\t\tif (tx.location === 'server' && createSource) {\n\t\t\t\tconst [prefix, sourceFileId] = createSource.split('/')\n\t\t\t\tif (prefix === FILE_PREFIX) {\n\t\t\t\t\tconst sourceFile = await tx.run(zql.file.where('id', '=', sourceFileId).one())\n\t\t\t\t\tawait assertUserCanAccessFile(tx, userId, sourceFile!)\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tconst file = await tx.run(zql.file.where('id', '=', fileId).one())\n\t\t\tassert(!file, ZErrorCode.bad_request)\n\t\t\tassertValidId(fileId)\n\t\t\tassertValidId(workspaceId)\n\t\t\tassert(name.trim(), ZErrorCode.bad_request)\n\t\t\t// Authorize via getRole, not a raw group_user lookup: the home workspace\n\t\t\t// (id === userId) is implicitly owned and may have no group_user row, yet\n\t\t\t// the user must still be able to create files in it. A raw row check would\n\t\t\t// reject that case, leaving an empty home un-switchable (selecting it from\n\t\t\t// the switcher creates-then-opens a file, which silently fails). Every other\n\t\t\t// workspace op already authorizes through getRole/can for the same reason.\n\t\t\tconst role = await getRole(tx, userId, workspaceId)\n\t\t\tassert(can(role, 'addFiles'), ZErrorCode.forbidden)\n\n\t\t\t// create file row, group_file row, file_state row\n\t\t\tawait tx.mutate.file.insert({\n\t\t\t\tid: fileId,\n\t\t\t\tname,\n\t\t\t\townerId: null,\n\t\t\t\towningGroupId: workspaceId,\n\t\t\t\townerName: '',\n\t\t\t\townerAvatar: '',\n\t\t\t\tthumbnail: '',\n\t\t\t\tshared: true,\n\t\t\t\tsharedLinkType: 'edit',\n\t\t\t\tisEmpty: true,\n\t\t\t\tpublished: false,\n\t\t\t\tlastPublished: 0,\n\t\t\t\tpublishedSlug: uniqueId(),\n\t\t\t\tcreatedAt: time,\n\t\t\t\tupdatedAt: time,\n\t\t\t\tisDeleted: false,\n\t\t\t\tcreateSource,\n\t\t\t})\n\t\t\tawait tx.mutate.group_file.insert({\n\t\t\t\tfileId,\n\t\t\t\tgroupId: workspaceId,\n\t\t\t\tcreatedAt: time,\n\t\t\t\tupdatedAt: time,\n\t\t\t\tindex: null,\n\t\t\t})\n\t\t\tawait tx.mutate.file_state.insert({\n\t\t\t\tfileId,\n\t\t\t\tuserId,\n\t\t\t\tisPinned: false,\n\t\t\t\tlastEditAt: null,\n\t\t\t\tlastVisitAt: null,\n\t\t\t\tfirstVisitAt: null,\n\t\t\t\tlastSessionState: null,\n\t\t\t\t// isFileOwner is no longer used in new model.\n\t\t\t\tisFileOwner: false,\n\t\t\t})\n\t\t},\n\n\t\tpinFile: async (\n\t\t\ttx: Tx,\n\t\t\t{ fileId, workspaceId, index }: { fileId: string; workspaceId: string; index?: IndexKey }\n\t\t) => {\n\t\t\tassert(fileId, ZErrorCode.bad_request)\n\t\t\tassert(typeof index === 'string' || index == null, ZErrorCode.bad_request)\n\t\t\tassert(workspaceId, ZErrorCode.bad_request)\n\t\t\t// Without this any signed-in user who knows a (fileId, workspaceId) pair — a guest who\n\t\t\t// opened a shared link, a removed member — could rewrite that workspace's pin order.\n\t\t\tassert(can(await getRole(tx, userId, workspaceId), 'accessFiles'), ZErrorCode.forbidden)\n\n\t\t\t// Pinned files are group_file rows with a non-null index.\n\t\t\t// New pins go above the workspace's current top pinned file.\n\t\t\tlet indexToUse = index\n\t\t\tif (indexToUse == null) {\n\t\t\t\tconst allWorkspaceFiles = await tx.run(zql.group_file.where('groupId', '=', workspaceId))\n\t\t\t\tconst otherPinnedFiles = allWorkspaceFiles.filter((gf: TlaGroupFile) => gf.index !== null)\n\n\t\t\t\totherPinnedFiles.sort(sortByMaybeIndex)\n\t\t\t\tindexToUse = getIndexBelow(otherPinnedFiles[0]?.index) ?? ('a1' as IndexKey)\n\t\t\t}\n\n\t\t\tawait tx.mutate.group_file.update({\n\t\t\t\tfileId,\n\t\t\t\tgroupId: workspaceId,\n\t\t\t\tindex: indexToUse,\n\t\t\t})\n\t\t},\n\n\t\tunpinFile: async (tx: Tx, { fileId, workspaceId }: { fileId: string; workspaceId: string }) => {\n\t\t\tassert(fileId, ZErrorCode.bad_request)\n\t\t\tassert(workspaceId, ZErrorCode.bad_request)\n\t\t\t// See pinFile.\n\t\t\tassert(can(await getRole(tx, userId, workspaceId), 'accessFiles'), ZErrorCode.forbidden)\n\n\t\t\tawait tx.mutate.group_file.update({\n\t\t\t\tfileId,\n\t\t\t\tgroupId: workspaceId,\n\t\t\t\tindex: null,\n\t\t\t})\n\t\t},\n\n\t\tremoveFileFromWorkspace: async (\n\t\t\ttx: Tx,\n\t\t\t{ fileId, workspaceId }: { fileId: string; workspaceId: string }\n\t\t) => {\n\t\t\tassert(fileId, ZErrorCode.bad_request)\n\t\t\tassert(workspaceId, ZErrorCode.bad_request)\n\t\t\tconst role = await getRole(tx, userId, workspaceId)\n\t\t\tassert(can(role, 'removeFiles'), ZErrorCode.forbidden)\n\t\t\tconst file = await tx.run(zql.file.where('id', '=', fileId).one())\n\t\t\tassert(file, ZErrorCode.bad_request)\n\n\t\t\tawait tx.mutate.file_state.delete({ fileId, userId })\n\t\t\tawait tx.mutate.group_file.delete({ fileId, groupId: workspaceId })\n\t\t\tif (file.owningGroupId === workspaceId) {\n\t\t\t\tawait tx.mutate.file.update({ id: fileId, isDeleted: true })\n\t\t\t}\n\t\t},\n\t\tonEnterFile: async (tx: Tx, { fileId, time }: { fileId: string; time: number }) => {\n\t\t\tassert(fileId, ZErrorCode.bad_request)\n\t\t\ttime = ensureSensibleTimestamp(time)\n\n\t\t\tconst file = await tx.run(zql.file.where('id', '=', fileId).one())\n\n\t\t\t// Verify the user has permission to access this file\n\t\t\tif (tx.location === 'server') {\n\t\t\t\tawait assertUserCanAccessFile(tx, userId, file!)\n\t\t\t}\n\n\t\t\t// If we get here, the user has legitimate access to the file\n\t\t\tawait tx.mutate.file_state.upsert({ fileId, userId, firstVisitAt: time })\n\n\t\t\t// Add a visited file to the user's home group so it shows as a \"guest file\" in the\n\t\t\t// sidebar — unless it's already visible to the user somewhere else. A file is listed\n\t\t\t// in a workspace only when that workspace actually OWNS it (getWorkspaceFilesSorted\n\t\t\t// lists a non-home workspace's file only when owningGroupId === workspaceId), so the\n\t\t\t// only thing that should suppress the home link is the file being owned by a\n\t\t\t// workspace the user belongs to.\n\t\t\t//\n\t\t\t// We deliberately do NOT key off \"any group_file row in one of my groups\": a\n\t\t\t// stale/mislinked row (e.g. a leftover from the removed drag-to-link feature,\n\t\t\t// #9107/#9254, or a create-workspace-race mirror) points at a workspace that does\n\t\t\t// not own the file, so it shows the file nowhere. Counting it here would skip the\n\t\t\t// home link and make the file invisible in the sidebar entirely.\n\t\t\tconst alreadyLinkedInHome = await tx.run(\n\t\t\t\tzql.group_file.where('fileId', '=', fileId).where('groupId', '=', userId).one()\n\t\t\t)\n\t\t\tif (!alreadyLinkedInHome) {\n\t\t\t\t// getRole returns null when the user isn't a member of the file's owning\n\t\t\t\t// workspace (and for a null owningGroupId), so this is true only when the file\n\t\t\t\t// is genuinely owned by a workspace the user belongs to.\n\t\t\t\tconst ownedByOneOfMyWorkspaces = (await getRole(tx, userId, file?.owningGroupId)) !== null\n\t\t\t\tif (!ownedByOneOfMyWorkspaces) {\n\t\t\t\t\tawait tx.mutate.group_file.insert({\n\t\t\t\t\t\tfileId,\n\t\t\t\t\t\tgroupId: userId,\n\t\t\t\t\t\tcreatedAt: time,\n\t\t\t\t\t\tupdatedAt: time,\n\t\t\t\t\t\tindex: null,\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\t\t},\n\t\tcreateWorkspace: async (tx: Tx, { id, name }: { id: string; name: string }) => {\n\t\t\tassertValidId(id)\n\n\t\t\tconst clampedName = name.trim().slice(0, MAX_WORKSPACE_NAME_LENGTH)\n\t\t\tassert(clampedName, ZErrorCode.bad_request)\n\n\t\t\t// Enforce the workspace limit before creating anything.\n\t\t\tconst existingWorkspaces = await tx.run(zql.group_user.where('userId', '=', userId))\n\t\t\tassert(\n\t\t\t\texistingWorkspaces.length < MAX_NUMBER_OF_WORKSPACES,\n\t\t\t\tZErrorCode.max_workspaces_reached\n\t\t\t)\n\n\t\t\tawait tx.mutate.group.insert({\n\t\t\t\tid,\n\t\t\t\tname: clampedName,\n\t\t\t\tinviteSecret: tx.location === 'server' ? uniqueId() : null,\n\t\t\t\tinviteLinkEnabled: true,\n\t\t\t\tisDeleted: false,\n\t\t\t\tcreatedAt: Date.now(),\n\t\t\t\tupdatedAt: Date.now(),\n\t\t\t})\n\n\t\t\t// Use tldraw's fractional indexing to place the new workspace at the top\n\t\t\t// (the workspace list sorts ascending, so the lowest index renders first)\n\t\t\tlet index: IndexKey\n\t\t\tif (existingWorkspaces.length === 0) {\n\t\t\t\t// First workspace gets 'a1'\n\t\t\t\tindex = 'a1' as IndexKey\n\t\t\t} else {\n\t\t\t\tconst sortedWorkspaces = existingWorkspaces.sort(sortByIndex)\n\t\t\t\tconst lowest = sortedWorkspaces[0]?.index as IndexKey | undefined\n\t\t\t\t// Generate a new index below the current lowest\n\t\t\t\tindex = getIndexBelow(lowest)\n\t\t\t}\n\n\t\t\tawait tx.mutate.group_user.insert({\n\t\t\t\tuserId,\n\t\t\t\tgroupId: id,\n\t\t\t\t// these are set by the trigger\n\t\t\t\tuserName: '',\n\t\t\t\tuserColor: '#000000',\n\t\t\t\trole: 'owner',\n\t\t\t\tcreatedAt: Date.now(),\n\t\t\t\tupdatedAt: Date.now(),\n\t\t\t\tindex,\n\t\t\t})\n\t\t},\n\t\tupdateWorkspace: async (tx: Tx, { id, name }: { id: string; name: string }) => {\n\t\t\tassert(id, ZErrorCode.bad_request)\n\t\t\tassert(name && name.trim(), ZErrorCode.bad_request)\n\t\t\t// The home workspace can be renamed (unlike other home-workspace actions),\n\t\t\t// so it's intentionally not guarded by assertNotHomeWorkspace here.\n\t\t\tconst role = await getRole(tx, userId, id)\n\t\t\tassert(can(role, 'manageWorkspace'), ZErrorCode.forbidden)\n\n\t\t\tawait tx.mutate.group.update({\n\t\t\t\tid,\n\t\t\t\tname: name.trim().slice(0, MAX_WORKSPACE_NAME_LENGTH),\n\t\t\t})\n\t\t},\n\t\tregenerateWorkspaceInviteSecret: async (tx: Tx, { id }: { id: string }) => {\n\t\t\tassert(id, ZErrorCode.bad_request)\n\t\t\tawait assertNotHomeWorkspace(tx, id)\n\n\t\t\tconst role = await getRole(tx, userId, id)\n\t\t\tassert(can(role, 'manageWorkspace'), ZErrorCode.forbidden)\n\n\t\t\tif (tx.location === 'server') {\n\t\t\t\tawait tx.mutate.group.update({ id, inviteSecret: uniqueId() })\n\t\t\t}\n\t\t},\n\t\tsetWorkspaceInviteLinkEnabled: async (\n\t\t\ttx: Tx,\n\t\t\t{ id, enabled }: { id: string; enabled: boolean }\n\t\t) => {\n\t\t\tassert(id, ZErrorCode.bad_request)\n\t\t\tawait assertNotHomeWorkspace(tx, id)\n\n\t\t\tconst role = await getRole(tx, userId, id)\n\t\t\tassert(can(role, 'manageWorkspace'), ZErrorCode.forbidden)\n\n\t\t\t// Flip the flag only; inviteSecret is preserved so re-enabling restores the\n\t\t\t// same link.\n\t\t\tawait tx.mutate.group.update({ id, inviteLinkEnabled: enabled })\n\t\t},\n\t\tsetWorkspaceMemberRole: async (\n\t\t\ttx: Tx,\n\t\t\t{\n\t\t\t\tworkspaceId,\n\t\t\t\ttargetUserId,\n\t\t\t\trole: targetRole,\n\t\t\t}: { workspaceId: string; targetUserId: string; role: Role }\n\t\t) => {\n\t\t\tassert(workspaceId, ZErrorCode.bad_request)\n\t\t\tassert(targetUserId, ZErrorCode.bad_request)\n\t\t\tassert(isRole(targetRole), ZErrorCode.bad_request)\n\t\t\tawait assertNotHomeWorkspace(tx, workspaceId)\n\n\t\t\tconst role = await getRole(tx, userId, workspaceId)\n\t\t\tassert(can(role, 'manageWorkspace'), ZErrorCode.forbidden)\n\n\t\t\t// Target must be a member\n\t\t\tconst targetMembership = await tx.run(\n\t\t\t\tzql.group_user.where('userId', '=', targetUserId).where('groupId', '=', workspaceId).one()\n\t\t\t)\n\t\t\tassert(targetMembership, ZErrorCode.bad_request)\n\n\t\t\tif (targetMembership.role === targetRole) return\n\n\t\t\t// Invariant (not a capability): a group must always keep at least one\n\t\t\t// owner, so the last owner can't be demoted away from owner.\n\t\t\tif (targetMembership.role === 'owner' && targetRole !== 'owner') {\n\t\t\t\tconst owners = await tx.run(\n\t\t\t\t\tzql.group_user.where('groupId', '=', workspaceId).where('role', '=', 'owner')\n\t\t\t\t)\n\t\t\t\tassert(owners.length > 1, ZErrorCode.forbidden)\n\t\t\t}\n\n\t\t\tawait tx.mutate.group_user.update({\n\t\t\t\tuserId: targetUserId,\n\t\t\t\tgroupId: workspaceId,\n\t\t\t\trole: targetRole,\n\t\t\t})\n\t\t},\n\t\tremoveWorkspaceMember: async (\n\t\t\ttx: Tx,\n\t\t\t{ workspaceId, targetUserId }: { workspaceId: string; targetUserId: string }\n\t\t) => {\n\t\t\tassert(workspaceId, ZErrorCode.bad_request)\n\t\t\tassert(targetUserId, ZErrorCode.bad_request)\n\n\t\t\tconst role = await getRole(tx, userId, workspaceId)\n\t\t\tassert(can(role, 'manageWorkspace'), ZErrorCode.forbidden)\n\n\t\t\t// Target must be a member\n\t\t\tconst targetMembership = await tx.run(\n\t\t\t\tzql.group_user.where('userId', '=', targetUserId).where('groupId', '=', workspaceId).one()\n\t\t\t)\n\t\t\tassert(targetMembership, ZErrorCode.bad_request)\n\n\t\t\t// Invariant (not a capability): a group must always keep at least one\n\t\t\t// owner, so the last owner can't be removed.\n\t\t\tif (targetMembership.role === 'owner') {\n\t\t\t\tconst owners = await tx.run(\n\t\t\t\t\tzql.group_user.where('groupId', '=', workspaceId).where('role', '=', 'owner')\n\t\t\t\t)\n\t\t\t\tassert(owners.length > 1, ZErrorCode.forbidden)\n\t\t\t}\n\n\t\t\tawait tx.mutate.group_user.delete({ userId: targetUserId, groupId: workspaceId })\n\t\t},\n\t\tleaveWorkspace: async (tx: Tx, { workspaceId }: { workspaceId: string }) => {\n\t\t\tassert(workspaceId, ZErrorCode.bad_request)\n\t\t\tawait assertNotHomeWorkspace(tx, workspaceId)\n\t\t\tconst owners = await tx.run(\n\t\t\t\tzql.group_user.where('groupId', '=', workspaceId).where('role', '=', 'owner')\n\t\t\t)\n\t\t\tconst isOnlyOwner = owners.length === 1 && owners[0].userId === userId\n\t\t\t// Invariant (not a capability): a group must always keep at least one\n\t\t\t// owner, so the last owner can't leave — they must delete the group instead.\n\t\t\tassert(!isOnlyOwner, ZErrorCode.forbidden)\n\t\t\tawait tx.mutate.group_user.delete({ userId, groupId: workspaceId })\n\t\t},\n\t\tdeleteWorkspace: async (tx: Tx, { id }: { id: string }) => {\n\t\t\tassert(id, ZErrorCode.bad_request)\n\t\t\tawait assertNotHomeWorkspace(tx, id)\n\t\t\tconst role = await getRole(tx, userId, id)\n\t\t\tassert(can(role, 'manageWorkspace'), ZErrorCode.forbidden)\n\n\t\t\t// Delete all workspace files\n\t\t\tconst workspaceFileRows = await tx.run(zql.group_file.where('groupId', '=', id))\n\t\t\tfor (const workspaceFile of workspaceFileRows) {\n\t\t\t\tawait tx.mutate.group_file.delete({ fileId: workspaceFile.fileId, groupId: id })\n\t\t\t}\n\n\t\t\t// Mark all files owned by this workspace as deleted\n\t\t\tconst files = await tx.run(zql.file.where('owningGroupId', '=', id))\n\t\t\tfor (const file of files) {\n\t\t\t\tawait tx.mutate.file.update({ id: file.id, isDeleted: true })\n\t\t\t}\n\n\t\t\tawait tx.mutate.group.update({ id: id, isDeleted: true })\n\t\t\tif (tx.location !== 'server') {\n\t\t\t\tawait tx.mutate.group_user.delete({ userId, groupId: id })\n\t\t\t}\n\t\t},\n\t\tmoveFileToWorkspace: async (\n\t\t\ttx: Tx,\n\t\t\t{ fileId, workspaceId }: { fileId: string; workspaceId: string }\n\t\t) => {\n\t\t\tassert(fileId, ZErrorCode.bad_request)\n\t\t\tassert(workspaceId, ZErrorCode.bad_request)\n\n\t\t\tconst file = await tx.run(zql.file.where('id', '=', fileId).one())\n\t\t\tassert(file, ZErrorCode.bad_request)\n\n\t\t\t// No-op if file is already in the target workspace\n\t\t\tif (file.owningGroupId === workspaceId) {\n\t\t\t\treturn\n\t\t\t}\n\n\t\t\t// User must be allowed to take the file out of its current workspace and\n\t\t\t// to add files to the destination workspace.\n\t\t\tconst fromRole = await getRole(tx, userId, file.owningGroupId)\n\t\t\tassert(can(fromRole, 'removeFiles'), ZErrorCode.forbidden)\n\t\t\tconst toRole = await getRole(tx, userId, workspaceId)\n\t\t\tassert(can(toRole, 'addFiles'), ZErrorCode.forbidden)\n\n\t\t\t// Remove file from current group association if it exists\n\t\t\tif (file.owningGroupId) {",
+        "detail": {
+          "unitId": "packages/dotcom-shared/src/mutators.ts__createMutators#function:createMutators",
+          "fileId": "packages/dotcom-shared/src/mutators.ts__createMutators",
+          "unitKind": "function",
+          "name": "createMutators",
+          "qualifiedName": "createMutators",
+          "parentUnitId": null,
+          "startLine": 126,
+          "endLine": 719,
+          "signature": "export function createMutators(userId: string)",
+          "parameters": [
+            { "name": "userId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "userId is the identity against which all returned mutators authorize operations.",
+            "Operations supplied to returned mutators receive a transaction compatible with the expected Tx or Transaction<TlaSchema> interface.",
+            "Mutation inputs conform to their respective Tla schema types and operation-specific shapes."
+          ],
+          "postconditions": [
+            "Returns an object containing user, file, file_state, comment, initialization, file/workspace, and workspace-membership mutators.",
+            "Every returned mutator uses the captured userId when checking ownership, membership, access, and user-scoped rows.",
+            "Successful mutator calls apply only the database mutations permitted by the caller's identity, role, transaction location, and input."
+          ],
+          "invariants": [
+            "A caller cannot mutate another user's user row or user-owned file state through the returned mutators.",
+            "Read access may be granted by ownership, owning-workspace membership, or sharing where applicable; sharing does not grant file update access.",
+            "Workspace operations preserve the invariant that a workspace retains at least one owner.",
+            "Home-workspace restrictions and workspace capability checks are enforced for the operations that require them.",
+            "Server transactions perform the applicable access and existence checks that optimistic client transactions may skip.",
+            "Immutable fields rejected by disallowImmutableMutations are not changed by update mutators."
+          ],
+          "edgeCases": [
+            "User-scoped inserts or updates whose user identifier differs from the captured userId fail with the forbidden error code.",
+            "Missing, malformed, duplicate, or invalid identifiers and blank names fail with the bad_request error code where the individual mutator validates them.",
+            "Deleting or marking an absent entity may be a no-op for the operations that explicitly tolerate absence; otherwise required missing records fail with bad_request.",
+            "Batch comment-read requests deduplicate comment identifiers, return without mutation for an empty batch, and use one normalized timestamp for all resulting rows.",
+            "A file-state update for a nonexistent state row returns without mutation after authorization checks.",
+            "Creating a file from a source file performs a server-side source-access check only when the createSource prefix is FILE_PREFIX.",
+            "Pinning without an index derives an index above the workspace's current top pinned file; unpinning writes a null index.",
+            "Attempting to demote or remove the last workspace owner fails with the forbidden error code.",
+            "Attempting to leave, modify, regenerate invite data for, or otherwise perform restricted actions on the home workspace fails where the operation guards against it.",
+            "Workspace names are trimmed and limited to MAX_WORKSPACE_NAME_LENGTH; empty trimmed names are rejected.",
+            "Workspace creation at the configured maximum fails with max_workspaces_reached."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Assertion errors carrying ZErrorCode.forbidden",
+              "Assertion errors carrying ZErrorCode.bad_request",
+              "Assertion errors carrying ZErrorCode.max_workspaces_reached"
+            ],
+            "reverts": [],
+            "onInvalidInput": "Reject the operation through assertions using bad_request, forbidden, or max_workspaces_reached as appropriate.",
+            "returnsOnError": "No successful value is specified; rejected operations throw/assert. Explicit no-op cases resolve without applying a mutation."
+          },
+          "stateMutations": [
+            "Rows in user, file, file_state, comment_read, group, group_user, and group_file transaction tables.",
+            "User-scoped file-state and comment-read rows.",
+            "File ownership, deletion, publication-related fields, workspace associations, pin indexes, invite-link fields, and membership roles as permitted by each mutator."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "assert", "source": null, "kind": "internal" },
+            { "name": "disallowImmutableMutations", "source": "same module", "kind": "internal" },
+            { "name": "ensureSensibleTimestamp", "source": "same module", "kind": "internal" },
+            { "name": "assertValidId", "source": "same module", "kind": "internal" },
+            { "name": "assertUserCanAccessFile", "source": "same module", "kind": "internal" },
+            { "name": "assertUserCanUpdateFile", "source": "same module", "kind": "internal" },
+            { "name": "assertNotHomeWorkspace", "source": "same module", "kind": "internal" },
+            { "name": "getRole", "source": "same module", "kind": "internal" },
+            { "name": "can", "source": null, "kind": "internal" },
+            { "name": "tx.run", "source": "transaction argument", "kind": "external" },
+            { "name": "tx.mutate.*", "source": "transaction argument", "kind": "external" },
+            { "name": "uniqueId", "source": null, "kind": "internal" },
+            { "name": "getIndexBelow", "source": null, "kind": "internal" },
+            { "name": "sortByIndex", "source": null, "kind": "internal" },
+            { "name": "sortByMaybeIndex", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "Tx",
+            "Transaction<TlaSchema>",
+            "TlaUser",
+            "TlaUserPartial",
+            "TlaFile",
+            "TlaFilePartial",
+            "TlaFileState",
+            "TlaFileStatePartial",
+            "TlaGroupFile",
+            "IndexKey",
+            "Role",
+            "TlaSchema",
+            "ZErrorCode",
+            "immutableColumns.user",
+            "immutableColumns.file",
+            "immutableColumns.file_state",
+            "FILE_PREFIX",
+            "MAX_WORKSPACE_NAME_LENGTH",
+            "MAX_NUMBER_OF_WORKSPACES"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a collection of transaction mutators bound to a specific user identity. The returned mutators enforce user ownership, workspace roles, file access, input validity, and relevant server-side authorization before applying database mutations.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "server",
+              "role": "Identifies transactions that must perform server-side access and source-file authorization checks."
+            },
+            {
+              "kind": "enum-value",
+              "value": "owner",
+              "role": "Workspace membership role used to establish ownership and enforce the last-owner invariant."
+            },
+            {
+              "kind": "enum-value",
+              "value": "accessFiles",
+              "role": "Capability required for file access, pinning, and unpinning."
+            },
+            {
+              "kind": "enum-value",
+              "value": "addFiles",
+              "role": "Capability required to create or move files into a workspace."
+            },
+            {
+              "kind": "enum-value",
+              "value": "removeFiles",
+              "role": "Capability required to remove or move files out of a workspace."
+            },
+            {
+              "kind": "enum-value",
+              "value": "manageWorkspace",
+              "role": "Capability required for workspace administration and membership changes."
+            },
+            {
+              "kind": "magic-number",
+              "value": "a1",
+              "role": "Initial and fallback fractional index for workspace or pinned-file ordering."
+            },
+            {
+              "kind": "magic-number",
+              "value": "#000000",
+              "role": "Default user color inserted for a newly created workspace membership."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned user.insert mutator is invoked.",
+              "then": "The operation rejects with ZErrorCode.forbidden and does not insert the user.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned createFile mutator is invoked without an inaccessible FILE_PREFIX source.",
+              "then": "It inserts the file, its group_file association, and the captured user's file_state row using the normalized creation timestamp.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned leaveWorkspace mutator is invoked for that workspace.",
+              "then": "The operation rejects with ZErrorCode.forbidden and does not remove the owner's membership.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "df4c54c77ebd459ecd7e6d176e50e8c20edcd62d30527665290ef18431c8e840"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/dotcom-shared/src/roles.ts",
+    "packages/dotcom-shared/src/types.ts",
+    "packages/dotcom-shared/src/routes.ts",
+    "packages/dotcom-shared/src/constants.ts",
+    "packages/dotcom-shared/src/tlaSchema.ts"
+  ],
+  "in": [],
+  "externals": ["@rocicorp/zero", "@tldraw/utils"],
+  "impact": { "seeds": 11, "callers": 2, "impactedFiles": [] }
+}

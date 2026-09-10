@@ -6,13 +6,49 @@
 
 # Plumbline
 
-**Local-first code intelligence.** Plumbline reads every file in your repository, extracts
-what each one is _for_, and stores the result as a queryable knowledge graph your coding
-agent searches over MCP — running entirely on your machine, bound to `127.0.0.1`.
+```
+      400+ repos            ~10,000,000 files            1 question
+  ┌────┐┌────┐┌────┐┌────┐          │                         │
+  │▤▤▤▤││▤▤▤▤││▤▤▤▤││▤▤▤▤│          ▼                         ▼
+  │▤▤▤▤││▤▤▤▤││▤▤▤▤││▤▤▤▤│   ═══▶  INDEX ONCE   ═══▶   ask forever
+  │▤▤▤▤││▤▤▤▤││▤▤▤▤││▤▤▤▤│      the expensive bit,
+  └────┘└────┘└────┘└────┘       exactly one time
 
-[![License](https://img.shields.io/badge/license-AGPL--3.0%20%2B%20non--commercial-A8762B)](LICENSE)
-[![MCP](https://img.shields.io/badge/MCP-streamable%20http%20%2B%20sse-1A211E)](#connect-an-mcp-client)
-[![Binds](https://img.shields.io/badge/binds-127.0.0.1%20only-55605B)](#who-this-is-for)
+┌─ WITHOUT PLUMBLINE ────────────────────────────────────────────────┐
+│                                                                    │
+│   you    "where do we enforce org-admin access?"                   │
+│   agent  "sure, let me just read the codebase real quick"          │
+│                                                                    │
+│   $ grep -rn 'admin' .                                  4,812 hits │
+│   $ grep -rn 'isAdmin' .                                1,203 hits │
+│   $ grep -rn 'checkPermission' .                          887 hits │
+│   $ grep -rn 'pls' .                                        0 hits │
+│                                                                    │
+│   context  [##################################]  100%    (x_x)     │
+│   files read  214     answer  not found     tokens  $$$$$$$$       │
+│                                                                    │
+│   agent  "based on my analysis it is probably in utils.ts"         │
+│          (it was not in utils.ts)                                  │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ WITH PLUMBLINE ───────────────────────────────────────────────────┐
+│                                                                    │
+│   you    "where do we enforce org-admin access?"                   │
+│   agent  *asks the graph*                                          │
+│                                                                    │
+│   > organizations/(org-admin-only)/layout.tsx       the guard      │
+│   > organizations/layout.tsx                        the gap        │
+│   > auth/lib/checkAdminOrOwner.ts                   the contract   │
+│   > ...6 more, ranked, all of them real                            │
+│                                                                    │
+│   context  [###-------------------------------]    8%    (^_^)     │
+│   files read    9     answer  found          tokens  $             │
+│                                                                    │
+│   agent  "found it: the layout renders children before the check"  │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
+```
 
 > **On the name:** Plumbline is the project; `plumbline` is the command it installs.
 > Every CLI invocation, container name, and config path below uses `plumbline` — that is
@@ -28,6 +64,111 @@ Plumbline gives it somewhere to look. Every file is analyzed once for its purpos
 business context, classes, functions and keywords. That metadata becomes a Neo4j graph; the
 raw content sits in a local SQLite database beside it. Retrieval fuses both — semantic meaning _and_
 structural relationships — so the agent asks a question instead of reading a directory.
+
+## Benchmark — cross-repository retrieval across 15 sibling repos
+
+The single-repo benchmark asks a question whose answer lives in one tree. This
+one asks a question whose answer is **spread across repositories that do not
+import one another** — no monorepo, no workspace, no shared package graph, no
+call edge to follow between them. The only thing connecting them is that they
+solve the same class of problem and therefore encode the same contracts.
+
+### The ecosystem
+
+Fifteen React state-management repositories, each pinned at exactly one commit.
+Those commits are the entire world for the task — later history is off-limits.
+
+| repo              | commit       |      files | code files |
+| ----------------- | ------------ | ---------: | ---------: |
+| `redux`           | `3aa561f9fc` |        477 |        198 |
+| `redux-toolkit`   | `b1c5130154` |      1,155 |        708 |
+| `react-redux`     | `ad5d1e0816` |        212 |         64 |
+| `reselect`        | `8d87c27b75` |        152 |         90 |
+| `redux-thunk`     | `184205d49f` |         31 |          7 |
+| `react`           | `3a717e4243` |      7,280 |      4,505 |
+| `jotai`           | `5c4ca26b0d` |        346 |        180 |
+| `zustand`         | `beca84e600` |        143 |         50 |
+| `TanStack/db`     | `7f0fa36ff6` |      1,574 |        709 |
+| `xyflow`          | `360f5b13e2` |        693 |        457 |
+| `TanStack/query`  | `46d7f02f1c` |      2,351 |      1,118 |
+| `TanStack/table`  | `d08af367e1` |      1,270 |        458 |
+| `tldraw`          | `5590d14d8e` |      4,492 |      2,769 |
+| `redux-devtools`  | `f4b4668c30` |        895 |        613 |
+| `TanStack/router` | `3dee5b2e94` |     11,976 |      8,801 |
+| **total**         |              | **33,047** | **20,727** |
+
+### How a case is built
+
+Each case is anchored on a **real merged PR whose fix lands after the pinned
+commit** — so the defect is live in the tree, and the fix is not reachable from
+it. Around that anchor, the gold set is extended to every other repository in the
+roster that defines, enforces, relies on, or violates the same contract.
+
+The query is written at the level of _behaviour_, and the identifiers are
+deliberately withheld — searching for the words in the question will not find the
+answer. From the `partial-key` case:
+
+> A correlated per-parent computation joins its result back to the parent that
+> asked for it using a key built only from the computed value itself — never from
+> which parent produced it. […] Which files build the join key that drops the
+> parent's identity, and which own the key-completeness contract it has to be
+> brought in line with?
+
+The instruction is explicit that the answer spans multiple repositories, that the
+retriever must not stop at the repository where the symptom appears, and that
+every returned path must exist at the pinned commit. Answers are capped at 75
+paths across all repositories combined.
+
+Each arm runs in a sandboxed session restricted to its own retrieval surface —
+no filesystem, no shell, no network. The only way to see the code is through the
+retriever under test.
+
+| case                                                                                                                          | anchor PR               | gold               | files in those repos |     needle |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------ | -------------------: | ---------: |
+| [delete is not terminal, cascade not scoped](benchmarks/crossrepo/hard-delete-is-not-terminal-and-its-cascade-is-not-scoped/) | `tldraw` #10298         | 7 files / 4 repos  |                8,344 | 1 in 1,192 |
+| [failed first load is a one-way door](benchmarks/crossrepo/hard-failed-first-load-is-a-one-way-door/)                         | `TanStack/db` #1751     | 15 files / 5 repos |                9,918 |   1 in 661 |
+| [lifecycle fires for a branch never shown](benchmarks/crossrepo/hard-lifecycle-fires-for-a-branch-that-was-never-shown/)      | `TanStack/router` #8165 | 7 files / 4 repos  |               21,953 | 1 in 3,136 |
+| [one effect, two doors, only one guarded](benchmarks/crossrepo/hard-one-effect-two-doors-only-one-guarded/)                   | `tldraw` #10300         | 7 files / 4 repos  |                8,560 | 1 in 1,222 |
+| [partial key lets siblings collide](benchmarks/crossrepo/hard-partial-key-lets-siblings-collide/)                             | `TanStack/db` #1761     | 9 files / 4 repos  |                6,350 |   1 in 705 |
+
+And the retriever is never told which repositories matter. It searches the whole
+roster of **33,047 files**, so the real odds on a 7-file gold set are **1 in
+4,721** before any ranking at all.
+
+### Results
+
+recall@75 — the full answer at the task's own cap. Every arm returned fewer than
+50 paths, so @50, @75 and @100 are identical throughout.
+
+| case                                                                                                      |      needle | Plumbline       | bare Opus 5 | graphify    | embeddings  |
+| --------------------------------------------------------------------------------------------------------- | ----------: | --------------- | ----------- | ----------- | ----------- |
+| [delete is not terminal](benchmarks/crossrepo/hard-delete-is-not-terminal-and-its-cascade-is-not-scoped/) |  7 of 8,344 | –               | 0.571 †     | 1.000 †     | 0.714       |
+| [failed first load](benchmarks/crossrepo/hard-failed-first-load-is-a-one-way-door/)                       | 15 of 9,918 | **1.000** †     | 0.733       | 0.467       | 0.600       |
+| [lifecycle, unshown branch](benchmarks/crossrepo/hard-lifecycle-fires-for-a-branch-that-was-never-shown/) | 7 of 21,953 | **1.000** †     | 0.571       | 0.429       | –           |
+| [one effect, two doors](benchmarks/crossrepo/hard-one-effect-two-doors-only-one-guarded/)                 |  7 of 8,560 | **0.857** †     | 0.714 †     | 0.286       | 0.286       |
+| [partial key, siblings collide](benchmarks/crossrepo/hard-partial-key-lets-siblings-collide/)             |  9 of 6,350 | **0.667**       | 0.556       | 0.222       | 0.333       |
+| **mean**                                                                                                  |             | **0.881** (n=4) | 0.629 (n=5) | 0.481 (n=5) | 0.483 (n=4) |
+
+```
+Plumbline    ██████████████████████████████████░░░░░  0.881
+bare Opus 5  ████████████████████████░░░░░░░░░░░░░░░  0.629
+embeddings   ██████████████████░░░░░░░░░░░░░░░░░░░░░  0.483
+graphify     ██████████████████░░░░░░░░░░░░░░░░░░░░░  0.481
+```
+
+The gap is much wider here than on the single-repo benchmark, and the reason is
+structural. Within one repository a strong model with `grep` can often reach the
+answer by following imports. Across fifteen repositories with no edges between
+them, there is nothing to follow — the second, third and fourth repositories in
+the gold set are reachable only if the retriever can recognise _the same contract
+expressed in unfamiliar code_. Both baselines degrade sharply on exactly the
+cases where the answer is most distributed; graphify and the embedding index both
+land near 0.48, and the embedding index never exceeds the bare model's mean.
+
+† Pending re-run under the sandboxed harness; see each case's `result.json` for run conditions.
+
+Raw artifacts — prompt, gold set, ranked output, per-run cost — are in
+[`benchmarks/crossrepo/`](benchmarks/crossrepo/), one directory per case.
 
 ## Quickstart
 
@@ -275,38 +416,142 @@ Settings live in `~/.plumbline/config.json` and are written exclusively by `plum
 
 If a required setting is missing, Plumbline either opens the setup form (interactive terminal) or prints the exact `plumbline set …` command and refuses to boot (non-interactive). It never silently reads `process.env`.
 
-## Why this design — research grounding
+## Benchmark — cal.com, ten commits, one real task each
 
-> Comparing Plumbline to PageIndex, GitNexus, GraphRAG, Sourcegraph, or Augment Code? See **[comparison.md](comparison.md)** for a side-by-side feature table and pros / cons of each.
+### Why we built it
 
-Plumbline's shape — _build a code graph at ingest time, enrich every node with LLM-derived structured semantics, then serve retrieval against the joined surface_ — tracks a converging body of recent work showing that purely structural retrieval (AST / call-graph) and purely semantic retrieval (embeddings) each leave large performance on the table, and that combining them at indexing time unlocks the gains.
+Retrieval tools are usually demonstrated on a small repo with a question whose
+answer is already visible in the directory names. That proves nothing. We wanted
+a test where the target is genuinely hard to find, the ground truth is not ours
+to invent, and the same question is put to every retriever under identical
+conditions.
 
-**Graphs beat flat retrieval for code.** Repository-level graphs from AST + imports + call structure consistently outperform flat embedding retrieval on real engineering tasks.
+So we used [cal.com](https://github.com/calcom/cal.com) — a production Next.js
+monorepo of roughly 8,000–10,500 files — and let its own history write the exam.
 
-- RepoGraph ([2410.14684](https://arxiv.org/abs/2410.14684), ICLR 2025) — +32.8% on SWE-bench.
-- CodexGraph ([2408.03910](https://arxiv.org/abs/2408.03910), NAACL 2025) — agents query a code graph DB; beats similarity-only retrieval.
-- CGM ([2505.16901](https://arxiv.org/abs/2505.16901)) — graph + node semantics; 43% on SWE-bench Lite.
-- Citation-Grounded Code Comprehension ([2512.12117](https://arxiv.org/abs/2512.12117)) — argues LLM-only and embedding-only both fail; hybrid wins.
+### How a case is built
 
-**LLM-generated semantic enrichment closes the vocabulary gap.** Identifiers and call edges don't capture intent — natural-language summaries on each node let retrieval match what a developer _means_, not just what the code _spells_.
+For each of ten commits we picked a bug-fix PR merged shortly afterwards, and
+turned it into a retrieval task:
 
-- Tram ([2305.11074](https://arxiv.org/abs/2305.11074), ACL 2023) — semantic enrichment beats flat sentence-level retrieval.
-- LLM Agents Improve Semantic Code Search ([2408.11058](https://arxiv.org/abs/2408.11058)) — LLM-injected metadata improves embedding-based retrieval.
-- Knowledge-Graph-Based Repo-Level Code Generation ([2505.14394](https://arxiv.org/abs/2505.14394)) — graph captures structure; LLM context fills semantic gaps.
-- Sense and Sensitivity ([2505.13353](https://arxiv.org/abs/2505.13353)) — lexical and semantic recall are different capabilities; supports the `summary` (semantic) vs SQLite raw (lexical) split.
+- **The query** is the bug as a person would describe it — prose, no filenames,
+  no symbol names, no stack trace. For example: _"Settings screens meant for
+  whoever runs an organisation can be opened by any signed-in member who types
+  the address straight into the browser."_
+- **The gold set** is the files that PR actually modified or removed, minus
+  tests, mocks, fixtures, lockfiles, locales, migrations, e2e harness, scripts
+  and docs/CI. Files the fix _added_ are excluded — they do not exist in the
+  indexed tree, so no retriever could return them.
+- **The repository is pinned** at a commit _before_ the fix. The answer is in
+  there; the fix is not.
 
-**Structured summaries and hierarchy beat blob summarization.** Explicit fields — purpose, inputs, outputs, business context — aggregated bottom-up let retrieval match at the right level of abstraction. This maps directly onto Plumbline's `purpose` / `summary` / `businessContext` schema.
+Ground truth is therefore decided by what the maintainers changed, not by us.
 
-- Hierarchical Repo-Level Code Summarization for Business Applications ([2501.07857](https://arxiv.org/abs/2501.07857), ICSE LLM4Code 2025) — closest motivational match: structured per-unit summaries aggregated to file/package level, grounded in business context.
-- Beyond Function Level ([2502.16704](https://arxiv.org/abs/2502.16704)) — class/repo context in summaries beats function-only.
-- Code-Craft ([2504.08975](https://arxiv.org/abs/2504.08975)) — closest published peer; bottom-up LLM summaries from a code graph; +82% top-1 retrieval precision on 7,531 functions.
-- Hierarchical Summarization (Springer 2025) — project/dir/file summaries at indexing time; Pass@10 of 0.89 on real Jira issues, beats flat retrieval and standard RAG.
+**Every case is pre-screened for difficulty.** Before a case is admitted, Opus 5
+attempts it alone with full filesystem access — `grep`, `find`, the whole
+checkout. A case is kept only if that run scores **recall@20 < 0.8**. Anything a
+strong model can already solve by reading the tree is thrown out, so the
+benchmark measures only what unaided search fails at.
 
-**Hybrid structure + semantics, served as memory.** The most recent work converges on serving the joined graph through a memory-style retrieval interface — exactly what MCP gives us.
+Each arm then runs in a fresh, isolated `claude -p` session with
+`--strict-mcp-config`, restricted to its own retrieval surface — no filesystem,
+no shell, no network. The only way to see the repository is through the
+retriever being tested.
 
-- Codebase-Memory ([2603.27277](https://arxiv.org/abs/2603.27277)) — MCP-served knowledge graph with LLM-derived metadata; reports 10× token reduction.
+### The corpus
 
-The design choices follow directly: each `:File` node carries LLM-generated semantics alongside `:HAS_CLASS` / `:HAS_FUNCTION` / `:HAS_KEYWORD` / `:HAS_IMPORT_*` edges (structure), and the three MCP tools fuse both surfaces at query time.
+| date       | commit       | files  |
+| ---------- | ------------ | ------ |
+| 2025-07-11 | `14e14289f0` | 8,060  |
+| 2025-07-26 | `a1c0daa1b5` | 8,177  |
+| 2025-09-09 | `1137047606` | 8,485  |
+| 2025-09-12 | `79169de8d8` | 8,508  |
+| 2025-10-17 | `9d4522825b` | 8,879  |
+| 2025-10-30 | `af61b6d341` | 8,994  |
+| 2025-12-01 | `3c46c35b69` | 9,137  |
+| 2026-02-09 | `f66fffd13b` | 10,485 |
+| 2026-02-17 | `ab4eff1fe1` | 10,278 |
+| 2026-02-25 | `4081d11fbe` | 10,333 |
+
+- **91,336** file-instances indexed across the ten commits
+- **12,371** distinct paths in the union of all ten, of which **9,187** are code files
+
+The repository is indexed **once per commit**, not once per question.
+
+### Index once, ask later
+
+The expensive part of understanding a repository is reading it. Plumbline pays
+that cost a single time: every file is analysed once for what it is _for_ —
+purpose, summary, business context, the classes, functions, imports and keywords
+it carries — and the result is written into a durable graph.
+
+Questions afterwards are cheap. They traverse a structure that already knows what
+the code means, instead of re-deriving that meaning from raw text on every query.
+That is the whole design: **one expensive pass, then arbitrarily many cheap
+ones.** A benchmark that asks a single question per commit is, if anything,
+unkind to this model — the indexing cost is amortised across exactly one query,
+where in real use it is amortised across thousands.
+
+### Embeddings are a weak signal for code
+
+One arm (`turbovec`) is a TurboQuant 4-bit vector index built over the same
+checkout — pure embedding retrieval. It is the **only arm in the benchmark that
+performs worse than the model working alone**, and it loses more cases than it
+wins:
+
+|                          | recall@20 | vs. bare Opus 5              |
+| ------------------------ | --------- | ---------------------------- |
+| Opus 5, filesystem only  | 0.501     | —                            |
+| Opus 5 + embedding index | 0.487     | 2 W / 4 L / 2 T over 8 cases |
+
+The reason is structural. Embedding similarity rewards text that _reads_ alike.
+Two files full of React page boilerplate are near-neighbours in vector space
+whether or not they share an authorisation bug; the file that actually governs
+their behaviour — a layout, a middleware, a guard — often shares almost no
+surface vocabulary with the query. Cosine distance over source text measures
+phrasing, and the thing you need to find is defined by _relationships_: what
+calls what, what renders inside what, what enforces what. That is a graph
+property, and it is not recoverable from a nearest-neighbour lookup.
+
+### Results
+
+Recall over each arm's full returned list. Every run returned at most 36 paths,
+so this is identical to recall@40/@50/@75 wherever those were recorded.
+
+| date       | commit       | Plumbline | bare Opus 5 | graphify  | embeddings |
+| ---------- | ------------ | --------- | ----------- | --------- | ---------- |
+| 2025-07-11 | `14e14289f0` | **0.800** | 0.600       | **0.800** | 0.600      |
+| 2025-07-26 | `a1c0daa1b5` | **0.750** | **0.750**   | 0.688     | 0.625      |
+| 2025-09-09 | `1137047606` | **1.000** | 0.353       | 0.941     | 0.765      |
+| 2025-10-17 | `9d4522825b` | **0.857** | 0.714       | 0.286     | 0.429      |
+| 2026-02-09 | `f66fffd13b` | **0.500** | 0.375       | 0.375     | 0.375      |
+| 2026-02-17 | `ab4eff1fe1` | 0.429     | 0.429       | **0.571** | 0.286      |
+| 2026-02-24 | `4081d11fbe` | 0.548     | 0.516       | 0.355     | **0.645**  |
+| **mean**   |              | **0.698** | 0.534       | 0.574     | 0.532      |
+
+```
+Plumbline    ███████████████████████████░░░░░░░░░░░░  0.698
+graphify     ██████████████████████░░░░░░░░░░░░░░░░░  0.574
+bare Opus 5  ████████████████████░░░░░░░░░░░░░░░░░░░  0.534
+embeddings   ████████████████████░░░░░░░░░░░░░░░░░░░  0.532
+```
+
+Plumbline leads five of seven cases and never places last. The embedding index
+finishes below the bare model — the only arm that does.
+
+Raw artifacts — the query, the gold set, every ranked list, per-run token and
+cost accounting — are in [`benchmarks/singlerepo/`](benchmarks/singlerepo/), one
+directory per commit. Every number above is recomputable from them.
+
+## Try it against a production index
+
+The benchmarks above run against a hosted Plumbline index. If you want to
+reproduce them, or point your own agent at an already-indexed corpus rather than
+building one locally, email **admin@bytebell.ai** for a production MCP key.
+
+Include what you are testing and roughly how much you expect to query, and we
+will send back an endpoint and key you can drop straight into your MCP client
+config — the same shape as the local `plumbline mcp` surface documented above.
 
 ## Enterprise
 

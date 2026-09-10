@@ -1,0 +1,2290 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "language": "typescript",
+    "sizeBytes": 27059,
+    "tokenCount": 6765,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-09-04T07:29:16.059Z",
+    "module": {
+      "purpose": "This file implements the booking-cancellation workflow for individual, recurring, seated, and platform-managed bookings. It validates cancellation requests, records audit information, updates booking state, coordinates payments and integrations, removes scheduled automation, and notifies affected participants.",
+      "summary": "The module coordinates the full lifecycle of cancelling a booking. It validates authorization and business rules, constructs calendar and webhook payloads, supports attendee-seat removal and recurring-series cancellation, records audit events, handles refunds or no-show fees, cancels calendar integrations, removes workflow and webhook schedules, optionally records internal notes, and sends cancellation notifications. Repository dependencies are injectable through a service adapter while a default handler remains available.",
+      "businessContext": "This supports appointment scheduling products where cancelled meetings must consistently update reservations, calendars, payments, reminders, and participants.\nFailures can leave bookings active, charge customers incorrectly, retain calendar events, or send misleading notifications.",
+      "classes": [
+        "PlatformParams (~L70-76): Optional platform URLs, client identity, and email delivery controls.",
+        "BookingToDelete (~L78-78): Derived booking record shape used throughout cancellation processing.",
+        "CancelBookingInput (~L80-85): Validated booking cancellation request with actor and platform metadata.",
+        "Dependencies (~L87-93): Repository dependencies supporting booking, user, profile, reference, and attendee access.",
+        "BookingCancelServiceDependencies (~L711-717): Repository dependencies injected into the booking cancellation service.",
+        "BookingCancelService (~L723-734): Service adapter exposing booking cancellation through the cancellation service interface."
+      ],
+      "functions": [
+        "getAuditActor (~L98-135): Resolves an authenticated or safely generated guest actor for cancellation auditing.",
+        "handler (~L137-709): Validates, broadcasts, persists, and finalizes individual or recurring booking cancellations.",
+        "cancelBooking (~L726-733): Adapts service requests and delegates cancellation processing to the handler."
+      ],
+      "keywords": [
+        "booking cancellation",
+        "recurring bookings",
+        "webhook triggers",
+        "workflow reminders",
+        "payment refunds",
+        "no-show fees",
+        "calendar integrations",
+        "booking audit",
+        "seated events",
+        "platform-managed bookings"
+      ],
+      "ontologyConcepts": [
+        "Cancellation",
+        "Authorization",
+        "Audit trail",
+        "Recurring event",
+        "Notification orchestration",
+        "Payment settlement",
+        "Integration synchronization",
+        "Reservation management"
+      ],
+      "businessEntities": [
+        "Booking",
+        "Attendee",
+        "Organizer",
+        "Host",
+        "Recurring event",
+        "Payment",
+        "Webhook",
+        "Workflow reminder"
+      ],
+      "systemCapabilities": [
+        "Validate cancellation eligibility",
+        "Cancel individual and recurring reservations",
+        "Coordinate calendar and webhook updates",
+        "Process refunds and cancellation fees",
+        "Cancel scheduled reminders and automation",
+        "Notify organizers and attendees"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "@calcom/app-store/constants",
+          "symbols": ["DailyLocationType"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/app-store/constants.ts",
+          "resolvedFileId": "packages/app-store/constants.ts",
+          "resolvedHint": "packages/app-store/constants.ts"
+        },
+        {
+          "spec": "@calcom/app-store/dailyvideo/lib/VideoApiAdapter",
+          "symbols": ["FAKE_DAILY_CREDENTIAL"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/app-store/dailyvideo/lib/VideoApiAdapter.ts",
+          "resolvedFileId": "packages/app-store/dailyvideo/lib/VideoApiAdapter.ts",
+          "resolvedHint": "packages/app-store/dailyvideo/lib/VideoApiAdapter.ts"
+        },
+        {
+          "spec": "@calcom/app-store/zod-utils",
+          "symbols": ["eventTypeMetaDataSchemaWithTypedApps"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/app-store/zod-utils.ts",
+          "resolvedFileId": "packages/app-store/zod-utils.ts",
+          "resolvedHint": "packages/app-store/zod-utils.ts"
+        },
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/dayjs/index.ts",
+          "resolvedFileId": "packages/dayjs/index.ts",
+          "resolvedHint": "packages/dayjs/index.ts"
+        },
+        {
+          "spec": "@calcom/emails/email-manager",
+          "symbols": ["sendCancelledEmailsAndSMS"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/emails/email-manager.ts",
+          "resolvedFileId": "packages/emails/email-manager.ts",
+          "resolvedHint": "packages/emails/email-manager.ts"
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/dto/types",
+          "symbols": ["Actor"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": "packages/features/booking-audit/lib/dto/types.ts",
+          "resolvedFileId": "packages/features/booking-audit/lib/dto/types.ts",
+          "resolvedHint": "packages/features/booking-audit/lib/dto/types.ts"
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/makeActor",
+          "symbols": ["buildActorEmail", "getUniqueIdentifier", "makeGuestActor", "makeUserActor"],
+          "anchor": { "startLine": 7, "endLine": 12 },
+          "resolvedRelativePath": "packages/features/booking-audit/lib/makeActor.ts",
+          "resolvedFileId": "packages/features/booking-audit/lib/makeActor.ts",
+          "resolvedHint": "packages/features/booking-audit/lib/makeActor.ts"
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/types/actionSource",
+          "symbols": ["ActionSource"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/features/booking-audit/lib/types/actionSource.ts",
+          "resolvedFileId": "packages/features/booking-audit/lib/types/actionSource.ts",
+          "resolvedHint": "packages/features/booking-audit/lib/types/actionSource.ts"
+        },
+        {
+          "spec": "@calcom/features/bookingReference/repositories/BookingReferenceRepository",
+          "symbols": ["BookingReferenceRepository"],
+          "anchor": { "startLine": 14, "endLine": 14 },
+          "resolvedRelativePath": "packages/features/bookingReference/repositories/BookingReferenceRepository.ts",
+          "resolvedFileId": "packages/features/bookingReference/repositories/BookingReferenceRepository.ts",
+          "resolvedHint": "packages/features/bookingReference/repositories/BookingReferenceRepository.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "symbols": ["getBookingEventHandlerService"],
+          "anchor": { "startLine": 15, "endLine": 15 },
+          "resolvedRelativePath": "packages/features/bookings/di/BookingEventHandlerService.container.ts",
+          "resolvedFileId": "packages/features/bookings/di/BookingEventHandlerService.container.ts",
+          "resolvedHint": "packages/features/bookings/di/BookingEventHandlerService.container.ts"
+        },
+        {
+          "spec": "@calcom/features/di/containers/FeaturesRepository",
+          "symbols": ["getFeaturesRepository"],
+          "anchor": { "startLine": 16, "endLine": 16 },
+          "resolvedRelativePath": "packages/features/di/containers/FeaturesRepository.ts",
+          "resolvedFileId": "packages/features/di/containers/FeaturesRepository.ts",
+          "resolvedHint": "packages/features/di/containers/FeaturesRepository.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/EventManager",
+          "symbols": ["EventManager"],
+          "anchor": { "startLine": 17, "endLine": 17 },
+          "resolvedRelativePath": "packages/features/bookings/lib/EventManager.ts",
+          "resolvedFileId": "packages/features/bookings/lib/EventManager.ts",
+          "resolvedHint": "packages/features/bookings/lib/EventManager.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getCalEventResponses",
+          "symbols": ["getCalEventResponses"],
+          "anchor": { "startLine": 18, "endLine": 18 },
+          "resolvedRelativePath": "packages/features/bookings/lib/getCalEventResponses.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getCalEventResponses.ts",
+          "resolvedHint": "packages/features/bookings/lib/getCalEventResponses.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/payment/processNoShowFeeOnCancellation",
+          "symbols": ["processNoShowFeeOnCancellation"],
+          "anchor": { "startLine": 19, "endLine": 19 },
+          "resolvedRelativePath": "packages/features/bookings/lib/payment/processNoShowFeeOnCancellation.ts",
+          "resolvedFileId": "packages/features/bookings/lib/payment/processNoShowFeeOnCancellation.ts",
+          "resolvedHint": "packages/features/bookings/lib/payment/processNoShowFeeOnCancellation.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/payment/processPaymentRefund",
+          "symbols": ["processPaymentRefund"],
+          "anchor": { "startLine": 20, "endLine": 20 },
+          "resolvedRelativePath": "packages/features/bookings/lib/payment/processPaymentRefund.ts",
+          "resolvedFileId": "packages/features/bookings/lib/payment/processPaymentRefund.ts",
+          "resolvedHint": "packages/features/bookings/lib/payment/processPaymentRefund.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/billing/credit-service",
+          "symbols": ["CreditService"],
+          "anchor": { "startLine": 21, "endLine": 21 },
+          "resolvedRelativePath": "packages/features/ee/billing/credit-service.ts",
+          "resolvedFileId": "packages/features/ee/billing/credit-service.ts",
+          "resolvedHint": "packages/features/ee/billing/credit-service.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "symbols": ["getBookerBaseUrl"],
+          "anchor": { "startLine": 22, "endLine": 22 },
+          "resolvedRelativePath": "packages/features/ee/organizations/lib/getBookerUrlServer.ts",
+          "resolvedFileId": "packages/features/ee/organizations/lib/getBookerUrlServer.ts",
+          "resolvedHint": "packages/features/ee/organizations/lib/getBookerUrlServer.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "symbols": ["getAllWorkflowsFromEventType"],
+          "anchor": { "startLine": 23, "endLine": 23 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/getAllWorkflowsFromEventType.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/getAllWorkflowsFromEventType.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/getAllWorkflowsFromEventType.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "symbols": ["sendCancelledReminders"],
+          "anchor": { "startLine": 24, "endLine": 24 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/repositories/WorkflowRepository",
+          "symbols": ["WorkflowRepository"],
+          "anchor": { "startLine": 25, "endLine": 25 },
+          "resolvedRelativePath": "packages/features/ee/workflows/repositories/WorkflowRepository.ts",
+          "resolvedFileId": "packages/features/ee/workflows/repositories/WorkflowRepository.ts",
+          "resolvedHint": "packages/features/ee/workflows/repositories/WorkflowRepository.ts"
+        },
+        {
+          "spec": "@calcom/features/membership/repositories/PrismaOrgMembershipRepository",
+          "symbols": ["PrismaOrgMembershipRepository"],
+          "anchor": { "startLine": 26, "endLine": 26 },
+          "resolvedRelativePath": "packages/features/membership/repositories/PrismaOrgMembershipRepository.ts",
+          "resolvedFileId": "packages/features/membership/repositories/PrismaOrgMembershipRepository.ts",
+          "resolvedHint": "packages/features/membership/repositories/PrismaOrgMembershipRepository.ts"
+        },
+        {
+          "spec": "@calcom/features/profile/repositories/ProfileRepository",
+          "symbols": ["ProfileRepository"],
+          "anchor": { "startLine": 27, "endLine": 27 },
+          "resolvedRelativePath": "packages/features/profile/repositories/ProfileRepository.ts",
+          "resolvedFileId": "packages/features/profile/repositories/ProfileRepository.ts",
+          "resolvedHint": "packages/features/profile/repositories/ProfileRepository.ts"
+        },
+        {
+          "spec": "@calcom/features/users/repositories/UserRepository",
+          "symbols": ["UserRepository"],
+          "anchor": { "startLine": 28, "endLine": 28 },
+          "resolvedRelativePath": "packages/features/users/repositories/UserRepository.ts",
+          "resolvedFileId": "packages/features/users/repositories/UserRepository.ts",
+          "resolvedHint": "packages/features/users/repositories/UserRepository.ts"
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/getWebhooks",
+          "symbols": ["GetSubscriberOptions", "getWebhooks"],
+          "anchor": { "startLine": 29, "endLine": 30 },
+          "resolvedRelativePath": "packages/features/webhooks/lib/getWebhooks.ts",
+          "resolvedFileId": "packages/features/webhooks/lib/getWebhooks.ts",
+          "resolvedHint": "packages/features/webhooks/lib/getWebhooks.ts"
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/scheduleTrigger",
+          "symbols": ["cancelNoShowTasksForBooking", "deleteWebhookScheduledTriggers"],
+          "anchor": { "startLine": 31, "endLine": 34 },
+          "resolvedRelativePath": "packages/features/webhooks/lib/scheduleTrigger.ts",
+          "resolvedFileId": "packages/features/webhooks/lib/scheduleTrigger.ts",
+          "resolvedHint": "packages/features/webhooks/lib/scheduleTrigger.ts"
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/sendOrSchedulePayload",
+          "symbols": ["sendPayload"],
+          "anchor": { "startLine": 35, "endLine": 35 },
+          "resolvedRelativePath": "packages/features/webhooks/lib/sendOrSchedulePayload.ts",
+          "resolvedFileId": "packages/features/webhooks/lib/sendOrSchedulePayload.ts",
+          "resolvedHint": "packages/features/webhooks/lib/sendOrSchedulePayload.ts"
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/sendPayload",
+          "symbols": ["EventTypeInfo"],
+          "anchor": { "startLine": 36, "endLine": 36 },
+          "resolvedRelativePath": "packages/features/webhooks/lib/sendPayload.ts",
+          "resolvedFileId": "packages/features/webhooks/lib/sendPayload.ts",
+          "resolvedHint": "packages/features/webhooks/lib/sendPayload.ts"
+        },
+        {
+          "spec": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "symbols": ["getOrgIdFromMemberOrTeamId"],
+          "anchor": { "startLine": 37, "endLine": 37 },
+          "resolvedRelativePath": "packages/lib/getOrgIdFromMemberOrTeamId.ts",
+          "resolvedFileId": "packages/lib/getOrgIdFromMemberOrTeamId.ts",
+          "resolvedHint": "packages/lib/getOrgIdFromMemberOrTeamId.ts"
+        },
+        {
+          "spec": "@calcom/lib/getTeamIdFromEventType",
+          "symbols": ["getTeamIdFromEventType"],
+          "anchor": { "startLine": 38, "endLine": 38 },
+          "resolvedRelativePath": "packages/lib/getTeamIdFromEventType.ts",
+          "resolvedFileId": "packages/lib/getTeamIdFromEventType.ts",
+          "resolvedHint": "packages/lib/getTeamIdFromEventType.ts"
+        },
+        {
+          "spec": "@calcom/lib/http-error",
+          "symbols": ["HttpError"],
+          "anchor": { "startLine": 39, "endLine": 39 },
+          "resolvedRelativePath": "packages/lib/http-error.ts",
+          "resolvedFileId": "packages/lib/http-error.ts",
+          "resolvedHint": "packages/lib/http-error.ts"
+        },
+        {
+          "spec": "@calcom/lib/isPrismaObj",
+          "symbols": ["isPrismaObjOrUndefined"],
+          "anchor": { "startLine": 40, "endLine": 40 },
+          "resolvedRelativePath": "packages/lib/isPrismaObj.ts",
+          "resolvedFileId": "packages/lib/isPrismaObj.ts",
+          "resolvedHint": "packages/lib/isPrismaObj.ts"
+        },
+        {
+          "spec": "@calcom/lib/isRecurringEvent",
+          "symbols": ["parseRecurringEvent"],
+          "anchor": { "startLine": 41, "endLine": 41 },
+          "resolvedRelativePath": "packages/lib/isRecurringEvent.ts",
+          "resolvedFileId": "packages/lib/isRecurringEvent.ts",
+          "resolvedHint": "packages/lib/isRecurringEvent.ts"
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "anchor": { "startLine": 42, "endLine": 42 },
+          "resolvedRelativePath": "packages/lib/logger.ts",
+          "resolvedFileId": "packages/lib/logger.ts",
+          "resolvedHint": "packages/lib/logger.ts"
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "anchor": { "startLine": 43, "endLine": 43 },
+          "resolvedRelativePath": "packages/lib/safeStringify.ts",
+          "resolvedFileId": "packages/lib/safeStringify.ts",
+          "resolvedHint": "packages/lib/safeStringify.ts"
+        },
+        {
+          "spec": "@calcom/lib/server/i18n",
+          "symbols": ["getTranslation"],
+          "anchor": { "startLine": 44, "endLine": 44 },
+          "resolvedRelativePath": "packages/lib/server/i18n.ts",
+          "resolvedFileId": "packages/lib/server/i18n.ts",
+          "resolvedHint": "packages/lib/server/i18n.ts"
+        },
+        {
+          "spec": "@calcom/lib/timeFormat",
+          "symbols": ["getTimeFormatStringFromUserTimeFormat"],
+          "anchor": { "startLine": 45, "endLine": 45 },
+          "resolvedRelativePath": "packages/lib/timeFormat.ts",
+          "resolvedFileId": "packages/lib/timeFormat.ts",
+          "resolvedHint": "packages/lib/timeFormat.ts"
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "anchor": { "startLine": 47, "endLine": 47 },
+          "resolvedRelativePath": "packages/prisma/index.ts",
+          "resolvedFileId": "packages/prisma/index.ts",
+          "resolvedHint": "packages/prisma/index.ts"
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["WebhookTriggerEvents", "WorkflowMethods", "BookingStatus"],
+          "anchor": { "startLine": 48, "endLine": 49 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "packages/prisma/enums.ts"
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["EventTypeMetadata", "bookingCancelInput", "bookingMetadataSchema"],
+          "anchor": { "startLine": 50, "endLine": 51 },
+          "resolvedRelativePath": "packages/prisma/zod-utils.ts",
+          "resolvedFileId": "packages/prisma/zod-utils.ts",
+          "resolvedHint": "packages/prisma/zod-utils.ts"
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["CalendarEvent"],
+          "anchor": { "startLine": 52, "endLine": 52 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "packages/types/Calendar.ts"
+        },
+        {
+          "spec": "../repositories/BookingRepository",
+          "symbols": ["BookingRepository"],
+          "anchor": { "startLine": 55, "endLine": 55 },
+          "resolvedRelativePath": "packages/features/bookings/repositories/BookingRepository.ts",
+          "resolvedFileId": "packages/features/bookings/repositories/BookingRepository.ts",
+          "resolvedHint": "packages/features/bookings/repositories/BookingRepository.ts"
+        },
+        {
+          "spec": "../repositories/PrismaBookingAttendeeRepository",
+          "symbols": ["PrismaBookingAttendeeRepository"],
+          "anchor": { "startLine": 56, "endLine": 56 },
+          "resolvedRelativePath": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+          "resolvedFileId": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+          "resolvedHint": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts"
+        },
+        {
+          "spec": "./dto/BookingCancel",
+          "symbols": ["CancelBookingMeta", "CancelRegularBookingData", "HandleCancelBookingResponse"],
+          "anchor": { "startLine": 57, "endLine": 61 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "packages/features/bookings/lib/dto/BookingCancel.ts"
+        },
+        {
+          "spec": "./getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "symbols": ["getAllCredentialsIncludeServiceAccountKey"],
+          "anchor": { "startLine": 62, "endLine": 62 },
+          "resolvedRelativePath": "packages/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials.ts",
+          "resolvedHint": "packages/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials.ts"
+        },
+        {
+          "spec": "./getBookingToDelete",
+          "symbols": ["getBookingToDelete"],
+          "anchor": { "startLine": 63, "endLine": 63 },
+          "resolvedRelativePath": "packages/features/bookings/lib/getBookingToDelete.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getBookingToDelete.ts",
+          "resolvedHint": "packages/features/bookings/lib/getBookingToDelete.ts"
+        },
+        {
+          "spec": "./handleInternalNote",
+          "symbols": ["handleInternalNote"],
+          "anchor": { "startLine": 64, "endLine": 64 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleInternalNote.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleInternalNote.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleInternalNote.ts"
+        },
+        {
+          "spec": "./handleSeats/cancel/cancelAttendeeSeat",
+          "symbols": ["cancelAttendeeSeat"],
+          "anchor": { "startLine": 65, "endLine": 65 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts"
+        },
+        {
+          "spec": "./interfaces/IBookingCancelService",
+          "symbols": ["IBookingCancelService"],
+          "anchor": { "startLine": 66, "endLine": 66 },
+          "resolvedRelativePath": "packages/features/bookings/lib/interfaces/IBookingCancelService.ts",
+          "resolvedFileId": "packages/features/bookings/lib/interfaces/IBookingCancelService.ts",
+          "resolvedHint": "packages/features/bookings/lib/interfaces/IBookingCancelService.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "uuid",
+          "symbols": ["uuidv4"],
+          "package": "uuid",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 53, "endLine": 53 }
+        },
+        {
+          "spec": "zod",
+          "symbols": ["z"],
+          "package": "zod",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 54, "endLine": 54 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads booking, user, profile, webhook, workflow, credential, and membership data through repositories and service calls.",
+          "Updates booking cancellation status and cancellation metadata in the database.",
+          "Deletes attendees, marks booking references deleted, and removes workflow reminders and scheduled triggers."
+        ],
+        "network": [
+          "Sends cancellation webhook payloads and logs individual webhook failures without aborting cancellation.",
+          "Cancels external calendar and meeting integrations through EventManager.",
+          "Sends cancelled booking emails and SMS notifications unless platform email restrictions disable them."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "event",
+          "role": "provides",
+          "address": "BOOKING_CANCELLED",
+          "payloadRef": "CalendarEvent",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "handler",
+          "shape": "async function handler(input: CancelBookingInput, dependencies?: Dependencies)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingCancelService.cancelBooking",
+          "shape": "async cancelBooking(input: { bookingData: CancelRegularBookingData; bookingMeta?: CancelBookingMeta })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CancelBookingInput",
+          "shape": "export type CancelBookingInput = { userId?: number; userUuid?: string; bookingData: z.infer<typeof bookingCancelInput>; actionSource?: ActionSource } & PlatformParams",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingToDelete",
+          "shape": "export type BookingToDelete = Awaited<ReturnType<typeof getBookingToDelete>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Booking cancellation response",
+          "shape": "{ success: true; message: string; onlyRemovedAttendee: boolean; bookingId: number; bookingUid: string; isPlatformManagedUserBooking: boolean }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "bookingCancelInput",
+          "shape": "bookingCancelInput.parse(body)",
+          "resolvedRelativePath": "packages/prisma/zod-utils.ts",
+          "resolvedFileId": "packages/prisma/zod-utils.ts"
+        },
+        {
+          "name": "HandleCancelBookingResponse",
+          "shape": "satisfies HandleCancelBookingResponse",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "WebhookTriggerEvents",
+          "shape": "const eventTrigger: WebhookTriggerEvents = \"BOOKING_CANCELLED\"",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CalendarEvent",
+          "shape": "const evt: CalendarEvent",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EventTypeMetadata",
+          "shape": "bookingToDelete.eventType?.metadata as EventTypeMetadata",
+          "resolvedRelativePath": "packages/prisma/zod-utils.ts",
+          "resolvedFileId": "packages/prisma/zod-utils.ts"
+        },
+        {
+          "name": "bookingMetadataSchema",
+          "shape": "bookingMetadataSchema.safeParse(bookingToDelete.metadata || {})",
+          "resolvedRelativePath": "packages/prisma/zod-utils.ts",
+          "resolvedFileId": "packages/prisma/zod-utils.ts"
+        },
+        {
+          "name": "eventTypeMetaDataSchemaWithTypedApps",
+          "shape": "eventTypeMetaDataSchemaWithTypedApps.safeParse(bookingToDelete.eventType?.metadata || null)",
+          "resolvedRelativePath": "packages/app-store/zod-utils.ts",
+          "resolvedFileId": "packages/app-store/zod-utils.ts"
+        },
+        {
+          "name": "IBookingCancelService",
+          "shape": "export class BookingCancelService implements IBookingCancelService",
+          "resolvedRelativePath": "packages/features/bookings/lib/interfaces/IBookingCancelService.ts",
+          "resolvedFileId": "packages/features/bookings/lib/interfaces/IBookingCancelService.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "getAuditActor",
+          "intent": "Build an authenticated or fallback guest actor for cancellation auditing.",
+          "structureKind": "branch",
+          "predicate": "if (userUuid)",
+          "branchOutcomes": ["authenticated user actor", "fallback guest actor"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 98, "endLine": 135 }
+        },
+        {
+          "name": "input parsing and cancellation validation",
+          "intent": "Parse cancellation input and reject invalid or unauthorized cancellation requests.",
+          "structureKind": "branch",
+          "predicate": "if (bookingToDelete.status === BookingStatus.CANCELLED)",
+          "branchOutcomes": ["already cancelled: throw HttpError", "continue validation"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 137, "endLine": 261 }
+        },
+        {
+          "name": "booking event preparation",
+          "intent": "Resolve webhook context, translations, attendees, organizer, and calendar event data.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 263, "endLine": 411 }
+        },
+        {
+          "name": "attendee seat cancellation",
+          "intent": "Remove only a requested attendee seat when applicable.",
+          "structureKind": "branch",
+          "predicate": "if (result)",
+          "branchOutcomes": [
+            "attendee removed: return success response",
+            "no attendee removal: continue booking cancellation"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 413, "endLine": 430 }
+        },
+        {
+          "name": "attendee classification",
+          "intent": "Classify the first attendee and team-host attendees before notification construction.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "let index = 0; index < bookingToDelete.attendees.length; index++",
+          "terminationCondition": null,
+          "anchor": { "startLine": 306, "endLine": 339 }
+        },
+        {
+          "name": "booking cancellation persistence",
+          "intent": "Cancel recurring bookings in bulk or update one booking and process payment effects.",
+          "structureKind": "branch",
+          "predicate": "if (\n    bookingToDelete.eventType?.recurringEvent &&\n    bookingToDelete.recurringEventId &&\n    (allRemainingBookings || cancelSubsequentBookings)\n  )",
+          "branchOutcomes": ["bulk-cancel matching recurring bookings", "cancel one booking"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 475, "endLine": 603 }
+        },
+        {
+          "name": "integration cancellation and cleanup",
+          "intent": "Cancel integrations, mark references deleted, and remove scheduled cancellation-related tasks.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 605, "endLine": 675 }
+        },
+        {
+          "name": "internal note and notifications",
+          "intent": "Attempt internal notes and cancellation notifications, then return cancellation success.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 677, "endLine": 708 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "PlatformParams",
+          "signature": "type PlatformParams = {\n  platformClientId?: string;\n  platformRescheduleUrl?: string;\n  platformCancelUrl?: string;\n  platformBookingUrl?: string;\n  arePlatformEmailsEnabled?: boolean;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 70, "endLine": 76 }
+        },
+        {
+          "kind": "type",
+          "name": "BookingToDelete",
+          "signature": "export type BookingToDelete = Awaited<ReturnType<typeof getBookingToDelete>>;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 78, "endLine": 78 }
+        },
+        {
+          "kind": "type",
+          "name": "CancelBookingInput",
+          "signature": "export type CancelBookingInput = {\n  userId?: number;\n  userUuid?: string;\n  bookingData: z.infer<typeof bookingCancelInput>;\n  actionSource?: ActionSource;\n} & PlatformParams;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 80, "endLine": 85 }
+        },
+        {
+          "kind": "type",
+          "name": "Dependencies",
+          "signature": "type Dependencies = {\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 87, "endLine": 93 }
+        },
+        {
+          "kind": "function",
+          "name": "getAuditActor",
+          "signature": "function getAuditActor({\n  userUuid,\n  cancelledByEmailInQueryParam,\n  bookingUid,\n}: {\n  userUuid: string | null;\n  cancelledByEmailInQueryParam: string | null;\n  bookingUid: string;\n}): Actor {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Actor",
+          "exported": false,
+          "anchor": { "startLine": 98, "endLine": 106 }
+        },
+        {
+          "kind": "function",
+          "name": "handler",
+          "signature": "async function handler(input: CancelBookingInput, dependencies?: Dependencies) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 137, "endLine": 137 }
+        },
+        {
+          "kind": "type",
+          "name": "BookingCancelServiceDependencies",
+          "signature": "type BookingCancelServiceDependencies = {\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 711, "endLine": 717 }
+        },
+        {
+          "kind": "class",
+          "name": "BookingCancelService",
+          "signature": "export class BookingCancelService implements IBookingCancelService {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 723, "endLine": 734 }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "constructor(private readonly deps: BookingCancelServiceDependencies) {}",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 724, "endLine": 724 }
+        },
+        {
+          "kind": "method",
+          "name": "cancelBooking",
+          "signature": "async cancelBooking(input: { bookingData: CancelRegularBookingData; bookingMeta?: CancelBookingMeta }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 726, "endLine": 726 }
+        },
+        {
+          "kind": "default_export",
+          "name": "handler",
+          "signature": "export default handler;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 736, "endLine": 736 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "alias",
+          "name": "PlatformParams",
+          "shape": "{\n  platformClientId?: string;\n  platformRescheduleUrl?: string;\n  platformCancelUrl?: string;\n  platformBookingUrl?: string;\n  arePlatformEmailsEnabled?: boolean;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 70, "endLine": 76 }
+        },
+        {
+          "kind": "alias",
+          "name": "BookingToDelete",
+          "shape": "Awaited<ReturnType<typeof getBookingToDelete>>",
+          "discriminant": null,
+          "anchor": { "startLine": 78, "endLine": 78 }
+        },
+        {
+          "kind": "alias",
+          "name": "CancelBookingInput",
+          "shape": "{\n  userId?: number;\n  userUuid?: string;\n  bookingData: z.infer<typeof bookingCancelInput>;\n  actionSource?: ActionSource;\n} & PlatformParams",
+          "discriminant": null,
+          "anchor": { "startLine": 80, "endLine": 85 }
+        },
+        {
+          "kind": "alias",
+          "name": "Dependencies",
+          "shape": "{\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 87, "endLine": 93 }
+        },
+        {
+          "kind": "alias",
+          "name": "BookingCancelServiceDependencies",
+          "shape": "{\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 711, "endLine": 717 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Malformed bookingData that fails bookingCancelInput parsing",
+          "handled": false,
+          "behavior": "bookingCancelInput.parse throws and cancellation stops before booking lookup",
+          "anchor": { "startLine": 152, "endLine": 164 }
+        },
+        {
+          "inputShape": "Booking already has status CANCELLED",
+          "handled": true,
+          "behavior": "Throws HttpError with statusCode 400 and message \"This booking has already been cancelled.\"",
+          "anchor": { "startLine": 200, "endLine": 205 }
+        },
+        {
+          "inputShape": "Booking has no userId or user",
+          "handled": true,
+          "behavior": "Throws HttpError with statusCode 400 and message \"User not found\"",
+          "anchor": { "startLine": 207, "endLine": 209 }
+        },
+        {
+          "inputShape": "Event type disables cancelling",
+          "handled": true,
+          "behavior": "Throws HttpError with statusCode 400 and message \"This event type does not allow cancellations\"",
+          "anchor": { "startLine": 211, "endLine": 215 }
+        },
+        {
+          "inputShape": "Host cancellation without a trimmed reason, platform client, or skip flag",
+          "handled": true,
+          "behavior": "Throws HttpError with statusCode 400 requiring a cancellation reason",
+          "anchor": { "startLine": 221, "endLine": 231 }
+        },
+        {
+          "inputShape": "Booking endTime is earlier than the current time",
+          "handled": true,
+          "behavior": "Throws HttpError with statusCode 400 and message \"Cannot cancel a booking that has already ended\"",
+          "anchor": { "startLine": 233, "endLine": 237 }
+        },
+        {
+          "inputShape": "Seated booking without seatReferenceUid and caller is neither host, owner, nor organization admin",
+          "handled": true,
+          "behavior": "Throws HttpError with statusCode 401 and message \"User not a host of this event or an admin of the booking user\"",
+          "anchor": { "startLine": 240, "endLine": 261 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "HttpError",
+          "caught": null,
+          "action": "Reject cancellation immediately.",
+          "fallback": null,
+          "anchor": { "startLine": 200, "endLine": 205 }
+        },
+        {
+          "thrown": "HttpError",
+          "caught": null,
+          "action": "Reject cancellation immediately.",
+          "fallback": null,
+          "anchor": { "startLine": 207, "endLine": 209 }
+        },
+        {
+          "thrown": "HttpError",
+          "caught": null,
+          "action": "Reject cancellation immediately.",
+          "fallback": null,
+          "anchor": { "startLine": 211, "endLine": 215 }
+        },
+        {
+          "thrown": "HttpError",
+          "caught": null,
+          "action": "Reject cancellation immediately.",
+          "fallback": null,
+          "anchor": { "startLine": 227, "endLine": 231 }
+        },
+        {
+          "thrown": "HttpError",
+          "caught": null,
+          "action": "Reject cancellation immediately.",
+          "fallback": null,
+          "anchor": { "startLine": 233, "endLine": 237 }
+        },
+        {
+          "thrown": "HttpError",
+          "caught": null,
+          "action": "Reject cancellation immediately.",
+          "fallback": null,
+          "anchor": { "startLine": 256, "endLine": 260 }
+        },
+        {
+          "thrown": "Webhook send error",
+          "caught": "catch (e)",
+          "action": "Log the webhook error and continue waiting for other webhook promises.",
+          "fallback": "Cancellation continues.",
+          "anchor": { "startLine": 432, "endLine": 447 }
+        },
+        {
+          "thrown": "Payment refund error",
+          "caught": "catch (error)",
+          "action": "Log the refund error.",
+          "fallback": "Cancellation result is still returned successfully.",
+          "anchor": { "startLine": 583, "endLine": 591 }
+        },
+        {
+          "thrown": "No-show fee processing error",
+          "caught": "catch (error)",
+          "action": "Log the no-show fee error.",
+          "fallback": "Cancellation result is still returned successfully.",
+          "anchor": { "startLine": 592, "endLine": 601 }
+        },
+        {
+          "thrown": "Metadata parsing Error",
+          "caught": "catch (error)",
+          "action": "Log the integration deletion error.",
+          "fallback": "External integration cancellation and reference deletion are skipped.",
+          "anchor": { "startLine": 619, "endLine": 649 }
+        },
+        {
+          "thrown": "Integration cancellation or reference update error",
+          "caught": "catch (error)",
+          "action": "Log the integration deletion error.",
+          "fallback": "Cancellation continues.",
+          "anchor": { "startLine": 644, "endLine": 649 }
+        },
+        {
+          "thrown": "Scheduled webhook, no-show task, or workflow reminder deletion error",
+          "caught": "catch (error)",
+          "action": "Log the cleanup error; individual rejected promises are also logged.",
+          "fallback": "Cancellation continues.",
+          "anchor": { "startLine": 655, "endLine": 675 }
+        },
+        {
+          "thrown": "Internal note handling error",
+          "caught": "catch (error)",
+          "action": "Log the internal note error.",
+          "fallback": "Cancellation continues.",
+          "anchor": { "startLine": 677, "endLine": 688 }
+        },
+        {
+          "thrown": "Cancelled email or SMS sending error",
+          "caught": "catch (error)",
+          "action": "Log the notification error.",
+          "fallback": "Cancellation success response is still returned.",
+          "anchor": { "startLine": 690, "endLine": 700 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies bookingData matching bookingCancelInput and may supply user, platform, and cancellation metadata.",
+          "anchor": { "startLine": 80, "endLine": 85 }
+        },
+        {
+          "kind": "init-order",
+          "description": "When dependencies are omitted, repositories are constructed using the module-level prisma client.",
+          "anchor": { "startLine": 137, "endLine": 151 }
+        },
+        {
+          "kind": "schema",
+          "description": "The booking event type, attendees, organizer, payment records, and recurring fields are shaped as expected by downstream services.",
+          "anchor": { "startLine": 164, "endLine": 172 }
+        },
+        {
+          "kind": "config",
+          "description": "Platform-managed cancellation email behavior depends on platformClientId and arePlatformEmailsEnabled.",
+          "anchor": { "startLine": 690, "endLine": 697 }
+        },
+        {
+          "kind": "platform",
+          "description": "Event integrations can be cancelled through credentials and typed event metadata available from the booking.",
+          "anchor": { "startLine": 619, "endLine": 645 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact records and external effects are produced by getBookingToDelete and cancelAttendeeSeat?",
+          "affects": "booking lookup and attendee-only cancellation behavior",
+          "anchor": { "startLine": 164, "endLine": 164 },
+          "resolution": null
+        },
+        {
+          "question": "What exact webhook, workflow, payment, calendar, email, and SMS delivery guarantees are provided by the imported services?",
+          "affects": "network side effects and error_handling",
+          "anchor": { "startLine": 432, "endLine": 473 },
+          "resolution": null
+        },
+        {
+          "question": "What database transaction or concurrency guarantees apply while recurring or individual bookings are marked cancelled?",
+          "affects": "booking cancellation persistence",
+          "anchor": { "startLine": 493, "endLine": 567 },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-already-cancelled-booking",
+          "scenario": "A cancellation is requested for a booking whose status is already CANCELLED.",
+          "given": ["bookingToDelete.status === BookingStatus.CANCELLED"],
+          "when": "handler(input, dependencies)",
+          "then": "throws HttpError with statusCode 400 and message \"This booking has already been cancelled.\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents repeated cancellation from deleting or reprocessing already-cancelled integrations."
+        },
+        {
+          "testId": "rejects-booking-without-user",
+          "scenario": "A cancellation is requested for a booking without an associated user.",
+          "given": ["!bookingToDelete.userId || !bookingToDelete.user"],
+          "when": "handler(input, dependencies)",
+          "then": "throws HttpError with statusCode 400 and message \"User not found\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Cancellation requires a valid booking owner."
+        },
+        {
+          "testId": "rejects-disabled-cancellation",
+          "scenario": "A cancellation is requested for an event type that disables cancellations.",
+          "given": ["bookingToDelete.eventType?.disableCancelling"],
+          "when": "handler(input, dependencies)",
+          "then": "throws HttpError with statusCode 400 and message \"This event type does not allow cancellations\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves event-type cancellation policy."
+        },
+        {
+          "testId": "requires-host-cancellation-reason",
+          "scenario": "A host cancels without a platform client, without a reason, and without explicitly skipping validation.",
+          "given": [
+            "!platformClientId",
+            "!cancellationReason?.trim()",
+            "isCancellationUserHost",
+            "!skipCancellationReasonValidation"
+          ],
+          "when": "handler(input, dependencies)",
+          "then": "throws HttpError with statusCode 400 and message \"Cancellation reason is required when you are the host\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures host cancellations retain an auditable reason."
+        },
+        {
+          "testId": "rejects-ended-booking",
+          "scenario": "A cancellation is requested after the booking end time.",
+          "given": ["bookingToDelete.endTime && new Date() > new Date(bookingToDelete.endTime)"],
+          "when": "handler(input, dependencies)",
+          "then": "throws HttpError with statusCode 400 and message \"Cannot cancel a booking that has already ended\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents cancellation of completed bookings."
+        },
+        {
+          "testId": "removes-attendee-seat",
+          "scenario": "A seated booking cancellation includes a seat reference that identifies an attendee seat.",
+          "given": ["seatReferenceUid", "cancelAttendeeSeat(...) returns a truthy result"],
+          "when": "handler(input, dependencies)",
+          "then": "returns success true, onlyRemovedAttendee true, and message \"Attendee successfully removed.\" without cancelling the booking",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Distinguishes attendee removal from whole-booking cancellation."
+        },
+        {
+          "testId": "cancels-recurring-series",
+          "scenario": "A recurring booking has a recurring event id and requests all remaining or subsequent cancellations.",
+          "given": [
+            "bookingToDelete.eventType?.recurringEvent",
+            "bookingToDelete.recurringEventId",
+            "(allRemainingBookings || cancelSubsequentBookings)"
+          ],
+          "when": "handler(input, dependencies)",
+          "then": "updates matching recurring bookings to BookingStatus.CANCELLED and calls onBulkBookingsCancelled",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins bulk cancellation boundaries and audit notification behavior."
+        },
+        {
+          "testId": "cancels-single-booking",
+          "scenario": "A non-bulk cancellation targets one booking.",
+          "given": [
+            "!(bookingToDelete.eventType?.recurringEvent && bookingToDelete.recurringEventId && (allRemainingBookings || cancelSubsequentBookings))"
+          ],
+          "when": "handler(input, dependencies)",
+          "then": "updates the booking status to BookingStatus.CANCELLED and calls onBookingCancelled",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the ordinary cancellation persistence and audit path."
+        },
+        {
+          "testId": "emits-booking-cancelled-webhook",
+          "scenario": "A booking cancellation proceeds with configured webhooks.",
+          "given": ["webhooks.length > 0", "eventTrigger === \"BOOKING_CANCELLED\""],
+          "when": "handler(input, dependencies)",
+          "then": "sends each webhook a payload containing status \"CANCELLED\" and the booking event data",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Protects the external webhook contract for cancellation consumers."
+        },
+        {
+          "testId": "returns-successful-cancellation",
+          "scenario": "A booking is successfully cancelled through the full flow.",
+          "given": [
+            "bookingToDelete.status !== BookingStatus.CANCELLED",
+            "bookingToDelete.user",
+            "!bookingToDelete.eventType?.disableCancelling",
+            "bookingToDelete.endTime is absent or in the future"
+          ],
+          "when": "handler(input, dependencies)",
+          "then": "returns success true, onlyRemovedAttendee false, and message \"Booking successfully cancelled.\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the public success response after cancellation processing."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "log",
+        "PlatformParams",
+        "BookingToDelete",
+        "CancelBookingInput",
+        "Dependencies",
+        "getAuditActor",
+        "handler",
+        "BookingCancelServiceDependencies",
+        "BookingCancelService",
+        "default"
+      ],
+      "moduleLevelCode": "import block",
+      "exports": [
+        { "name": "BookingToDelete", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "CancelBookingInput", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "BookingCancelService", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "handler", "kind": "own", "fromSpec": null, "exportedAs": "default" }
+      ],
+      "importSymbolMap": [
+        { "symbol": "DailyLocationType", "module": "@calcom/app-store/constants", "alias": null, "kind": "internal" },
+        {
+          "symbol": "FAKE_DAILY_CREDENTIAL",
+          "module": "@calcom/app-store/dailyvideo/lib/VideoApiAdapter",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "eventTypeMetaDataSchemaWithTypedApps",
+          "module": "@calcom/app-store/zod-utils",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "dayjs", "module": "@calcom/dayjs", "alias": null, "kind": "internal" },
+        {
+          "symbol": "sendCancelledEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "Actor",
+          "module": "@calcom/features/booking-audit/lib/dto/types",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "buildActorEmail",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getUniqueIdentifier",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "makeGuestActor",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "makeUserActor",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "ActionSource",
+          "module": "@calcom/features/booking-audit/lib/types/actionSource",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "BookingReferenceRepository",
+          "module": "@calcom/features/bookingReference/repositories/BookingReferenceRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBookingEventHandlerService",
+          "module": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getFeaturesRepository",
+          "module": "@calcom/features/di/containers/FeaturesRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventManager",
+          "module": "@calcom/features/bookings/lib/EventManager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getCalEventResponses",
+          "module": "@calcom/features/bookings/lib/getCalEventResponses",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "processNoShowFeeOnCancellation",
+          "module": "@calcom/features/bookings/lib/payment/processNoShowFeeOnCancellation",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "processPaymentRefund",
+          "module": "@calcom/features/bookings/lib/payment/processPaymentRefund",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "CreditService",
+          "module": "@calcom/features/ee/billing/credit-service",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBookerBaseUrl",
+          "module": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getAllWorkflowsFromEventType",
+          "module": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "sendCancelledReminders",
+          "module": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowRepository",
+          "module": "@calcom/features/ee/workflows/repositories/WorkflowRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "PrismaOrgMembershipRepository",
+          "module": "@calcom/features/membership/repositories/PrismaOrgMembershipRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "ProfileRepository",
+          "module": "@calcom/features/profile/repositories/ProfileRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "UserRepository",
+          "module": "@calcom/features/users/repositories/UserRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "GetSubscriberOptions",
+          "module": "@calcom/features/webhooks/lib/getWebhooks",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getWebhooks",
+          "module": "@calcom/features/webhooks/lib/getWebhooks",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "cancelNoShowTasksForBooking",
+          "module": "@calcom/features/webhooks/lib/scheduleTrigger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "deleteWebhookScheduledTriggers",
+          "module": "@calcom/features/webhooks/lib/scheduleTrigger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "sendPayload",
+          "module": "@calcom/features/webhooks/lib/sendOrSchedulePayload",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventTypeInfo",
+          "module": "@calcom/features/webhooks/lib/sendPayload",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getOrgIdFromMemberOrTeamId",
+          "module": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTeamIdFromEventType",
+          "module": "@calcom/lib/getTeamIdFromEventType",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "HttpError", "module": "@calcom/lib/http-error", "alias": null, "kind": "internal" },
+        { "symbol": "isPrismaObjOrUndefined", "module": "@calcom/lib/isPrismaObj", "alias": null, "kind": "internal" },
+        {
+          "symbol": "parseRecurringEvent",
+          "module": "@calcom/lib/isRecurringEvent",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "logger", "module": "@calcom/lib/logger", "alias": null, "kind": "internal" },
+        { "symbol": "safeStringify", "module": "@calcom/lib/safeStringify", "alias": null, "kind": "internal" },
+        { "symbol": "getTranslation", "module": "@calcom/lib/server/i18n", "alias": null, "kind": "internal" },
+        {
+          "symbol": "getTimeFormatStringFromUserTimeFormat",
+          "module": "@calcom/lib/timeFormat",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "internal" },
+        { "symbol": "WebhookTriggerEvents", "module": "@calcom/prisma/enums", "alias": null, "kind": "internal" },
+        { "symbol": "WorkflowMethods", "module": "@calcom/prisma/enums", "alias": null, "kind": "internal" },
+        { "symbol": "BookingStatus", "module": "@calcom/prisma/enums", "alias": null, "kind": "internal" },
+        { "symbol": "EventTypeMetadata", "module": "@calcom/prisma/zod-utils", "alias": null, "kind": "internal" },
+        { "symbol": "bookingCancelInput", "module": "@calcom/prisma/zod-utils", "alias": null, "kind": "internal" },
+        { "symbol": "bookingMetadataSchema", "module": "@calcom/prisma/zod-utils", "alias": null, "kind": "internal" },
+        { "symbol": "CalendarEvent", "module": "@calcom/types/Calendar", "alias": null, "kind": "internal" },
+        { "symbol": "uuidv4", "module": "uuid", "alias": "v4", "kind": "external" },
+        { "symbol": "z", "module": "zod", "alias": null, "kind": "external" },
+        {
+          "symbol": "BookingRepository",
+          "module": "../repositories/BookingRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "PrismaBookingAttendeeRepository",
+          "module": "../repositories/PrismaBookingAttendeeRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "CancelBookingMeta", "module": "./dto/BookingCancel", "alias": null, "kind": "internal" },
+        { "symbol": "CancelRegularBookingData", "module": "./dto/BookingCancel", "alias": null, "kind": "internal" },
+        { "symbol": "HandleCancelBookingResponse", "module": "./dto/BookingCancel", "alias": null, "kind": "internal" },
+        {
+          "symbol": "getAllCredentialsIncludeServiceAccountKey",
+          "module": "./getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "getBookingToDelete", "module": "./getBookingToDelete", "alias": null, "kind": "internal" },
+        { "symbol": "handleInternalNote", "module": "./handleInternalNote", "alias": null, "kind": "internal" },
+        {
+          "symbol": "cancelAttendeeSeat",
+          "module": "./handleSeats/cancel/cancelAttendeeSeat",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "IBookingCancelService",
+          "module": "./interfaces/IBookingCancelService",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        { "name": "log", "value": "logger.getSubLogger({ prefix: [\"handleCancelBooking\"] })", "kind": "const" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__PlatformParams_1#type_alias:PlatformParams",
+        "unitKind": "type_alias",
+        "name": "PlatformParams",
+        "qualifiedName": "PlatformParams",
+        "parentUnitId": null,
+        "startLine": 70,
+        "endLine": 76,
+        "isBehavioral": false,
+        "source": "type PlatformParams = {\n  platformClientId?: string;\n  platformRescheduleUrl?: string;\n  platformCancelUrl?: string;\n  platformBookingUrl?: string;\n  arePlatformEmailsEnabled?: boolean;\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingToDelete_2#type_alias:BookingToDelete",
+        "unitKind": "type_alias",
+        "name": "BookingToDelete",
+        "qualifiedName": "BookingToDelete",
+        "parentUnitId": null,
+        "startLine": 78,
+        "endLine": 78,
+        "isBehavioral": false,
+        "source": "export type BookingToDelete = Awaited<ReturnType<typeof getBookingToDelete>>;"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__CancelBookingInput_3#type_alias:CancelBookingInput",
+        "unitKind": "type_alias",
+        "name": "CancelBookingInput",
+        "qualifiedName": "CancelBookingInput",
+        "parentUnitId": null,
+        "startLine": 80,
+        "endLine": 85,
+        "isBehavioral": false,
+        "source": "export type CancelBookingInput = {\n  userId?: number;\n  userUuid?: string;\n  bookingData: z.infer<typeof bookingCancelInput>;\n  actionSource?: ActionSource;\n} & PlatformParams;",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__CancelBookingInput_3#type_alias:CancelBookingInput",
+          "fileId": "packages/features/bookings/lib/handleCancelBooking.ts__CancelBookingInput_3",
+          "unitKind": "type_alias",
+          "name": "CancelBookingInput",
+          "qualifiedName": "CancelBookingInput",
+          "parentUnitId": null,
+          "startLine": 80,
+          "endLine": 85,
+          "signature": "export type CancelBookingInput = { userId?: number; userUuid?: string; bookingData: z.infer<typeof bookingCancelInput>; actionSource?: ActionSource; } & PlatformParams;",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": ["PlatformParams"],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "userId",
+              "kind": "property",
+              "type": "number",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "userUuid",
+              "kind": "property",
+              "type": "string",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "bookingData",
+              "kind": "property",
+              "type": "z.infer<typeof bookingCancelInput>",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "actionSource",
+              "kind": "property",
+              "type": "ActionSource",
+              "default": null,
+              "visibility": null,
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the shape of input required to cancel a booking, combining optional user identifiers, booking data, an optional action source, and platform-level parameters.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "99d7fc7f470d5bc9f49b4cb32dff9e9b1a42045187c0f8d8913218aba4d4b902"
+        }
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__Dependencies_4#type_alias:Dependencies",
+        "unitKind": "type_alias",
+        "name": "Dependencies",
+        "qualifiedName": "Dependencies",
+        "parentUnitId": null,
+        "startLine": 87,
+        "endLine": 93,
+        "isBehavioral": false,
+        "source": "type Dependencies = {\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n};",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__Dependencies_4#type_alias:Dependencies",
+          "fileId": "packages/features/bookings/lib/handleCancelBooking.ts__Dependencies_4",
+          "unitKind": "type_alias",
+          "name": "Dependencies",
+          "qualifiedName": "Dependencies",
+          "parentUnitId": null,
+          "startLine": 87,
+          "endLine": 93,
+          "signature": "type Dependencies = { userRepository: UserRepository; bookingRepository: BookingRepository; profileRepository: ProfileRepository; bookingReferenceRepository: BookingReferenceRepository; attendeeRepository: PrismaBookingAttendeeRepository; }",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "userRepository",
+              "kind": "property",
+              "type": "UserRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "bookingRepository",
+              "kind": "property",
+              "type": "BookingRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "profileRepository",
+              "kind": "property",
+              "type": "ProfileRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "bookingReferenceRepository",
+              "kind": "property",
+              "type": "BookingReferenceRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "attendeeRepository",
+              "kind": "property",
+              "type": "PrismaBookingAttendeeRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the set of repository dependencies required by booking cancellation handlers.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "b224bf413fc2385131a4e2f6e2c6a92cf6fbb622534f01c1776d4d97c4ae0641"
+        }
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__getAuditActor_5#function:getAuditActor",
+        "unitKind": "function",
+        "name": "getAuditActor",
+        "qualifiedName": "getAuditActor",
+        "parentUnitId": null,
+        "startLine": 98,
+        "endLine": 135,
+        "isBehavioral": true,
+        "source": "function getAuditActor({\n  userUuid,\n  cancelledByEmailInQueryParam,\n  bookingUid,\n}: {\n  userUuid: string | null;\n  cancelledByEmailInQueryParam: string | null;\n  bookingUid: string;\n}): Actor {\n  if (userUuid) {\n    return makeUserActor(userUuid);\n  }\n\n  let actorEmail: string;\n  // Fallback to guest actor for unauthenticated cancellation\n  if (!cancelledByEmailInQueryParam) {\n    log.warn(\n      \"No cancelledBy email in query param available, creating fallback guest actor for audit\",\n      safeStringify({\n        bookingUid,\n      })\n    );\n    // Having fallback prefix makes it clear that we created guest actor from fallback logic\n    actorEmail = buildActorEmail({\n      identifier: getUniqueIdentifier({ prefix: \"fallback\" }),\n      actorType: \"guest\",\n    });\n  } else {\n    // We can't trust cancelledByEmail and thus can't reuse it as is because it can be set anything by anyone. If we use that as guest actor, we could accidentally attribute the action to the wrong guest actor.\n    // Having param prefix makes it clear that we created guest actor from query param and we still don't use the email as is.\n    actorEmail = buildActorEmail({\n      identifier: getUniqueIdentifier({ prefix: \"param\" }),\n      actorType: \"guest\",\n    });\n  }\n\n  return makeGuestActor({ email: actorEmail, name: null });\n}",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__getAuditActor_5#function:getAuditActor",
+          "fileId": "packages/features/bookings/lib/handleCancelBooking.ts__getAuditActor_5",
+          "unitKind": "function",
+          "name": "getAuditActor",
+          "qualifiedName": "getAuditActor",
+          "parentUnitId": null,
+          "startLine": 98,
+          "endLine": 135,
+          "signature": "function getAuditActor({ userUuid, cancelledByEmailInQueryParam, bookingUid, }: { userUuid: string | null; cancelledByEmailInQueryParam: string | null; bookingUid: string; }): Actor",
+          "parameters": [
+            {
+              "name": "userUuid",
+              "type": "string | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "cancelledByEmailInQueryParam",
+              "type": "string | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "bookingUid",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "Actor",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "userUuid is either a string or null",
+            "cancelledByEmailInQueryParam is either a string or null",
+            "bookingUid is a non‑empty string"
+          ],
+          "postconditions": [
+            "If userUuid is non‑null, returns the result of makeUserActor(userUuid)",
+            "If userUuid is null, returns a Guest Actor created by makeGuestActor with an email generated via buildActorEmail and name set to null"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "userUuid provided → user actor returned",
+            "userUuid null & cancelledByEmailInQueryParam missing → guest actor with identifier prefixed \"fallback\"",
+            "userUuid null & cancelledByEmailInQueryParam present → guest actor with identifier prefixed \"param\""
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "makeUserActor", "source": null, "kind": "internal" },
+            { "name": "log.warn", "source": null, "kind": "internal" },
+            { "name": "safeStringify", "source": null, "kind": "internal" },
+            { "name": "buildActorEmail", "source": null, "kind": "internal" },
+            { "name": "getUniqueIdentifier", "source": null, "kind": "internal" },
+            { "name": "makeGuestActor", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Actor"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines the audit actor for a booking cancellation, returning a user actor when a user UUID is provided or a guest actor otherwise.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "No cancelledBy email in query param available, creating fallback guest actor for audit",
+              "role": "log message for fallback path"
+            },
+            { "kind": "magic-number", "value": "fallback", "role": "prefix indicating fallback identifier generation" },
+            {
+              "kind": "magic-number",
+              "value": "param",
+              "role": "prefix indicating identifier generated from query parameter"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuditActor is called",
+              "then": "returns the result of makeUserActor('123')",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuditActor is called",
+              "then": "returns a Guest Actor whose email is built with identifier prefix 'fallback' and name null",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuditActor is called",
+              "then": "returns a Guest Actor whose email is built with identifier prefix 'param' and name null",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "sourceHash": "",
+          "semanticFingerprint": "5a616599adde09f56ea6bd8b29be20262c5dc7f6351694421b6051e12e1d994b"
+        }
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__handler_6#function:handler",
+        "unitKind": "function",
+        "name": "handler",
+        "qualifiedName": "handler",
+        "parentUnitId": null,
+        "startLine": 137,
+        "endLine": 709,
+        "isBehavioral": true,
+        "source": "async function handler(input: CancelBookingInput, dependencies?: Dependencies) {\n  const prismaClient = prisma;\n  const {\n    userRepository,\n    bookingRepository,\n    profileRepository,\n    bookingReferenceRepository,\n    attendeeRepository,\n  } = dependencies || {\n    userRepository: new UserRepository(prismaClient),\n    bookingRepository: new BookingRepository(prismaClient),\n    profileRepository: new ProfileRepository({ prismaClient }),\n    bookingReferenceRepository: new BookingReferenceRepository({ prismaClient }),\n    attendeeRepository: new PrismaBookingAttendeeRepository(prismaClient),\n  };\n  const body = input.bookingData;\n  const {\n    id,\n    uid,\n    allRemainingBookings,\n    cancellationReason,\n    seatReferenceUid,\n    cancelledBy,\n    cancelSubsequentBookings,\n    internalNote,\n    skipCancellationReasonValidation = false,\n  } = bookingCancelInput.parse(body);\n  const bookingToDelete = await getBookingToDelete(id, uid);\n  const {\n    userId,\n    platformBookingUrl,\n    platformCancelUrl,\n    platformClientId,\n    platformRescheduleUrl,\n    arePlatformEmailsEnabled,\n  } = input;\n\n  const userUuid = input.userUuid ?? null;\n\n  // Extract action source once for reuse\n  const actionSource = input.actionSource ?? \"UNKNOWN\";\n  if (actionSource === \"UNKNOWN\") {\n    log.warn(\n      \"Booking cancellation with unknown actionSource\",\n      safeStringify({\n        bookingUid: bookingToDelete.uid,\n        userUuid,\n      })\n    );\n  }\n\n  const actorToUse = getAuditActor({\n    userUuid,\n    cancelledByEmailInQueryParam: cancelledBy ?? null,\n    bookingUid: bookingToDelete.uid,\n  });\n\n  /**\n   * Important: We prevent cancelling an already cancelled booking.\n   * A booking could have been CANCELLED due to a reschedule,\n   * in which case we simply update the existing calendar event and meeting.\n   * We want to avoid deleting them by a subsequent cancellation attempt.\n   */\n  if (bookingToDelete.status === BookingStatus.CANCELLED) {\n    throw new HttpError({\n      statusCode: 400,\n      message: \"This booking has already been cancelled.\",\n    });\n  }\n\n  if (!bookingToDelete.userId || !bookingToDelete.user) {\n    throw new HttpError({ statusCode: 400, message: \"User not found\" });\n  }\n\n  if (bookingToDelete.eventType?.disableCancelling) {\n    throw new HttpError({\n      statusCode: 400,\n      message: \"This event type does not allow cancellations\",\n    });\n  }\n\n  const isCancellationUserHost =\n    bookingToDelete.userId === userId || bookingToDelete.user.email === cancelledBy;\n\n  if (\n    !platformClientId &&\n    !cancellationReason?.trim() &&\n    isCancellationUserHost &&\n    !skipCancellationReasonValidation\n  ) {\n    throw new HttpError({\n      statusCode: 400,\n      message: \"Cancellation reason is required when you are the host\",\n    });\n  }\n\n  if (bookingToDelete.endTime && new Date() > new Date(bookingToDelete.endTime)) {\n    throw new HttpError({\n      statusCode: 400,\n      message: \"Cannot cancel a booking that has already ended\",\n    });\n  }\n\n  // If the booking is a seated event and there is no seatReferenceUid we should validate that logged in user is host\n  if (bookingToDelete.eventType?.seatsPerTimeSlot && !seatReferenceUid) {\n    const userIsHost = bookingToDelete.eventType.hosts.find((host) => {\n      if (host.user.id === userId) return true;\n    });\n\n    const userIsOwnerOfEventType = bookingToDelete.eventType.owner?.id === userId;\n\n    const userIsOrgAdminOfBookingUser =\n      userId &&\n      (await PrismaOrgMembershipRepository.isLoggedInUserOrgAdminOfBookingHost(\n        userId,\n        bookingToDelete.userId\n      ));\n\n    if (!userIsHost && !userIsOwnerOfEventType && !userIsOrgAdminOfBookingUser) {\n      throw new HttpError({\n        statusCode: 401,\n        message: \"User not a host of this event or an admin of the booking user\",\n      });\n    }\n  }\n\n  // get webhooks\n  const eventTrigger: WebhookTriggerEvents = \"BOOKING_CANCELLED\";\n\n  const teamId = await getTeamIdFromEventType({\n    eventType: {\n      team: { id: bookingToDelete.eventType?.team?.id ?? null },\n      parentId: bookingToDelete?.eventType?.parentId ?? null,\n    },\n  });\n  const triggerForUser = !teamId || (teamId && bookingToDelete.eventType?.parentId);\n  const organizerUserId = triggerForUser ? bookingToDelete.userId : null;\n\n  const orgId = await getOrgIdFromMemberOrTeamId({ memberId: organizerUserId, teamId });\n\n  const featuresRepository = getFeaturesRepository();\n  const isBookingAuditEnabled = orgId\n    ? await featuresRepository.checkIfTeamHasFeature(orgId, \"booking-audit\")\n    : false;\n\n  const subscriberOptions: GetSubscriberOptions = {\n    userId: organizerUserId,\n    eventTypeId: bookingToDelete.eventTypeId as number,\n    triggerEvent: eventTrigger,\n    teamId,\n    orgId,\n    oAuthClientId: platformClientId,\n  };\n\n  const eventTypeInfo: EventTypeInfo = {\n    eventTitle: bookingToDelete?.eventType?.title || null,\n    eventDescription: bookingToDelete?.eventType?.description || null,\n    requiresConfirmation: bookingToDelete?.eventType?.requiresConfirmation || null,\n    price: bookingToDelete?.eventType?.price || null,\n    currency: bookingToDelete?.eventType?.currency || null,\n    length: bookingToDelete?.eventType?.length || null,\n  };\n\n  const webhooks = await getWebhooks(subscriberOptions);\n\n  const organizer = await userRepository.findByIdOrThrow({\n    id: bookingToDelete.userId,\n  });\n\n  const teamMembersPromises = [];\n  const attendeesListPromises = [];\n  const hostEmails = new Set(bookingToDelete.eventType?.hosts?.map((host) => host.user.email) ?? []);\n\n  for (let index = 0; index < bookingToDelete.attendees.length; index++) {\n    const attendee = bookingToDelete.attendees[index];\n    const attendeeObject = {\n      name: attendee.name,\n      email: attendee.email,\n      timeZone: attendee.timeZone,\n      phoneNumber: attendee.phoneNumber,\n      language: {\n        translate: await getTranslation(attendee.locale ?? \"en\", \"common\"),\n        locale: attendee.locale ?? \"en\",\n      },\n    };\n\n    // The first attendee is the booker in all cases, so always consider them as an attendee.\n    if (index === 0) {\n      attendeesListPromises.push(attendeeObject);\n    } else {\n      const isTeamEvent = hostEmails.size > 0;\n      const isTeamMember = isTeamEvent && hostEmails.has(attendee.email);\n\n      if (isTeamMember) {\n        teamMembersPromises.push(attendeeObject);\n      } else {\n        attendeesListPromises.push(attendeeObject);\n      }\n    }\n  }\n\n  const attendeesList = await Promise.all(attendeesListPromises);\n  const teamMembers = await Promise.all(teamMembersPromises);\n  const tOrganizer = await getTranslation(organizer.locale ?? \"en\", \"common\");\n\n  const ownerProfile = await profileRepository.findFirstByUserId({\n    userId: bookingToDelete.userId,\n  });\n\n  const bookerUrl = await getBookerBaseUrl(\n    bookingToDelete.eventType?.team?.parentId ?? ownerProfile?.organizationId ?? null\n  );\n\n  const evt: CalendarEvent = {\n    bookerUrl,\n    title: bookingToDelete?.title,\n    length: bookingToDelete?.eventType?.length,\n    type: bookingToDelete?.eventType?.slug as string,\n    additionalNotes: bookingToDelete?.description,\n    description: bookingToDelete.eventType?.description,\n    customInputs: isPrismaObjOrUndefined(bookingToDelete.customInputs),\n    eventTypeId: bookingToDelete.eventTypeId as number,\n    ...getCalEventResponses({\n      bookingFields: bookingToDelete.eventType?.bookingFields ?? null,\n      booking: bookingToDelete,\n    }),\n    startTime: bookingToDelete?.startTime ? dayjs(bookingToDelete.startTime).format() : \"\",\n    endTime: bookingToDelete?.endTime ? dayjs(bookingToDelete.endTime).format() : \"\",\n    organizer: {\n      id: organizer.id,\n      username: organizer.username || undefined,\n      usernameInOrg: ownerProfile?.username || undefined,\n      email: bookingToDelete?.userPrimaryEmail ?? organizer.email,\n      name: organizer.name ?? \"Nameless\",\n      timeZone: organizer.timeZone,\n      timeFormat: getTimeFormatStringFromUserTimeFormat(organizer.timeFormat),\n      language: { translate: tOrganizer, locale: organizer.locale ?? \"en\" },\n    },\n    attendees: attendeesList,\n    uid: bookingToDelete?.uid,\n    bookingId: bookingToDelete?.id,\n    /* Include recurringEvent information only when cancelling all bookings */\n    recurringEvent: allRemainingBookings\n      ? parseRecurringEvent(bookingToDelete.eventType?.recurringEvent)\n      : undefined,\n    location: bookingToDelete?.location,\n    destinationCalendar: bookingToDelete?.destinationCalendar\n      ? [bookingToDelete?.destinationCalendar]\n      : bookingToDelete?.user.destinationCalendar\n        ? [bookingToDelete?.user.destinationCalendar]\n        : [],\n    cancellationReason: cancellationReason,\n    ...(teamMembers &&\n      teamId && {\n        team: {\n          name: bookingToDelete?.eventType?.team?.name || \"Nameless\",\n          members: teamMembers,\n          id: teamId,\n        },\n      }),\n    seatsPerTimeSlot: bookingToDelete.eventType?.seatsPerTimeSlot,\n    seatsShowAttendees: bookingToDelete.eventType?.seatsShowAttendees,\n    iCalUID: bookingToDelete.iCalUID,\n    iCalSequence: bookingToDelete.iCalSequence + 1,\n    platformClientId,\n    platformRescheduleUrl,\n    platformCancelUrl,\n    hideOrganizerEmail: bookingToDelete.eventType?.hideOrganizerEmail,\n    platformBookingUrl,\n    customReplyToEmail: bookingToDelete.eventType?.customReplyToEmail,\n    organizationId: ownerProfile?.organizationId ?? null,\n    schedulingType: bookingToDelete.eventType?.schedulingType,\n  };\n\n  const dataForWebhooks = { evt, webhooks, eventTypeInfo };\n\n  // If it's just an attendee of a booking then just remove them from that booking\n  const result = await cancelAttendeeSeat(\n    {\n      seatReferenceUid: seatReferenceUid,\n      bookingToDelete,\n    },\n    dataForWebhooks,\n    bookingToDelete?.eventType?.metadata as EventTypeMetadata\n  );\n  if (result)\n    return {\n      success: true,\n      onlyRemovedAttendee: true,\n      bookingId: bookingToDelete.id,\n      bookingUid: bookingToDelete.uid,\n      message: \"Attendee successfully removed.\",\n      isPlatformManagedUserBooking: bookingToDelete.user.isPlatformManaged,\n    } satisfies HandleCancelBookingResponse;\n\n  const promises = webhooks.map((webhook) =>\n    sendPayload(webhook.secret, eventTrigger, new Date().toISOString(), webhook, {\n      ...evt,\n      ...eventTypeInfo,\n      status: \"CANCELLED\",\n      smsReminderNumber: bookingToDelete.smsReminderNumber || undefined,\n      cancelledBy: cancelledBy,\n      requestReschedule: false,\n    }).catch((e) => {\n      logger.error(\n        `Error executing webhook for event: ${eventTrigger}, URL: ${webhook.subscriberUrl}, bookingId: ${evt.bookingId}, bookingUid: ${evt.uid}`,\n        safeStringify(e)\n      );\n    })\n  );\n  await Promise.all(promises);\n\n  const workflows = await getAllWorkflowsFromEventType(bookingToDelete.eventType, bookingToDelete.userId);\n  const parsedMetadata = bookingMetadataSchema.safeParse(bookingToDelete.metadata || {});\n\n  const creditService = new CreditService();\n\n  await sendCancelledReminders({\n    workflows,\n    smsReminderNumber: bookingToDelete.smsReminderNumber,\n    evt: {\n      ...evt,\n      ...(parsedMetadata.success && parsedMetadata.data?.videoCallUrl\n        ? { metadata: { videoCallUrl: parsedMetadata.data.videoCallUrl } }\n        : {}),\n      bookerUrl,\n      ...{\n        eventType: {\n          slug: bookingToDelete.eventType?.slug as string,\n          schedulingType: bookingToDelete.eventType?.schedulingType,\n          hosts: bookingToDelete.eventType?.hosts,\n        },\n      },\n    },\n    hideBranding: !!bookingToDelete.eventType?.owner?.hideBranding,\n    creditCheckFn: creditService.hasAvailableCredits.bind(creditService),\n  });\n\n  let updatedBookings: {\n    id: number;\n    uid: string;\n    workflowReminders: {\n      id: number;\n      referenceId: string | null;\n      method: WorkflowMethods;\n    }[];\n    references: {\n      type: string;\n      credentialId: number | null;\n      uid: string;\n      externalCalendarId: string | null;\n    }[];\n    startTime: Date;\n    endTime: Date;\n  }[] = [];\n\n  const bookingEventHandlerService = getBookingEventHandlerService();\n\n  // by cancelling first, and blocking whilst doing so; we can ensure a cancel\n  // action always succeeds even if subsequent integrations fail cancellation.\n  if (\n    bookingToDelete.eventType?.recurringEvent &&\n    bookingToDelete.recurringEventId &&\n    (allRemainingBookings || cancelSubsequentBookings)\n  ) {\n    const recurringEventId = bookingToDelete.recurringEventId;\n    const gte = cancelSubsequentBookings ? bookingToDelete.startTime : new Date();\n    // Proceed to mark as cancelled all remaining recurring events instances (greater than or equal to right now)\n    await bookingRepository.updateMany({\n      where: {\n        recurringEventId,\n        startTime: {\n          gte,\n        },\n      },\n      data: {\n        status: BookingStatus.CANCELLED,\n        cancellationReason: cancellationReason,\n        cancelledBy: cancelledBy,\n      },\n    });\n    const allUpdatedBookings = await bookingRepository.findManyIncludeWorkflowRemindersAndReferences({\n      where: {\n        recurringEventId: bookingToDelete.recurringEventId,\n        startTime: {\n          gte: new Date(),\n        },\n      },\n    });\n    updatedBookings = updatedBookings.concat(allUpdatedBookings);\n\n    const operationId = uuidv4();\n    await bookingEventHandlerService.onBulkBookingsCancelled({\n      bookings: allUpdatedBookings.map((updatedRecurringBooking) => ({\n        bookingUid: updatedRecurringBooking.uid,\n        auditData: {\n          cancellationReason: cancellationReason ?? null,\n          cancelledBy: cancelledBy ?? null,\n          status: {\n            old: bookingToDelete.status,\n            new: BookingStatus.CANCELLED,\n          },\n        },\n      })),\n      actor: actorToUse,\n      organizationId: orgId ?? null,\n      operationId,\n      source: actionSource,\n      isBookingAuditEnabled,\n    });\n  } else {\n    if (bookingToDelete?.eventType?.seatsPerTimeSlot) {\n      await attendeeRepository.deleteManyByBookingId(bookingToDelete.id);\n    }\n\n    const updatedBooking = await bookingRepository.updateIncludeWorkflowRemindersAndReferences({\n      where: {\n        uid: bookingToDelete.uid,\n      },\n      data: {\n        status: BookingStatus.CANCELLED,\n        cancellationReason: cancellationReason,\n        cancelledBy: cancelledBy,\n        // Assume that canceling the booking is the last action\n        iCalSequence: evt.iCalSequence || 100,\n      },\n    });\n\n    updatedBookings.push(updatedBooking);\n\n    await bookingEventHandlerService.onBookingCancelled({\n      bookingUid: updatedBooking.uid,\n      actor: actorToUse,\n      organizationId: orgId ?? null,\n      source: actionSource,\n      auditData: {\n        cancellationReason: cancellationReason ?? null,\n        cancelledBy: cancelledBy ?? null,\n        status: {\n          old: bookingToDelete.status,\n          new: BookingStatus.CANCELLED,\n        },\n      },\n      isBookingAuditEnabled,\n    });\n\n    if (bookingToDelete.payment.some((payment) => payment.paymentOption === \"ON_BOOKING\")) {\n      try {\n        await processPaymentRefund({\n          booking: bookingToDelete,\n          teamId,\n        });\n      } catch (error) {\n        log.error(`Error processing payment refund for booking ${bookingToDelete.uid}:`, error);\n      }\n    } else if (bookingToDelete.payment.some((payment) => payment.paymentOption === \"HOLD\")) {\n      try {\n        await processNoShowFeeOnCancellation({\n          booking: bookingToDelete,\n          payments: bookingToDelete.payment,\n          cancelledByUserId: userId,\n        });\n      } catch (error) {\n        log.error(`Error processing no-show fee for booking ${bookingToDelete.uid}:`, error);\n      }\n    }\n  }\n\n  /** TODO: Remove this without breaking functionality */\n  if (bookingToDelete.location === DailyLocationType) {\n    bookingToDelete.user.credentials.push({\n      ...FAKE_DAILY_CREDENTIAL,\n      teamId: bookingToDelete.eventType?.team?.id || null,\n    });\n  }\n\n  const isBookingInRecurringSeries = !!(\n    bookingToDelete.eventType?.recurringEvent &&\n    bookingToDelete.recurringEventId &&\n    allRemainingBookings\n  );\n\n  try {\n    const bookingToDeleteEventTypeMetadataParsed = eventTypeMetaDataSchemaWithTypedApps.safeParse(\n      bookingToDelete.eventType?.metadata || null\n    );\n\n    if (!bookingToDeleteEventTypeMetadataParsed.success) {\n      log.error(\n        `Error parsing metadata`,\n        safeStringify({ error: bookingToDeleteEventTypeMetadataParsed?.error })\n      );\n      throw new Error(\"Error parsing metadata\");\n    }\n\n    const bookingToDeleteEventTypeMetadata = bookingToDeleteEventTypeMetadataParsed.data;\n\n    const credentials = await getAllCredentialsIncludeServiceAccountKey(bookingToDelete.user, {\n      ...bookingToDelete.eventType,\n      metadata: bookingToDeleteEventTypeMetadata,\n    });\n\n    const eventManager = new EventManager(\n      { ...bookingToDelete.user, credentials },\n      bookingToDeleteEventTypeMetadata?.apps\n    );\n\n    await eventManager.cancelEvent(evt, bookingToDelete.references, isBookingInRecurringSeries);\n\n    await bookingReferenceRepository.updateManyByBookingId(bookingToDelete.id, { deleted: true });\n  } catch (error) {\n    log.error(`Error deleting integrations`, safeStringify({ error }));\n  }\n\n  try {\n    const webhookTriggerPromises = [];\n    const workflowReminderPromises = [];\n\n    for (const booking of updatedBookings) {\n      // delete scheduled webhook triggers of cancelled bookings\n      webhookTriggerPromises.push(deleteWebhookScheduledTriggers({ booking }));\n      webhookTriggerPromises.push(cancelNoShowTasksForBooking({ bookingUid: booking.uid }));\n\n      //Workflows - cancel all reminders for cancelled bookings\n      workflowReminderPromises.push(WorkflowRepository.deleteAllWorkflowReminders(booking.workflowReminders));\n    }\n\n    await Promise.allSettled([...webhookTriggerPromises, ...workflowReminderPromises]).then((results) => {\n      const rejectedReasons = results\n        .filter((result): result is PromiseRejectedResult => result.status === \"rejected\")\n        .map((result) => result.reason);\n\n      if (rejectedReasons.length > 0) {\n        log.error(\"An error occurred when deleting workflow reminders and webhook triggers\", rejectedReasons);\n      }\n    });\n  } catch (error) {\n    log.error(\"Error deleting scheduled webhooks and workflows\", safeStringify({ error }));\n  }\n\n  try {\n    if (internalNote && teamId) {\n      await handleInternalNote({\n        internalNote,\n        booking: bookingToDelete,\n        userId: userId || -1,\n        teamId: teamId,\n      });\n    }\n  } catch (error) {\n    log.error(\"Error handlingInternalNote\", safeStringify({ error }));\n  }\n\n  try {\n    // TODO: if emails fail try to requeue them\n    if (!platformClientId || (platformClientId && arePlatformEmailsEnabled))\n      await sendCancelledEmailsAndSMS(\n        evt,\n        { eventName: bookingToDelete?.eventType?.eventName },\n        bookingToDelete?.eventType?.metadata as EventTypeMetadata\n      );\n  } catch (error) {\n    log.error(\"Error deleting event\", error);\n  }\n  return {\n    success: true,\n    message: \"Booking successfully cancelled.\",\n    onlyRemovedAttendee: false,\n    bookingId: bookingToDelete.id,\n    bookingUid: bookingToDelete.uid,\n    isPlatformManagedUserBooking: bookingToDelete.user.isPlatformManaged,\n  } satisfies HandleCancelBookingResponse;\n}",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__handler_6#function:handler",
+          "fileId": "packages/features/bookings/lib/handleCancelBooking.ts__handler_6",
+          "unitKind": "function",
+          "name": "handler",
+          "qualifiedName": "handler",
+          "parentUnitId": null,
+          "startLine": 137,
+          "endLine": 709,
+          "signature": "async function handler(input: CancelBookingInput, dependencies?: Dependencies): Promise<HandleCancelBookingResponse>",
+          "parameters": [
+            {
+              "name": "input",
+              "type": "CancelBookingInput",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "dependencies",
+              "type": "Dependencies",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Promise<HandleCancelBookingResponse>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Input.bookingData must conform to bookingCancelInput schema",
+            "The booking identified by input.bookingData.id must exist"
+          ],
+          "postconditions": [
+            "The booking status is set to BookingStatus.CANCELLED",
+            "Relevant webhooks are sent and workflow reminders are cleared",
+            "An audit event is recorded with the acting user"
+          ],
+          "invariants": ["If the booking is already cancelled, an error is thrown and state is unchanged"],
+          "edgeCases": [
+            "Cancelling an already cancelled booking → HttpError 400",
+            "Missing user or booking owner → HttpError 400",
+            "Event type disables cancelling → HttpError 400",
+            "Host cancelling without reason when required → HttpError 400",
+            "Attempt to cancel after booking end time → HttpError 400",
+            "Seat reference missing for seated events → validation of host/admin rights"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["HttpError"],
+            "reverts": [],
+            "onInvalidInput": "throws HttpError with status 400",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "booking.status",
+            "booking.cancellationReason",
+            "booking.cancelledBy",
+            "booking.iCalSequence",
+            "bookingRepository records updated",
+            "attendeeRepository deletions",
+            "bookingReferenceRepository updates",
+            "workflow reminders deleted"
+          ],
+          "eventsEmitted": [
+            "BookingCancelled audit event via BookingEventHandlerService",
+            "Webhook payloads for eventTrigger BOOKING_CANCELLED"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "getBookingToDelete", "source": null, "kind": "internal" },
+            { "name": "getAuditActor", "source": null, "kind": "internal" },
+            { "name": "log.warn", "source": null, "kind": "internal" },
+            { "name": "getTeamIdFromEventType", "source": null, "kind": "internal" },
+            { "name": "getFeaturesRepository", "source": null, "kind": "internal" },
+            { "name": "getWebhooks", "source": null, "kind": "internal" },
+            { "name": "userRepository.findByIdOrThrow", "source": null, "kind": "internal" },
+            { "name": "sendPayload", "source": null, "kind": "internal" },
+            { "name": "bookingRepository.updateMany", "source": null, "kind": "internal" },
+            { "name": "bookingEventHandlerService.onBulkBookingsCancelled", "source": null, "kind": "internal" },
+            { "name": "bookingEventHandlerService.onBookingCancelled", "source": null, "kind": "internal" },
+            { "name": "processPaymentRefund", "source": null, "kind": "internal" },
+            { "name": "processNoShowFeeOnCancellation", "source": null, "kind": "internal" },
+            { "name": "EventManager.cancelEvent", "source": null, "kind": "internal" },
+            { "name": "deleteWebhookScheduledTriggers", "source": null, "kind": "internal" },
+            { "name": "cancelNoShowTasksForBooking", "source": null, "kind": "internal" },
+            { "name": "WorkflowRepository.deleteAllWorkflowReminders", "source": null, "kind": "internal" },
+            { "name": "handleInternalNote", "source": null, "kind": "internal" },
+            { "name": "sendCancelledEmailsAndSMS", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "BookingStatus",
+            "HttpError",
+            "CancelBookingInput",
+            "Dependencies",
+            "HandleCancelBookingResponse",
+            "WebhookTriggerEvents",
+            "EventTypeInfo",
+            "CreditService",
+            "BookingRepository",
+            "AttendeeRepository",
+            "EventManager",
+            "DailyLocationType",
+            "FAKE_DAILY_CREDENTIAL"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Cancels a booking, handling validation, audit logging, webhook notifications, and related clean‑up, and returns a success response.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "This booking has already been cancelled.",
+              "role": "error message for duplicate cancellation"
+            },
+            { "kind": "error-message", "value": "User not found", "role": "error message when booking owner missing" },
+            {
+              "kind": "error-message",
+              "value": "This event type does not allow cancellations",
+              "role": "error message when event type disallows cancellation"
+            },
+            {
+              "kind": "error-message",
+              "value": "Cancellation reason is required when you are the host",
+              "role": "validation error for missing reason"
+            },
+            {
+              "kind": "error-message",
+              "value": "Cannot cancel a booking that has already ended",
+              "role": "validation error for past bookings"
+            },
+            {
+              "kind": "error-message",
+              "value": "User not a host of this event or an admin of the booking user",
+              "role": "authorization error for seated events"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "1e7a7963db09654a75f47f7f003f4990245e84d8fb8ee65f3562cd36808eacdc"
+        }
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelServiceDependencies_7#type_alias:BookingCancelServiceDependencies",
+        "unitKind": "type_alias",
+        "name": "BookingCancelServiceDependencies",
+        "qualifiedName": "BookingCancelServiceDependencies",
+        "parentUnitId": null,
+        "startLine": 711,
+        "endLine": 717,
+        "isBehavioral": false,
+        "source": "type BookingCancelServiceDependencies = {\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n};",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelServiceDependencies_7#type_alias:BookingCancelServiceDependencies",
+          "fileId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelServiceDependencies_7",
+          "unitKind": "type_alias",
+          "name": "BookingCancelServiceDependencies",
+          "qualifiedName": "BookingCancelServiceDependencies",
+          "parentUnitId": null,
+          "startLine": 711,
+          "endLine": 717,
+          "signature": "type BookingCancelServiceDependencies = {\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n};",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [
+            "UserRepository",
+            "BookingRepository",
+            "ProfileRepository",
+            "BookingReferenceRepository",
+            "PrismaBookingAttendeeRepository"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "userRepository",
+              "kind": "property",
+              "type": "UserRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "bookingRepository",
+              "kind": "property",
+              "type": "BookingRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "profileRepository",
+              "kind": "property",
+              "type": "ProfileRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "bookingReferenceRepository",
+              "kind": "property",
+              "type": "BookingReferenceRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "attendeeRepository",
+              "kind": "property",
+              "type": "PrismaBookingAttendeeRepository",
+              "default": null,
+              "visibility": null,
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the set of repository dependencies required by BookingCancelService to perform booking cancellation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "4dc2f53bb176b56ae863908be9a4616ac8865e82da1977ddba83c4dbbcf9b9e1"
+        }
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService_8#class:BookingCancelService",
+        "unitKind": "class",
+        "name": "BookingCancelService",
+        "qualifiedName": "BookingCancelService",
+        "parentUnitId": null,
+        "startLine": 723,
+        "endLine": 734,
+        "isBehavioral": false,
+        "source": "export class BookingCancelService implements IBookingCancelService {\n  constructor(private readonly deps: BookingCancelServiceDependencies) {}\n\n  async cancelBooking(input: { bookingData: CancelRegularBookingData; bookingMeta?: CancelBookingMeta }) {\n    const cancelBookingInput: CancelBookingInput = {\n      bookingData: input.bookingData,\n      ...(input.bookingMeta || {}),\n    };\n\n    return handler(cancelBookingInput, this.deps);\n  }\n}",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService_8#class:BookingCancelService",
+          "fileId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService_8",
+          "unitKind": "class",
+          "name": "BookingCancelService",
+          "qualifiedName": "BookingCancelService",
+          "parentUnitId": null,
+          "startLine": 723,
+          "endLine": 734,
+          "signature": "export class BookingCancelService implements IBookingCancelService",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [
+            "IBookingCancelService",
+            "BookingCancelServiceDependencies",
+            "CancelBookingInput",
+            "handler"
+          ],
+          "baseTypes": [],
+          "implementsTypes": ["IBookingCancelService"],
+          "members": [
+            {
+              "name": "deps",
+              "kind": "property",
+              "type": "BookingCancelServiceDependencies",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "cancelBooking",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides booking cancellation functionality by constructing a CancelBookingInput and delegating to the handler.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "5c29955becfacf97889201500ab793abc808e220babd55d542bf87afb686e6c8"
+        }
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService.constructor_9#constructor:BookingCancelService.constructor",
+        "unitKind": "constructor",
+        "name": "constructor",
+        "qualifiedName": "BookingCancelService.constructor",
+        "parentUnitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService_8#class:BookingCancelService",
+        "startLine": 724,
+        "endLine": 724,
+        "isBehavioral": true,
+        "source": "  constructor(private readonly deps: BookingCancelServiceDependencies) {}"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService.cancelBooking_10#method:BookingCancelService.cancelBooking",
+        "unitKind": "method",
+        "name": "cancelBooking",
+        "qualifiedName": "BookingCancelService.cancelBooking",
+        "parentUnitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService_8#class:BookingCancelService",
+        "startLine": 726,
+        "endLine": 733,
+        "isBehavioral": true,
+        "source": "  async cancelBooking(input: { bookingData: CancelRegularBookingData; bookingMeta?: CancelBookingMeta }) {\n    const cancelBookingInput: CancelBookingInput = {\n      bookingData: input.bookingData,\n      ...(input.bookingMeta || {}),\n    };\n\n    return handler(cancelBookingInput, this.deps);\n  }",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService.cancelBooking_10#method:BookingCancelService.cancelBooking",
+          "fileId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService.cancelBooking_10",
+          "unitKind": "method",
+          "name": "cancelBooking",
+          "qualifiedName": "BookingCancelService.cancelBooking",
+          "parentUnitId": "packages/features/bookings/lib/handleCancelBooking.ts__BookingCancelService_8#class:BookingCancelService",
+          "startLine": 726,
+          "endLine": 733,
+          "signature": "async cancelBooking(input: { bookingData: CancelRegularBookingData; bookingMeta?: CancelBookingMeta }): Promise<any>",
+          "parameters": [
+            {
+              "name": "input",
+              "type": "{ bookingData: CancelRegularBookingData; bookingMeta?: CancelBookingMeta }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "Promise<any>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The `input` object must contain a valid `bookingData` property of type `CancelRegularBookingData`."
+          ],
+          "postconditions": [
+            "The method returns the result produced by `handler` for the constructed `CancelBookingInput`."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If `bookingMeta` is omitted, the method still constructs a valid `CancelBookingInput` using only `bookingData`.",
+            "If `bookingData` is missing or invalid, `handler` is expected to throw an error."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "throws Error",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "handler", "source": null, "kind": "internal" }],
+          "symbolReferences": ["CancelRegularBookingData", "CancelBookingMeta", "CancelBookingInput", "handler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Cancels a booking by constructing a CancelBookingInput and delegating to the generic handler, returning the handler's result.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "ca985d38ad6cefb2a87393c41ea63c256137eee98993cc235b13704c3921b911"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/lib/getOrgIdFromMemberOrTeamId.ts",
+    "packages/features/bookings/lib/getCalEventResponses.ts",
+    "packages/features/bookings/lib/getBookingToDelete.ts",
+    "packages/app-store/constants.ts",
+    "packages/lib/safeStringify.ts",
+    "packages/features/profile/repositories/ProfileRepository.ts",
+    "packages/features/webhooks/lib/sendOrSchedulePayload.ts",
+    "packages/features/booking-audit/lib/dto/types.ts",
+    "packages/features/users/repositories/UserRepository.ts",
+    "packages/features/webhooks/lib/sendPayload.ts",
+    "packages/features/membership/repositories/PrismaOrgMembershipRepository.ts",
+    "packages/lib/server/i18n.ts",
+    "packages/app-store/dailyvideo/lib/VideoApiAdapter.ts",
+    "packages/features/bookings/lib/interfaces/IBookingCancelService.ts",
+    "packages/features/ee/workflows/repositories/WorkflowRepository.ts",
+    "packages/lib/getTeamIdFromEventType.ts",
+    "packages/features/di/containers/FeaturesRepository.ts",
+    "packages/features/ee/organizations/lib/getBookerUrlServer.ts",
+    "packages/features/webhooks/lib/scheduleTrigger.ts",
+    "packages/features/bookings/lib/payment/processNoShowFeeOnCancellation.ts",
+    "packages/emails/email-manager.ts",
+    "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+    "packages/app-store/zod-utils.ts",
+    "packages/prisma/zod-utils.ts",
+    "packages/lib/http-error.ts",
+    "packages/features/booking-audit/lib/types/actionSource.ts",
+    "packages/features/booking-audit/lib/makeActor.ts",
+    "packages/features/bookings/lib/handleInternalNote.ts",
+    "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+    "packages/lib/isRecurringEvent.ts",
+    "packages/features/ee/workflows/lib/getAllWorkflowsFromEventType.ts",
+    "packages/prisma/index.ts",
+    "packages/features/bookingReference/repositories/BookingReferenceRepository.ts",
+    "packages/features/bookings/di/BookingEventHandlerService.container.ts",
+    "packages/features/bookings/lib/payment/processPaymentRefund.ts",
+    "packages/features/webhooks/lib/getWebhooks.ts",
+    "packages/dayjs/index.ts",
+    "packages/features/bookings/repositories/BookingRepository.ts",
+    "packages/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials.ts",
+    "packages/lib/isPrismaObj.ts",
+    "packages/features/ee/billing/credit-service.ts",
+    "packages/features/bookings/lib/EventManager.ts",
+    "packages/lib/logger.ts",
+    "packages/lib/timeFormat.ts",
+    "packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts"
+  ],
+  "in": [
+    "packages/features/bookings/di/BookingCancelService.module.ts",
+    "packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts"
+  ],
+  "externals": ["uuid", "zod", "@calcom/prisma/enums", "@calcom/types/Calendar", "./dto/BookingCancel"],
+  "impact": { "seeds": 10, "callers": 2, "impactedFiles": [] }
+}

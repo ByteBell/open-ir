@@ -1,0 +1,39 @@
+{
+  "contract": "Whether the vendor's own name/logo may appear must be decided once, from the booking's owning profile \u2014 the team (and its parent organization) for a team event, and the member's own profile (and its organization) for a personal event \u2014 and that single resolved decision must be honoured on every attendee-facing surface produced for that booking, not only the booking page: the scheduled/confirmation and reminder emails and SMS a workflow sends, the code-verification message sent to an attendee before the booking is accepted, and every message and page emitted after a paid booking is completed. Any surface that renders the brand mark from its own ad-hoc lookup, or that never receives the resolved flag at all, breaks the contract, as does any resolver that yields a different answer for a team event than for a personal event given the same paid entitlement.",
+  "defect_location": {
+    "repo": "calcom/cal.com",
+    "summary": "The canonical resolver lives in packages/features/profile/lib/hideBranding.ts, which exports resolveHideBranding() (L35), getHideBranding() (L50), shouldHideBrandingForEventUsingProfile() (L85) and the event-level entry shouldHideBrandingForEvent() (L116), which forks into two separate code paths \u2014 shouldHideBrandingForTeamEvent() (L158) and shouldHideBrandingForUserEvent() (L169) \u2014 which is exactly where the team-event vs personal-event divergence is encoded. Its only consumers at this commit are page-render paths and part of the workflow layer: apps/web/modules/bookings/views/bookings-single-view.getServerSideProps.tsx:L13,L253 and packages/features/ee/payments/pages/payment.tsx:L6,L58 import shouldHideBrandingForEvent(), and packages/features/ee/workflows/lib/service/EmailWorkflowService.ts:L8,L264 and packages/features/ee/workflows/lib/service/WorkflowService.ts:L11,L133 import getHideBranding() \u2014 two different resolvers for the same question. Message surfaces bypass the helper entirely. (1) The cron that actually emits scheduled workflow reminder/confirmation emails, packages/features/ee/workflows/api/scheduleEmailReminders.ts, defines its own local shouldHideBranding() at L519 and imports emailReminderTemplate.ts (L37) / emailRatingTemplate.ts (L36) directly, importing nothing from hideBranding.ts \u2014 a second, divergent implementation of the same rule on the path that reaches attendees. (2) The pre-booking code-verification message never carries the flag: apps/web/modules/bookings/hooks/useVerifyEmail.ts:L17 drives the trpc mutation whose input is packages/trpc/server/routers/viewer/auth/sendVerifyEmailCode.schema.ts:L3-L10, handled at packages/trpc/server/routers/viewer/auth/sendVerifyEmailCode.handler.ts:L11-L33, which calls sendEmailVerificationByCode() at packages/features/auth/lib/verifyEmail.ts:L88-L107; that in turn calls sendEmailVerificationCode() at packages/emails/auth-email-service.ts:L31-L32, which constructs AttendeeVerifyEmail (packages/emails/templates/attendee-verify-email.ts:L9) over the EmailVerifyCode payload declared at packages/emails/lib/types/email-types.ts:L15 and renders packages/emails/src/templates/VerifyEmailByCode.tsx:L6, which pulls APP_NAME/SENDER_NAME from packages/lib/constants.ts (L1) and wraps itself in BaseEmailHtml (L4) \u2014 no branding flag exists anywhere in that chain, so the mark is always drawn by packages/emails/src/components/EmailBodyLogo.tsx:L8 via packages/emails/src/components/BaseEmailHtml.tsx:L3 (and its twin packages/emails/src/components/V2BaseEmailHtml.tsx:L3). (3) The paid-booking completion path packages/app-store/_utils/payments/handlePaymentSuccess.ts builds its own event and calls _sendScheduledEmailsAndSMS() (L2, from packages/emails/email-manager.ts:L110) and WorkflowService (L12) without ever consulting hideBranding.ts, so the post-payment confirmation messages are branded even when the booking page for the same event was not. Fixing the contract therefore means resolving the flag once in hideBranding.ts, deleting the duplicate at scheduleEmailReminders.ts:L519, and threading the resolved value through the workflow reminder managers (packages/features/ee/workflows/lib/reminders/emailReminderManager.ts:L91-L176, reminderScheduler.ts:L57-L207, smsReminderManager.ts:L46-L126), the verification chain listed above, and the payment-success path."
+  },
+  "answer": [
+    "packages/features/profile/lib/hideBranding.ts",
+    "packages/features/ee/workflows/api/scheduleEmailReminders.ts",
+    "packages/features/ee/workflows/lib/service/EmailWorkflowService.ts",
+    "packages/features/auth/lib/verifyEmail.ts",
+    "packages/emails/auth-email-service.ts",
+    "packages/emails/templates/attendee-verify-email.ts",
+    "packages/emails/src/templates/VerifyEmailByCode.tsx",
+    "packages/emails/lib/types/email-types.ts",
+    "packages/features/ee/workflows/lib/service/WorkflowService.ts",
+    "packages/trpc/server/routers/viewer/auth/sendVerifyEmailCode.handler.ts",
+    "packages/trpc/server/routers/viewer/auth/sendVerifyEmailCode.schema.ts",
+    "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+    "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+    "packages/app-store/_utils/payments/handlePaymentSuccess.ts",
+    "packages/features/ee/payments/pages/payment.tsx",
+    "apps/web/modules/bookings/hooks/useVerifyEmail.ts",
+    "packages/emails/src/components/EmailBodyLogo.tsx",
+    "packages/emails/src/components/BaseEmailHtml.tsx",
+    "packages/emails/src/components/V2BaseEmailHtml.tsx",
+    "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts",
+    "packages/features/ee/workflows/lib/reminders/templates/emailReminderTemplate.ts",
+    "packages/features/ee/workflows/lib/reminders/templates/smsReminderTemplate.ts",
+    "packages/features/ee/workflows/lib/reminders/scheduleMandatoryReminder.ts",
+    "packages/features/ee/workflows/lib/reminders/whatsappReminderManager.ts",
+    "packages/emails/email-manager.ts",
+    "packages/features/bookings/lib/handleConfirmation.ts",
+    "packages/features/bookings/lib/service/RegularBookingService.ts",
+    "apps/web/modules/bookings/components/VerifyCodeDialog.tsx",
+    "packages/features/profile/lib/getBranding.ts",
+    "apps/web/modules/bookings/views/bookings-single-view.getServerSideProps.tsx"
+  ]
+}

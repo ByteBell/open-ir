@@ -1,0 +1,938 @@
+{
+  "relativePath": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts",
+  "language": "typescript",
+  "sha256": "5059933ea189a60239544706ee74980ac8852406ab227c68759b95497840df3b",
+  "sizeBytes": 4355,
+  "tokenCount": 1089,
+  "lineCount": 151,
+  "analysedAt": "2026-08-27T17:29:45.733Z",
+  "analysis": {
+    "module": {
+      "purpose": "Loads the users eligible for a new booking from either an event type configuration or a dynamic username list, then applies routing, contact-owner, and fixed-user selection rules.",
+      "summary": "This module orchestrates user resolution for new bookings. It derives organization context, chooses between event-type host matching and dynamic username lookup, enriches database users with calendar credentials and selected calendars, and applies routed-user overrides. Errors are logged and normalized into HTTP errors suitable for the booking API.",
+      "businessContext": "Supports booking assignment across organizations, teams, routed hosts, and contact owners. Failure prevents creation of bookings because eligible organizers cannot be resolved.",
+      "classes": [
+        "EventType (~L19-29): Selected event-type fields required for resolving booking users",
+        "LoadedUsers (~L141): Inferred collection type returned by the primary loader",
+        "OrganizerUser (~L143-146): Loaded user representation with organizer assignment metadata"
+      ],
+      "functions": [
+        "loadUsers (~L31-76): Resolves booking users and applies routing overrides",
+        "loadUsersByEventType (~L78-93): Finds hosts matching event segments and preserves assignment metadata",
+        "loadDynamicUsers (~L95-102): Validates dynamic usernames and resolves them within organization context",
+        "findUsersByUsername (~L107-139): Queries users with credentials, metadata, calendars, and profiles"
+      ],
+      "keywords": [
+        "booking host routing",
+        "dynamic user list",
+        "contact owner",
+        "fixed users",
+        "event segment matching",
+        "organization domain",
+        "calendar credentials",
+        "Prisma user query"
+      ],
+      "ontologyConcepts": [
+        "user resolution",
+        "host assignment",
+        "organization scoping",
+        "routing override",
+        "profile enrichment",
+        "error normalization"
+      ],
+      "businessEntities": [
+        "User",
+        "Organizer",
+        "Booking",
+        "Event Type",
+        "Organization",
+        "Team Member",
+        "Contact Owner",
+        "Calendar Credential"
+      ],
+      "systemCapabilities": [
+        "Resolve event-type booking hosts",
+        "Resolve dynamic users by username",
+        "Apply routed-user overrides",
+        "Enrich users with calendar data",
+        "Scope lookups to organization domains",
+        "Normalize lookup failures as HTTP errors"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "@calcom/features/ee/organizations/lib/orgDomains",
+          "symbols": ["getOrgDomainConfig"],
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          },
+          "resolvedRelativePath": "packages/features/ee/organizations/lib/orgDomains.ts",
+          "resolvedFileId": "packages/features/ee/organizations/lib/orgDomains.ts",
+          "resolvedHint": "packages/features/ee/organizations/lib/orgDomains.ts"
+        },
+        {
+          "spec": "@calcom/lib/bookings/getRoutedUsers",
+          "symbols": [
+            "getRoutedUsersWithContactOwnerAndFixedUsers",
+            "findMatchingHostsWithEventSegment",
+            "getNormalizedHosts"
+          ],
+          "anchor": {
+            "startLine": 5,
+            "endLine": 9
+          },
+          "resolvedRelativePath": "packages/lib/bookings/getRoutedUsers.ts",
+          "resolvedFileId": "packages/lib/bookings/getRoutedUsers.ts",
+          "resolvedHint": "packages/lib/bookings/getRoutedUsers.ts"
+        },
+        {
+          "spec": "@calcom/lib/http-error",
+          "symbols": ["HttpError"],
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          },
+          "resolvedRelativePath": "packages/lib/http-error.ts",
+          "resolvedFileId": "packages/lib/http-error.ts",
+          "resolvedHint": "packages/lib/http-error.ts"
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          },
+          "resolvedRelativePath": "packages/lib/logger.ts",
+          "resolvedFileId": "packages/lib/logger.ts",
+          "resolvedHint": "packages/lib/logger.ts"
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "anchor": {
+            "startLine": 12,
+            "endLine": 12
+          },
+          "resolvedRelativePath": "packages/lib/safeStringify.ts",
+          "resolvedFileId": "packages/lib/safeStringify.ts",
+          "resolvedHint": "packages/lib/safeStringify.ts"
+        },
+        {
+          "spec": "@calcom/lib/server/repository/user",
+          "symbols": ["withSelectedCalendars", "UserRepository"],
+          "anchor": {
+            "startLine": 13,
+            "endLine": 13
+          },
+          "resolvedRelativePath": "packages/lib/server/repository/user.ts",
+          "resolvedFileId": "packages/lib/server/repository/user.ts",
+          "resolvedHint": "packages/lib/server/repository/user.ts"
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma", "userSelect"],
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          },
+          "resolvedRelativePath": "packages/prisma/index.ts",
+          "resolvedFileId": "packages/prisma/index.ts",
+          "resolvedHint": "packages/prisma/index.ts"
+        },
+        {
+          "spec": "@calcom/prisma/selects/credential",
+          "symbols": ["credentialForCalendarServiceSelect"],
+          "anchor": {
+            "startLine": 15,
+            "endLine": 15
+          },
+          "resolvedRelativePath": "packages/prisma/selects/credential.ts",
+          "resolvedFileId": "packages/prisma/selects/credential.ts",
+          "resolvedHint": "packages/prisma/selects/credential.ts"
+        },
+        {
+          "spec": "./getEventTypesFromDB",
+          "symbols": ["NewBookingEventType"],
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@prisma/client",
+          "symbols": ["Prisma"],
+          "package": "@prisma/client",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes debug and error messages through the module logger."],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "user",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "loadUsers",
+          "shape": "export const loadUsers = async ({ eventType, dynamicUserList, hostname, forcedSlug, isPlatform, routedTeamMemberIds, contactOwnerEmail }: { eventType: EventType; dynamicUserList: string[]; routedTeamMemberIds: number[] | null; contactOwnerEmail: string | null; hostname: string; forcedSlug: string | undefined; isPlatform: boolean; })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "findUsersByUsername",
+          "shape": "export const findUsersByUsername = async ({ usernameList, orgSlug }: { orgSlug: string | null; usernameList: string[] })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "LoadedUsers",
+          "shape": "export type LoadedUsers = Awaited<ReturnType<typeof loadUsers>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "OrganizerUser",
+          "shape": "export type OrganizerUser = LoadedUsers[number] & { isFixed?: boolean; metadata?: Prisma.JsonValue; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "NewBookingEventType",
+          "shape": "Pick<NewBookingEventType, \"hosts\" | \"users\" | \"id\" | \"schedulingType\" | \"team\" | \"assignAllTeamMembers\" | \"assignRRMembersUsingSegment\" | \"rrSegmentQueryValue\">",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+        },
+        {
+          "name": "getOrgDomainConfig",
+          "shape": "getOrgDomainConfig({ hostname, forcedSlug, isPlatform })",
+          "resolvedRelativePath": "packages/features/ee/organizations/lib/orgDomains.ts",
+          "resolvedFileId": "packages/features/ee/organizations/lib/orgDomains.ts"
+        },
+        {
+          "name": "getRoutedUsersWithContactOwnerAndFixedUsers",
+          "shape": "getRoutedUsersWithContactOwnerAndFixedUsers({ users, routedTeamMemberIds, contactOwnerEmail })",
+          "resolvedRelativePath": "packages/lib/bookings/getRoutedUsers.ts",
+          "resolvedFileId": "packages/lib/bookings/getRoutedUsers.ts"
+        },
+        {
+          "name": "findMatchingHostsWithEventSegment",
+          "shape": "findMatchingHostsWithEventSegment({ eventType, hosts: hosts ?? fallbackHosts })",
+          "resolvedRelativePath": "packages/lib/bookings/getRoutedUsers.ts",
+          "resolvedFileId": "packages/lib/bookings/getRoutedUsers.ts"
+        },
+        {
+          "name": "getNormalizedHosts",
+          "shape": "getNormalizedHosts({ eventType: { ...eventType, hosts: eventType.hosts.filter(Boolean) } })",
+          "resolvedRelativePath": "packages/lib/bookings/getRoutedUsers.ts",
+          "resolvedFileId": "packages/lib/bookings/getRoutedUsers.ts"
+        },
+        {
+          "name": "_getWhereClauseForFindingUsersByUsername",
+          "shape": "new UserRepository(prisma)._getWhereClauseForFindingUsersByUsername({ orgSlug, usernameList })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.user.findMany",
+          "shape": "prisma.user.findMany({ where, select: { ...userSelect.select, credentials: { select: credentialForCalendarServiceSelect }, metadata: true } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "user-source-selection",
+          "intent": "Chooses event-type host resolution or dynamic username resolution.",
+          "structureKind": "branch",
+          "predicate": "eventType.id",
+          "branchOutcomes": ["loadUsersByEventType(eventType)", "loadDynamicUsers(dynamicUserList, currentOrgDomain)"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 55,
+            "endLine": 57
+          }
+        },
+        {
+          "name": "routed-user-precedence",
+          "intent": "Returns routed users when routing produces any eligible users.",
+          "structureKind": "branch",
+          "predicate": "routedUsers.length",
+          "branchOutcomes": ["return routedUsers", "return users"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 64,
+            "endLine": 69
+          }
+        },
+        {
+          "name": "load-users-error-normalization",
+          "intent": "Logs failures and converts known and unknown errors to HTTP errors.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 76
+          }
+        },
+        {
+          "name": "dynamic-list-validation",
+          "intent": "Rejects missing, non-array, or empty dynamic username input.",
+          "structureKind": "branch",
+          "predicate": "!Array.isArray(dynamicUserList) || dynamicUserList.length === 0",
+          "branchOutcomes": ["throw new Error", "findUsersByUsername"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 96,
+            "endLine": 101
+          }
+        },
+        {
+          "name": "event-host-normalization",
+          "intent": "Removes falsy hosts and derives normalized or fallback host candidates.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 79,
+            "endLine": 81
+          }
+        },
+        {
+          "name": "matching-host-enrichment",
+          "intent": "Maps matched hosts into users carrying assignment metadata.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 82,
+            "endLine": 93
+          }
+        },
+        {
+          "name": "database-user-enrichment",
+          "intent": "Queries selected user relations and attaches calendars and organization profiles.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 115,
+            "endLine": 139
+          }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "loadUsers",
+          "signature": "export const loadUsers = async ({\n  eventType,\n  dynamicUserList,\n  hostname,\n  forcedSlug,\n  isPlatform,\n  routedTeamMemberIds,\n  contactOwnerEmail,\n}: {\n  eventType: EventType;\n  dynamicUserList: string[];\n  routedTeamMemberIds: number[] | null;\n  contactOwnerEmail: string | null;\n  hostname: string;\n  forcedSlug: string | undefined;\n  isPlatform: boolean;\n}) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 31,
+            "endLine": 47
+          }
+        },
+        {
+          "kind": "function",
+          "name": "findUsersByUsername",
+          "signature": "export const findUsersByUsername = async ({\n  usernameList,\n  orgSlug,\n}: {\n  orgSlug: string | null;\n  usernameList: string[];\n}) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 107,
+            "endLine": 113
+          }
+        },
+        {
+          "kind": "function",
+          "name": "loadUsersByEventType",
+          "signature": "const loadUsersByEventType = async (eventType: EventType): Promise<NewBookingEventType[\"users\"]> =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<NewBookingEventType[\"users\"]>",
+          "exported": false,
+          "anchor": {
+            "startLine": 78,
+            "endLine": 78
+          }
+        },
+        {
+          "kind": "function",
+          "name": "loadDynamicUsers",
+          "signature": "const loadDynamicUsers = async (dynamicUserList: string[], currentOrgDomain: string | null) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 95,
+            "endLine": 95
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "EventType",
+          "shape": "Pick<\n  NewBookingEventType,\n  | \"hosts\"\n  | \"users\"\n  | \"id\"\n  | \"schedulingType\"\n  | \"team\"\n  | \"assignAllTeamMembers\"\n  | \"assignRRMembersUsingSegment\"\n  | \"rrSegmentQueryValue\"\n>",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 19,
+            "endLine": 29
+          }
+        },
+        {
+          "kind": "type",
+          "name": "LoadedUsers",
+          "shape": "Awaited<ReturnType<typeof loadUsers>>",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 141,
+            "endLine": 141
+          }
+        },
+        {
+          "kind": "intersection",
+          "name": "OrganizerUser",
+          "shape": "LoadedUsers[number] & {\n  isFixed?: boolean;\n  metadata?: Prisma.JsonValue;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 143,
+            "endLine": 146
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "Empty or non-array dynamicUserList",
+          "handled": true,
+          "behavior": "Throws an Error, which the outer loader converts into a 500 HttpError.",
+          "anchor": {
+            "startLine": 96,
+            "endLine": 98
+          }
+        },
+        {
+          "inputShape": "No routed users produced",
+          "handled": true,
+          "behavior": "Falls back to returning the originally resolved users.",
+          "anchor": {
+            "startLine": 64,
+            "endLine": 69
+          }
+        },
+        {
+          "inputShape": "User without a matching profile",
+          "handled": true,
+          "behavior": "Assigns organizationId null and profile null.",
+          "anchor": {
+            "startLine": 132,
+            "endLine": 136
+          }
+        },
+        {
+          "inputShape": "Falsy hosts in an event type",
+          "handled": true,
+          "behavior": "Filters falsy hosts before host normalization.",
+          "anchor": {
+            "startLine": 80,
+            "endLine": 81
+          }
+        },
+        {
+          "inputShape": "Known HTTP or Prisma client error",
+          "handled": true,
+          "behavior": "Logs the error and throws a new HttpError with status code 400 and the original message.",
+          "anchor": {
+            "startLine": 71,
+            "endLine": 74
+          }
+        },
+        {
+          "inputShape": "Unknown error",
+          "handled": true,
+          "behavior": "Logs the error and throws a generic HttpError with status code 500.",
+          "anchor": {
+            "startLine": 71,
+            "endLine": 76
+          }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs the serialized error, then classifies known HTTP and Prisma errors.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 70,
+            "endLine": 72
+          }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 400, message: error.message })",
+          "caught": "HttpError or Prisma.PrismaClientKnownRequestError",
+          "action": "Replaces the original known error with a normalized client error.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 72,
+            "endLine": 74
+          }
+        },
+        {
+          "thrown": "new Error(\"dynamicUserList is not properly defined or empty.\")",
+          "caught": "Outer loadUsers catch handler",
+          "action": "Logs the validation failure and normalizes it as an internal HTTP error.",
+          "fallback": "HttpError with statusCode 500 and message \"Unable to load users\"",
+          "anchor": {
+            "startLine": 96,
+            "endLine": 98
+          }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 500, message: \"Unable to load users\" })",
+          "caught": null,
+          "action": "Propagates a generic failure to the caller.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 75,
+            "endLine": 75
+          }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "Dynamic username lookup requires a non-empty array of usernames.",
+          "anchor": {
+            "startLine": 96,
+            "endLine": 98
+          }
+        },
+        {
+          "kind": "ordering",
+          "description": "Routed users take precedence over the initially resolved user collection.",
+          "anchor": {
+            "startLine": 59,
+            "endLine": 69
+          }
+        },
+        {
+          "kind": "invariant",
+          "description": "Dynamic user queries use the organization domain as orgSlug when available, otherwise null.",
+          "anchor": {
+            "startLine": 99,
+            "endLine": 101
+          }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Each queried user receives an organizationId and profile derived from matching profile data or null.",
+          "anchor": {
+            "startLine": 131,
+            "endLine": 137
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide an event type with the fields required by host matching or a valid dynamic username list.",
+          "anchor": {
+            "startLine": 31,
+            "endLine": 47
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Prisma user records and selected credential relations conform to the imported selection shapes.",
+          "anchor": {
+            "startLine": 120,
+            "endLine": 128
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Profile records expose user.id and organizationId for association with queried users.",
+          "anchor": {
+            "startLine": 131,
+            "endLine": 136
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact routing precedence and deduplication rules are implemented by the imported routed-user helper?",
+          "affects": "routed-user behavior",
+          "anchor": {
+            "startLine": 59,
+            "endLine": 62
+          },
+          "resolution": null
+        },
+        {
+          "question": "What host fallback and segment-matching semantics are implemented by the imported host helpers?",
+          "affects": "event-type user resolution",
+          "anchor": {
+            "startLine": 79,
+            "endLine": 85
+          },
+          "resolution": null
+        },
+        {
+          "question": "Which user fields and calendar transformations are applied by withSelectedCalendars?",
+          "affects": "findUsersByUsername return shape",
+          "anchor": {
+            "startLine": 130,
+            "endLine": 137
+          },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Each invocation performs independent asynchronous organization, host, repository, and Prisma lookups; no shared mutable state is maintained."
+      },
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "loads-users-by-event-type",
+          "scenario": "An event type with an id loads users from matching routed hosts.",
+          "given": ["eventType.id", "eventType.hosts"],
+          "when": "loadUsers({ eventType, dynamicUserList, hostname, forcedSlug, isPlatform, routedTeamMemberIds, contactOwnerEmail })",
+          "then": "the returned users include the matching hosts with isFixed, priority, weight, and createdAt fields",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins event-type host resolution and preservation of routing metadata."
+        },
+        {
+          "testId": "rejects-empty-dynamic-user-list",
+          "scenario": "A booking without an event type provides an empty dynamic user list.",
+          "given": ["eventType.id === undefined", "dynamicUserList = []"],
+          "when": "loadUsers({ eventType, dynamicUserList, hostname, forcedSlug, isPlatform, routedTeamMemberIds, contactOwnerEmail })",
+          "then": "the call throws an HttpError with statusCode 500 and message \"Unable to load users\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards validation and error normalization for missing dynamic users."
+        },
+        {
+          "testId": "returns-routed-users-when-present",
+          "scenario": "Routing produces at least one user after applying contact-owner and fixed-user constraints.",
+          "given": ["routedUsers.length > 0"],
+          "when": "loadUsers({ eventType, dynamicUserList, hostname, forcedSlug, isPlatform, routedTeamMemberIds, contactOwnerEmail })",
+          "then": "the returned value is routedUsers rather than the initially loaded users",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins routing precedence over the unfiltered user list."
+        },
+        {
+          "testId": "normalizes-known-user-errors",
+          "scenario": "User loading fails with an HttpError or Prisma known request error.",
+          "given": ["error instanceof HttpError || error instanceof Prisma.PrismaClientKnownRequestError"],
+          "when": "loadUsers({ eventType, dynamicUserList, hostname, forcedSlug, isPlatform, routedTeamMemberIds, contactOwnerEmail })",
+          "then": "the call throws an HttpError with statusCode 400 and the original error message",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves client-facing classification for known lookup failures."
+        },
+        {
+          "testId": "maps-users-with-selected-calendars",
+          "scenario": "Users are found by username within an organization.",
+          "given": ["usernameList = [\"alice\"]", "orgSlug = \"acme\""],
+          "when": "findUsersByUsername({ usernameList, orgSlug })",
+          "then": "each returned user includes selected calendars, organizationId, profile, credentials, and metadata",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the enriched user shape required by booking creation."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Prisma and application imports",
+        "NewBookingEventType type import",
+        "log sublogger constant",
+        "EventType type alias",
+        "loadUsers exported asynchronous orchestrator",
+        "loadUsersByEventType asynchronous helper",
+        "loadDynamicUsers asynchronous helper",
+        "findUsersByUsername exported asynchronous database helper",
+        "LoadedUsers exported type alias",
+        "OrganizerUser exported intersection type alias"
+      ],
+      "moduleLevelCode": "import { Prisma } from \"@prisma/client\";\n\nimport { getOrgDomainConfig } from \"@calcom/features/ee/organizations/lib/orgDomains\";\nimport {\n  getRoutedUsersWithContactOwnerAndFixedUsers,\n  findMatchingHostsWithEventSegment,\n  getNormalizedHosts,\n} from \"@calcom/lib/bookings/getRoutedUsers\";\nimport { HttpError } from \"@calcom/lib/http-error\";\nimport logger from \"@calcom/lib/logger\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport { withSelectedCalendars, UserRepository } from \"@calcom/lib/server/repository/user\";\nimport prisma, { userSelect } from \"@calcom/prisma\";\nimport { credentialForCalendarServiceSelect } from \"@calcom/prisma/selects/credential\";\n\nimport type { NewBookingEventType } from \"./getEventTypesFromDB\";\n\nconst log = logger.getSubLogger({ prefix: [\"[loadUsers]:handleNewBooking \"] });",
+      "exports": [
+        {
+          "name": "loadUsers",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "findUsersByUsername",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "LoadedUsers",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "OrganizerUser",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "Prisma",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getOrgDomainConfig",
+          "module": "@calcom/features/ee/organizations/lib/orgDomains",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getRoutedUsersWithContactOwnerAndFixedUsers",
+          "module": "@calcom/lib/bookings/getRoutedUsers",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "findMatchingHostsWithEventSegment",
+          "module": "@calcom/lib/bookings/getRoutedUsers",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getNormalizedHosts",
+          "module": "@calcom/lib/bookings/getRoutedUsers",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "HttpError",
+          "module": "@calcom/lib/http-error",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "safeStringify",
+          "module": "@calcom/lib/safeStringify",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "withSelectedCalendars",
+          "module": "@calcom/lib/server/repository/user",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "UserRepository",
+          "module": "@calcom/lib/server/repository/user",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "userSelect",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "credentialForCalendarServiceSelect",
+          "module": "@calcom/prisma/selects/credential",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "NewBookingEventType",
+          "module": "./getEventTypesFromDB",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        {
+          "name": "log",
+          "value": "logger.getSubLogger({ prefix: [\"[loadUsers]:handleNewBooking \"] })",
+          "kind": "const"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts__EventType_1#type_alias:EventType",
+        "unitKind": "type_alias",
+        "name": "EventType",
+        "qualifiedName": "EventType",
+        "parentUnitId": null,
+        "startLine": 20,
+        "endLine": 29,
+        "isBehavioral": false,
+        "source": "type EventType = Pick<\n  NewBookingEventType,\n  | \"hosts\"\n  | \"users\"\n  | \"id\"\n  | \"schedulingType\"\n  | \"team\"\n  | \"assignAllTeamMembers\"\n  | \"assignRRMembersUsingSegment\"\n  | \"rrSegmentQueryValue\""
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts__loadUsers_2#function:loadUsers",
+        "unitKind": "function",
+        "name": "loadUsers",
+        "qualifiedName": "loadUsers",
+        "parentUnitId": null,
+        "startLine": 32,
+        "endLine": 78,
+        "isBehavioral": true,
+        "source": "export const loadUsers = async ({\n  eventType,\n  dynamicUserList,\n  hostname,\n  forcedSlug,\n  isPlatform,\n  routedTeamMemberIds,\n  contactOwnerEmail,\n}: {\n  eventType: EventType;\n  dynamicUserList: string[];\n  routedTeamMemberIds: number[] | null;\n  contactOwnerEmail: string | null;\n  hostname: string;\n  forcedSlug: string | undefined;\n  isPlatform: boolean;\n}) => {\n  try {\n    const { currentOrgDomain } = getOrgDomainConfig({\n      hostname,\n      forcedSlug,\n      isPlatform,\n    });\n\n    const users = eventType.id\n      ? await loadUsersByEventType(eventType)\n      : await loadDynamicUsers(dynamicUserList, currentOrgDomain);\n\n    const routedUsers = getRoutedUsersWithContactOwnerAndFixedUsers({\n      users,\n      routedTeamMemberIds,\n      contactOwnerEmail,\n    });\n\n    if (routedUsers.length) {\n      return routedUsers;\n    }\n\n    return users;\n  } catch (error) {\n    log.error(\"Unable to load users\", safeStringify(error));\n    if (error instanceof HttpError || error instanceof Prisma.PrismaClientKnownRequestError) {\n      throw new HttpError({ statusCode: 400, message: error.message });\n    }\n    throw new HttpError({ statusCode: 500, message: \"Unable to load users\" });\n  }\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts__loadUsersByEventType_3#function:loadUsersByEventType",
+        "unitKind": "function",
+        "name": "loadUsersByEventType",
+        "qualifiedName": "loadUsersByEventType",
+        "parentUnitId": null,
+        "startLine": 80,
+        "endLine": 95,
+        "isBehavioral": true,
+        "source": "const loadUsersByEventType = async (eventType: EventType): Promise<NewBookingEventType[\"users\"]> => {\n  const { hosts, fallbackHosts } = getNormalizedHosts({\n    eventType: { ...eventType, hosts: eventType.hosts.filter(Boolean) },\n  });\n  const matchingHosts = await findMatchingHostsWithEventSegment({\n    eventType,\n    hosts: hosts ?? fallbackHosts,\n  });\n  return matchingHosts.map(({ user, isFixed, priority, weight, createdAt }) => ({\n    ...user,\n    isFixed,\n    priority,\n    weight,\n    createdAt,\n  }));\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts__loadDynamicUsers_4#function:loadDynamicUsers",
+        "unitKind": "function",
+        "name": "loadDynamicUsers",
+        "qualifiedName": "loadDynamicUsers",
+        "parentUnitId": null,
+        "startLine": 97,
+        "endLine": 105,
+        "isBehavioral": true,
+        "source": "const loadDynamicUsers = async (dynamicUserList: string[], currentOrgDomain: string | null) => {\n  if (!Array.isArray(dynamicUserList) || dynamicUserList.length === 0) {\n    throw new Error(\"dynamicUserList is not properly defined or empty.\");\n  }\n  return findUsersByUsername({\n    usernameList: dynamicUserList,\n    orgSlug: !!currentOrgDomain ? currentOrgDomain : null,\n  });\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts__findUsersByUsername_5#function:findUsersByUsername",
+        "unitKind": "function",
+        "name": "findUsersByUsername",
+        "qualifiedName": "findUsersByUsername",
+        "parentUnitId": null,
+        "startLine": 111,
+        "endLine": 143,
+        "isBehavioral": true,
+        "source": "export const findUsersByUsername = async ({\n  usernameList,\n  orgSlug,\n}: {\n  orgSlug: string | null;\n  usernameList: string[];\n}) => {\n  log.debug(\"findUsersByUsername\", { usernameList, orgSlug });\n  const { where, profiles } = await new UserRepository(prisma)._getWhereClauseForFindingUsersByUsername({\n    orgSlug,\n    usernameList,\n  });\n  return (\n    await prisma.user.findMany({\n      where,\n      select: {\n        ...userSelect.select,\n        credentials: {\n          select: credentialForCalendarServiceSelect,\n        },\n        metadata: true,\n      },\n    })\n  ).map((_user) => {\n    const user = withSelectedCalendars(_user);\n    const profile = profiles?.find((profile) => profile.user.id === user.id) ?? null;\n    return {\n      ...user,\n      organizationId: profile?.organizationId ?? null,\n      profile,\n    };\n  });\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts__LoadedUsers_6#type_alias:LoadedUsers",
+        "unitKind": "type_alias",
+        "name": "LoadedUsers",
+        "qualifiedName": "LoadedUsers",
+        "parentUnitId": null,
+        "startLine": 145,
+        "endLine": 145,
+        "isBehavioral": false,
+        "source": "export type LoadedUsers = Awaited<ReturnType<typeof loadUsers>>;"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts__OrganizerUser_7#type_alias:OrganizerUser",
+        "unitKind": "type_alias",
+        "name": "OrganizerUser",
+        "qualifiedName": "OrganizerUser",
+        "parentUnitId": null,
+        "startLine": 147,
+        "endLine": 150,
+        "isBehavioral": false,
+        "source": "export type OrganizerUser = LoadedUsers[number] & {\n  isFixed?: boolean;\n  metadata?: Prisma.JsonValue;\n};"
+      }
+    ],
+    "extractedUnitCount": 7,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 7140,
+    "outputTokens": 9440,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

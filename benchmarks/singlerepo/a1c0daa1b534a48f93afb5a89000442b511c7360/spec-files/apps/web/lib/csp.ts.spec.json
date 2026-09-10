@@ -1,0 +1,1026 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "apps/web/lib/csp.ts",
+    "language": "typescript",
+    "sizeBytes": 4335,
+    "tokenCount": 1084,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-27T17:44:02.300Z",
+    "module": {
+      "purpose": "Provides Content Security Policy nonce generation, request propagation, and response-header emission for web page requests.",
+      "summary": "This module implements CSP handling across Node and Next.js request/response interfaces. It recognizes existing nonces, filters requests to page paths, generates cryptographic nonces when policy enforcement is enabled, stores them on requests, and conditionally emits a normalized CSP header on responses.",
+      "businessContext": "Supports browser security for the web application by restricting executable and loadable resources. Failure can prevent page rendering or weaken protection against injected scripts and unauthorized resource loading.",
+      "classes": [],
+      "functions": [
+        "getCspPolicy (~L9-38): Builds a nonce-aware Content Security Policy string.",
+        "isPagePathRequest (~L41-46): Determines whether a URL represents a page request.",
+        "safeParseString (~L48-53): Validates unknown values before treating them as strings.",
+        "csp (~L55-111): Generates, propagates, and emits CSP nonces for requests."
+      ],
+      "keywords": [
+        "Content Security Policy",
+        "CSP nonce",
+        "strict-dynamic",
+        "Next.js middleware",
+        "request headers",
+        "response headers",
+        "page path filtering",
+        "cryptographic randomness"
+      ],
+      "ontologyConcepts": [
+        "web application security",
+        "request middleware",
+        "resource policy enforcement",
+        "nonce propagation",
+        "input validation",
+        "feature gating"
+      ],
+      "businessEntities": ["web page", "HTTP request", "HTTP response", "CSP policy", "nonce"],
+      "systemCapabilities": [
+        "Generate cryptographic CSP nonces",
+        "Detect page requests",
+        "Propagate nonce request headers",
+        "Emit Content Security Policy headers"
+      ],
+      "configDependencies": ["CSP_POLICY"],
+      "importsInternal": [
+        {
+          "spec": "./buildNonce",
+          "symbols": ["buildNonce"],
+          "anchor": { "startLine": 7, "endLine": 7 },
+          "resolvedRelativePath": "apps/web/lib/buildNonce.ts",
+          "resolvedFileId": "apps/web/lib/buildNonce.ts",
+          "resolvedHint": "apps/web/lib/buildNonce.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "http",
+          "symbols": ["IncomingMessage", "OutgoingMessage"],
+          "package": "http",
+          "subpath": null,
+          "isBuiltin": true,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "next/server",
+          "symbols": ["NextRequest", "NextResponse"],
+          "package": "next",
+          "subpath": "server",
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@calcom/lib/constants",
+          "symbols": ["IS_PRODUCTION"],
+          "package": "@calcom/lib",
+          "subpath": "constants",
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        },
+        {
+          "spec": "@calcom/lib/constants",
+          "symbols": ["WEBAPP_URL"],
+          "package": "@calcom/lib",
+          "subpath": "constants",
+          "isBuiltin": false,
+          "anchor": { "startLine": 5, "endLine": 5 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [
+          "Reads process.env.CSP_POLICY to determine whether CSP processing is enabled and whether non-strict styles are allowed."
+        ],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates the request x-nonce header when a page request requires CSP.",
+          "Mutates the response headers by setting Content-Security-Policy when enforcement is requested."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "csp",
+          "shape": "export function csp(req: IncomingMessage | NextRequest | null, res: OutgoingMessage | NextResponse | null)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "IncomingMessage", "shape": "IncomingMessage", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "OutgoingMessage", "shape": "OutgoingMessage", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "NextRequest", "shape": "NextRequest", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "NextResponse", "shape": "NextResponse", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "IS_PRODUCTION", "shape": "IS_PRODUCTION", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "WEBAPP_URL", "shape": "WEBAPP_URL", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "buildNonce",
+          "shape": "buildNonce(crypto.getRandomValues(new Uint8Array(22)))",
+          "resolvedRelativePath": "apps/web/lib/buildNonce.ts",
+          "resolvedFileId": "apps/web/lib/buildNonce.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "policy construction",
+          "intent": "Constructs the CSP directives using environment, deployment, and nonce values.",
+          "structureKind": "branch",
+          "predicate": "CSP_POLICY === \"non-strict\"",
+          "branchOutcomes": ["non-strict style policy", "strict style policy"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 9, "endLine": 38 }
+        },
+        {
+          "name": "page path classification",
+          "intent": "Excludes framework, API, and file paths from page classification.",
+          "structureKind": "branch",
+          "predicate": "!isNonPagePathPrefix.test(pathname) && !isFile.test(pathname)",
+          "branchOutcomes": ["page path", "non-page path"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 41, "endLine": 46 }
+        },
+        {
+          "name": "request validation",
+          "intent": "Returns an empty nonce when no request is supplied.",
+          "structureKind": "branch",
+          "predicate": "!req",
+          "branchOutcomes": ["no request", "request present"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 55, "endLine": 58 }
+        },
+        {
+          "name": "existing nonce reuse",
+          "intent": "Reads and validates a nonce already attached to the request.",
+          "structureKind": "branch",
+          "predicate": "existingNonce",
+          "branchOutcomes": ["existing nonce present", "no existing nonce"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 59, "endLine": 64 }
+        },
+        {
+          "name": "CSP eligibility",
+          "intent": "Generates a nonce and gates processing by policy configuration and URL type.",
+          "structureKind": "branch",
+          "predicate": "!cspEnabledForPage",
+          "branchOutcomes": ["CSP disabled for page", "CSP enabled for page"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 68, "endLine": 77 }
+        },
+        {
+          "name": "request nonce propagation",
+          "intent": "Stores the generated nonce using the request API available at runtime.",
+          "structureKind": "branch",
+          "predicate": "\"cache\" in req",
+          "branchOutcomes": ["Next request header API", "Node request header object"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 81, "endLine": 85 }
+        },
+        {
+          "name": "response policy emission",
+          "intent": "Optionally emits a normalized enforced CSP header on the response.",
+          "structureKind": "branch",
+          "predicate": "if (res)",
+          "branchOutcomes": ["response present", "response absent"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 87, "endLine": 108 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "getCspPolicy",
+          "signature": "function getCspPolicy(nonce: string)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 9, "endLine": 9 }
+        },
+        {
+          "kind": "function",
+          "name": "isPagePathRequest",
+          "signature": "const isPagePathRequest = (url: URL) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 41, "endLine": 41 }
+        },
+        {
+          "kind": "function",
+          "name": "safeParseString",
+          "signature": "function safeParseString(value: unknown): { success: boolean; data?: string }",
+          "generics": null,
+          "decorators": [],
+          "returnType": "{ success: boolean; data?: string }",
+          "exported": false,
+          "anchor": { "startLine": 48, "endLine": 48 }
+        },
+        {
+          "kind": "function",
+          "name": "csp",
+          "signature": "export function csp(req: IncomingMessage | NextRequest | null, res: OutgoingMessage | NextResponse | null)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 55, "endLine": 55 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "null request",
+          "handled": true,
+          "behavior": "Returns an object with an undefined nonce without accessing the response.",
+          "anchor": { "startLine": 56, "endLine": 58 }
+        },
+        {
+          "inputShape": "request with existing non-string x-nonce",
+          "handled": true,
+          "behavior": "Returns an empty nonce because validation fails.",
+          "anchor": { "startLine": 61, "endLine": 63 }
+        },
+        {
+          "inputShape": "request without URL",
+          "handled": true,
+          "behavior": "Returns an undefined nonce without generating or attaching CSP state.",
+          "anchor": { "startLine": 65, "endLine": 67 }
+        },
+        {
+          "inputShape": "API, framework, or file path",
+          "handled": true,
+          "behavior": "Does not enable CSP for the request and returns an undefined nonce.",
+          "anchor": { "startLine": 41, "endLine": 46 }
+        },
+        {
+          "inputShape": "CSP policy disabled",
+          "handled": true,
+          "behavior": "Returns an undefined nonce after generating a nonce but before mutating headers.",
+          "anchor": { "startLine": 68, "endLine": 77 }
+        },
+        {
+          "inputShape": "response absent",
+          "handled": true,
+          "behavior": "Sets the request nonce when eligible but skips response header emission.",
+          "anchor": { "startLine": 87, "endLine": 108 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "CSP_POLICY",
+          "right": "\"non-strict\"",
+          "inclusive": false,
+          "intent": "Selects the non-strict style policy variant.",
+          "anchor": { "startLine": 15, "endLine": 15 }
+        },
+        {
+          "operator": "==",
+          "left": "CSP_POLICY",
+          "right": "\"non-strict\"",
+          "inclusive": false,
+          "intent": "Selects the non-strict style policy variant.",
+          "anchor": { "startLine": 15, "endLine": 15 }
+        },
+        {
+          "operator": "==",
+          "left": "req.headers[\"x-csp-enforce\"]",
+          "right": "\"true\"",
+          "inclusive": false,
+          "intent": "Enables an enforced CSP response header only for an explicit true flag.",
+          "anchor": { "startLine": 88, "endLine": 88 }
+        }
+      ],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "non-null",
+          "description": "A generated nonce is only returned after CSP is enabled for a page request.",
+          "anchor": { "startLine": 73, "endLine": 77 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Existing request nonces take precedence over generation of a new nonce.",
+          "anchor": { "startLine": 61, "endLine": 64 }
+        },
+        {
+          "kind": "ordering",
+          "description": "The request nonce header is set before the response CSP header is emitted.",
+          "anchor": { "startLine": 81, "endLine": 104 }
+        },
+        {
+          "kind": "invariant",
+          "description": "CSP response values are whitespace-normalized and trimmed before being set.",
+          "anchor": { "startLine": 99, "endLine": 101 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "env",
+          "description": "The runtime provides process.env.CSP_POLICY and its presence enables CSP processing for eligible page requests.",
+          "anchor": { "startLine": 68, "endLine": 69 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers provide request objects compatible with either Node headers or the Next.js cache/header API.",
+          "anchor": { "startLine": 59, "endLine": 59 }
+        },
+        {
+          "kind": "platform",
+          "description": "The runtime provides crypto.getRandomValues and URL parsing support.",
+          "anchor": { "startLine": 70, "endLine": 72 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What deployment configuration guarantees that CSP_POLICY is populated when CSP enforcement is required?",
+          "affects": "configDependencies and CSP eligibility",
+          "anchor": { "startLine": 68, "endLine": 69 },
+          "resolution": null
+        },
+        {
+          "question": "Which request and response adapters guarantee compatibility with the two header mutation APIs?",
+          "affects": "request nonce propagation and response policy emission",
+          "anchor": { "startLine": 81, "endLine": 106 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "All operations are synchronous; nonce generation uses per-call cryptographic randomness and request/response mutation is local to the supplied objects."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "returns-undefined-nonce-for-null-request",
+          "scenario": "A null request is passed to the CSP middleware.",
+          "given": ["req = null"],
+          "when": "csp(req, res)",
+          "then": "result.nonce === undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "reuses-existing-string-nonce",
+          "scenario": "The request already contains a string x-nonce header.",
+          "given": ["req.headers[\"x-nonce\"] = \"existing-nonce\""],
+          "when": "csp(req, res)",
+          "then": "result.nonce === \"existing-nonce\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Existing nonce propagation avoids generating a replacement nonce."
+        },
+        {
+          "testId": "rejects-non-string-existing-nonce",
+          "scenario": "The request contains an existing x-nonce value that is not a string.",
+          "given": ["req.headers[\"x-nonce\"] = [\"invalid\"]"],
+          "when": "csp(req, res)",
+          "then": "result.nonce === \"\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The middleware preserves the safe-parse failure contract for malformed nonce values."
+        },
+        {
+          "testId": "returns-undefined-nonce-without-request-url",
+          "scenario": "A request without a URL is provided and has no existing nonce.",
+          "given": ["req.url = undefined", "req.headers[\"x-nonce\"] = undefined"],
+          "when": "csp(req, res)",
+          "then": "result.nonce === undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "skips-csp-for-non-page-path",
+          "scenario": "CSP is enabled but the request targets an API or Next.js internal path.",
+          "given": ["process.env.CSP_POLICY = \"strict\"", "req.url = \"/api/example\""],
+          "when": "csp(req, res)",
+          "then": "result.nonce === undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "CSP nonce generation is restricted to page-path requests."
+        },
+        {
+          "testId": "sets-enforced-csp-response-header",
+          "scenario": "An eligible page request has CSP enabled and enforcement requested.",
+          "given": [
+            "process.env.CSP_POLICY = \"strict\"",
+            "req.url = \"/dashboard\"",
+            "req.headers[\"x-csp-enforce\"] = \"true\""
+          ],
+          "when": "csp(req, res)",
+          "then": "res.headers[\"Content-Security-Policy\"] is a non-empty normalized policy containing the generated nonce",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the response security-header contract and nonce-policy coupling."
+        },
+        {
+          "testId": "writes-generated-nonce-to-request",
+          "scenario": "An eligible page request has CSP enabled and no existing nonce.",
+          "given": [
+            "process.env.CSP_POLICY = \"strict\"",
+            "req.url = \"/dashboard\"",
+            "req.headers[\"x-nonce\"] = undefined"
+          ],
+          "when": "csp(req, res)",
+          "then": "req.headers[\"x-nonce\"] === result.nonce && typeof result.nonce === \"string\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Downstream server rendering relies on the nonce being written to the request."
+        },
+        {
+          "testId": "omits-response-policy-when-not-enforced",
+          "scenario": "An eligible page request has CSP enabled but enforcement is not requested.",
+          "given": [
+            "process.env.CSP_POLICY = \"strict\"",
+            "req.url = \"/dashboard\"",
+            "req.headers[\"x-csp-enforce\"] = \"false\""
+          ],
+          "when": "csp(req, res)",
+          "then": "result.nonce === undefined && res.headers[\"Content-Security-Policy\"] is absent",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "The implementation intentionally does not emit report-only or unenforced CSP headers."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "type-only HTTP and Next.js imports",
+        "application constants imports",
+        "nonce builder import",
+        "CSP policy builder",
+        "page path classifier",
+        "unknown-string validator",
+        "exported CSP middleware function"
+      ],
+      "moduleLevelCode": "import type { IncomingMessage, OutgoingMessage } from \"http\";\nimport type { NextRequest, NextResponse } from \"next/server\";\n\nimport { IS_PRODUCTION } from \"@calcom/lib/constants\";\nimport { WEBAPP_URL } from \"@calcom/lib/constants\";\n\nimport { buildNonce } from \"./buildNonce\";",
+      "exports": [{ "name": "csp", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "IncomingMessage", "module": "http", "alias": null, "kind": "external" },
+        { "symbol": "OutgoingMessage", "module": "http", "alias": null, "kind": "external" },
+        { "symbol": "NextRequest", "module": "next/server", "alias": null, "kind": "external" },
+        { "symbol": "NextResponse", "module": "next/server", "alias": null, "kind": "external" },
+        { "symbol": "IS_PRODUCTION", "module": "@calcom/lib/constants", "alias": null, "kind": "external" },
+        { "symbol": "WEBAPP_URL", "module": "@calcom/lib/constants", "alias": null, "kind": "external" },
+        { "symbol": "buildNonce", "module": "./buildNonce", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/web/lib/csp.ts__getCspPolicy#function:getCspPolicy",
+        "unitKind": "function",
+        "name": "getCspPolicy",
+        "qualifiedName": "getCspPolicy",
+        "parentUnitId": null,
+        "startLine": 9,
+        "endLine": 38,
+        "isBehavioral": true,
+        "source": "function getCspPolicy(nonce: string) {\n  //TODO: Do we need to explicitly define it in turbo.json\n  const CSP_POLICY = process.env.CSP_POLICY;\n\n  // Note: \"non-strict\" policy only allows inline styles otherwise it's the same as \"strict\"\n  // We can remove 'unsafe-inline' from style-src when we add nonces to all style tags\n  // Maybe see how @next-safe/middleware does it if it's supported.\n  const useNonStrictPolicy = CSP_POLICY === \"non-strict\";\n\n  // We add WEBAPP_URL to img-src because of booking pages, which end up loading images from app.cal.com on cal.com\n  // FIXME: Write a layer to extract out EventType Analytics tracking endpoints and add them to img-src or connect-src as needed. e.g. fathom, Google Analytics and others\n  return `\n\t  default-src 'self' ${IS_PRODUCTION ? \"\" : \"data:\"};\n\t  script-src ${\n      IS_PRODUCTION\n        ? // 'self' 'unsafe-inline' https: added for Browsers not supporting strict-dynamic not supporting strict-dynamic\n          `'nonce-${nonce}' 'strict-dynamic' 'self' 'unsafe-inline' https:`\n        : // Note: We could use 'strict-dynamic' with 'nonce-..' instead of unsafe-inline but there are some streaming related scripts that get blocked(because they don't have nonce on them). It causes a really frustrating full page error model by Next.js to show up sometimes\n          \"'unsafe-inline' 'unsafe-eval' https: http:\"\n    };\n    object-src 'none';\n    base-uri 'none';\n\t  child-src app.cal.com;\n\t  style-src 'self' ${\n      IS_PRODUCTION ? (useNonStrictPolicy ? \"'unsafe-inline'\" : \"\") : \"'unsafe-inline'\"\n    } app.cal.com;\n\t  font-src 'self';\n\t  img-src 'self' ${WEBAPP_URL} https://img.youtube.com https://eu.ui-avatars.com/api/ data:;\n    connect-src 'self'\n\t`;",
+        "detail": {
+          "unitId": "apps/web/lib/csp.ts__getCspPolicy#function:getCspPolicy",
+          "fileId": "apps/web/lib/csp.ts__getCspPolicy",
+          "unitKind": "function",
+          "name": "getCspPolicy",
+          "qualifiedName": "getCspPolicy",
+          "parentUnitId": null,
+          "startLine": 9,
+          "endLine": 38,
+          "signature": "function getCspPolicy(nonce: string)",
+          "parameters": [
+            { "name": "nonce", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "string",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The nonce argument is provided as a string.",
+            "IS_PRODUCTION and WEBAPP_URL are available in the module scope."
+          ],
+          "postconditions": [
+            "Returns a CSP policy string containing directives for default, script, object, base, child, style, font, image, and connection sources.",
+            "In production mode, the script-src directive contains the supplied nonce and strict-dynamic policy.",
+            "In non-production mode, the script-src directive permits unsafe-inline, unsafe-eval, https:, and http:.",
+            "The returned img-src directive includes WEBAPP_URL."
+          ],
+          "invariants": [
+            "The returned policy always contains object-src 'none' and base-uri 'none'.",
+            "The returned policy always allows app.cal.com for child-src and style-src.",
+            "The returned policy always includes 'self' for default-src, style-src, font-src, img-src, and connect-src."
+          ],
+          "edgeCases": [
+            "When CSP_POLICY is exactly \"non-strict\", production style-src includes 'unsafe-inline'; other CSP_POLICY values do not enable this production style exception.",
+            "When IS_PRODUCTION is false, default-src includes data:, script-src includes unsafe-inline and unsafe-eval, and style-src includes unsafe-inline.",
+            "When IS_PRODUCTION is true, the nonce is interpolated into script-src as 'nonce-{nonce}', and style-src omits unsafe-inline unless CSP_POLICY is exactly \"non-strict\".",
+            "An empty nonce is interpolated without validation as 'nonce-'."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["process.env.CSP_POLICY", "IS_PRODUCTION", "WEBAPP_URL"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns a newline- and tab-formatted Content-Security-Policy directive string. The policy contains default-src, script-src, object-src, base-uri, child-src, style-src, font-src, img-src, and connect-src directives.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Builds and returns the Content Security Policy string for the current environment. The policy incorporates the supplied nonce, production mode, configured CSP policy mode, and the configured web application URL.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "non-strict",
+              "role": "Exact CSP_POLICY value that enables unsafe-inline in production style-src."
+            },
+            { "kind": "format-string", "value": "'nonce-${nonce}'", "role": "Production script-src nonce format." },
+            {
+              "kind": "enum-value",
+              "value": "'strict-dynamic'",
+              "role": "Production script-src strict dynamic directive."
+            },
+            {
+              "kind": "enum-value",
+              "value": "'unsafe-inline'",
+              "role": "Permitted inline script or style source according to environment and policy mode."
+            },
+            { "kind": "enum-value", "value": "'unsafe-eval'", "role": "Non-production script-src permission." },
+            { "kind": "enum-value", "value": "app.cal.com", "role": "Allowed child-src and style-src host." },
+            { "kind": "enum-value", "value": "https://img.youtube.com", "role": "Allowed image source." },
+            { "kind": "enum-value", "value": "https://eu.ui-avatars.com/api/", "role": "Allowed image source." },
+            { "kind": "enum-value", "value": "'none'", "role": "object-src and base-uri restriction." }
+          ],
+          "declaredConstants": [{ "name": "CSP_POLICY", "value": "process.env.CSP_POLICY", "kind": "string" }],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getCspPolicy(\"abc123\") is called.",
+              "then": "The result contains script-src 'nonce-abc123' 'strict-dynamic' 'self' 'unsafe-inline' https:, style-src 'self' 'unsafe-inline' app.cal.com, and img-src 'self' https://example.com https://img.youtube.com https://eu.ui-avatars.com/api/ data:.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getCspPolicy(\"abc123\") is called.",
+              "then": "The result contains default-src 'self' data:, script-src 'unsafe-inline' 'unsafe-eval' https: http:, and style-src 'self' 'unsafe-inline' app.cal.com.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getCspPolicy(\"abc123\") is called.",
+              "then": "The production style-src directive does not contain 'unsafe-inline', while script-src contains 'nonce-abc123' and 'strict-dynamic'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "8720342961e5f8c2eaab9815cd263da9ce1cd268f85600237283c6cee706d1ac"
+        }
+      },
+      {
+        "unitId": "apps/web/lib/csp.ts__isPagePathRequest#function:isPagePathRequest",
+        "unitKind": "function",
+        "name": "isPagePathRequest",
+        "qualifiedName": "isPagePathRequest",
+        "parentUnitId": null,
+        "startLine": 41,
+        "endLine": 46,
+        "isBehavioral": true,
+        "source": "// Taken from @next-safe/middleware\nconst isPagePathRequest = (url: URL) => {\n  const isNonPagePathPrefix = /^\\/(?:_next|api)\\//;\n  const isFile = /\\..*$/;\n  const { pathname } = url;\n  return !isNonPagePathPrefix.test(pathname) && !isFile.test(pathname);",
+        "detail": {
+          "unitId": "apps/web/lib/csp.ts__isPagePathRequest#function:isPagePathRequest",
+          "fileId": "apps/web/lib/csp.ts__isPagePathRequest",
+          "unitKind": "function",
+          "name": "isPagePathRequest",
+          "qualifiedName": "isPagePathRequest",
+          "parentUnitId": null,
+          "startLine": 41,
+          "endLine": 46,
+          "signature": "const isPagePathRequest = (url: URL) => boolean",
+          "parameters": [
+            { "name": "url", "type": "URL", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["url is a URL object with a pathname property."],
+          "postconditions": [
+            "Returns false when pathname starts with /_next/ or /api/.",
+            "Returns false when pathname contains a dot followed by zero or more characters through the end of the pathname.",
+            "Returns true otherwise."
+          ],
+          "invariants": ["Only url.pathname is inspected; URL query and fragment components do not affect the result."],
+          "edgeCases": [
+            "The root pathname / returns true.",
+            "A pathname beginning with /_next/ or /api/ returns false.",
+            "A pathname containing a dot, including a trailing dot, returns false.",
+            "A pathname exactly equal to /_next or /api does not match the prefixed-path rule and is evaluated only for the file-like dot rule."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["URL"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether a URL pathname represents a page request rather than a Next.js/internal API path or a file-like path.",
+          "specLiterals": [
+            {
+              "kind": "regex",
+              "value": "/^\\/(?:_next|api)\\//",
+              "role": "Identifies pathname prefixes reserved for Next.js assets and API routes."
+            },
+            {
+              "kind": "regex",
+              "value": "/\\..*$/",
+              "role": "Identifies pathnames containing a dot through the end of the pathname as file-like paths."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isPagePathRequest(url) is called",
+              "then": "The result is true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isPagePathRequest(url) is called",
+              "then": "The result is false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isPagePathRequest(url) is called",
+              "then": "The result is false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a27e6f9ecf39212d61a23b555b0c355ecd672c97d035df6f3f9503cd802fcc23"
+        }
+      },
+      {
+        "unitId": "apps/web/lib/csp.ts__safeParseString#function:safeParseString",
+        "unitKind": "function",
+        "name": "safeParseString",
+        "qualifiedName": "safeParseString",
+        "parentUnitId": null,
+        "startLine": 48,
+        "endLine": 53,
+        "isBehavioral": true,
+        "source": "\nfunction safeParseString(value: unknown): { success: boolean; data?: string } {\n  if (typeof value === \"string\") {\n    return { success: true, data: value };\n  }\n  return { success: false };",
+        "detail": {
+          "unitId": "apps/web/lib/csp.ts__safeParseString#function:safeParseString",
+          "fileId": "apps/web/lib/csp.ts__safeParseString",
+          "unitKind": "function",
+          "name": "safeParseString",
+          "qualifiedName": "safeParseString",
+          "parentUnitId": null,
+          "startLine": 48,
+          "endLine": 53,
+          "signature": "function safeParseString(value: unknown): { success: boolean; data?: string }",
+          "parameters": [
+            { "name": "value", "type": "unknown", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "{ success: boolean; data?: string }",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns { success: true, data: value } when value is a string.",
+            "Returns { success: false } when value is not a string."
+          ],
+          "invariants": [
+            "The input value is not modified.",
+            "The data property is present only when the input is a string."
+          ],
+          "edgeCases": [
+            "An empty string is accepted and returned with success true.",
+            "Non-string values, including null, undefined, numbers, booleans, objects, and arrays, return success false without data."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns { success: false } for any non-string value.",
+            "returnsOnError": "{ success: false }"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Safely determines whether an unknown value is a string and returns a success result containing the value when it is.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "safeParseString(value) is called",
+              "then": "The result is { success: true, data: \"hello\" }.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "safeParseString(value) is called",
+              "then": "The result is { success: true, data: \"\" }.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "safeParseString(value) is called",
+              "then": "The result is { success: false } and has no data property.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7c942a4d3e057e6d03fe6be6af0c241151e77c6b9269a418bbb15dabc2b4caf9"
+        }
+      },
+      {
+        "unitId": "apps/web/lib/csp.ts__csp#function:csp",
+        "unitKind": "function",
+        "name": "csp",
+        "qualifiedName": "csp",
+        "parentUnitId": null,
+        "startLine": 55,
+        "endLine": 111,
+        "isBehavioral": true,
+        "source": "\nexport function csp(req: IncomingMessage | NextRequest | null, res: OutgoingMessage | NextResponse | null) {\n  if (!req) {\n    return { nonce: undefined };\n  }\n  const existingNonce = \"cache\" in req ? req.headers.get(\"x-nonce\") : req.headers[\"x-nonce\"];\n\n  if (existingNonce) {\n    const existingNoneParsed = safeParseString(existingNonce);\n    return { nonce: existingNoneParsed.success ? existingNoneParsed.data : \"\" };\n  }\n  if (!req.url) {\n    return { nonce: undefined };\n  }\n  const CSP_POLICY = process.env.CSP_POLICY;\n  const cspEnabledForInstance = CSP_POLICY;\n  const nonce = buildNonce(crypto.getRandomValues(new Uint8Array(22)));\n\n  const parsedUrl = new URL(req.url, \"http://base_url\");\n  const cspEnabledForPage = cspEnabledForInstance && isPagePathRequest(parsedUrl);\n  if (!cspEnabledForPage) {\n    return {\n      nonce: undefined,\n    };\n  }\n  // Set x-nonce request header to be used by `getServerSideProps` or similar fns and `Document.getInitialProps` to read the nonce from\n  // It is generated for all page requests but only used by pages that need CSP\n\n  if (\"cache\" in req) {\n    req.headers.set(\"x-nonce\", nonce);\n  } else {\n    req.headers[\"x-nonce\"] = nonce;\n  }\n\n  if (res) {\n    const enforced =\n      \"cache\" in req ? req.headers.get(\"x-csp-enforce\") === \"true\" : req.headers[\"x-csp-enforce\"] === \"true\";\n\n    // No need to enable REPORT ONLY mode for CSP unless we start actively working on it. See https://github.com/calcom/cal.com/issues/13844\n    const name = enforced ? \"Content-Security-Policy\" : /*\"Content-Security-Policy-Report-Only\"*/ null;\n\n    if (!name) {\n      return {\n        nonce: undefined,\n      };\n    }\n\n    const value = getCspPolicy(nonce)\n      .replace(/\\s{2,}/g, \" \")\n      .trim();\n\n    if (\"body\" in res) {\n      res.headers.set(name, value);\n    } else {\n      res.setHeader(name, value);\n    }\n  }",
+        "detail": {
+          "unitId": "apps/web/lib/csp.ts__csp#function:csp",
+          "fileId": "apps/web/lib/csp.ts__csp",
+          "unitKind": "function",
+          "name": "csp",
+          "qualifiedName": "csp",
+          "parentUnitId": null,
+          "startLine": 55,
+          "endLine": 111,
+          "signature": "export function csp(req: IncomingMessage | NextRequest | null, res: OutgoingMessage | NextResponse | null)",
+          "parameters": [
+            {
+              "name": "req",
+              "type": "IncomingMessage | NextRequest | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "res",
+              "type": "OutgoingMessage | NextResponse | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "req may be null; when non-null it may be either an IncomingMessage or a NextRequest.",
+            "res may be null; when non-null it may be either an OutgoingMessage or a NextResponse.",
+            "For nonce generation and page-policy evaluation, req.url must be present and parseable as a URL relative to http://base_url."
+          ],
+          "postconditions": [
+            "If req is null, or req.url is absent, or CSP_POLICY is disabled, or the URL is not a page-path request, the returned nonce is undefined.",
+            "If a truthy existing x-nonce header is present, it is parsed and returned without generating a new nonce or modifying the response.",
+            "For an eligible page request, a generated nonce is written to the request x-nonce header.",
+            "When a response is supplied and x-csp-enforce equals \"true\", the generated CSP policy is normalized and written to the response Content-Security-Policy header."
+          ],
+          "invariants": [
+            "An existing truthy x-nonce header takes precedence over nonce generation and page-policy evaluation.",
+            "The generated nonce is 22 random bytes encoded by buildNonce before being used as a header value.",
+            "CSP policy whitespace runs of two or more characters are replaced with a single space and the final value is trimmed before being written."
+          ],
+          "edgeCases": [
+            "A null request returns an object with nonce undefined.",
+            "A request with a truthy x-nonce header returns the parsed nonce when parsing succeeds.",
+            "A request with a truthy but invalid x-nonce header returns an empty-string nonce.",
+            "A non-null request without a URL returns an object with nonce undefined.",
+            "When CSP_POLICY is unset or otherwise falsy, no generated nonce is exposed and no CSP response header is written.",
+            "When the request URL is not a page-path request, no generated nonce is exposed and no CSP response header is written.",
+            "For an eligible page request with no response, the request nonce is set but no response header is written.",
+            "For an eligible page request whose x-csp-enforce header is not exactly \"true\", no response CSP header is written and the returned nonce is undefined."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "URL parsing errors from new URL(req.url, \"http://base_url\") may propagate.",
+              "Errors from nonce generation, nonce parsing, policy generation, or header operations may propagate."
+            ],
+            "reverts": [],
+            "onInvalidInput": "Invalid existing x-nonce values are converted to an empty-string nonce; missing request or URL yields an undefined nonce.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Sets the request x-nonce header for eligible page requests.",
+            "Sets the response Content-Security-Policy header when enforcement is enabled."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "safeParseString", "source": "apps/web/lib/csp.ts", "kind": "internal" },
+            { "name": "buildNonce", "source": "apps/web/lib/csp.ts", "kind": "internal" },
+            { "name": "isPagePathRequest", "source": "apps/web/lib/csp.ts", "kind": "internal" },
+            { "name": "getCspPolicy", "source": "apps/web/lib/csp.ts", "kind": "internal" },
+            { "name": "crypto.getRandomValues", "source": "global Web Crypto API", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "IncomingMessage",
+            "NextRequest",
+            "OutgoingMessage",
+            "NextResponse",
+            "process.env.CSP_POLICY",
+            "Uint8Array",
+            "URL"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Reads and writes x-nonce and x-csp-enforce request headers. When enforced, writes a normalized CSP policy to the Content-Security-Policy response header.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether a request should receive a CSP nonce and, when enforcement is enabled, applies the generated nonce and CSP policy to the request and response headers. Existing request nonces are reused after validation.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "http://base_url",
+              "role": "Base URL used to parse request-relative URLs."
+            },
+            {
+              "kind": "format-string",
+              "value": "x-nonce",
+              "role": "Request header used to read and store the CSP nonce."
+            },
+            {
+              "kind": "format-string",
+              "value": "x-csp-enforce",
+              "role": "Request header controlling whether CSP enforcement is applied to the response."
+            },
+            {
+              "kind": "format-string",
+              "value": "true",
+              "role": "Exact request-header value that enables CSP enforcement."
+            },
+            {
+              "kind": "format-string",
+              "value": "Content-Security-Policy",
+              "role": "Response header receiving the enforced CSP policy."
+            },
+            {
+              "kind": "regex",
+              "value": "\\s{2,}",
+              "role": "Whitespace normalization pattern applied to the generated CSP policy."
+            },
+            { "kind": "magic-number", "value": "22", "role": "Number of random bytes supplied to nonce generation." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "csp(req, res) is called",
+              "then": "It returns an object whose nonce property is undefined and does not access or mutate either endpoint.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "csp(req, res) is called",
+              "then": "It returns an object whose nonce property is the empty string and does not generate a nonce or write a response CSP header.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "csp(req, res) is called",
+              "then": "The generated nonce is written to req's x-nonce header and a normalized CSP policy is written to res's Content-Security-Policy header.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "d3607c84c5541dfb0750338933cbff657334677106d60bcc1f546443ac9c6b17"
+        }
+      }
+    ]
+  },
+  "out": ["apps/web/lib/buildNonce.ts"],
+  "in": ["apps/web/middleware.ts", "apps/web/lib/withNonce.tsx", "apps/web/pages/_document.tsx"],
+  "externals": ["http", "next/server", "@calcom/lib/constants"],
+  "impact": { "seeds": 4, "callers": 3, "impactedFiles": ["apps/web/pages/_document.tsx", "apps/web/middleware.ts"] }
+}

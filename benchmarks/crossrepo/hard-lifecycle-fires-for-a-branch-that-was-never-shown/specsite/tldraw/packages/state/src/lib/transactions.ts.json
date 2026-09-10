@@ -1,0 +1,1982 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/state/src/lib/transactions.ts",
+    "language": "typescript",
+    "sizeBytes": 12314,
+    "tokenCount": 3079,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:15:10.745Z",
+    "module": {
+      "purpose": "Provides the transaction coordinator for the reactive state system, batching atom changes, preserving rollback state, and scheduling affected reactors after commits.",
+      "summary": "This module implements synchronous and asynchronous transaction contexts around atoms and signals. It tracks global epochs, records initial atom values for rollback, folds nested transactions into parent state, traverses dependent signals to collect reactors, and performs cleanup passes while preventing reaction reentrancy. Public helpers support transactional batching, rollback, epoch inspection, and deferred asynchronous updates.",
+      "businessContext": "Supports reactive application state updates where multiple changes must produce coherent effects. Failure can expose partially updated state, lose rollback behavior, or trigger inconsistent reactions.",
+      "classes": ["Transaction (~L11-65): Tracks atom changes, nesting, synchronization mode, and rollback state"],
+      "functions": [
+        "getGlobalEpoch (~L85-87): Returns the current global reactive epoch",
+        "getIsInTransaction (~L95-97): Reports whether a transaction is currently active",
+        "traverseChild (~L102-114): Collects reachable effect schedulers while avoiding repeated traversal",
+        "flushChanges (~L122-165): Traverses changed atoms and schedules reactors through cleanup passes",
+        "atomDidChange (~L168-184): Records previous atom values or immediately flushes changes",
+        "traverseAtomForCleanup (~L186-189): Adds reactors affected during an active reaction pass",
+        "advanceGlobalEpoch (~L192-194): Increments the shared reactive epoch",
+        "commit (~L25-46): Flushes root changes or folds nested values into the parent transaction",
+        "abort (~L55-64): Restores recorded atom values and commits the rollback effects",
+        "transaction (~L274-304): Executes a rollback-capable synchronous transaction",
+        "transact (~L331-336): Reuses an active transaction or creates a batching transaction",
+        "deferAsyncEffects (~L361-421): Batches asynchronous state changes until all shared work settles"
+      ],
+      "keywords": [
+        "reactive transactions",
+        "atom rollback",
+        "effect scheduler",
+        "cleanup reactors",
+        "global epoch",
+        "nested transactions",
+        "async effects",
+        "signal traversal",
+        "reaction depth limit"
+      ],
+      "ontologyConcepts": [
+        "transaction",
+        "rollback",
+        "reactive propagation",
+        "dependency traversal",
+        "effect scheduling",
+        "epoch tracking",
+        "reentrancy control"
+      ],
+      "businessEntities": ["Atom", "Signal", "Reactor", "Transaction", "Effect"],
+      "systemCapabilities": [
+        "Batch reactive state updates",
+        "Restore changed state on failure",
+        "Schedule dependent effects",
+        "Defer asynchronous effects",
+        "Detect overlapping transaction boundaries",
+        "Limit recursive reaction updates"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./Atom",
+          "symbols": ["_Atom"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/state/src/lib/Atom.ts",
+          "resolvedFileId": "packages/state/src/lib/Atom.ts",
+          "resolvedHint": "packages/state/src/lib/Atom.ts"
+        },
+        {
+          "spec": "./constants",
+          "symbols": ["GLOBAL_START_EPOCH"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/state/src/lib/constants.ts",
+          "resolvedFileId": "packages/state/src/lib/constants.ts",
+          "resolvedHint": "packages/state/src/lib/constants.ts"
+        },
+        {
+          "spec": "./helpers",
+          "symbols": ["singleton"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/state/src/lib/helpers.ts",
+          "resolvedFileId": "packages/state/src/lib/helpers.ts",
+          "resolvedHint": "packages/state/src/lib/helpers.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": ["Child", "Signal"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/state/src/lib/types.ts",
+          "resolvedFileId": "packages/state/src/lib/types.ts",
+          "resolvedHint": "packages/state/src/lib/types.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Abort restores each recorded atom by calling atom.set(value).",
+          "Abort clears each restored atom's history buffer when present.",
+          "Transactions mutate global transaction state, epoch state, and reactor cleanup sets."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "getGlobalEpoch",
+          "shape": "export function getGlobalEpoch()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getIsInTransaction",
+          "shape": "export function getIsInTransaction()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "atomDidChange",
+          "shape": "export function atomDidChange(atom: _Atom, previousValue: any)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "advanceGlobalEpoch",
+          "shape": "export function advanceGlobalEpoch()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "transaction",
+          "shape": "export function transaction<T>(fn: (rollback: () => void) => T)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "transact",
+          "shape": "export function transact<T>(fn: () => T): T",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "deferAsyncEffects",
+          "shape": "export async function deferAsyncEffects<T>(fn: () => Promise<T>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "GLOBAL_START_EPOCH",
+          "shape": "GLOBAL_START_EPOCH + 1",
+          "resolvedRelativePath": "packages/state/src/lib/constants.ts",
+          "resolvedFileId": "packages/state/src/lib/constants.ts"
+        },
+        {
+          "name": "singleton",
+          "shape": "singleton('transactions', () => ({",
+          "resolvedRelativePath": "packages/state/src/lib/helpers.ts",
+          "resolvedFileId": "packages/state/src/lib/helpers.ts"
+        },
+        {
+          "name": "_Atom",
+          "shape": "atom.set(value); atom.historyBuffer?.clear(); atom.children.visit(traverseChild)",
+          "resolvedRelativePath": "packages/state/src/lib/Atom.ts",
+          "resolvedFileId": "packages/state/src/lib/Atom.ts"
+        },
+        {
+          "name": "Child",
+          "shape": "child.lastTraversedEpoch === inst.globalEpoch",
+          "resolvedRelativePath": "packages/state/src/lib/types.ts",
+          "resolvedFileId": "packages/state/src/lib/types.ts"
+        },
+        {
+          "name": "Signal",
+          "shape": "(child as any as Signal<any>).children.visit(traverseChild)",
+          "resolvedRelativePath": "packages/state/src/lib/types.ts",
+          "resolvedFileId": "packages/state/src/lib/types.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "transaction-commit",
+          "intent": "Flush root changes or merge nested rollback baselines into the parent.",
+          "structureKind": "branch",
+          "predicate": "if (this.isRoot)",
+          "branchOutcomes": ["root transaction flushes changes", "nested transaction merges into parent"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 25, "endLine": 46 }
+        },
+        {
+          "name": "rollback-restoration",
+          "intent": "Restore every atom's initial value and propagate the restored state.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "this.initialAtomValues.forEach",
+          "terminationCondition": null,
+          "anchor": { "startLine": 55, "endLine": 64 }
+        },
+        {
+          "name": "reactor-traversal",
+          "intent": "Collect unique reachable reactors from changed atom dependencies.",
+          "structureKind": "branch",
+          "predicate": "if (child.lastTraversedEpoch === inst.globalEpoch)",
+          "branchOutcomes": ["already traversed", "mark and visit child"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 102, "endLine": 114 }
+        },
+        {
+          "name": "change-flush",
+          "intent": "Schedule affected reactors and repeatedly process deferred cleanup reactors.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 122, "endLine": 165 }
+        },
+        {
+          "name": "cleanup-reaction-loop",
+          "intent": "Run cleanup reactors until no deferred reactors remain or depth exceeds limit.",
+          "structureKind": "loop",
+          "predicate": "while (inst.cleanupReactors?.size)",
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": "while (inst.cleanupReactors?.size)",
+          "anchor": { "startLine": 149, "endLine": 158 }
+        },
+        {
+          "name": "synchronous-transaction",
+          "intent": "Execute callback, detect rollback or boundary violations, then settle the transaction.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 274, "endLine": 304 }
+        },
+        {
+          "name": "async-reaction-wait",
+          "intent": "Yield through microtasks while the reactive system is reacting.",
+          "structureKind": "loop",
+          "predicate": "while (inst.globalIsReacting)",
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": "while (inst.globalIsReacting)",
+          "anchor": { "startLine": 369, "endLine": 371 }
+        },
+        {
+          "name": "async-transaction-settlement",
+          "intent": "Share async transaction state and settle only after the final process completes.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 361, "endLine": 421 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "getGlobalEpoch",
+          "signature": "export function getGlobalEpoch()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 85, "endLine": 85 }
+        },
+        {
+          "kind": "function",
+          "name": "getIsInTransaction",
+          "signature": "export function getIsInTransaction()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 95, "endLine": 95 }
+        },
+        {
+          "kind": "function",
+          "name": "atomDidChange",
+          "signature": "export function atomDidChange(atom: _Atom, previousValue: any)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 168, "endLine": 168 }
+        },
+        {
+          "kind": "function",
+          "name": "advanceGlobalEpoch",
+          "signature": "export function advanceGlobalEpoch()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 192, "endLine": 192 }
+        },
+        {
+          "kind": "function",
+          "name": "transaction",
+          "signature": "export function transaction<T>(fn: (rollback: () => void) => T)",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 274, "endLine": 274 }
+        },
+        {
+          "kind": "function",
+          "name": "transact",
+          "signature": "export function transact<T>(fn: () => T): T",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": "T",
+          "exported": true,
+          "anchor": { "startLine": 331, "endLine": 331 }
+        },
+        {
+          "kind": "function",
+          "name": "deferAsyncEffects",
+          "signature": "export async function deferAsyncEffects<T>(fn: () => Promise<T>)",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 361, "endLine": 361 }
+        },
+        {
+          "kind": "class",
+          "name": "Transaction",
+          "signature": "class Transaction {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 11, "endLine": 11 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "Reactor",
+          "shape": "interface Reactor {\n\tmaybeScheduleEffect(): void\n\tlastTraversedEpoch: number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 6, "endLine": 9 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Nested transaction with an empty parent baseline",
+          "handled": true,
+          "behavior": "The parent's initial-value map adopts the nested transaction's map directly.",
+          "anchor": { "startLine": 38, "endLine": 40 }
+        },
+        {
+          "inputShape": "Callback throws, including an undefined throw",
+          "handled": true,
+          "behavior": "The synchronous transaction aborts and rethrows the original exception.",
+          "anchor": { "startLine": 283, "endLine": 287 }
+        },
+        {
+          "inputShape": "Rollback callback invoked",
+          "handled": true,
+          "behavior": "The transaction aborts and restores all recorded atom values.",
+          "anchor": { "startLine": 294, "endLine": 298 }
+        },
+        {
+          "inputShape": "Overlapping transaction boundaries",
+          "handled": true,
+          "behavior": "An Error is thrown when the current transaction is no longer the transaction being settled.",
+          "anchor": { "startLine": 290, "endLine": 292 }
+        },
+        {
+          "inputShape": "Reaction updates exceeding one thousand iterations",
+          "handled": true,
+          "behavior": "An Error is thrown to stop the cleanup reaction loop.",
+          "anchor": { "startLine": 149, "endLine": 152 }
+        },
+        {
+          "inputShape": "Async effect started during a synchronous transaction",
+          "handled": true,
+          "behavior": "The function throws before creating or joining an asynchronous transaction.",
+          "anchor": { "startLine": 362, "endLine": 364 }
+        },
+        {
+          "inputShape": "Async effect started during a reaction phase",
+          "handled": true,
+          "behavior": "Execution waits by yielding microtasks until reaction processing ends.",
+          "anchor": { "startLine": 369, "endLine": 371 }
+        },
+        {
+          "inputShape": "Async callback throws undefined",
+          "handled": true,
+          "behavior": "The thrown value is stored as null so it remains distinguishable from no error.",
+          "anchor": { "startLine": 389, "endLine": 392 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "updateDepth++",
+          "right": "1000",
+          "inclusive": false,
+          "intent": "Stops reaction cleanup after the depth limit is exceeded.",
+          "anchor": { "startLine": 150, "endLine": 152 }
+        },
+        {
+          "operator": ">",
+          "left": "--txn.asyncProcessCount",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Keeps shared async transactions unsettled while other processes remain.",
+          "anchor": { "startLine": 394, "endLine": 403 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new Error('Reaction update depth limit exceeded')",
+          "caught": null,
+          "action": "Stops repeated cleanup reaction scheduling.",
+          "fallback": null,
+          "anchor": { "startLine": 150, "endLine": 152 }
+        },
+        {
+          "thrown": "new Error('Transaction boundaries overlap')",
+          "caught": null,
+          "action": "Rejects settlement after the current transaction has been replaced.",
+          "fallback": null,
+          "anchor": { "startLine": 290, "endLine": 292 }
+        },
+        {
+          "thrown": null,
+          "caught": "e",
+          "action": "Aborts the transaction and rethrows the callback error.",
+          "fallback": null,
+          "anchor": { "startLine": 283, "endLine": 287 }
+        },
+        {
+          "thrown": "new Error('deferAsyncEffects cannot be called during a sync transaction')",
+          "caught": null,
+          "action": "Rejects asynchronous effects initiated inside synchronous transactions.",
+          "fallback": null,
+          "anchor": { "startLine": 362, "endLine": 364 }
+        },
+        {
+          "thrown": "new Error('deferAsyncEffects cannot be called during a sync transaction')",
+          "caught": null,
+          "action": "Rejects an unexpectedly synchronous transaction before joining it.",
+          "fallback": null,
+          "anchor": { "startLine": 376, "endLine": 377 }
+        },
+        {
+          "thrown": null,
+          "caught": "e",
+          "action": "Stores the error, aborts on final settlement, and rethrows it.",
+          "fallback": null,
+          "anchor": { "startLine": 389, "endLine": 413 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "A transaction records each changed atom's value only once, preserving its initial state.",
+          "anchor": { "startLine": 169, "endLine": 177 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Nested transaction values are folded into the parent before reaction-specific handling.",
+          "anchor": { "startLine": 31, "endLine": 45 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Reaction state and the outer transaction are restored in flushChanges finally handling.",
+          "anchor": { "startLine": 159, "endLine": 164 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "The final asynchronous process commits or aborts while its transaction remains current.",
+          "anchor": { "startLine": 405, "endLine": 420 }
+        },
+        {
+          "kind": "non-null",
+          "description": "A transaction's parent is required when merging a non-root transaction.",
+          "anchor": { "startLine": 37, "endLine": 40 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Transaction callbacks must not replace the current transaction boundary before settlement.",
+          "anchor": { "startLine": 290, "endLine": 292 }
+        },
+        {
+          "kind": "caller",
+          "description": "Async callers are expected to await deferAsyncEffects so its transaction can settle.",
+          "anchor": { "startLine": 361, "endLine": 361 }
+        },
+        {
+          "kind": "init-order",
+          "description": "Atom children and reactor objects provide visit and scheduling behavior expected by traversal.",
+          "anchor": { "startLine": 107, "endLine": 113 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Which concrete signal and reactor implementations can appear in the dependency graph?",
+          "affects": "traverseChild and reactor scheduling",
+          "anchor": { "startLine": 102, "endLine": 114 },
+          "resolution": null
+        },
+        {
+          "question": "What guarantees prevent concurrent async callers from unintentionally sharing one transaction?",
+          "affects": "deferAsyncEffects concurrency semantics",
+          "anchor": { "startLine": 373, "endLine": 381 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Synchronous transactions are nested and serialized; asynchronous effects share transaction state, wait through reaction phases, and settle when the last process completes."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "batches-transaction-updates",
+          "scenario": "Multiple atom updates inside a transaction defer reactions until the transaction commits.",
+          "given": [
+            "const firstName = atom('firstName', 'John')",
+            "const lastName = atom('lastName', 'Doe')",
+            "transaction(() => { firstName.set('Jane'); lastName.set('Smith') })"
+          ],
+          "when": "transaction(() => { firstName.set('Jane'); lastName.set('Smith') })",
+          "then": "the dependent effect runs after the transaction completes and observes both updated values",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins atomic batching and deferred side effects."
+        },
+        {
+          "testId": "rolls-back-explicit-transaction",
+          "scenario": "A transaction invokes its rollback callback after changing an atom.",
+          "given": ["const firstName = atom('firstName', 'John')"],
+          "when": "transaction((rollback) => { firstName.set('Jane'); rollback() })",
+          "then": "firstName.get() === 'John'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards restoration of initial atom values."
+        },
+        {
+          "testId": "rolls-back-thrown-transaction",
+          "scenario": "A transaction changes an atom and then throws.",
+          "given": ["const firstName = atom('firstName', 'John')"],
+          "when": "transaction(() => { firstName.set('Jane'); throw new Error('oops') })",
+          "then": "the call throws and firstName.get() === 'John'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures exceptions abort and restore transaction state."
+        },
+        {
+          "testId": "reuses-existing-transact-context",
+          "scenario": "transact is called while another transaction is already open.",
+          "given": ["const count = atom('count', 0)", "let calls = 0"],
+          "when": "transaction(() => { transact(() => { count.set(1); calls++ }); count.set(2) })",
+          "then": "calls === 1 and the changes commit as one outer transaction",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins transact's non-nesting behavior."
+        },
+        {
+          "testId": "defer-async-effects-batches-awaits",
+          "scenario": "An asynchronous deferred effect updates atoms before and after an await.",
+          "given": ["const loading = atom('loading', false)", "const data = atom('data', null)"],
+          "when": "await deferAsyncEffects(async () => { loading.set(true); await Promise.resolve(); data.set('result'); loading.set(false) })",
+          "then": "the promise resolves, the final atom values are data.get() === 'result' and loading.get() === false, and effects are deferred until settlement",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards async transaction lifetime across await boundaries."
+        },
+        {
+          "testId": "rejects-async-effects-in-sync-transaction",
+          "scenario": "deferAsyncEffects is invoked during a synchronous transaction.",
+          "given": ["transaction(() => {})"],
+          "when": "transaction(() => deferAsyncEffects(async () => {}))",
+          "then": "the call throws Error('deferAsyncEffects cannot be called during a sync transaction')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents asynchronous work from escaping a synchronous transaction boundary."
+        },
+        {
+          "testId": "increments-global-epoch",
+          "scenario": "The global epoch is advanced explicitly.",
+          "given": ["const before = getGlobalEpoch()"],
+          "when": "advanceGlobalEpoch()",
+          "then": "getGlobalEpoch() === before + 1",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins monotonic epoch advancement."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "Reactor interface",
+        "Transaction class",
+        "transactions singleton state",
+        "global epoch and transaction inspection functions",
+        "reactor traversal helper",
+        "change flushing helper",
+        "atom change and cleanup helpers",
+        "global epoch advancement function",
+        "synchronous transaction API",
+        "transaction batching API",
+        "asynchronous effects API"
+      ],
+      "moduleLevelCode": "import { _Atom } from './Atom'\nimport { GLOBAL_START_EPOCH } from './constants'\nimport { singleton } from './helpers'\nimport { Child, Signal } from './types'\n\nconst inst = singleton('transactions', () => ({\n\t// The current epoch (global to all atoms).\n\tglobalEpoch: GLOBAL_START_EPOCH + 1,\n\t// Whether any transaction is reacting.\n\tglobalIsReacting: false,\n\tcurrentTransaction: null as Transaction | null,\n\n\tcleanupReactors: null as null | Set<Reactor>,\n}))\n\nlet traverseReactors: Set<Reactor>",
+      "exports": [
+        { "name": "getGlobalEpoch", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getIsInTransaction", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "atomDidChange", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "advanceGlobalEpoch", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "transaction", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "transact", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "deferAsyncEffects", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "_Atom", "module": "./Atom", "alias": null, "kind": "internal" },
+        { "symbol": "GLOBAL_START_EPOCH", "module": "./constants", "alias": null, "kind": "internal" },
+        { "symbol": "singleton", "module": "./helpers", "alias": null, "kind": "internal" },
+        { "symbol": "Child", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "Signal", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__Transaction#class:Transaction",
+        "unitKind": "class",
+        "name": "Transaction",
+        "qualifiedName": "Transaction",
+        "parentUnitId": null,
+        "startLine": 11,
+        "endLine": 65,
+        "isBehavioral": true,
+        "source": "class Transaction {\n\tasyncProcessCount = 0\n\tconstructor(\n\t\tpublic readonly parent: Transaction | null,\n\t\tpublic readonly isSync: boolean\n\t) {}\n\n\tinitialAtomValues = new Map<_Atom, any>()\n\n\t// eslint-disable-next-line tldraw/no-setter-getter\n\tget isRoot() {\n\t\treturn this.parent === null\n\t}\n\n\tcommit() {\n\t\tif (this.isRoot) {\n\t\t\t// For root transactions, flush changed atoms\n\t\t\tflushChanges(this.initialAtomValues.keys())\n\t\t\treturn\n\t\t}\n\t\t// For transactions with parents, add the transaction's initial values to the parent's, so\n\t\t// an outer rollback can still undo them (T7). This must come before any \"are we reacting?\" special case: a nested\n\t\t// transaction committed by an effect during the reaction phase used to skip this fold and\n\t\t// its changes survived the outer rollback.\n\t\t// A parent that has recorded nothing yet adopts the map outright: this transaction is\n\t\t// finished with it, and the common nested case is a single inner transaction doing all\n\t\t// the writes.\n\t\tconst parentValues = this.parent!.initialAtomValues\n\t\tif (parentValues.size === 0) {\n\t\t\tthis.parent!.initialAtomValues = this.initialAtomValues\n\t\t\treturn\n\t\t}\n\t\tthis.initialAtomValues.forEach((value, atom) => {\n\t\t\tif (!parentValues.has(atom)) {\n\t\t\t\tparentValues.set(atom, value)\n\t\t\t}\n\t\t})\n\t}\n\n\t/**\n\t * Abort the transaction. Restores every atom changed in this transaction to its initial\n\t * value, then commits. Must be called while this is still `inst.currentTransaction`, so that\n\t * the restoring sets are recorded against it instead of each flushing effects on their own.\n\t *\n\t * @public\n\t */\n\tabort() {\n\t\tinst.globalEpoch++\n\n\t\tthis.initialAtomValues.forEach((value, atom) => {\n\t\t\tatom.set(value)\n\t\t\tatom.historyBuffer?.clear()\n\t\t})\n\n\t\tthis.commit()",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__Transaction#class:Transaction",
+          "fileId": "packages/state/src/lib/transactions.ts__Transaction",
+          "unitKind": "class",
+          "name": "Transaction",
+          "qualifiedName": "Transaction",
+          "parentUnitId": null,
+          "startLine": 11,
+          "endLine": 65,
+          "signature": "class Transaction",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "parent",
+              "kind": "property",
+              "type": "Transaction | null",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "isSync",
+              "kind": "property",
+              "type": "boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "asyncProcessCount",
+              "kind": "property",
+              "type": "number",
+              "default": "0",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "initialAtomValues",
+              "kind": "property",
+              "type": "Map<_Atom, any>",
+              "default": "new Map<_Atom, any>()",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "isRoot",
+              "kind": "getter",
+              "type": "boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "commit",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "abort",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Transaction represents a scope for tracking atom changes, with optional nesting under a parent transaction. It exposes transaction state and lifecycle operations for committing or aborting the scope.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "f4a2eff8e1b2e11feb06f9dbe991b7fa9073d3b554fc4816e76100dada9cf3e5"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__Transaction.commit#method:Transaction.commit",
+        "unitKind": "method",
+        "name": "commit",
+        "qualifiedName": "Transaction.commit",
+        "parentUnitId": "packages/state/src/lib/transactions.ts__Transaction#class:Transaction",
+        "startLine": 25,
+        "endLine": 46,
+        "isBehavioral": true,
+        "source": "\tcommit() {\n\t\tif (this.isRoot) {\n\t\t\t// For root transactions, flush changed atoms\n\t\t\tflushChanges(this.initialAtomValues.keys())\n\t\t\treturn\n\t\t}\n\t\t// For transactions with parents, add the transaction's initial values to the parent's, so\n\t\t// an outer rollback can still undo them (T7). This must come before any \"are we reacting?\" special case: a nested\n\t\t// transaction committed by an effect during the reaction phase used to skip this fold and\n\t\t// its changes survived the outer rollback.\n\t\t// A parent that has recorded nothing yet adopts the map outright: this transaction is\n\t\t// finished with it, and the common nested case is a single inner transaction doing all\n\t\t// the writes.\n\t\tconst parentValues = this.parent!.initialAtomValues\n\t\tif (parentValues.size === 0) {\n\t\t\tthis.parent!.initialAtomValues = this.initialAtomValues\n\t\t\treturn\n\t\t}\n\t\tthis.initialAtomValues.forEach((value, atom) => {\n\t\t\tif (!parentValues.has(atom)) {\n\t\t\t\tparentValues.set(atom, value)\n\t\t\t}",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__Transaction.commit#method:Transaction.commit",
+          "fileId": "packages/state/src/lib/transactions.ts__Transaction.commit",
+          "unitKind": "method",
+          "name": "commit",
+          "qualifiedName": "Transaction.commit",
+          "parentUnitId": "packages/state/src/lib/transactions.ts__Transaction#class:Transaction",
+          "startLine": 25,
+          "endLine": 46,
+          "signature": "commit()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The transaction has an initialized initialAtomValues collection.",
+            "A non-root transaction has a parent transaction."
+          ],
+          "postconditions": [
+            "For a root transaction, flushChanges is called with the root transaction's initially recorded atom keys.",
+            "For a nested transaction whose parent has no recorded initial values, the parent adopts this transaction's initialAtomValues collection.",
+            "For a nested transaction whose parent already has recorded values, every atom initially recorded by this transaction but absent from the parent is added to the parent with this transaction's initial value.",
+            "Nested transaction values already recorded by the parent are not overwritten."
+          ],
+          "invariants": [
+            "Committing a nested transaction preserves the earliest initial value recorded for each atom in the parent transaction.",
+            "Only root transactions flush changed atoms."
+          ],
+          "edgeCases": [
+            "A root transaction with no initially recorded atoms calls flushChanges with an empty key collection.",
+            "A nested transaction whose parent initialAtomValues is empty transfers the collection directly without iterating and merging entries.",
+            "When both nested and parent transactions contain an atom, the parent's existing initial value is retained.",
+            "When the nested transaction contains no initial values and the parent already contains values, the parent remains unchanged."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "For a nested transaction with an empty parent initialAtomValues collection, assigns this transaction's initialAtomValues to parent.initialAtomValues.",
+            "For a nested transaction with a non-empty parent initialAtomValues collection, adds previously absent atom/value entries to parent.initialAtomValues."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "flushChanges", "source": "packages/state/src/lib/transactions.ts", "kind": "internal" }],
+          "symbolReferences": ["initialAtomValues", "parent", "isRoot"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits a transaction. Root transactions flush their changed atoms, while nested transactions propagate their initial atom values to the parent so an outer rollback can restore the pre-transaction state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commit() is called.",
+              "then": "flushChanges is called once with the keys of A and B, and no parent transaction state is modified.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commit() is called.",
+              "then": "The parent retains A1 and continues to record B0, while A0 is not inserted because the parent already contains atom A.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commit() is called.",
+              "then": "The parent adopts the nested transaction's initialAtomValues collection, including A0.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4b2cb3b3560232fe02f3ccd24ce0446eb4170c32f274a9dc4917e7154497ab7d"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__Transaction.abort#method:Transaction.abort",
+        "unitKind": "method",
+        "name": "abort",
+        "qualifiedName": "Transaction.abort",
+        "parentUnitId": "packages/state/src/lib/transactions.ts__Transaction#class:Transaction",
+        "startLine": 48,
+        "endLine": 64,
+        "isBehavioral": true,
+        "source": "\t}\n\n\t/**\n\t * Abort the transaction. Restores every atom changed in this transaction to its initial\n\t * value, then commits. Must be called while this is still `inst.currentTransaction`, so that\n\t * the restoring sets are recorded against it instead of each flushing effects on their own.\n\t *\n\t * @public\n\t */\n\tabort() {\n\t\tinst.globalEpoch++\n\n\t\tthis.initialAtomValues.forEach((value, atom) => {\n\t\t\tatom.set(value)\n\t\t\tatom.historyBuffer?.clear()\n\t\t})\n",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__Transaction.abort#method:Transaction.abort",
+          "fileId": "packages/state/src/lib/transactions.ts__Transaction.abort",
+          "unitKind": "method",
+          "name": "abort",
+          "qualifiedName": "Transaction.abort",
+          "parentUnitId": "packages/state/src/lib/transactions.ts__Transaction#class:Transaction",
+          "startLine": 48,
+          "endLine": 64,
+          "signature": "abort()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The transaction is the current active transaction for the instance.",
+            "The transaction's initial atom values are available for iteration."
+          ],
+          "postconditions": [
+            "The global epoch has been incremented by one.",
+            "Each atom recorded in initialAtomValues has been set to its recorded initial value.",
+            "Each restored atom's history buffer has been cleared when present."
+          ],
+          "invariants": [
+            "Every atom in initialAtomValues is processed once during the abort operation.",
+            "Restoration uses the value captured when the atom first changed in this transaction."
+          ],
+          "edgeCases": [
+            "When initialAtomValues is empty, the global epoch is still incremented and no atoms or history buffers are changed.",
+            "When an atom has no historyBuffer, restoration proceeds without attempting to clear a buffer.",
+            "If atom.set or historyBuffer.clear throws, the error propagates and later entries may not be processed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Errors thrown by atom.set or historyBuffer.clear propagate to the caller."],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "inst.globalEpoch is incremented.",
+            "Each atom in initialAtomValues is set to its captured initial value.",
+            "Each present atom.historyBuffer in initialAtomValues is cleared."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "atom.set", "source": null, "kind": "external" },
+            { "name": "atom.historyBuffer.clear", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["inst.globalEpoch", "initialAtomValues", "atom.historyBuffer"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Aborts the current transaction by restoring every atom recorded with its initial value and clearing each restored atom's history buffer. The global transaction epoch is advanced before restoration.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Transaction.abort() is called on the active transaction.",
+              "then": "The global epoch increases by one, both atoms are restored to their recorded initial values, and the present history buffer is cleared.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "9f9289da00f12ecddc877226d3ce1e8d44ff6a549ce4bd3961a55e2e9e926cb4"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__getGlobalEpoch#function:getGlobalEpoch",
+        "unitKind": "function",
+        "name": "getGlobalEpoch",
+        "qualifiedName": "getGlobalEpoch",
+        "parentUnitId": null,
+        "startLine": 77,
+        "endLine": 87,
+        "isBehavioral": true,
+        "source": "}))\n\n/**\n * Gets the current global epoch, which is incremented every time any atom changes.\n * This is used to track changes across the entire reactive system.\n *\n * @returns The current global epoch number\n * @public\n */\nexport function getGlobalEpoch() {\n\treturn inst.globalEpoch",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__getGlobalEpoch#function:getGlobalEpoch",
+          "fileId": "packages/state/src/lib/transactions.ts__getGlobalEpoch",
+          "unitKind": "function",
+          "name": "getGlobalEpoch",
+          "qualifiedName": "getGlobalEpoch",
+          "parentUnitId": null,
+          "startLine": 77,
+          "endLine": 87,
+          "signature": "export function getGlobalEpoch()",
+          "parameters": [],
+          "returnType": "number",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["Returns the current global epoch number without modifying it."],
+          "invariants": ["The returned value reflects the global epoch maintained by the reactive system."],
+          "edgeCases": [
+            "The function accepts no arguments and returns the current epoch, including when the epoch is zero or has not changed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["inst.globalEpoch"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns the current global epoch used to track changes across the reactive system.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "8adb364778af8a8dacb794eff3c2428e3c5585e4f6c23c6d374077ea55339fa4"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__getIsInTransaction#function:getIsInTransaction",
+        "unitKind": "function",
+        "name": "getIsInTransaction",
+        "qualifiedName": "getIsInTransaction",
+        "parentUnitId": null,
+        "startLine": 89,
+        "endLine": 97,
+        "isBehavioral": true,
+        "source": "\n/**\n * Whether a transaction (sync or async) is currently open. While one is, atom changes are\n * recorded but their children are not traversed until it commits.\n *\n * @internal\n */\nexport function getIsInTransaction() {\n\treturn inst.currentTransaction !== null",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__getIsInTransaction#function:getIsInTransaction",
+          "fileId": "packages/state/src/lib/transactions.ts__getIsInTransaction",
+          "unitKind": "function",
+          "name": "getIsInTransaction",
+          "qualifiedName": "getIsInTransaction",
+          "parentUnitId": null,
+          "startLine": 89,
+          "endLine": 97,
+          "signature": "export function getIsInTransaction()",
+          "parameters": [],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["Returns true exactly when a current transaction exists; otherwise returns false."],
+          "invariants": [
+            "The result reflects whether the current transaction reference is non-null at the time of the call."
+          ],
+          "edgeCases": [
+            "When no transaction is open, returns false.",
+            "When a synchronous or asynchronous transaction is open, returns true."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["inst.currentTransaction"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reports whether a synchronous or asynchronous transaction is currently open.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call getIsInTransaction().",
+              "then": "The function returns false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call getIsInTransaction().",
+              "then": "The function returns true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4fa8b7605aee4f678e94eca9dc88170dee3ddc9df7a5bc8e2bc51c15a2b2736b"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__traverseChild#function:traverseChild",
+        "unitKind": "function",
+        "name": "traverseChild",
+        "qualifiedName": "traverseChild",
+        "parentUnitId": null,
+        "startLine": 102,
+        "endLine": 114,
+        "isBehavioral": true,
+        "source": "// code, so nothing can re-enter and swap it mid-walk.\nlet traverseReactors: Set<Reactor>\n\nfunction traverseChild(child: Child) {\n\tif (child.lastTraversedEpoch === inst.globalEpoch) {\n\t\treturn\n\t}\n\n\tchild.lastTraversedEpoch = inst.globalEpoch\n\n\tif ('__isEffectScheduler' in child) {\n\t\ttraverseReactors.add(child as unknown as Reactor)\n\t} else {",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__traverseChild#function:traverseChild",
+          "fileId": "packages/state/src/lib/transactions.ts__traverseChild",
+          "unitKind": "function",
+          "name": "traverseChild",
+          "qualifiedName": "traverseChild",
+          "parentUnitId": null,
+          "startLine": 102,
+          "endLine": 114,
+          "signature": "function traverseChild(child: Child)",
+          "parameters": [
+            { "name": "child", "type": "Child", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "child is a non-null Child object with a lastTraversedEpoch property.",
+            "inst.globalEpoch is available."
+          ],
+          "postconditions": [
+            "If child.lastTraversedEpoch differed from inst.globalEpoch, child.lastTraversedEpoch equals inst.globalEpoch after the call.",
+            "If the child has a __isEffectScheduler property and was not already traversed in the current epoch, it is present in traverseReactors."
+          ],
+          "invariants": [
+            "A child is processed at most once for a given inst.globalEpoch value.",
+            "A child already marked with the current global epoch is not added to traverseReactors again by this function."
+          ],
+          "edgeCases": [
+            "When child.lastTraversedEpoch already equals inst.globalEpoch, the function returns without mutating the child or traverseReactors.",
+            "When the child has an own or inherited __isEffectScheduler property, it is registered in traverseReactors after its epoch marker is updated.",
+            "When the child does not have a __isEffectScheduler property, it is marked as traversed but is not registered in traverseReactors by the shown logic."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates child.lastTraversedEpoch to inst.globalEpoch when the child has not been traversed in the current epoch.",
+            "Adds effect-scheduler children to the module-level traverseReactors set."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Child", "Reactor", "inst.globalEpoch", "traverseReactors", "__isEffectScheduler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Marks a child as traversed for the current global epoch and registers it for reactor processing when it is an effect scheduler. Repeated traversal of the same child within the epoch has no effect.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "traverseChild(child) is called.",
+              "then": "child.lastTraversedEpoch is set to inst.globalEpoch and the child is added to traverseReactors.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "traverseChild(child) is called.",
+              "then": "The function performs no further processing and does not add the child to traverseReactors.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "97521b71d3fb1e4c22763f1c4019add4cfb3ff9bbf55dc19aca536ad26f9ab44"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__flushChanges#function:flushChanges",
+        "unitKind": "function",
+        "name": "flushChanges",
+        "qualifiedName": "flushChanges",
+        "parentUnitId": null,
+        "startLine": 116,
+        "endLine": 165,
+        "isBehavioral": true,
+        "source": "\t}\n}\n\n/**\n * Collect all of the reactors that need to run for an atom and run them. During the reaction\n * phase the affected effects are instead queued for the cleanup pass, so a change made by an\n * effect never interrupts the pass that is running (P4).\n *\n * @param atoms - The atoms to flush changes for.\n */\nfunction flushChanges(atoms: Iterable<_Atom>) {\n\tif (inst.globalIsReacting) {\n\t\tfor (const atom of atoms) {\n\t\t\ttraverseAtomForCleanup(atom)\n\t\t}\n\t\treturn\n\t}\n\n\tconst outerTxn = inst.currentTransaction\n\ttry {\n\t\t// clear the transaction stack. Transactions started by effects must be roots: the committing\n\t\t// transaction (if any) has already handed its changes to this flush.\n\t\tinst.currentTransaction = null\n\t\tinst.globalIsReacting = true\n\n\t\tconst reactors = new Set<Reactor>()\n\t\ttraverseReactors = reactors\n\t\tfor (const atom of atoms) {\n\t\t\tatom.children.visit(traverseChild)\n\t\t}\n\n\t\t// Run each reactor.\n\t\tfor (const r of reactors) {\n\t\t\tr.maybeScheduleEffect()\n\t\t}\n\n\t\tlet updateDepth = 0\n\t\twhile (inst.cleanupReactors?.size) {\n\t\t\tif (updateDepth++ > 1000) {\n\t\t\t\tthrow new Error('Reaction update depth limit exceeded')\n\t\t\t}\n\t\t\tconst reactors = inst.cleanupReactors\n\t\t\tinst.cleanupReactors = null\n\t\t\tfor (const r of reactors) {\n\t\t\t\tr.maybeScheduleEffect()\n\t\t\t}\n\t\t}\n\t} finally {\n\t\tinst.cleanupReactors = null\n\t\tinst.globalIsReacting = false",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__flushChanges#function:flushChanges",
+          "fileId": "packages/state/src/lib/transactions.ts__flushChanges",
+          "unitKind": "function",
+          "name": "flushChanges",
+          "qualifiedName": "flushChanges",
+          "parentUnitId": null,
+          "startLine": 116,
+          "endLine": 165,
+          "signature": "function flushChanges(atoms: Iterable<_Atom>)",
+          "parameters": [
+            {
+              "name": "atoms",
+              "type": "Iterable<_Atom>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["atoms is an iterable of atom instances."],
+          "postconditions": [
+            "Each reactor discovered from the supplied atoms is considered for effect scheduling.",
+            "Queued cleanup reactors are repeatedly scheduled until no cleanup reactors remain.",
+            "Global reaction state is cleared before normal completion or error propagation.",
+            "The active transaction context is preserved across the flush."
+          ],
+          "invariants": [
+            "While the reaction pass is active, inst.globalIsReacting is true.",
+            "Changes made while already reacting are queued for cleanup instead of starting a nested reaction pass.",
+            "Transactions started by effects are treated as root transactions during the flush.",
+            "A reactor is collected at most once per flush through the Set of reactors."
+          ],
+          "edgeCases": [
+            "When inst.globalIsReacting is already true, each supplied atom is traversed for cleanup and no immediate reactor scheduling pass is started.",
+            "When atoms is empty, no reactors are scheduled and the function completes without error.",
+            "When cleanup reactions continue beyond the permitted update depth, the function throws an Error with message 'Reaction update depth limit exceeded'.",
+            "If reactor scheduling or traversal throws, reaction state is cleared before the error propagates."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error when reaction update depth exceeds the limit.",
+              "Any error thrown by atom traversal or reactor scheduling is propagated after reaction state cleanup."
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "inst.currentTransaction is temporarily cleared while the flush runs.",
+            "inst.globalIsReacting is set during the reaction phase and cleared during cleanup.",
+            "The shared reactor traversal target is replaced with the current reactor Set.",
+            "inst.cleanupReactors is consumed and reset while cleanup reactors are scheduled."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "traverseAtomForCleanup",
+              "source": "packages/state/src/lib/transactions.ts",
+              "kind": "internal"
+            },
+            { "name": "atom.children.visit", "source": "_Atom", "kind": "internal" },
+            { "name": "traverseChild", "source": "packages/state/src/lib/transactions.ts", "kind": "internal" },
+            { "name": "Reactor.maybeScheduleEffect", "source": "Reactor", "kind": "internal" }
+          ],
+          "symbolReferences": ["_Atom", "Reactor", "inst"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Flushes the reactors affected by the supplied atoms and runs their scheduled effects. Changes occurring during reaction are deferred to cleanup rather than interrupting the active reaction pass.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Reaction update depth limit exceeded",
+              "role": "Error message raised when repeated cleanup reactions exceed the update depth limit."
+            },
+            { "kind": "magic-number", "value": "1000", "role": "Maximum cleanup reaction update depth before failure." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "flushChanges(atoms) is called",
+              "then": "Each atom is traversed for cleanup, no immediate reactor collection or scheduling pass is started, and the function returns normally.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "flushChanges(atoms) is called",
+              "then": "The affected reactors are collected, each is considered for effect scheduling, and any queued cleanup reactors are processed until the cleanup queue is empty.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "flushChanges(atoms) is called",
+              "then": "It throws an Error whose message is exactly 'Reaction update depth limit exceeded', and global reaction state is cleared.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "131bed5a9f734778142ae35f9968c17c956886207389b6caadd1cb23ae4a3bb8"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__atomDidChange#function:atomDidChange",
+        "unitKind": "function",
+        "name": "atomDidChange",
+        "qualifiedName": "atomDidChange",
+        "parentUnitId": null,
+        "startLine": 167,
+        "endLine": 184,
+        "isBehavioral": true,
+        "source": "\t\ttraverseReactors = undefined! // free memory\n\t}\n}\n\n/** @internal */\nexport function atomDidChange(atom: _Atom, previousValue: any) {\n\tif (inst.currentTransaction) {\n\t\t// If we are in a transaction, then all we have to do is preserve\n\t\t// the value of the atom at the start of the transaction in case\n\t\t// we need to roll back. Children are not traversed until the\n\t\t// transaction commits, which is why `Computed` must not trust its\n\t\t// traversal-based cache shortcut while a transaction is open.\n\t\tif (!inst.currentTransaction.initialAtomValues.has(atom)) {\n\t\t\tinst.currentTransaction.initialAtomValues.set(atom, previousValue)\n\t\t}\n\t} else {\n\t\t// If there is no transaction, flush the changes immediately.\n\t\tflushChanges([atom])",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__atomDidChange#function:atomDidChange",
+          "fileId": "packages/state/src/lib/transactions.ts__atomDidChange",
+          "unitKind": "function",
+          "name": "atomDidChange",
+          "qualifiedName": "atomDidChange",
+          "parentUnitId": null,
+          "startLine": 167,
+          "endLine": 184,
+          "signature": "export function atomDidChange(atom: _Atom, previousValue: any)",
+          "parameters": [
+            { "name": "atom", "type": "_Atom", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "previousValue",
+              "type": "any",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["atom is an atom instance compatible with the internal _Atom type."],
+          "postconditions": [
+            "If a transaction is active and the atom had no recorded initial value, its previousValue is stored as that transaction's initial value.",
+            "If no transaction is active, changes are flushed immediately for the supplied atom."
+          ],
+          "invariants": [
+            "Within a transaction, an atom's recorded initial value is not overwritten once present.",
+            "A transaction-active call does not flush changes immediately."
+          ],
+          "edgeCases": [
+            "When a transaction is active and the atom already has an initial value recorded, the existing value is preserved and no new value is stored.",
+            "When no transaction is active, the atom is passed as the sole element of the change list to immediate flushing."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "The active transaction's initialAtomValues map may be populated with the atom and previousValue."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "flushChanges", "source": null, "kind": "internal" }],
+          "symbolReferences": ["_Atom", "inst.currentTransaction", "initialAtomValues"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Records an atom's initial value while a transaction is active, preserving rollback state. When no transaction is active, it immediately flushes the changed atom.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "atomDidChange(atom, previousValue) is called.",
+              "then": "The map contains atom mapped to previousValue, and changes are not flushed immediately.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "atomDidChange(atom, previousValue) is called.",
+              "then": "flushChanges is invoked immediately with a single-element list containing atom.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "0c297881363aa9d50274607fa0858393f34e1b6769ba78724491d87b942bb3d4"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__traverseAtomForCleanup#function:traverseAtomForCleanup",
+        "unitKind": "function",
+        "name": "traverseAtomForCleanup",
+        "qualifiedName": "traverseAtomForCleanup",
+        "parentUnitId": null,
+        "startLine": 186,
+        "endLine": 189,
+        "isBehavioral": true,
+        "source": "}\n\nfunction traverseAtomForCleanup(atom: _Atom) {\n\ttraverseReactors = inst.cleanupReactors ??= new Set()",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__traverseAtomForCleanup#function:traverseAtomForCleanup",
+          "fileId": "packages/state/src/lib/transactions.ts__traverseAtomForCleanup",
+          "unitKind": "function",
+          "name": "traverseAtomForCleanup",
+          "qualifiedName": "traverseAtomForCleanup",
+          "parentUnitId": null,
+          "startLine": 186,
+          "endLine": 189,
+          "signature": "function traverseAtomForCleanup(atom: _Atom)",
+          "parameters": [
+            { "name": "atom", "type": "_Atom", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The supplied atom is an instance compatible with _Atom.",
+            "The transaction context required by the cleanup traversal is available."
+          ],
+          "postconditions": [
+            "The transaction instance has a cleanupReactors set initialized if it was previously absent.",
+            "The traversal reactor state is assigned from the transaction instance's cleanupReactors set."
+          ],
+          "invariants": ["cleanupReactors is represented as a Set when initialized."],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Initializes inst.cleanupReactors when it is nullish.",
+            "Assigns traverseReactors to inst.cleanupReactors."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["_Atom", "inst.cleanupReactors", "traverseReactors", "Set"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Prepares cleanup traversal state for the supplied atom by using the transaction instance's cleanup-reactor set.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "56bb4e40aa10003a978b5feddd43fd902cd7bd76fdf70339d0244a14ea094f75"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__advanceGlobalEpoch#function:advanceGlobalEpoch",
+        "unitKind": "function",
+        "name": "advanceGlobalEpoch",
+        "qualifiedName": "advanceGlobalEpoch",
+        "parentUnitId": null,
+        "startLine": 191,
+        "endLine": 194,
+        "isBehavioral": true,
+        "source": "}\n\n/** @internal */\nexport function advanceGlobalEpoch() {",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__advanceGlobalEpoch#function:advanceGlobalEpoch",
+          "fileId": "packages/state/src/lib/transactions.ts__advanceGlobalEpoch",
+          "unitKind": "function",
+          "name": "advanceGlobalEpoch",
+          "qualifiedName": "advanceGlobalEpoch",
+          "parentUnitId": null,
+          "startLine": 191,
+          "endLine": 194,
+          "signature": "export function advanceGlobalEpoch()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["The function returns normally without producing a value."],
+          "invariants": [],
+          "edgeCases": ["Called with no arguments; returns normally without observable effects."],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides an exported hook for advancing the global epoch. The current implementation completes without observable effects.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1d268b07f0b3f68c8851ba0e7ed2986f7f4b1d8bfbe44d804d3523c9150d0886"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__transaction#function:transaction",
+        "unitKind": "function",
+        "name": "transaction",
+        "qualifiedName": "transaction",
+        "parentUnitId": null,
+        "startLine": 196,
+        "endLine": 304,
+        "isBehavioral": true,
+        "source": "}\n\n/**\n * Batches state updates, deferring side effects until after the transaction completes.\n * Unlike {@link transact}, this function always creates a new transaction, allowing for nested transactions.\n *\n * @example\n * ```ts\n * const firstName = atom('firstName', 'John')\n * const lastName = atom('lastName', 'Doe')\n *\n * react('greet', () => {\n *   console.log(`Hello, ${firstName.get()} ${lastName.get()}!`)\n * })\n *\n * // Logs \"Hello, John Doe!\"\n *\n * transaction(() => {\n *  firstName.set('Jane')\n *  lastName.set('Smith')\n * })\n *\n * // Logs \"Hello, Jane Smith!\"\n * ```\n *\n * If the function throws, the transaction is aborted and any signals that were updated during the transaction revert to their state before the transaction began. An aborted transaction still flushes effects: effects whose parents went through a change-and-restore round trip are checked again and, if a parent's value differs from what they last saw (an atom they read directly always will), run once more with the restored values.\n *\n * @example\n * ```ts\n * const firstName = atom('firstName', 'John')\n * const lastName = atom('lastName', 'Doe')\n *\n * react('greet', () => {\n *   console.log(`Hello, ${firstName.get()} ${lastName.get()}!`)\n * })\n *\n * // Logs \"Hello, John Doe!\"\n *\n * transaction(() => {\n *  firstName.set('Jane')\n *  throw new Error('oops')\n * })\n *\n * // firstName.get() === 'John'\n * // Logs \"Hello, John Doe!\" again: effects whose parents were changed and restored still run,\n * // and observe the restored values.\n * ```\n *\n * A `rollback` callback is passed into the function.\n * Calling this will prevent the transaction from committing and will revert any signals that were updated during the transaction to their state before the transaction began.\n *\n * @example\n * ```ts\n * const firstName = atom('firstName', 'John')\n * const lastName = atom('lastName', 'Doe')\n *\n * react('greet', () => {\n *   console.log(`Hello, ${firstName.get()} ${lastName.get()}!`)\n * })\n *\n * // Logs \"Hello, John Doe!\"\n *\n * transaction((rollback) => {\n *  firstName.set('Jane')\n *  lastName.set('Smith')\n *  rollback()\n * })\n *\n * // firstName.get() === 'John'\n * // lastName.get() === 'Doe'\n * // Logs \"Hello, John Doe!\" again, as above.\n * ```\n *\n * @param fn - The function to run in a transaction, called with a function to roll back the change.\n * @returns The return value of the function\n * @public\n */\nexport function transaction<T>(fn: (rollback: () => void) => T) {\n\tconst txn = new Transaction(inst.currentTransaction, true)\n\n\tinst.currentTransaction = txn\n\n\ttry {\n\t\tlet result = undefined as T | undefined\n\t\tlet rollback = false\n\n\t\ttry {\n\t\t\tresult = fn(() => (rollback = true))\n\t\t} catch (e) {\n\t\t\ttxn.abort()\n\t\t\tthrow e\n\t\t}\n\n\t\tif (inst.currentTransaction !== txn) {\n\t\t\tthrow new Error('Transaction boundaries overlap')\n\t\t}\n\n\t\tif (rollback) {\n\t\t\ttxn.abort()\n\t\t} else {\n\t\t\ttxn.commit()\n\t\t}\n\n\t\treturn result\n\t} finally {\n\t\tinst.currentTransaction = txn.parent\n\t}\n}\n",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__transaction#function:transaction",
+          "fileId": "packages/state/src/lib/transactions.ts__transaction",
+          "unitKind": "function",
+          "name": "transaction",
+          "qualifiedName": "transaction",
+          "parentUnitId": null,
+          "startLine": 196,
+          "endLine": 304,
+          "signature": "export function transaction<T>(fn: (rollback: () => void) => T)",
+          "parameters": [
+            {
+              "name": "fn",
+              "type": "(rollback: () => void) => T",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "T",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T"],
+          "logicOutline": [],
+          "preconditions": ["fn is callable and accepts a rollback callback."],
+          "postconditions": [
+            "A new transaction is committed when the callback completes without requesting rollback.",
+            "The new transaction is aborted when rollback is requested or the callback throws.",
+            "The current transaction is restored to the parent transaction before the function exits.",
+            "The callback's return value is returned when no exception is thrown."
+          ],
+          "invariants": [
+            "The transaction created by this function is always nested under the transaction that was current on entry.",
+            "The transaction boundary must remain associated with the newly created transaction until commit or abort begins.",
+            "The parent transaction is restored even when the callback or boundary validation throws."
+          ],
+          "edgeCases": [
+            "If the callback calls rollback, all signals updated during this transaction are reverted to their entry state and the callback's return value is still returned.",
+            "If the callback throws, the transaction is aborted, the updated signals are reverted, and the same thrown value is rethrown.",
+            "If transaction boundaries overlap before commit or abort, the function throws an Error instead of committing or rolling back normally.",
+            "Nested calls create distinct transactions rather than reusing the current transaction."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "The original value thrown by fn is rethrown after aborting the transaction.",
+              "Error when the current transaction is no longer the transaction created by this call, with message \"Transaction boundaries overlap\"."
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "inst.currentTransaction is set to the newly created transaction during callback execution and restored to its parent in the finally block.",
+            "The transaction's tracked signal state is committed or aborted through Transaction.commit or Transaction.abort."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "Transaction", "source": "packages/state/src/lib/transactions.ts", "kind": "internal" },
+            { "name": "Transaction.abort", "source": "Transaction", "kind": "internal" },
+            { "name": "Transaction.commit", "source": "Transaction", "kind": "internal" },
+            { "name": "fn", "source": "caller-provided callback", "kind": "internal" }
+          ],
+          "symbolReferences": ["Transaction", "inst.currentTransaction"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Runs a callback within a new transaction, batching state updates and committing them unless the callback throws or explicitly requests rollback. Returns the callback's value while restoring transactional state on abort and preserving deferred effect flushing behavior.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Transaction boundaries overlap",
+              "role": "Stable error message raised when the current transaction no longer matches the transaction created by this call."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "transaction(fn) is called.",
+              "then": "The callback runs in a newly created transaction, that transaction commits, the callback's value is returned, and the prior current transaction is restored.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "transaction(fn) is called.",
+              "then": "The transaction is aborted and its state changes are reverted, the callback's value is returned, and the prior current transaction is restored.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "transaction(fn) is called.",
+              "then": "The transaction is aborted, its state changes are reverted, the same thrown value is rethrown, and the prior current transaction is restored.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "bf4fc73cc985bc31c027e2cbf4436fe7b9e4dda49bcf6fdf46b52902ca1237f3"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__transact#function:transact",
+        "unitKind": "function",
+        "name": "transact",
+        "qualifiedName": "transact",
+        "parentUnitId": null,
+        "startLine": 306,
+        "endLine": 336,
+        "isBehavioral": true,
+        "source": " * Like {@link transaction}, but does not create a new transaction if there is already one in progress.\n * This is the preferred way to batch state updates when you don't need the rollback functionality.\n *\n * @example\n * ```ts\n * const count = atom('count', 0)\n * const doubled = atom('doubled', 0)\n *\n * react('update doubled', () => {\n *   console.log(`Count: ${count.get()}, Doubled: ${doubled.get()}`)\n * })\n *\n * // This batches both updates into a single reaction\n * transact(() => {\n *   count.set(5)\n *   doubled.set(count.get() * 2)\n * })\n * // Logs: \"Count: 5, Doubled: 10\"\n * ```\n *\n * @param fn - The function to run in a transaction\n * @returns The return value of the function\n * @public\n */\nexport function transact<T>(fn: () => T): T {\n\tif (inst.currentTransaction) {\n\t\treturn fn()\n\t}\n\treturn transaction(fn)\n}\n",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__transact#function:transact",
+          "fileId": "packages/state/src/lib/transactions.ts__transact",
+          "unitKind": "function",
+          "name": "transact",
+          "qualifiedName": "transact",
+          "parentUnitId": null,
+          "startLine": 306,
+          "endLine": 336,
+          "signature": "export function transact<T>(fn: () => T): T",
+          "parameters": [
+            { "name": "fn", "type": "() => T", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "T",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T"],
+          "logicOutline": [],
+          "preconditions": ["fn is a callable function."],
+          "postconditions": [
+            "The return value is the value returned by fn.",
+            "If no transaction is active on entry, fn is executed through a new transaction.",
+            "If a transaction is already active on entry, no additional transaction is created."
+          ],
+          "invariants": ["The callback is invoked exactly once."],
+          "edgeCases": [
+            "When called during an existing transaction, fn executes directly in that transaction context.",
+            "When called outside an existing transaction, fn executes within a transaction created by transaction.",
+            "If fn throws, the thrown error propagates according to the active transaction path."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Errors thrown by fn are propagated."],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "transaction", "source": "internal", "kind": "internal" }],
+          "symbolReferences": ["inst.currentTransaction", "transaction"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Executes a callback within a transaction, reusing the current transaction when one is already active. It returns the callback's result.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "transact(fn) is called.",
+              "then": "fn is invoked directly without creating a nested transaction, and transact returns fn's value.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "transact(fn) is called.",
+              "then": "fn is executed through a transaction and transact returns fn's value.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "3d5e21832a19f10f9584dbae957b6b473b206f7bc0800b6304d35ab903fa3e25"
+        }
+      },
+      {
+        "unitId": "packages/state/src/lib/transactions.ts__deferAsyncEffects#function:deferAsyncEffects",
+        "unitKind": "function",
+        "name": "deferAsyncEffects",
+        "qualifiedName": "deferAsyncEffects",
+        "parentUnitId": null,
+        "startLine": 338,
+        "endLine": 421,
+        "isBehavioral": true,
+        "source": " * Defers the execution of asynchronous effects until they can be properly handled.\n * This function creates an asynchronous transaction context that batches state updates\n * across async operations while preventing conflicts with synchronous transactions.\n *\n * @example\n * ```ts\n * const data = atom('data', null)\n * const loading = atom('loading', false)\n *\n * await deferAsyncEffects(async () => {\n *   loading.set(true)\n *   const result = await fetch('/api/data')\n *   const json = await result.json()\n *   data.set(json)\n *   loading.set(false)\n * })\n * ```\n *\n * @param fn - The async function to execute within the deferred context\n * @returns A promise that resolves to the return value of the function\n * @throws Will throw if called during a synchronous transaction\n * @internal\n */\nexport async function deferAsyncEffects<T>(fn: () => Promise<T>) {\n\t// Can't kick off async transactions during a sync transaction because\n\t// the async transaction won't finish until after the sync transaction\n\t// is done.\n\tif (inst.currentTransaction?.isSync) {\n\t\tthrow new Error('deferAsyncEffects cannot be called during a sync transaction')\n\t}\n\n\t// Can't kick off async transactions during a reaction phase at the moment,\n\t// because the transaction stack is cleared after the reaction phase.\n\t// So wait until the path ahead is clear\n\twhile (inst.globalIsReacting) {\n\t\tawait new Promise((r) => queueMicrotask(() => r(null)))\n\t}\n\n\tconst txn = inst.currentTransaction ?? new Transaction(null, false)\n\n\t// don't think this can happen, but just in case\n\tif (txn.isSync) throw new Error('deferAsyncEffects cannot be called during a sync transaction')\n\n\tinst.currentTransaction = txn\n\ttxn.asyncProcessCount++\n\n\tlet result = undefined as T | undefined\n\n\t// `undefined` means \"did not throw\"; a thrown `undefined` is stored as `null` so it still counts.\n\tlet error = undefined as any\n\ttry {\n\t\t// Run the function.\n\t\tresult = await fn()\n\t} catch (e) {\n\t\t// Abort the transaction if the function throws.\n\t\terror = e ?? null\n\t}\n\n\tif (--txn.asyncProcessCount > 0) {\n\t\t// Other processes still share this transaction; it settles when the last one finishes.\n\t\tif (typeof error !== 'undefined') {\n\t\t\t// If the rollback was triggered, abort the transaction.\n\t\t\tthrow error\n\t\t} else {\n\t\t\treturn result\n\t\t}\n\t}\n\n\t// Settle while this is still the current transaction (see `Transaction.abort`): clearing it\n\t// first made every restoring set inside `abort()` flush effects on its own, so effects\n\t// observed half-restored state.\n\ttry {\n\t\tif (typeof error !== 'undefined') {\n\t\t\t// If the rollback was triggered, abort the transaction.\n\t\t\ttxn.abort()\n\t\t\tthrow error\n\t\t} else {\n\t\t\ttxn.commit()\n\t\t\treturn result\n\t\t}\n\t} finally {\n\t\tinst.currentTransaction = null\n\t}\n}",
+        "detail": {
+          "unitId": "packages/state/src/lib/transactions.ts__deferAsyncEffects#function:deferAsyncEffects",
+          "fileId": "packages/state/src/lib/transactions.ts__deferAsyncEffects",
+          "unitKind": "function",
+          "name": "deferAsyncEffects",
+          "qualifiedName": "deferAsyncEffects",
+          "parentUnitId": null,
+          "startLine": 338,
+          "endLine": 421,
+          "signature": "export async function deferAsyncEffects<T>(fn: () => Promise<T>)",
+          "parameters": [
+            {
+              "name": "fn",
+              "type": "() => Promise<T>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "Promise<T>",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T"],
+          "logicOutline": [],
+          "preconditions": [
+            "The function must not be called while the current transaction is synchronous.",
+            "fn must be an asynchronous function returning a Promise<T>."
+          ],
+          "postconditions": [
+            "The function's resolved value is returned when the asynchronous transaction completes successfully.",
+            "The transaction is committed when the final participating asynchronous process completes without error.",
+            "The transaction is aborted when the final participating asynchronous process observes an error.",
+            "The current transaction reference is cleared after the final transaction settlement."
+          ],
+          "invariants": [
+            "A synchronous transaction is never used for deferred asynchronous effects.",
+            "The transaction's async process count is incremented before fn executes and decremented before settlement or return.",
+            "A transaction shared by multiple asynchronous processes is settled only when its async process count reaches zero.",
+            "The transaction remains the current transaction while abort or commit performs restoration or effect processing."
+          ],
+          "edgeCases": [
+            "Called during a synchronous transaction: throws an Error immediately with the specified message.",
+            "Called while a reaction phase is active: waits through queued microtasks until the reaction phase ends before starting or joining a transaction.",
+            "The callback rejects or throws: the error is retained; the final participating process aborts the transaction and rethrows it.",
+            "The callback throws undefined: the thrown value is normalized to null and null is rethrown when the transaction settles.",
+            "Another asynchronous process still shares the transaction when this call finishes: the call returns or rethrows without committing or aborting the transaction.",
+            "No current transaction exists: a new asynchronous transaction is created."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error('deferAsyncEffects cannot be called during a sync transaction')",
+              "The error thrown or rejected by fn",
+              "null when fn throws or rejects with undefined"
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "inst.currentTransaction is set to the selected transaction and cleared after final settlement.",
+            "txn.asyncProcessCount is incremented before callback execution and decremented afterward."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "fn", "source": null, "kind": "external" },
+            { "name": "queueMicrotask", "source": null, "kind": "external" },
+            { "name": "Transaction", "source": null, "kind": "internal" },
+            { "name": "txn.abort", "source": "Transaction", "kind": "internal" },
+            { "name": "txn.commit", "source": "Transaction", "kind": "internal" }
+          ],
+          "symbolReferences": ["inst", "Transaction"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Executes an asynchronous function within a deferred transaction context that batches state updates across asynchronous operations. It prevents execution during synchronous transactions, waits for active reactions to clear, and commits or aborts the shared transaction when processing completes.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "deferAsyncEffects cannot be called during a sync transaction",
+              "role": "Error message raised when deferred asynchronous effects are started during a synchronous transaction."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call deferAsyncEffects with fn.",
+              "then": "The returned promise resolves to fn's value, and the created asynchronous transaction is committed after fn completes.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call deferAsyncEffects with any callback.",
+              "then": "The call throws an Error with message 'deferAsyncEffects cannot be called during a sync transaction', without executing the callback.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Await deferAsyncEffects(fn).",
+              "then": "The transaction is aborted and the returned promise rejects with the same error.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7c6312f44c55f3d5c78f648ad1ed99fe1028f2d929f93b0287dae0299ac383d9"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/state/src/lib/Atom.ts",
+    "packages/state/src/lib/constants.ts",
+    "packages/state/src/lib/helpers.ts",
+    "packages/state/src/lib/types.ts"
+  ],
+  "in": [
+    "packages/state/src/lib/Atom.ts",
+    "packages/state/src/lib/__tests__/errors.test.ts",
+    "packages/state/src/lib/__tests__/computed.test.ts",
+    "packages/state/src/lib/__tests__/transactions.test.ts",
+    "packages/state/src/lib/__tests__/propagation.test.ts",
+    "packages/state/src/lib/__tests__/localStorageAtom.test.ts",
+    "packages/state/src/lib/__tests__/history.test.ts",
+    "packages/state/src/lib/__tests__/EffectScheduler.test.ts",
+    "packages/state/src/lib/__tests__/fuzz.tlstate.test.ts",
+    "packages/state/src/lib/__tests__/deferAsyncEffects.test.ts",
+    "packages/state/src/lib/__tests__/atom.test.ts",
+    "packages/state/src/lib/__tests__/capture.test.ts",
+    "packages/state/src/lib/EffectScheduler.ts",
+    "packages/state/src/lib/Computed.ts"
+  ],
+  "externals": [],
+  "impact": {
+    "seeds": 13,
+    "callers": 12,
+    "impactedFiles": [
+      "packages/state/src/lib/__tests__/transactions.test.ts",
+      "packages/state/src/lib/Computed.ts",
+      "packages/state/src/lib/Atom.ts",
+      "packages/state/src/lib/EffectScheduler.ts",
+      "packages/state/src/lib/__tests__/fuzz.tlstate.test.ts"
+    ]
+  }
+}

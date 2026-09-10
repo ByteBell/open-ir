@@ -1,0 +1,59 @@
+{
+  "id": "xrepo-v6-4-lifecycle-fires-for-a-branch-that-was-never-shown-hard",
+  "question": "When part of a tree is not the part that actually got shown - it was superseded and replaced by a stand-in while it was still settling - the per-node enter and leave notifications for the superseded part still run, because the code that decides which nodes entered and which left compares only the old set against the new set. It has no notion of where the shown region stops, so nodes below that boundary are treated exactly like nodes the user is really looking at: their callbacks fire for a region that was never presented, and they fire against membership that was published without any record of which branch it belonged to, so an observer re-entering during publication sees the wrong extent. The concept that would fix this does not exist anywhere in the repository yet - there is no name to search for. Elsewhere in the folder the same hazard is handled on purpose: one library carries an explicit flag down the tree so that a subtree currently held back does not run its attach and detach work, another attaches and detaches only along the branch that is genuinely depended upon, and another funnels all observer notification through a single batching point so that membership and notification cannot interleave. Which files decide entered-and-left membership without a boundary, and which own the scoped-notification contract they have to be brought in line with?",
+  "anchor": {
+    "repo": "router",
+    "pinned_commit": "3dee5b2e9453d01a3172c73426959007b290b3fc",
+    "fix_pr": "https://github.com/TanStack/router/pull/8165",
+    "pr_number": 8165,
+    "pr_title": "fix(router-core): skip lifecycle callbacks below fallback boundaries",
+    "fix_merged": "2026-09-06",
+    "fix_merge_commit": "2f20c00224c5",
+    "parent_is_buggy": true
+  },
+  "counts": {
+    "min_repos": 4,
+    "min_files": 7
+  },
+  "repo_commits": {
+    "router": "3dee5b2e9453d01a3172c73426959007b290b3fc",
+    "react": "3a717e42438afac81020cdec297dadb5613a4304",
+    "jotai": "5c4ca26b0db5571114be58393e17854a771f7790",
+    "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76"
+  },
+  "expected": [
+    {
+      "repo": "router",
+      "knowledgeId": "328fd1db-0faf-59bd-b628-c446e782693a",
+      "files": [
+        "packages/router-core/src/router.ts",
+        "packages/router-core/src/load-client.ts",
+        "packages/router-core/src/load-server.ts"
+      ]
+    },
+    {
+      "repo": "react",
+      "knowledgeId": "2a9d1614-943b-44ad-b7cf-edda2f37ddf9",
+      "files": [
+        "packages/react-reconciler/src/ReactFiberCommitWork.js",
+        "packages/react-reconciler/src/ReactFiberOffscreenComponent.js"
+      ]
+    },
+    {
+      "repo": "jotai",
+      "knowledgeId": "581a242e-3f4c-45db-8e84-c69cf159ac44",
+      "files": ["src/vanilla/internals.ts"]
+    },
+    {
+      "repo": "query",
+      "knowledgeId": "0c574639-1088-4233-a793-3a4397e6c431",
+      "files": ["packages/query-core/src/notifyManager.ts"]
+    }
+  ],
+  "grader_notes": {
+    "why_cross_repo": "ANCHOR (real bug, TanStack/router PR #8165 'skip lifecycle callbacks below fallback boundaries', merged 2026-09-06 as 2f20c00224c5 - AFTER the pinned commit 3dee5b2e9453, so the pin is the buggy parent and the fix postdates the May 2026 cutoff). At the pin `runRouteLifecycle(router, previous, matches, owner?)` (packages/router-core/src/router.ts:931-936) decides entered/left membership purely by comparing the previous match set against the new one; it has no parameter describing where the rendered region stops, so onEnter/onLeave fire for matches below a fallback boundary that were never presented. commitMatches (load-client.ts) publishes membership with no record of which branch it belongs to, so an observer that synchronously re-enters during publishMatches sees the wrong extent. The fix introduces lifecycleEnd() and threads previousEnd/nextEnd through commitMatches, hydrate and the server loader. The citations own the scoped-notification contract correctly: React carries offscreenSubtreeIsHidden down the commit walk so a subtree held back behind a fallback does not run its layout effects (ReactFiberCommitWork.js, with the visibility model in ReactFiberOffscreenComponent.js); jotai mounts and unmounts only along the branch actually depended upon (src/vanilla/internals.ts mountAtom/unmountAtom/mountDependencies); query funnels every observer notification through one batching point so membership and notification cannot interleave (notifyManager.ts).",
+    "verification_method": "(1) `git merge-base --is-ancestor 3dee5b2e9453 2f20c00224c5` in router = true, mined from `pin..origin/main` so ancestry is guaranteed by construction. (2) _tools/verify_anchor.py: load-client.ts 2/2 and load-server.ts 3/3 removed lines verbatim at the pin. router.ts is pure addition, so per the rule that killed the query cache-key candidate it was verified by reading the pin DIRECTLY rather than from the fix's diff context: `git show <pin>:packages/router-core/src/router.ts` shows runRouteLifecycle with the four-parameter signature and no boundary argument, and `git grep lifecycleEnd <pin> -- packages/` returns ZERO hits, so the concept is genuinely absent from the buggy tree. (3) The `router` pin was missing from verify_anchor.py's PINS map entirely - router anchors could not be checked before this case; it has been added. (4) Every gold path confirmed with `git cat-file -e <pin>:<path>`, and router's route-scoped modules confirmed served by the openspecs graph at the pin. (5) Overlap check across every existing xrepo golden.json: 0 shared (repo,file) pairs - router had no gold files in any prior case.",
+    "difficulty_design": "Hardest available profile on the non-greppability axis: the missing concept has NO NAME at the pin, so there is no identifier, comment or type to search for - the file set can only be reached by reasoning about the mechanism. Complementary to v6-1, whose difficulty lived in file selection within one repo (11 candidate-looking files); here the in-repo gold is only 3 files and the difficulty is mechanism identification plus recognising the same contract in three libraries that share no vocabulary for it (lifecycleEnd vs offscreenSubtreeIsHidden vs mountDependencies vs notifyManager.batch). Gold is 7 files, at the >=7 floor from the measured difficulty predictors.",
+    "rejected_candidates": "TanStack/router #8169 'preserve shouldThrow in route-scoped hooks' looked ideal on size (15 files, all 100% bug-live at the pin, 0 gold overlap) but fails the greppability screen: `git grep shouldThrow` at the pin hits 9 of the 15 gold files, so one identifier unlocks most of the answer - medium, not hard. TanStack/query #10571 'resolve query client outside memos' is bug-live 7/7 but solid-query-only, with no cross-repo analogue worth citing."
+  }
+}

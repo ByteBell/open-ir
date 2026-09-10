@@ -1,0 +1,889 @@
+{
+  "relativePath": "packages/lib/bookings/getRoutedUsers.ts",
+  "language": "typescript",
+  "sha256": "0fca38de0f43a68dd43719318af8ccd12851f4a2485a2034e77079ef3542735d",
+  "sizeBytes": 6511,
+  "tokenCount": 1628,
+  "lineCount": 212,
+  "analysedAt": "2026-08-27T17:37:11.066Z",
+  "analysis": {
+    "module": {
+      "purpose": "Provides host normalization, routing filters, delegation-credential enrichment, and round-robin segment matching for booking event types.",
+      "summary": "This module prepares booking hosts for downstream scheduling flows. It filters routed users while preserving fixed users and contact owners, normalizes explicit hosts versus fallback users, enriches hosts with delegation credentials, and restricts round-robin hosts using team-member attribute segmentation. It supports both synchronous transformations and asynchronous organization, credential, and segmentation lookups.",
+      "businessContext": "Supports Cal.com team booking and round-robin assignment. Failures can route bookings to incorrect hosts, omit eligible members, or prevent delegated credentials from being used.",
+      "classes": [],
+      "functions": [
+        "getRoutedUsersWithContactOwnerAndFixedUsers (~L15-38): Filters users according to routed members and booking exceptions",
+        "findMatchingTeamMembersIdsForEventRRSegment (~L40-63): Resolves team members matching event round-robin segmentation",
+        "getNormalizedHosts (~L91-123): Converts explicit hosts or users into normalized scheduling hosts",
+        "getNormalizedHostsWithDelegationCredentials (~L125-188): Normalizes hosts and enriches them with delegated credentials",
+        "findMatchingHostsWithEventSegment (~L192-216): Filters hosts against event segment team-member matches"
+      ],
+      "keywords": [
+        "round-robin routing",
+        "team member segmentation",
+        "delegation credentials",
+        "contact owner",
+        "fixed hosts",
+        "fallback hosts",
+        "host normalization",
+        "attribute logic"
+      ],
+      "ontologyConcepts": [
+        "routing",
+        "round-robin assignment",
+        "segmentation",
+        "credential delegation",
+        "fallback selection",
+        "host eligibility"
+      ],
+      "businessEntities": ["User", "Host", "Team", "EventType", "Credential", "Contact Owner"],
+      "systemCapabilities": [
+        "Filter routed booking users",
+        "Normalize booking hosts",
+        "Enrich hosts with delegated credentials",
+        "Match team members by attributes",
+        "Apply round-robin segment eligibility"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../delegationCredential/server",
+          "symbols": ["enrichHostsWithDelegationCredentials"],
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          },
+          "resolvedRelativePath": "packages/lib/delegationCredential/server.ts",
+          "resolvedFileId": "packages/lib/delegationCredential/server.ts",
+          "resolvedHint": "packages/lib/delegationCredential/server.ts"
+        },
+        {
+          "spec": "../getOrgIdFromMemberOrTeamId",
+          "symbols": ["getOrgIdFromMemberOrTeamId"],
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          },
+          "resolvedRelativePath": "packages/lib/getOrgIdFromMemberOrTeamId.ts",
+          "resolvedFileId": "packages/lib/getOrgIdFromMemberOrTeamId.ts",
+          "resolvedHint": "packages/lib/bookings/getOrgIdFromMemberOrTeamId.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          }
+        },
+        {
+          "spec": "@calcom/lib/raqb/findTeamMembersMatchingAttributeLogic",
+          "symbols": ["findTeamMembersMatchingAttributeLogic"],
+          "package": "@calcom/lib",
+          "subpath": "raqb/findTeamMembersMatchingAttributeLogic",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "spec": "@calcom/lib/raqb/types",
+          "symbols": ["AttributesQueryValue"],
+          "package": "@calcom/lib",
+          "subpath": "raqb/types",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "package": "@calcom/lib",
+          "subpath": "safeStringify",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 4,
+            "endLine": 4
+          }
+        },
+        {
+          "spec": "@calcom/prisma/client",
+          "symbols": ["RRResetInterval"],
+          "package": "@calcom/prisma",
+          "subpath": "client",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 5,
+            "endLine": 5
+          }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["RRTimestampBasis", "SchedulingType"],
+          "package": "@calcom/prisma",
+          "subpath": "enums",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 6,
+            "endLine": 7
+          }
+        },
+        {
+          "spec": "@calcom/types/Credential",
+          "symbols": ["CredentialPayload"],
+          "package": "@calcom/types",
+          "subpath": "Credential",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes debug logging when routed-user filtering is applied."],
+        "network": [
+          "Delegates team-member segmentation lookup to findTeamMembersMatchingAttributeLogic.",
+          "Delegates organization lookup and credential enrichment to imported services."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "getRoutedUsersWithContactOwnerAndFixedUsers",
+          "shape": "export const getRoutedUsersWithContactOwnerAndFixedUsers = <T extends { id: number; isFixed?: boolean; email: string }>({ routedTeamMemberIds, users, contactOwnerEmail }: { routedTeamMemberIds: number[] | null; users: T[]; contactOwnerEmail: string | null }) =>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EventType",
+          "shape": "export type EventType = { assignAllTeamMembers: boolean; assignRRMembersUsingSegment: boolean; rrSegmentQueryValue: AttributesQueryValue | null | undefined; team: { id: number; parentId: number | null; rrResetInterval: RRResetInterval | null; rrTimestampBasis: RRTimestampBasis } | null; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getNormalizedHosts",
+          "shape": "export function getNormalizedHosts<User extends BaseUser, Host extends BaseHost<User>>({ eventType }: { eventType: { schedulingType: SchedulingType | null; hosts?: Host[]; users: User[]; }; })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getNormalizedHostsWithDelegationCredentials",
+          "shape": "export async function getNormalizedHostsWithDelegationCredentials<User extends BaseUserWithCredentialPayload, Host extends BaseHost<User>>({ eventType }: { eventType: { schedulingType: SchedulingType | null; hosts?: Host[]; users: User[]; teamId?: number; }; })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "findMatchingHostsWithEventSegment",
+          "shape": "export async function findMatchingHostsWithEventSegment<User extends BaseUser>({ eventType, hosts }: { eventType: EventType; hosts: { isFixed: boolean; user: User; priority?: number | null; weight?: number | null; createdAt: Date | null; }[]; })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "findTeamMembersMatchingAttributeLogic",
+          "shape": "findTeamMembersMatchingAttributeLogic({ attributesQueryValue: eventType.rrSegmentQueryValue ?? null, teamId: eventType.team.id, orgId: eventType.team.parentId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "enrichHostsWithDelegationCredentials",
+          "shape": "enrichHostsWithDelegationCredentials({ orgId: firstUserOrgId ?? null, hosts: hostsWithoutDelegationCredential ?? null })",
+          "resolvedRelativePath": "packages/lib/delegationCredential/server.ts",
+          "resolvedFileId": "packages/lib/delegationCredential/server.ts"
+        },
+        {
+          "name": "getOrgIdFromMemberOrTeamId",
+          "shape": "getOrgIdFromMemberOrTeamId({ memberId: firstHost?.user?.id ?? null, teamId: eventType.teamId })",
+          "resolvedRelativePath": "packages/lib/getOrgIdFromMemberOrTeamId.ts",
+          "resolvedFileId": "packages/lib/getOrgIdFromMemberOrTeamId.ts"
+        },
+        {
+          "name": "SchedulingType",
+          "shape": "SchedulingType.COLLECTIVE",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "AttributesQueryValue",
+          "shape": "rrSegmentQueryValue: AttributesQueryValue | null | undefined",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CredentialPayload",
+          "shape": "credentials: CredentialPayload[]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "routed-user fallback",
+          "intent": "Returns all users when no routed member identifiers are provided.",
+          "structureKind": "branch",
+          "predicate": "!routedTeamMemberIds || !routedTeamMemberIds.length",
+          "branchOutcomes": ["return users", "filter routed, fixed, or contact-owner users"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 28,
+            "endLine": 30
+          }
+        },
+        {
+          "name": "segment eligibility guards",
+          "intent": "Skips segmentation when event configuration or parent organization data is unavailable.",
+          "structureKind": "branch",
+          "predicate": "isSegmentationDisabled",
+          "branchOutcomes": ["return null", "continue with segmentation lookup"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 45,
+            "endLine": 52
+          }
+        },
+        {
+          "name": "explicit-host normalization",
+          "intent": "Maps configured hosts into the normalized host representation.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 101,
+            "endLine": 110
+          }
+        },
+        {
+          "name": "fallback-user normalization",
+          "intent": "Builds fallback hosts from event users when explicit hosts are unavailable.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 111,
+            "endLine": 123
+          }
+        },
+        {
+          "name": "delegated explicit-host enrichment",
+          "intent": "Looks up organization context and enriches configured hosts with delegated credentials.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 137,
+            "endLine": 159
+          }
+        },
+        {
+          "name": "delegated fallback-host enrichment",
+          "intent": "Builds fallback hosts and enriches them using the first user's organization.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 160,
+            "endLine": 187
+          }
+        },
+        {
+          "name": "segment host filtering",
+          "intent": "Retains hosts whose users belong to the matched round-robin segment.",
+          "structureKind": "branch",
+          "predicate": "if (!matchingRRTeamMembers) return true;",
+          "branchOutcomes": ["retain every host", "retain only matching users"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 210,
+            "endLine": 214
+          }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "getRoutedUsersWithContactOwnerAndFixedUsers",
+          "signature": "export const getRoutedUsersWithContactOwnerAndFixedUsers = <\n  T extends { id: number; isFixed?: boolean; email: string }\n>({\n  routedTeamMemberIds,\n  users,\n  contactOwnerEmail,\n}: {\n  routedTeamMemberIds: number[] | null;\n  users: T[];\n  contactOwnerEmail: string | null;\n}) =>",
+          "generics": "<\n  T extends { id: number; isFixed?: boolean; email: string }\n>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 15,
+            "endLine": 24
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getNormalizedHosts",
+          "signature": "export function getNormalizedHosts<User extends BaseUser, Host extends BaseHost<User>>({\n  eventType,\n}: {\n  eventType: {\n    schedulingType: SchedulingType | null;\n    hosts?: Host[];\n    users: User[];\n  };\n})",
+          "generics": "<User extends BaseUser, Host extends BaseHost<User>>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 91,
+            "endLine": 100
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getNormalizedHostsWithDelegationCredentials",
+          "signature": "export async function getNormalizedHostsWithDelegationCredentials<\n  User extends BaseUserWithCredentialPayload,\n  Host extends BaseHost<User>\n>({\n  eventType,\n}: {\n  eventType: {\n    schedulingType: SchedulingType | null;\n    hosts?: Host[];\n    users: User[];\n    teamId?: number;\n  };\n})",
+          "generics": "<\n  User extends BaseUserWithCredentialPayload,\n  Host extends BaseHost<User>\n>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 125,
+            "endLine": 136
+          }
+        },
+        {
+          "kind": "function",
+          "name": "findMatchingHostsWithEventSegment",
+          "signature": "export async function findMatchingHostsWithEventSegment<User extends BaseUser>({\n  eventType,\n  hosts,\n}: {\n  eventType: EventType;\n  hosts: {\n    isFixed: boolean;\n    user: User;\n    priority?: number | null;\n    weight?: number | null;\n    createdAt: Date | null;\n  }[];\n})",
+          "generics": "<User extends BaseUser>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 192,
+            "endLine": 206
+          }
+        },
+        {
+          "kind": "type",
+          "name": "EventType",
+          "signature": "export type EventType = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 79,
+            "endLine": 89
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "BaseUser",
+          "shape": "{\n  id: number;\n  email: string;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 65,
+            "endLine": 68
+          }
+        },
+        {
+          "kind": "type",
+          "name": "BaseHost",
+          "shape": "{\n  isFixed: boolean;\n  createdAt: Date;\n  priority?: number | null;\n  weight?: number | null;\n  weightAdjustment?: number | null;\n  user: User;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 70,
+            "endLine": 77
+          }
+        },
+        {
+          "kind": "type",
+          "name": "EventType",
+          "shape": "{\n  assignAllTeamMembers: boolean;\n  assignRRMembersUsingSegment: boolean;\n  rrSegmentQueryValue: AttributesQueryValue | null | undefined;\n  team: {\n    id: number;\n    parentId: number | null;\n    rrResetInterval: RRResetInterval | null;\n    rrTimestampBasis: RRTimestampBasis;\n  } | null;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 79,
+            "endLine": 89
+          }
+        },
+        {
+          "kind": "type",
+          "name": "BaseUserWithCredentialPayload",
+          "shape": "BaseUser & { credentials: CredentialPayload[] }",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 124,
+            "endLine": 124
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "null or empty routedTeamMemberIds",
+          "handled": true,
+          "behavior": "Returns users without filtering.",
+          "anchor": {
+            "startLine": 28,
+            "endLine": 30
+          }
+        },
+        {
+          "inputShape": "event without segmentation configuration",
+          "handled": true,
+          "behavior": "Returns null and leaves host eligibility unrestricted.",
+          "anchor": {
+            "startLine": 45,
+            "endLine": 52
+          }
+        },
+        {
+          "inputShape": "empty explicit hosts or absent scheduling type",
+          "handled": true,
+          "behavior": "Uses event users as fallback hosts.",
+          "anchor": {
+            "startLine": 111,
+            "endLine": 123
+          }
+        },
+        {
+          "inputShape": "empty host list during credential enrichment",
+          "handled": true,
+          "behavior": "Passes a null member identifier and null organization fallback to enrichment.",
+          "anchor": {
+            "startLine": 146,
+            "endLine": 155
+          }
+        },
+        {
+          "inputShape": "no matching segment member list",
+          "handled": true,
+          "behavior": "Keeps every supplied host.",
+          "anchor": {
+            "startLine": 210,
+            "endLine": 214
+          }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Missing routed member identifiers preserve the original user list unchanged.",
+          "anchor": {
+            "startLine": 28,
+            "endLine": 30
+          }
+        },
+        {
+          "kind": "invariant",
+          "description": "Fixed users and the contact owner remain eligible during routed-user filtering.",
+          "anchor": {
+            "startLine": 35,
+            "endLine": 37
+          }
+        },
+        {
+          "kind": "invariant",
+          "description": "Explicit hosts and fallback users are mutually exclusive in normalized output.",
+          "anchor": {
+            "startLine": 101,
+            "endLine": 123
+          }
+        },
+        {
+          "kind": "invariant",
+          "description": "When segmentation has no matching result, all supplied hosts remain eligible.",
+          "anchor": {
+            "startLine": 210,
+            "endLine": 214
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide users and hosts conforming to the declared identity and credential shapes.",
+          "anchor": {
+            "startLine": 15,
+            "endLine": 24
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "The first host user's identifier is sufficient to determine the organization for credential enrichment.",
+          "anchor": {
+            "startLine": 146,
+            "endLine": 155
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Fixed hosts are intentionally excluded from segment matching when segmentation is enabled.",
+          "anchor": {
+            "startLine": 190,
+            "endLine": 192
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What concrete behavior does credential enrichment apply when organization lookup returns null?",
+          "affects": "getNormalizedHostsWithDelegationCredentials output and delegation credential behavior",
+          "anchor": {
+            "startLine": 152,
+            "endLine": 155
+          },
+          "resolution": null
+        },
+        {
+          "question": "What does findTeamMembersMatchingAttributeLogic return when the segment query is malformed or the lookup fails?",
+          "affects": "segment filtering and error behavior",
+          "anchor": {
+            "startLine": 54,
+            "endLine": 58
+          },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Functions perform independent asynchronous lookups without shared mutable state; host and user mapping preserve input order."
+      },
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "falls-back-without-routed-members",
+          "scenario": "No routed team member IDs are supplied.",
+          "given": ["routedTeamMemberIds = null", "users = [{ id: 1, email: \"a@example.com\" }]"],
+          "when": "getRoutedUsersWithContactOwnerAndFixedUsers({ routedTeamMemberIds, users, contactOwnerEmail: null })",
+          "then": "returns users",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the regular booking flow when routing constraints are absent."
+        },
+        {
+          "testId": "retains-routed-fixed-and-contact-owner-users",
+          "scenario": "Users include routed members, fixed users, a contact owner, and unrelated users.",
+          "given": [
+            "routedTeamMemberIds = [1]",
+            "users = [{ id: 1, email: \"a@example.com\" }, { id: 2, isFixed: true, email: \"b@example.com\" }, { id: 3, email: \"owner@example.com\" }, { id: 4, email: \"other@example.com\" }]"
+          ],
+          "when": "getRoutedUsersWithContactOwnerAndFixedUsers({ routedTeamMemberIds, users, contactOwnerEmail: \"owner@example.com\" })",
+          "then": "returns users with ids 1, 2, and 3 in their original order",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the inclusive filtering rules for routed, fixed, and contact-owner users."
+        },
+        {
+          "testId": "normalizes-configured-hosts",
+          "scenario": "An event has a scheduling type and configured hosts.",
+          "given": [
+            "eventType.hosts = [{ isFixed: true, user, priority: 1, weight: 2, weightAdjustment: 3, createdAt }]",
+            "eventType.schedulingType = SchedulingType.ROUND_ROBIN"
+          ],
+          "when": "getNormalizedHosts({ eventType })",
+          "then": "returns hosts containing isFixed, user, priority, weight, and createdAt, with fallbackHosts equal to null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the normalized host shape and configured-host branch."
+        },
+        {
+          "testId": "uses-fallback-users-when-hosts-unconfigured",
+          "scenario": "An event has no usable configured hosts.",
+          "given": [
+            "eventType.hosts = []",
+            "eventType.schedulingType = SchedulingType.COLLECTIVE",
+            "eventType.users = [user]"
+          ],
+          "when": "getNormalizedHosts({ eventType })",
+          "then": "returns hosts equal to null and fallbackHosts containing the user with isFixed true and createdAt null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins fallback host construction for collective scheduling."
+        },
+        {
+          "testId": "filters-hosts-by-segment-membership",
+          "scenario": "Segment matching is enabled and the attribute query returns a subset of team members.",
+          "given": [
+            "eventType.assignAllTeamMembers = true",
+            "eventType.assignRRMembersUsingSegment = true",
+            "eventType.team = { id: 10, parentId: 20, rrResetInterval: null, rrTimestampBasis }",
+            "matchingRRTeamMembers = [1]"
+          ],
+          "when": "findMatchingHostsWithEventSegment({ eventType, hosts })",
+          "then": "returns only hosts whose user.id is included in matchingRRTeamMembers",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Verifies segment membership is applied to round-robin hosts."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import declarations",
+        "logger sub-logger constant",
+        "getRoutedUsersWithContactOwnerAndFixedUsers export",
+        "findMatchingTeamMembersIdsForEventRRSegment function",
+        "BaseUser type",
+        "BaseHost type",
+        "EventType exported type",
+        "getNormalizedHosts export",
+        "BaseUserWithCredentialPayload type",
+        "getNormalizedHostsWithDelegationCredentials export",
+        "findMatchingHostsWithEventSegment export"
+      ],
+      "moduleLevelCode": "import logger from \"@calcom/lib/logger\";\nimport { findTeamMembersMatchingAttributeLogic } from \"@calcom/lib/raqb/findTeamMembersMatchingAttributeLogic\";\nimport type { AttributesQueryValue } from \"@calcom/lib/raqb/types\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport type { RRResetInterval } from \"@calcom/prisma/client\";\nimport type { RRTimestampBasis } from \"@calcom/prisma/enums\";\nimport { SchedulingType } from \"@calcom/prisma/enums\";\nimport type { CredentialPayload } from \"@calcom/types/Credential\";\n\nimport { enrichHostsWithDelegationCredentials } from \"../delegationCredential/server\";\nimport getOrgIdFromMemberOrTeamId from \"../getOrgIdFromMemberOrTeamId\";\n\nconst log = logger.getSubLogger({ prefix: [\"[getRoutedUsers]\"] });",
+      "exports": [
+        {
+          "name": "getRoutedUsersWithContactOwnerAndFixedUsers",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "EventType",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getNormalizedHosts",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getNormalizedHostsWithDelegationCredentials",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "findMatchingHostsWithEventSegment",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "findTeamMembersMatchingAttributeLogic",
+          "module": "@calcom/lib/raqb/findTeamMembersMatchingAttributeLogic",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "AttributesQueryValue",
+          "module": "@calcom/lib/raqb/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "safeStringify",
+          "module": "@calcom/lib/safeStringify",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "RRResetInterval",
+          "module": "@calcom/prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "RRTimestampBasis",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "SchedulingType",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CredentialPayload",
+          "module": "@calcom/types/Credential",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "enrichHostsWithDelegationCredentials",
+          "module": "../delegationCredential/server",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getOrgIdFromMemberOrTeamId",
+          "module": "../getOrgIdFromMemberOrTeamId",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        {
+          "name": "log",
+          "value": "logger.getSubLogger({ prefix: [\"[getRoutedUsers]\"] })",
+          "kind": "const"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__getRoutedUsersWithContactOwnerAndFixedUsers_1#function:getRoutedUsersWithContactOwnerAndFixedUsers",
+        "unitKind": "function",
+        "name": "getRoutedUsersWithContactOwnerAndFixedUsers",
+        "qualifiedName": "getRoutedUsersWithContactOwnerAndFixedUsers",
+        "parentUnitId": null,
+        "startLine": 15,
+        "endLine": 39,
+        "isBehavioral": true,
+        "source": "export const getRoutedUsersWithContactOwnerAndFixedUsers = <\n  T extends { id: number; isFixed?: boolean; email: string }\n>({\n  routedTeamMemberIds,\n  users,\n  contactOwnerEmail,\n}: {\n  routedTeamMemberIds: number[] | null;\n  users: T[];\n  contactOwnerEmail: string | null;\n}) => {\n  // We don't want to enter a scenario where we have no team members to be booked\n  // So, let's just fallback to regular flow if no routedTeamMemberIds are provided\n  if (!routedTeamMemberIds || !routedTeamMemberIds.length) {\n    return users;\n  }\n\n  log.debug(\n    \"filtering users as per routedTeamMemberIds\",\n    safeStringify({ routedTeamMemberIds, contactOwnerEmail })\n  );\n  return users.filter(\n    (user) => routedTeamMemberIds.includes(user.id) || user.isFixed || user.email === contactOwnerEmail\n  );\n};"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__findMatchingTeamMembersIdsForEventRRSegment_2#function:findMatchingTeamMembersIdsForEventRRSegment",
+        "unitKind": "function",
+        "name": "findMatchingTeamMembersIdsForEventRRSegment",
+        "qualifiedName": "findMatchingTeamMembersIdsForEventRRSegment",
+        "parentUnitId": null,
+        "startLine": 41,
+        "endLine": 65,
+        "isBehavioral": true,
+        "source": "async function findMatchingTeamMembersIdsForEventRRSegment(eventType: EventType) {\n  if (!eventType) {\n    return null;\n  }\n\n  const isSegmentationDisabled = !eventType.assignAllTeamMembers || !eventType.assignRRMembersUsingSegment;\n\n  if (isSegmentationDisabled) {\n    return null;\n  }\n\n  if (!eventType.team || !eventType.team.parentId) {\n    return null;\n  }\n\n  const { teamMembersMatchingAttributeLogic } = await findTeamMembersMatchingAttributeLogic({\n    attributesQueryValue: eventType.rrSegmentQueryValue ?? null,\n    teamId: eventType.team.id,\n    orgId: eventType.team.parentId,\n  });\n  if (!teamMembersMatchingAttributeLogic) {\n    return teamMembersMatchingAttributeLogic;\n  }\n  return teamMembersMatchingAttributeLogic.map((member) => member.userId);\n}"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__BaseUser_3#type_alias:BaseUser",
+        "unitKind": "type_alias",
+        "name": "BaseUser",
+        "qualifiedName": "BaseUser",
+        "parentUnitId": null,
+        "startLine": 67,
+        "endLine": 70,
+        "isBehavioral": false,
+        "source": "type BaseUser = {\n  id: number;\n  email: string;\n};"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__BaseHost_4#type_alias:BaseHost",
+        "unitKind": "type_alias",
+        "name": "BaseHost",
+        "qualifiedName": "BaseHost",
+        "parentUnitId": null,
+        "startLine": 72,
+        "endLine": 79,
+        "isBehavioral": false,
+        "source": "type BaseHost<User extends BaseUser> = {\n  isFixed: boolean;\n  createdAt: Date;\n  priority?: number | null;\n  weight?: number | null;\n  weightAdjustment?: number | null;\n  user: User;\n};"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__EventType_5#type_alias:EventType",
+        "unitKind": "type_alias",
+        "name": "EventType",
+        "qualifiedName": "EventType",
+        "parentUnitId": null,
+        "startLine": 81,
+        "endLine": 91,
+        "isBehavioral": false,
+        "source": "export type EventType = {\n  assignAllTeamMembers: boolean;\n  assignRRMembersUsingSegment: boolean;\n  rrSegmentQueryValue: AttributesQueryValue | null | undefined;\n  team: {\n    id: number;\n    parentId: number | null;\n    rrResetInterval: RRResetInterval | null;\n    rrTimestampBasis: RRTimestampBasis;\n  } | null;\n};"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__getNormalizedHosts_6#function:getNormalizedHosts",
+        "unitKind": "function",
+        "name": "getNormalizedHosts",
+        "qualifiedName": "getNormalizedHosts",
+        "parentUnitId": null,
+        "startLine": 93,
+        "endLine": 126,
+        "isBehavioral": true,
+        "source": "export function getNormalizedHosts<User extends BaseUser, Host extends BaseHost<User>>({\n  eventType,\n}: {\n  eventType: {\n    schedulingType: SchedulingType | null;\n    hosts?: Host[];\n    users: User[];\n  };\n}) {\n  if (eventType.hosts?.length && eventType.schedulingType) {\n    return {\n      hosts: eventType.hosts.map((host) => ({\n        isFixed: host.isFixed,\n        user: host.user,\n        priority: host.priority,\n        weight: host.weight,\n        createdAt: host.createdAt,\n      })),\n      fallbackHosts: null,\n    };\n  } else {\n    return {\n      hosts: null,\n      fallbackHosts: eventType.users.map((user) => {\n        return {\n          isFixed: !eventType.schedulingType || eventType.schedulingType === SchedulingType.COLLECTIVE,\n          email: user.email,\n          user: user,\n          createdAt: null,\n        };\n      }),\n    };\n  }\n}"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__BaseUserWithCredentialPayload_7#type_alias:BaseUserWithCredentialPayload",
+        "unitKind": "type_alias",
+        "name": "BaseUserWithCredentialPayload",
+        "qualifiedName": "BaseUserWithCredentialPayload",
+        "parentUnitId": null,
+        "startLine": 127,
+        "endLine": 127,
+        "isBehavioral": false,
+        "source": "type BaseUserWithCredentialPayload = BaseUser & { credentials: CredentialPayload[] };"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__getNormalizedHostsWithDelegationCredentials_8#function:getNormalizedHostsWithDelegationCredentials",
+        "unitKind": "function",
+        "name": "getNormalizedHostsWithDelegationCredentials",
+        "qualifiedName": "getNormalizedHostsWithDelegationCredentials",
+        "parentUnitId": null,
+        "startLine": 128,
+        "endLine": 130,
+        "isBehavioral": true,
+        "source": "export async function getNormalizedHostsWithDelegationCredentials<\n  User extends BaseUserWithCredentialPayload,\n  Host extends BaseHost<User>"
+      },
+      {
+        "unitId": "packages/lib/bookings/getRoutedUsers.ts__findMatchingHostsWithEventSegment_9#function:findMatchingHostsWithEventSegment",
+        "unitKind": "function",
+        "name": "findMatchingHostsWithEventSegment",
+        "qualifiedName": "findMatchingHostsWithEventSegment",
+        "parentUnitId": null,
+        "startLine": 189,
+        "endLine": 211,
+        "isBehavioral": true,
+        "source": "export async function findMatchingHostsWithEventSegment<User extends BaseUser>({\n  eventType,\n  hosts,\n}: {\n  eventType: EventType;\n  hosts: {\n    isFixed: boolean;\n    user: User;\n    priority?: number | null;\n    weight?: number | null;\n    createdAt: Date | null;\n  }[];\n}) {\n  const matchingRRTeamMembers = await findMatchingTeamMembersIdsForEventRRSegment({\n    ...eventType,\n    rrSegmentQueryValue: eventType.rrSegmentQueryValue ?? null,\n  });\n  const segmentedRoundRobinHosts = hosts.filter((host) => {\n    if (!matchingRRTeamMembers) return true;\n    return matchingRRTeamMembers.includes(host.user.id);\n  });\n  return segmentedRoundRobinHosts;\n}"
+      }
+    ],
+    "extractedUnitCount": 9,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 8147,
+    "outputTokens": 8981,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

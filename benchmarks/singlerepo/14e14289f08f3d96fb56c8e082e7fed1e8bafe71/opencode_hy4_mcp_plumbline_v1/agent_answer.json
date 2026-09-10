@@ -1,0 +1,29 @@
+{
+  "contract": "For a round-robin team event that has both always-invited (isFixed) hosts and a rotating host pool, a booking may be created only if the complete required-host set is satisfied for the requested slot: every fixed host must be free AND at least one host from the rotating pool must be free; and whenever the request is rejected because a host condition is unmet, the rejection must carry a specific, machine-identifiable error that names the condition that failed, never a bare or generic failure.",
+  "defect_location": {
+    "repo": "calcom/cal.com",
+    "summary": "The defect is in the new-booking handler, packages/features/bookings/lib/handleNewBooking.ts. Host availability is resolved at handleNewBooking.ts:756-804, which calls ensureAvailableUsers with [...qualifiedRRUsers, ...fixedUsers]; but ensureAvailableUsers (packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts:213-256) only FILTERS the host list and throws ErrorCode.NoAvailableUsersFound at lines 249-252 when availableUsers.length === 0. So when every rotating host is busy but the always-invited hosts are free, no error is raised. handleNewBooking.ts:806-811 then splits the result into luckyUserPool/fixedUserPool, and the only guard at handleNewBooking.ts:896-899 is `if (fixedUserPool.length !== users.filter((user) => user.isFixed).length) throw new Error(ErrorCode.HostsUnavailableForBooking)` - i.e. only the always-present hosts are checked. With luckyUserPool empty the while-loop at handleNewBooking.ts:827-895 yields no lucky user, luckyUsers stays [], the fixed-only guard still passes, and handleNewBooking.ts:901 sets users = [...fixedUserPool, ...luckyUsers] (fixed hosts only), so the round-robin booking is taken with no rotating host at all. The later safety net at handleNewBooking.ts:927-930 (`if (users.length === 0 && eventType.schedulingType === SchedulingType.ROUND_ROBIN)`) never fires because users is non-empty. What reaches the caller is unspecific: the code throws a plain `new Error(<code>)` whose message is only inspected as a string in packages/lib/server/getServerErrorFromUnknown.ts:100-136 (unmatched codes fall through to 500 at lines 133-134) and in apps/api/v2/src/ee/bookings/2024-08-13/services/errors.service.ts:34-54, which rethrows the raw error at line 53 when the message is not one of the recognised strings. The host partition itself comes from packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts:71-175 (isFixed tagging at 138-144, qualifiedRRHosts/allFallbackRRHosts/fixedHosts at 145-152) and packages/features/bookings/lib/handleNewBooking/loadUsers.ts, and the codes live in packages/lib/errorCodes.ts:1-26."
+  },
+  "answer": [
+    "packages/features/bookings/lib/handleNewBooking.ts",
+    "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts",
+    "packages/lib/errorCodes.ts",
+    "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts",
+    "packages/lib/server/getServerErrorFromUnknown.ts",
+    "apps/api/v2/src/ee/bookings/2024-08-13/services/errors.service.ts",
+    "packages/features/bookings/lib/handleNewBooking/loadUsers.ts",
+    "apps/api/v2/src/ee/bookings/2024-08-13/services/bookings.service.ts",
+    "packages/features/bookings/lib/handleNewBooking/types.ts",
+    "packages/features/bookings/lib/handleNewRecurringBooking.ts",
+    "apps/web/public/static/locales/en/common.json",
+    "packages/features/bookings/lib/handleNewBooking/createBooking.ts",
+    "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+    "packages/lib/server/getLuckyUser.ts",
+    "packages/features/bookings/lib/handleSeats/handleSeats.ts",
+    "apps/web/pages/api/book/event.ts",
+    "apps/api/v1/pages/api/bookings/_post.ts",
+    "packages/platform/libraries/index.ts",
+    "packages/features/eventtypes/components/tabs/assignment/EventTeamAssignmentTab.tsx",
+    "apps/api/v2/src/ee/bookings/2024-04-15/controllers/bookings.controller.e2e-spec.ts"
+  ]
+}

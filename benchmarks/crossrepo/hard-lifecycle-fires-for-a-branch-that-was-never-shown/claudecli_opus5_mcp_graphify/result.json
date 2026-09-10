@@ -1,0 +1,455 @@
+{
+  "arm": "claudecli_opus5_mcp_graphify",
+  "contract": "Per-node lifecycle notification must be scoped to the region that was actually committed/published, and membership must be published atomically with a record of the scope it belongs to. Concretely: whenever a system recomputes a set of tree nodes (dependencies, effects, matches, subscribers) and derives \"newly entered\" and \"newly left\" nodes by set difference against the previous set, the difference alone is not authoritative \u2014 the code must also know where the delivered/committed region stops, so that nodes belonging to a sub-branch that was superseded (aborted, replaced by a placeholder/fallback, or still unsettled) never have their attach/detach (mount/unmount, subscribe/unsubscribe, ref attach/detach) callbacks run; and the published membership must carry the identity of the branch/epoch it was computed for, and be published through a single batching point so that a listener re-entering the store during notification cannot observe a membership whose extent does not match the region that was actually delivered.",
+  "defect_location": {
+    "repo": "jotai",
+    "summary": "The entered-and-left decision lives in src/vanilla/internals.ts:L929 (BUILDING_BLOCK_mountDependencies) which is reached from the recompute/read path \u2014 BUILDING_BLOCK_readAtomState (src/vanilla/internals.ts:L652-L831) and BUILDING_BLOCK_recomputeInvalidatedAtoms (src/vanilla/internals.ts:L560-L649) \u2014 and from BUILDING_BLOCK_writeAtomState (src/vanilla/internals.ts:L866-L928). mountDependencies decides which nodes entered and which left purely by differencing the freshly captured dependency set against the previously mounted set, then runs the per-node lifecycle through BUILDING_BLOCK_mountAtom (src/vanilla/internals.ts:L967-L1030, which invokes the atom's onMount via hasOnMount at src/vanilla/internals.ts:L297 and BUILDING_BLOCK_atomOnMount at src/vanilla/internals.ts:L471) and BUILDING_BLOCK_unmountAtom (src/vanilla/internals.ts:L1031-L1070, running the OnUnmount declared at src/vanilla/internals.ts:L17 and src/vanilla/atom.ts:L34-L36). Nothing in that difference carries any notion of whether the computation whose dependency set is being installed is the one whose value was actually delivered: a read that was superseded while its promise was still unsettled is replaced by a stand-in value/promise via BUILDING_BLOCK_setAtomStateValueOrPromise (src/vanilla/internals.ts:L1071-L1100) together with addPendingPromiseToDependency (src/vanilla/internals.ts:L335-L346) and BUILDING_BLOCK_abortPromise / BUILDING_BLOCK_registerAbortHandler (src/vanilla/internals.ts:L1150-L1178), yet the superseded branch's dependency set is still installed and still drives mount/unmount. The membership itself (AtomState.d / Mounted.d, declared at src/vanilla/internals.ts:L29-L68) is written with no record of the branch/epoch (EpochNumber, src/vanilla/internals.ts:L20; StoreEpochHolder, src/vanilla/internals.ts:L199) it was computed for, and it is published while listeners are being run out of BUILDING_BLOCK_flushCallbacks (src/vanilla/internals.ts:L500-L559) and getMountedOrPendingDependents (src/vanilla/internals.ts:L347-L372), so a subscriber registered through BUILDING_BLOCK_storeSub (src/vanilla/internals.ts:L1127-L1149) that re-enters via BUILDING_BLOCK_storeGet (src/vanilla/internals.ts:L1101-L1105) during that flush observes a dependency extent that includes the branch that was never delivered. The React binding is where the stand-in is manufactured and where the never-delivered branch becomes user-visible: createContinuablePromise (src/react/useAtomValue.ts:L60-L119) and useAtomValue (src/react/useAtomValue.ts:L120-L160). The three scoped-notification contracts this must be brought in line with are all graph-verified elsewhere in the folder: react carries the explicit held-back-subtree flag through the commit walk so a hidden subtree runs no attach/detach (packages/react-reconciler/src/ReactFiberCommitWork.js:L3103 safelyDetachRef, :L3301 recursivelyTraverseReappearLayoutEffects, with the effect lists in packages/react-reconciler/src/ReactFiberCommitEffects.js:L141); tldraw's signal layer attaches and detaches only along the branch genuinely depended upon (packages/state/src/lib/EffectScheduler.ts:L134 attach, :L149 detach, :L89-L133 scheduling); and query funnels every observer notification through one batching point (packages/query-core/src/notifyManager.ts:L99). NOTE ON SURFACE COVERAGE: the merged graph I was given spans fourteen repositories, not fifteen \u2014 the 'router' checkout is absent from it entirely (probes for matchRoutes, RouterCore, createFileRoute, createBrowserRouter, useNavigate, @tanstack/router-core and @tanstack/history all return no node; '@tanstack/react-router' resolves only to a dependency entry inside db's examples). Every path below was found in the graph and carries a repo/source_file; I have named no path I could not confirm there.",
+    "note_on_confidence": "The behavioural description also matches a route-match lifecycle diffed against a pending/fallback branch, which would live in the missing 'router' repository; because that repository is not present in the tool surface I could not verify or cite any path from it, and I have not guessed any."
+  },
+  "case_id": "xrepo-v6-4-lifecycle-fires-for-a-branch-that-was-never-shown-hard",
+  "case_question": "When part of a tree is not the part that actually got shown - it was superseded and replaced by a stand-in while it was still settling - the per-node enter and leave notifications for the superseded part still run, because the code that decides which nodes entered and which left compares only the old set against the new set. It has no notion of where the shown region stops, so nodes below that boundary are treated exactly like nodes the user is really looking at: their callbacks fire for a region that was never presented, and they fire against membership that was published without any record of which branch it belonged to, so an observer re-entering during publication sees the wrong extent. The concept that would fix this does not exist anywhere in the repository yet - there is no name to search for. Elsewhere in the folder the same hazard is handled on purpose: one library carries an explicit flag down the tree so that a subtree currently held back does not run its attach and detach work, another attaches and detaches only along the branch that is genuinely depended upon, and another funnels all observer notification through a single batching point so that membership and notification cannot interleave. Which files decide entered-and-left membership without a boundary, and which own the scoped-notification contract they have to be brought in line with?",
+  "retrieved": 39,
+  "gold_counts": {
+    "min_repos": 4,
+    "min_files": 7
+  },
+  "gold_size": 7,
+  "gold_repo_count": 4,
+  "metrics": {
+    "recall@10": 0.2857,
+    "recall@25": 0.4286,
+    "recall@50": 0.4286,
+    "recall@100": 0.4286,
+    "precision@5": 0.2,
+    "precision@10": 0.2,
+    "MRR": 1.0,
+    "first_hit_rank": 1,
+    "hits_at_25": "3/7",
+    "repo_recall": 0.75,
+    "repos_found": "3/4",
+    "repos_named": 8,
+    "invalid_path_rate": 0.0,
+    "cap_at_run_time": 100
+  },
+  "prf": {
+    "full_list": {
+      "precision": 0.0769,
+      "recall": 0.4286,
+      "f1": 0.1304,
+      "hits": 3,
+      "retrieved": 39,
+      "gold_size": 7
+    },
+    "@10": {
+      "precision": 0.2,
+      "recall": 0.2857,
+      "f1": 0.2353,
+      "hits": 2,
+      "retrieved": 10,
+      "gold_size": 7
+    },
+    "@25": {
+      "precision": 0.12,
+      "recall": 0.4286,
+      "f1": 0.1875,
+      "hits": 3,
+      "retrieved": 25,
+      "gold_size": 7
+    },
+    "@50": {
+      "precision": 0.0769,
+      "recall": 0.4286,
+      "f1": 0.1304,
+      "hits": 3,
+      "retrieved": 39,
+      "gold_size": 7
+    },
+    "@100": {
+      "precision": 0.0769,
+      "recall": 0.4286,
+      "f1": 0.1304,
+      "hits": 3,
+      "retrieved": 39,
+      "gold_size": 7
+    }
+  },
+  "hits": [
+    "jotai::src/vanilla/internals.ts",
+    "react::packages/react-reconciler/src/ReactFiberCommitWork.js",
+    "query::packages/query-core/src/notifyManager.ts"
+  ],
+  "ranked_detail": [
+    {
+      "rank": 1,
+      "repo": "jotai",
+      "path": "src/vanilla/internals.ts",
+      "gold": true,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 2,
+      "repo": "jotai",
+      "path": "src/react/useAtomValue.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 3,
+      "repo": "jotai",
+      "path": "src/vanilla/atom.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 4,
+      "repo": "jotai",
+      "path": "src/react/useAtom.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 5,
+      "repo": "jotai",
+      "path": "src/react/useSetAtom.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 6,
+      "repo": "jotai",
+      "path": "src/react/Provider.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 7,
+      "repo": "jotai",
+      "path": "src/vanilla/typeUtils.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 8,
+      "repo": "react",
+      "path": "packages/react-reconciler/src/ReactFiberCommitWork.js",
+      "gold": true,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 9,
+      "repo": "react",
+      "path": "packages/react-reconciler/src/ReactFiberCommitEffects.js",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 10,
+      "repo": "react",
+      "path": "packages/react-reconciler/src/ReactFiberCommitHostEffects.js",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 11,
+      "repo": "react",
+      "path": "packages/react-reconciler/src/ReactFiberWorkLoop.js",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 12,
+      "repo": "react",
+      "path": "packages/react-reconciler/src/ReactFiberThrow.js",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 13,
+      "repo": "react",
+      "path": "packages/react-reconciler/src/ReactFiberFlags.js",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 14,
+      "repo": "query",
+      "path": "packages/query-core/src/notifyManager.ts",
+      "gold": true,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 15,
+      "repo": "query",
+      "path": "packages/query-core/src/queryObserver.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 16,
+      "repo": "query",
+      "path": "packages/query-core/src/queryCache.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 17,
+      "repo": "query",
+      "path": "packages/query-core/src/queriesObserver.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 18,
+      "repo": "query",
+      "path": "packages/query-core/src/mutationCache.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 19,
+      "repo": "query",
+      "path": "packages/query-core/src/mutationObserver.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 20,
+      "repo": "query",
+      "path": "packages/query-core/src/query.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 21,
+      "repo": "query",
+      "path": "packages/query-core/src/removable.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 22,
+      "repo": "tldraw",
+      "path": "packages/state/src/lib/EffectScheduler.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 23,
+      "repo": "tldraw",
+      "path": "packages/state/src/lib/Computed.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 24,
+      "repo": "tldraw",
+      "path": "packages/state/src/lib/Atom.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 25,
+      "repo": "tldraw",
+      "path": "packages/state/src/lib/transactions.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 26,
+      "repo": "tldraw",
+      "path": "packages/store/src/lib/Store.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 27,
+      "repo": "tldraw",
+      "path": "packages/sync-core/src/lib/MicrotaskNotifier.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 28,
+      "repo": "tldraw",
+      "path": "packages/store/src/lib/AtomMap.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 29,
+      "repo": "react-redux",
+      "path": "src/utils/Subscription.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 30,
+      "repo": "react-redux",
+      "path": "src/hooks/useSelector.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 31,
+      "repo": "redux",
+      "path": "src/createStore.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 32,
+      "repo": "redux",
+      "path": "src/applyMiddleware.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 33,
+      "repo": "db",
+      "path": "packages/db/src/collection/subscription.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 34,
+      "repo": "db",
+      "path": "packages/db/src/collection/changes.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 35,
+      "repo": "db",
+      "path": "packages/db/src/collection/index.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 36,
+      "repo": "db",
+      "path": "packages/db/src/query/live/collection-subscriber.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 37,
+      "repo": "xyflow",
+      "path": "packages/system/src/utils/store.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 38,
+      "repo": "xyflow",
+      "path": "packages/react/src/hooks/useVisibleNodeIds.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 39,
+      "repo": "xyflow",
+      "path": "packages/react/src/hooks/useStore.ts",
+      "gold": false,
+      "exists_at_pin": true
+    }
+  ],
+  "invalid_paths": [],
+  "missed_gold": [
+    "router::packages/router-core/src/router.ts",
+    "router::packages/router-core/src/load-client.ts",
+    "router::packages/router-core/src/load-server.ts",
+    "react::packages/react-reconciler/src/ReactFiberOffscreenComponent.js"
+  ],
+  "retriever": {
+    "surface": "Opus 5 with ONLY the graphify knowledge-graph MCP server: a single graph merged across all 14 pinned repos. No Bash, Read, Grep, Glob, filesystem access, network, or subagents.",
+    "repo_pins": {
+      "redux": "3aa561f9fc13f3287e6d83764f85fe0e82437c5f",
+      "redux-toolkit": "b1c5130154c454ca8387f55da6122fcb507c560c",
+      "react-redux": "ad5d1e0816d0cb1464b25cf2853f2a7d73433f5b",
+      "reselect": "8d87c27b75f55883629be75d1eae1c27832d907a",
+      "redux-thunk": "184205d49f707c6f203269e0d39ad85824801816",
+      "react": "3a717e42438afac81020cdec297dadb5613a4304",
+      "jotai": "5c4ca26b0db5571114be58393e17854a771f7790",
+      "zustand": "beca84e600e4e250f6b244d22878e72948f331c7",
+      "db": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+      "xyflow": "360f5b13e2bc6899ea06b4be1a49b068d86926cf",
+      "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+      "table": "d08af367e11c539bb7e18c2472aa761149ef6db6",
+      "tldraw": "5590d14d8edd4faab7dc1177b6e1adb28876fd23",
+      "redux-devtools": "f4b4668c30ae08920c59a76cc4629c35c16ef0fa",
+      "router": "3dee5b2e9453d01a3172c73426959007b290b3fc"
+    },
+    "checkout_verified": "run.sh gates on git rev-parse HEAD == pinned commit for all 14 repositories before launch",
+    "isolation": "kernel-enforced by sandbox-exec: gold, the answer vault and every sibling arm are unreadable; no prior-run transcript is readable; fresh cwd; no settings sources loaded",
+    "surface_pure": true
+  },
+  "cost": {
+    "session_id": "3da8efa5-c5bc-45a8-b97c-7601860ac933",
+    "arm": "claudecli_opus5_mcp_graphify",
+    "case": "xrepo-v6-4-lifecycle-fires-for-a-branch-that-was-never-shown",
+    "model": ["claude-haiku-4-5-20251001", "claude-opus-5"],
+    "launch": "fresh isolated `claude -p` under sandbox-exec, --setting-sources '' --disable-slash-commands, --strict-mcp-config with ONLY the shared graphify MCP server (one graph merged across all 14 pinned repos), --allowedTools mcp__graphify__* and --disallowedTools Bash,Read,Write,Edit,Grep,Glob,...",
+    "price_per_mtok_usd": {
+      "input": 5.0,
+      "output": 25.0,
+      "cache_write": 6.25,
+      "cache_read": 0.5
+    },
+    "usd_per_query_cli": 19.690024,
+    "usd_per_query_list_price": 19.686715,
+    "duration_ms": 1028807,
+    "wall_seconds": 1037,
+    "num_turns": 64,
+    "tokens": {
+      "input": 3579043,
+      "output": 71660,
+      "cache_creation": 0,
+      "cache_read": 0
+    },
+    "tokens_retrieved": 54367,
+    "cache_first_turn_read": 0,
+    "cache_inherited": false,
+    "cache_clean": true,
+    "cache_mode": "cold",
+    "cache_clean_note": "cache_clean means no cache was inherited from an earlier session, which is what the run conditions require -- NOT that the run read no cache at all. In-run cache (the totals below) is expected and comparable. Judged on cache_read at the first assistant turn.",
+    "tool_calls": {
+      "ToolSearch": 1,
+      "mcp__graphify__graph_stats": 1,
+      "mcp__graphify__query_graph": 33,
+      "mcp__graphify__get_node": 23,
+      "mcp__graphify__get_neighbors": 4,
+      "mcp__graphify__god_nodes": 1
+    },
+    "disallowed_tool_calls": {},
+    "non_retrieval_tool_calls": {
+      "ToolSearch": 1
+    },
+    "mcp_tool_calls": {
+      "mcp__graphify__graph_stats": 1,
+      "mcp__graphify__query_graph": 33,
+      "mcp__graphify__get_node": 23,
+      "mcp__graphify__get_neighbors": 4,
+      "mcp__graphify__god_nodes": 1
+    },
+    "surface_pure": true,
+    "surface_pure_note": "Arm surface is Opus 5 with ONLY the graphify knowledge-graph MCP server (query_graph, get_node, get_neighbors, get_community, god_nodes, graph_stats, shortest_path) against a single graph merged across all 14 pinned repos. Bash/Read/Grep/Glob/Write/Edit and every other MCP server are excluded by --disallowedTools and --strict-mcp-config, so a filesystem-grep escape was not merely unused but impossible. Any tool outside the graphify allow-list counts as a surface violation.",
+    "sandbox": {
+      "mechanism": "sandbox-exec (macOS seatbelt), profile pinned at sandbox.sb",
+      "gold_readable": false,
+      "other_arms_readable": false,
+      "transcripts_readable": false,
+      "out_of_arena_paths_attempted": {},
+      "reads_refused_by_kernel": 0,
+      "contamination_possible": false,
+      "note": "The benchmark tree is denied wholesale and only the 14 repo directories plus cross-repo/_indexes/graphify/merged (the graphify MCP server's own graph.json) are re-allowed, so golden.json, DONOTREADTHISFOLDER/ and every sibling arm's results fail with EPERM. ~/.claude/projects is denied too, so no earlier session transcript - nor this run's own - is readable. cwd was a fresh empty directory, no settings sources were loaded and slash commands were disabled, so no CLAUDE.md, skills, plugins or hooks applied; auto-memory is unreadable under the sandbox."
+    },
+    "transcript": "/Users/sauravverma/.claude/projects/-private-tmp-xrepo-runs-xrepo-v6-4-lifecycle-fires-for-a-branch-that-was-never-shown-graphify-opus5/3da8efa5-c5bc-45a8-b97c-7601860ac933.jsonl",
+    "prompt_caching": "default (caching not disabled)",
+    "index": {
+      "tool": "graphify",
+      "index_location": "~/programs/benchmarks/react-ecosystem/cross-repo/_indexes/graphify/merged/graphify-out/graph.json",
+      "build": "per-repo `graphify extract <repo> --code-only --no-cluster`, then `graphify merge-graphs` across all 14 repos into one cross-repo graph (shared across every cross-repo case, built once)"
+    }
+  },
+  "comparable": true
+}

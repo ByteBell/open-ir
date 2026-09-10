@@ -1,0 +1,76 @@
+You are performing an information-retrieval task against a codebase.
+
+REPOSITORY:  calcom/cal.com
+COMMIT:      14e14289f08f3d96fb56c8e082e7fed1e8bafe71
+CHECKOUT:    cal.com.processed/14e14289f08f3d96fb56c8e082e7fed1e8bafe71/repo
+             All paths in this prompt are relative to the benchmark root
+             (~/programs/benchmarks/react-ecosystem). The checkout is the repository at exactly the
+             commit above - do not use any other revision, and do not use outside
+             knowledge of the project's later history.
+
+QUERY (a symptom-level bug report):
+A team event that mixes hosts who are always on the invitation with a rotating pool of others can still be booked at a moment when nobody from that pool is free, because only the always-present hosts are checked. The booking is taken and then falls over afterwards, and what comes back to the caller is a generic failure that never says which condition was not met.
+
+TASK: Identify which files in this repository, as it stands at the commit above, would have to
+change to fix the issue described.
+
+RULES:
+- You may ONLY use the gitnexus MCP tools. You have no filesystem, shell, or grep
+  access. The repository is indexed as a code knowledge graph: `query` searches it for
+  execution flows related to a concept, `context` gives a 360-degree view of one symbol
+  (its callers, callees and the processes it takes part in), `impact` gives the blast
+  radius of changing a symbol, `trace` finds the shortest path between two symbols, and
+  `cypher` runs a raw query against the graph. `route_map`, `tool_map`, `shape_check`
+  and `api_impact` cover HTTP routes and their consumers. `list_repos` tells you what is
+  indexed. Every path you name must have come back from one of these calls.
+
+- Do not stop at the first plausible file. The fix likely spans multiple files.
+- Every path you return must be relative to the checkout root (cal.com.processed/14e14289f08f3d96fb56c8e082e7fed1e8bafe71/repo), exactly as it appears
+  at this commit: no leading slash, no absolute prefix, no path that does not exist there.
+  Example of the required form: packages/features/bookings/lib/handleNewBooking.ts
+
+RUN CONDITIONS (MANDATORY - this run is invalid if any of these is not met):
+- LAUNCH: one fresh session per run. Prompt caching WITHIN this run is fine -
+  cache this session creates and reads back is expected and costs nothing in
+  comparability. What is forbidden is inheriting cache from an EARLIER session:
+  do not resume or continue a prior session, do not reuse a session across cases
+  or arms, and do not re-attempt a case in a session that already attempted it.
+  A run that starts warm on someone else's context is not a measurement.
+- INDEX: before searching, confirm your tool surface is actually live for THIS
+  repository at THIS commit. If the index or server does not have it, STOP and
+  say so plainly. Do not answer from parametric memory, from another revision,
+  or from a partially indexed snapshot, and do not return a guessed list. A run
+  against a missing index is a failed run to be relaunched after indexing - it
+  is not an empty answer.
+- COST: cost.json must record cache_read and cache_creation next to the USD
+  figure, and both must be attributable to THIS run alone. If the session was
+  resumed, reused, or had already attempted the case, say so plainly in your final
+  message so the run can be marked not-comparable instead of scored against clean runs.
+
+DELIVERABLES: the harness captures this run for you - it records the full transcript
+(output.log), every tool call (commands.log) and the cost from /session-analysis (cost.json), and it
+writes ranked.json from your final message. You have no write tools; do not attempt to create files.
+result.json is NOT yours to produce and nothing you emit lands in it: after the run the scorer
+writes it from ranked.json against the held-out gold set, carrying recall@10/@20,
+precision@5/@10/@20, F1_full_list/F1@20, MRR and hits alongside ranked_detail, found,
+missed_gold and retriever.
+Your only job is the ranked list, capped at 40 paths.
+
+FINAL MESSAGE: output ONLY a JSON object, no prose and no markdown fence, in exactly
+this shape - the harness saves it verbatim as agent_answer.json:
+
+{
+  "contract": "<one paragraph stating the rule the defect breaks, phrased so it applies
+                to every file you name - not a restatement of the symptom>",
+  "defect_location": {
+    "repo": "calcom/cal.com",
+    "summary": "<where the defect is and why it breaks the contract, citing
+                 <path>:<line-range> for every claim you make>"
+  },
+  "answer": ["packages/foo/bar.ts", "packages/foo/baz.tsx"]
+}
+
+"answer" is the ranked list and is exactly what ranked.json must contain: a flat JSON
+array of checkout-relative paths, most likely first, maximum 40. The harness extracts it
+into ranked.json as a bare array - the scorer reads that file directly. "contract" and "defect_location" are graded
+alongside it, so state them from what your tools actually showed you.

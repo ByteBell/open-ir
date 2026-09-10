@@ -1,0 +1,1403 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "db",
+  "commitHash": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+  "generatedAt": "2026-07-18T07:32:21.777Z",
+  "file": {
+    "relativePath": "packages/trailbase-db-collection/src/trailbase.ts",
+    "language": "typescript",
+    "sizeBytes": 14912,
+    "tokenCount": 3728,
+    "model": "poolside/laguna-xs-2.1",
+    "analysedAt": "2026-07-17T16:01:47.513Z",
+    "module": {
+      "purpose": "Implements Trailbase collection synchronization layer for TanStack DB, providing bidirectional sync between local store and Trailbase remote database with automatic ID tracking and event subscription.",
+      "summary": "This file exports the `trailBaseCollectionOptions` function that configures a TanStack DB collection to sync with a Trailbase remote database. It handles serialization/deserialization of records, bidirectional synchronization (eager and lazy modes), real-time event subscription, and ensures transaction IDs are properly awaited for consistency. The module provides conversion utilities between internal item format and Trailbase record format, manages cursor-based pagination, and implements cleanup of expired seen IDs.",
+      "businessContext": "Enables offline-first applications to sync data with Trailbase backend, ensuring data consistency across clients. Critical for collaborative apps where multiple users modify shared records. Failure results in data loss or inconsistency between clients.",
+      "classes": [],
+      "functions": [
+        "convert (~L52-67): Generic record conversion with optional field transformations",
+        "convertPartial (~L69-84): Partial record conversion for updates",
+        "trailBaseCollectionOptions (~L120-243): Main factory function creating collection config with sync capabilities",
+        "buildOrder (~L271-284): Transforms TanStack DB order clauses to Trailbase format",
+        "buildCompareOp (~L286-301): Maps comparison operator names between TanStack and Trailbase",
+        "buildFilters (~L303-361): Converts where clauses to Trailbase filter format"
+      ],
+      "keywords": [
+        "synchronization",
+        "bidirectional-sync",
+        "event-subscription",
+        "pagination",
+        "cursor-based",
+        "type-conversion",
+        "transaction-await",
+        "ID-tracking"
+      ],
+      "ontologyConcepts": [
+        "data-synchronization",
+        "record-transformation",
+        "event-driven-architecture",
+        "pagination-cursor",
+        "transaction-consistency"
+      ],
+      "businessEntities": ["Record", "Transaction", "Cursor", "Event", "ID"],
+      "systemCapabilities": [
+        "Remote database synchronization",
+        "Real-time event subscription",
+        "Record serialization/deserialization",
+        "Pagination with cursor caching",
+        "Transaction ID tracking and awaiting"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../../db/dist/esm/query/ir",
+          "symbols": ["OrderByClause"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "packages/trailbase-db/dist/esm/query/ir"
+        },
+        {
+          "spec": "./errors",
+          "symbols": [
+            "ExpectedDeleteTypeError",
+            "ExpectedInsertTypeError",
+            "ExpectedUpdateTypeError",
+            "TimeoutWaitingForIdsError"
+          ],
+          "anchor": { "startLine": 2, "endLine": 5 },
+          "resolvedRelativePath": "packages/trailbase-db-collection/src/errors.ts",
+          "resolvedFileId": "packages/trailbase-db-collection/src/errors.ts",
+          "resolvedHint": "packages/trailbase-db-collection/src/errors.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tanstack/store",
+          "symbols": ["Store"],
+          "package": "@tanstack/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "trailbase",
+          "symbols": ["Event", "FilterOrComposite", "RecordApi", "CompareOp"],
+          "package": "trailbase",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 5, "endLine": 5 }
+        },
+        {
+          "spec": "@tanstack/db",
+          "symbols": [
+            "BaseCollectionConfig",
+            "CollectionConfig",
+            "DeleteMutationFnParams",
+            "InsertMutationFnParams",
+            "LoadSubsetOptions",
+            "SyncConfig",
+            "SyncMode",
+            "UpdateMutationFnParams",
+            "UtilsRecord"
+          ],
+          "package": "@tanstack/db",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 8, "endLine": 17 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [
+          "Fetches records via recordApi.list() during sync.load()",
+          "Subscribes to Trailbase event stream via recordApi.subscribe()",
+          "Creates records via recordApi.createBulk() on insert mutations",
+          "Updates records via recordApi.update() on update mutations",
+          "Deletes records via recordApi.delete() on delete mutations"
+        ],
+        "env": [
+          "Logs warnings for unsupported order clauses via console.warn()",
+          "Logs warnings for unsupported where clauses via console.warn()",
+          "Logs errors for unhandled event types via console.error()"
+        ],
+        "fs": [],
+        "process": [
+          "Sets intervals for periodic cleanup task via setInterval()",
+          "Clears intervals when reader closes via clearInterval()"
+        ],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        { "kind": "event", "role": "consumes", "address": "*", "payloadRef": "Event", "rawKind": null },
+        {
+          "kind": "http",
+          "role": "consumes",
+          "address": "RecordApi.list",
+          "payloadRef": "ListOptions",
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "consumes",
+          "address": "RecordApi.createBulk",
+          "payloadRef": "TItem[]",
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "consumes",
+          "address": "RecordApi.update",
+          "payloadRef": "UpdateParams",
+          "rawKind": null
+        },
+        {
+          "kind": "http",
+          "role": "consumes",
+          "address": "RecordApi.delete",
+          "payloadRef": "DeleteParams",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "trailBaseCollectionOptions",
+          "shape": "Returns CollectionConfig with sync, getKey, onInsert, onUpdate, onDelete, utils methods",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TrailBaseCollectionConfig",
+          "shape": "Interface with recordApi, syncMode, parse, serialize, getKey",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TrailBaseCollectionUtils",
+          "shape": "Extends UtilsRecord with cancel: () => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "RecordApi",
+          "shape": "Interface with subscribe(), list(), createBulk(), update(), delete() methods",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BaseCollectionConfig",
+          "shape": "Base configuration interface from @tanstack/db",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SyncConfig",
+          "shape": "Provides sync(), begin(), write(), commit(), markReady() functions",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "OrderByClause",
+          "shape": "Query ordering clause from trailbase-db",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Event",
+          "shape": "Event types: Insert, Update, Delete, Error from trailbase",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "Type utilities",
+          "intent": "Define conversion type utilities for record transformation",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 24, "endLine": 50 }
+        },
+        {
+          "name": "Conversion functions",
+          "intent": "Implement record conversion with optional field transformations",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 52, "endLine": 84 }
+        },
+        {
+          "name": "Configuration types",
+          "intent": "Export configuration interfaces for Trailbase collection",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 86, "endLine": 118 }
+        },
+        {
+          "name": "main synchronization setup",
+          "intent": "Initialize sync state and helper functions",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 120, "endLine": 148 }
+        },
+        {
+          "name": "awaitIds",
+          "intent": "Wait for transaction IDs to appear in seen store",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 143, "endLine": 167 }
+        },
+        {
+          "name": "sync.load",
+          "intent": "Load records with pagination and cursor management",
+          "structureKind": "loop",
+          "predicate": "length > 0 && remaining > 0",
+          "branchOutcomes": ["drained-break", "limit-break", "continue-loop"],
+          "bounds": "Math.min(remaining, 256)",
+          "terminationCondition": "length === 0 || length < limit || remaining <= 0",
+          "anchor": { "startLine": 170, "endLine": 215 }
+        },
+        {
+          "name": "sync.listen",
+          "intent": "Process real-time events from subscription stream",
+          "structureKind": "loop",
+          "predicate": "done === false && event !== undefined",
+          "branchOutcomes": ["Insert", "Delete", "Update", "Error", "done-return"],
+          "bounds": null,
+          "terminationCondition": "done === true || event === undefined",
+          "anchor": { "startLine": 218, "endLine": 240 }
+        },
+        {
+          "name": "sync.start",
+          "intent": "Initialize sync: start subscription, load data, schedule cleanup",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 243, "endLine": 258 }
+        },
+        {
+          "name": "buildOrder",
+          "intent": "Transform TanStack DB order clauses to Trailbase format",
+          "structureKind": "branch",
+          "predicate": "o.expression.type === 'ref'",
+          "branchOutcomes": ["ref-asc", "ref-desc", "default"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 271, "endLine": 284 }
+        },
+        {
+          "name": "buildCompareOp",
+          "intent": "Map comparison operator names between TanStack and Trailbase",
+          "structureKind": "branch",
+          "predicate": "name in ['eq', 'ne', 'gt', 'gte', 'lt', 'lte']",
+          "branchOutcomes": ["eq", "ne", "gt", "gte", "lt", "lte", "default"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 286, "endLine": 301 }
+        },
+        {
+          "name": "buildFilters",
+          "intent": "Convert where clause to Trailbase filter format",
+          "structureKind": "branch",
+          "predicate": "where.type === 'func'",
+          "branchOutcomes": ["func-valid", "func-invalid", "ref", "val", "default"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 303, "endLine": 361 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "TrailBaseSyncMode",
+          "signature": "export type TrailBaseSyncMode = SyncMode",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 86, "endLine": 86 }
+        },
+        {
+          "kind": "interface",
+          "name": "TrailBaseCollectionConfig",
+          "signature": "export interface TrailBaseCollectionConfig<TItem extends ShapeOf<TRecord>, TRecord extends ShapeOf<TItem> = TItem, TKey extends string | number = string | number> extends Omit<BaseCollectionConfig<TItem, TKey>, `onInsert` | `onUpdate` | `onDelete` | `syncMode`>",
+          "generics": "TItem extends ShapeOf<TRecord>, TRecord extends ShapeOf<TItem> = TItem, TKey extends string | number = string | number",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 91, "endLine": 112 }
+        },
+        {
+          "kind": "type",
+          "name": "AwaitTxIdFn",
+          "signature": "export type AwaitTxIdFn = (txId: string, timeout?: number) => Promise<boolean>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 114, "endLine": 114 }
+        },
+        {
+          "kind": "interface",
+          "name": "TrailBaseCollectionUtils",
+          "signature": "export interface TrailBaseCollectionUtils extends UtilsRecord { cancel: () => void }",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 116, "endLine": 118 }
+        },
+        {
+          "kind": "function",
+          "name": "trailBaseCollectionOptions",
+          "signature": "export function trailBaseCollectionOptions<TItem extends ShapeOf<TRecord>, TRecord extends ShapeOf<TItem> = TItem, TKey extends string | number = string | number>(config: TrailBaseCollectionConfig<TItem, TRecord, TKey>): CollectionConfig<TItem, TKey, never, TrailBaseCollectionUtils> & { utils: TrailBaseCollectionUtils }",
+          "generics": "TItem extends ShapeOf<TRecord>, TRecord extends ShapeOf<TItem> = TItem, TKey extends string | number = string | number",
+          "decorators": [],
+          "returnType": "CollectionConfig<TItem, TKey, never, TrailBaseCollectionUtils> & { utils: TrailBaseCollectionUtils }",
+          "exported": true,
+          "anchor": { "startLine": 120, "endLine": 243 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "ShapeOf",
+          "shape": "type ShapeOf<T> = Record<keyof T, unknown>",
+          "discriminant": null,
+          "anchor": { "startLine": 24, "endLine": 24 }
+        },
+        {
+          "kind": "type",
+          "name": "Conversion",
+          "shape": "type Conversion<I, O> = (value: I) => O",
+          "discriminant": null,
+          "anchor": { "startLine": 25, "endLine": 25 }
+        },
+        {
+          "kind": "type",
+          "name": "OptionalConversions",
+          "shape": "type OptionalConversions<InputType extends ShapeOf<OutputType>, OutputType extends ShapeOf<InputType>> = { [K in keyof InputType as InputType[K] extends OutputType[K] ? K : never]?: Conversion<InputType[K], OutputType[K]> }",
+          "discriminant": null,
+          "anchor": { "startLine": 27, "endLine": 34 }
+        },
+        {
+          "kind": "type",
+          "name": "RequiredConversions",
+          "shape": "type RequiredConversions<InputType extends ShapeOf<OutputType>, OutputType extends ShapeOf<InputType>> = { [K in keyof InputType as InputType[K] extends OutputType[K] ? never : K]: Conversion<InputType[K], OutputType[K]> }",
+          "discriminant": null,
+          "anchor": { "startLine": 36, "endLine": 44 }
+        },
+        {
+          "kind": "type",
+          "name": "Conversions",
+          "shape": "type Conversions<InputType extends ShapeOf<OutputType>, OutputType extends ShapeOf<InputType>> = OptionalConversions<InputType, OutputType> & RequiredConversions<InputType, OutputType>",
+          "discriminant": null,
+          "anchor": { "startLine": 46, "endLine": 50 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "opts.limit <= 0",
+          "handled": true,
+          "behavior": "Returns early without fetching any records",
+          "anchor": { "startLine": 188, "endLine": 189 }
+        },
+        {
+          "inputShape": "opts.orderBy with unsupported expression type",
+          "handled": true,
+          "behavior": "Logs warning and skips the clause",
+          "anchor": { "startLine": 279, "endLine": 283 }
+        },
+        {
+          "inputShape": "where.type not 'func', 'ref', or 'val'",
+          "handled": true,
+          "behavior": "Logs warning and returns undefined",
+          "anchor": { "startLine": 358, "endLine": 360 }
+        },
+        {
+          "inputShape": "where.args[0].type !== 'ref' or where.args[1].type !== 'val'",
+          "handled": true,
+          "behavior": "Breaks out of switch without returning filters",
+          "anchor": { "startLine": 347, "endLine": 350 }
+        },
+        {
+          "inputShape": "completed(seenIds.state) returns true in awaitIds",
+          "handled": true,
+          "behavior": "Returns resolved promise immediately without subscription",
+          "anchor": { "startLine": 149, "endLine": 151 }
+        },
+        {
+          "inputShape": "event.Error in unhandled event type",
+          "handled": true,
+          "behavior": "Logs error to console",
+          "anchor": { "startLine": 238, "endLine": 239 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<=",
+          "left": "remaining",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Check if no more records needed to be loaded",
+          "anchor": { "startLine": 189, "endLine": 189 }
+        },
+        {
+          "operator": "<",
+          "left": "remaining",
+          "right": "256",
+          "inclusive": false,
+          "intent": "Limit batch size to 256 records per fetch",
+          "anchor": { "startLine": 191, "endLine": 191 }
+        },
+        {
+          "operator": ">",
+          "left": "length",
+          "right": "limit",
+          "inclusive": false,
+          "intent": "Check if more data available for next iteration",
+          "anchor": { "startLine": 205, "endLine": 205 }
+        },
+        {
+          "operator": ">",
+          "left": "remaining",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Check if more records still needed",
+          "anchor": { "startLine": 166, "endLine": 166 }
+        },
+        {
+          "operator": "==",
+          "left": "o.compareOptions.direction",
+          "right": "'asc'",
+          "inclusive": true,
+          "intent": "Determine sort order direction for field",
+          "anchor": { "startLine": 277, "endLine": 277 }
+        },
+        {
+          "operator": ">",
+          "left": "now",
+          "right": "v + 300000",
+          "inclusive": false,
+          "intent": "Check if seen ID entry has expired (5 minutes)",
+          "anchor": { "startLine": 231, "endLine": 231 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "TimeoutWaitingForIdsError",
+          "caught": null,
+          "action": "Reject promise with timeout error if IDs not seen within timeout",
+          "fallback": null,
+          "anchor": { "startLine": 154, "endLine": 157 }
+        },
+        {
+          "thrown": "ExpectedInsertTypeError",
+          "caught": null,
+          "action": "Throw error if mutation type is not 'insert'",
+          "fallback": null,
+          "anchor": { "startLine": 218, "endLine": 218 }
+        },
+        {
+          "thrown": "ExpectedUpdateTypeError",
+          "caught": null,
+          "action": "Throw error if mutation type is not 'update'",
+          "fallback": null,
+          "anchor": { "startLine": 230, "endLine": 230 }
+        },
+        {
+          "thrown": "ExpectedDeleteTypeError",
+          "caught": null,
+          "action": "Throw error if mutation type is not 'delete'",
+          "fallback": null,
+          "anchor": { "startLine": 241, "endLine": 241 }
+        },
+        {
+          "thrown": null,
+          "caught": "e",
+          "action": "Cancel event reader and re-throw error during eager sync initialization",
+          "fallback": "markReady() called in finally block to prevent blocking app",
+          "anchor": { "startLine": 214, "endLine": 218 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "ordering",
+          "description": "Event subscription starts before initial load to prevent gaps in data",
+          "anchor": { "startLine": 250, "endLine": 252 }
+        },
+        {
+          "kind": "invariant",
+          "description": "seenIds map tracks all record IDs with timestamps for transaction awaiting",
+          "anchor": { "startLine": 138, "endLine": 138 }
+        },
+        {
+          "kind": "invariant",
+          "description": "fullSyncCompleted flag is set only after complete initial load in eager mode",
+          "anchor": { "startLine": 211, "endLine": 211 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Caller-must-handle errors from recordApi methods; they propagate to caller",
+          "anchor": { "startLine": 173, "endLine": 176 }
+        },
+        {
+          "kind": "caller",
+          "description": "Caller-must-provide valid getKey function that returns string | number",
+          "anchor": { "startLine": 129, "endLine": 129 }
+        },
+        {
+          "kind": "caller",
+          "description": "Caller-must-provide valid recordApi with list, subscribe, createBulk, update, delete methods",
+          "anchor": { "startLine": 102, "endLine": 102 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What is the expected behavior when both offset and cursor are provided in opts?",
+          "affects": "load function pagination logic",
+          "anchor": { "startLine": 180, "endLine": 184 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": false,
+        "ordering": "fifo",
+        "notes": "Event processing is sequential via async/await; subscriptions use Promise-based stream reader with FIFO event ordering"
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "sync-emits-insert-on-event",
+          "scenario": "When an Insert event is received via subscription, the sync handler writes an insert mutation",
+          "given": ["Event stream with Insert event"],
+          "when": "listen(reader) processes event",
+          "then": "write({ type: 'insert', value: parsedRecord }) is called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures subscription events correctly translate to TanStack DB mutations"
+        },
+        {
+          "testId": "sync-emits-delete-on-event",
+          "scenario": "When a Delete event is received via subscription, the sync handler writes a delete mutation",
+          "given": ["Event stream with Delete event"],
+          "when": "listen(reader) processes event",
+          "then": "write({ type: 'delete', value: parsedRecord }) is called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures delete events correctly trigger TanStack DB delete mutations"
+        },
+        {
+          "testId": "onInsert-creates-bulk",
+          "scenario": "When onInsert is called, it calls recordApi.createBulk with serialized items",
+          "given": ["InsertMutationFnParams with insert mutations"],
+          "when": "onInsert(params) is invoked",
+          "then": "config.recordApi.createBulk(serializedItems) is called and ids are awaited",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validates bulk insert flow through RecordApi"
+        },
+        {
+          "testId": "onUpdate-uses-record-api",
+          "scenario": "When onUpdate is called, it calls recordApi.update for each mutation",
+          "given": ["UpdateMutationFnParams with update mutations"],
+          "when": "onUpdate(params) is invoked",
+          "then": "config.recordApi.update(key, serializedChanges) is called for each mutation",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures updates are properly serialized and sent to RecordApi"
+        },
+        {
+          "testId": "onDelete-uses-record-api",
+          "scenario": "When onDelete is called, it calls recordApi.delete for each mutation",
+          "given": ["DeleteMutationFnParams with delete mutations"],
+          "when": "onDelete(params) is invoked",
+          "then": "config.recordApi.delete(key) is called for each mutation",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validates delete operations propagate to RecordApi"
+        },
+        {
+          "testId": "awaitIds-resolves-when-all-present",
+          "scenario": "When all awaited IDs are present in seenIds, the promise resolves immediately",
+          "given": ["seenIds contains all requested IDs"],
+          "when": "awaitIds(ids) is called",
+          "then": "Promise resolves without waiting",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents unnecessary waiting when IDs already synced"
+        },
+        {
+          "testId": "load-caches-cursors-by-key",
+          "scenario": "When loading data, cursors are cached by record key for pagination",
+          "given": ["load() called with cursor options"],
+          "when": "load(opts) processes response",
+          "then": "cursors.set(getKey(parsedRecord), response.cursor) is called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures cursor caching enables consistent pagination"
+        },
+        {
+          "testId": "load-applies-filters-and-order",
+          "scenario": "When loading data, filters and order clauses are built and sent to API",
+          "given": ["LoadSubsetOptions with where and orderBy"],
+          "when": "load(opts) calls recordApi.list",
+          "then": "request includes order and filters derived from buildOrder/buildFilters",
+          "targets": [],
+          "oracleKind": "property",
+          "rationale": "Validates query options correctly transform to API calls"
+        },
+        {
+          "testId": "periodic-cleanup-removes-expired-ids",
+          "scenario": "Periodic cleanup task removes IDs older than 5 minutes",
+          "given": ["seenIds with entries older than 300 seconds"],
+          "when": "setInterval callback executes",
+          "then": "expired entries are filtered from seenIds Map",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "Prevents memory growth from stale ID tracking"
+        },
+        {
+          "testId": "convert-partial-handles-partial-input",
+          "scenario": "convertPartial correctly transforms partial input objects",
+          "given": ["Partial<TItem> input with some fields"],
+          "when": "convertPartial is called with conversions",
+          "then": "Output Partial<TRecord> with converted values for defined keys",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures partial updates maintain type safety"
+        },
+        {
+          "testId": "buildOrder-handles-ascending",
+          "scenario": "buildOrder converts ascending order to +field syntax",
+          "given": ["OrderByClause with direction='asc'"],
+          "when": "buildOrder is called",
+          "then": "Returns ['+field'] for the field",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validates correct sorting syntax for API"
+        },
+        {
+          "testId": "buildOrder-handles-descending",
+          "scenario": "buildOrder converts descending order to -field syntax",
+          "given": ["OrderByClause with direction='desc'"],
+          "when": "buildOrder is called",
+          "then": "Returns ['-field'] for the field",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validates correct sorting syntax for API"
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Type utilities (ShapeOf, Conversion, OptionalConversions, RequiredConversions, Conversions)",
+        "Conversion functions (convert, convertPartial)",
+        "Exported types (TrailBaseSyncMode, TrailBaseCollectionConfig, AwaitTxIdFn, TrailBaseCollectionUtils)",
+        "Main factory function (trailBaseCollectionOptions)",
+        "Helper functions (buildOrder, buildCompareOp, buildFilters)"
+      ],
+      "moduleLevelCode": null,
+      "exports": [
+        { "name": "TrailBaseSyncMode", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TrailBaseCollectionConfig", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "AwaitTxIdFn", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TrailBaseCollectionUtils", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "trailBaseCollectionOptions", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Store", "module": "@tanstack/store", "alias": null, "kind": "external" },
+        { "symbol": "Event", "module": "trailbase", "alias": null, "kind": "external" },
+        { "symbol": "FilterOrComposite", "module": "trailbase", "alias": null, "kind": "external" },
+        { "symbol": "RecordApi", "module": "trailbase", "alias": null, "kind": "external" },
+        { "symbol": "CompareOp", "module": "trailbase", "alias": null, "kind": "external" },
+        { "symbol": "BaseCollectionConfig", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "CollectionConfig", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "DeleteMutationFnParams", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "InsertMutationFnParams", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "LoadSubsetOptions", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "SyncConfig", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "SyncMode", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "UpdateMutationFnParams", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "UtilsRecord", "module": "@tanstack/db", "alias": null, "kind": "external" },
+        { "symbol": "OrderByClause", "module": "../../db/dist/esm/query/ir", "alias": null, "kind": "internal" },
+        { "symbol": "ExpectedDeleteTypeError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "ExpectedInsertTypeError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "ExpectedUpdateTypeError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "TimeoutWaitingForIdsError", "module": "./errors", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/trailbase-db-collection/src/trailbase.ts__convert#function:convert",
+        "unitKind": "function",
+        "name": "convert",
+        "qualifiedName": "convert",
+        "parentUnitId": null,
+        "startLine": 52,
+        "endLine": 67,
+        "isBehavioral": true,
+        "source": "\nfunction convert<\n  InputType extends ShapeOf<OutputType> & Record<string, unknown>,\n  OutputType extends ShapeOf<InputType>,\n>(\n  conversions: Conversions<InputType, OutputType>,\n  input: InputType,\n): OutputType {\n  const c = conversions as Record<string, Conversion<InputType, OutputType>>\n\n  return Object.fromEntries(\n    Object.keys(input).map((k: string) => {\n      const value = input[k]\n      return [k, c[k]?.(value as any) ?? value]\n    }),\n  ) as OutputType",
+        "detail": {
+          "unitId": "packages/trailbase-db-collection/src/trailbase.ts__convert#function:convert",
+          "fileId": "packages/trailbase-db-collection/src/trailbase.ts__convert",
+          "unitKind": "function",
+          "name": "convert",
+          "qualifiedName": "convert",
+          "parentUnitId": null,
+          "startLine": 52,
+          "endLine": 67,
+          "signature": "function convert<\n  InputType extends ShapeOf<OutputType> & Record<string, unknown>,\n  OutputType extends ShapeOf<InputType>,\n>(\n  conversions: Conversions<InputType, OutputType>,\n  input: InputType,\n): OutputType",
+          "parameters": [
+            {
+              "name": "conversions",
+              "type": "Conversions<InputType, OutputType>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "input", "type": "InputType", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "OutputType",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [
+            "InputType extends ShapeOf<OutputType> & Record<string, unknown>",
+            "OutputType extends ShapeOf<InputType>"
+          ],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "The returned object contains every key present in input",
+            "For each key k in input, if conversions[k] exists the returned value is conversions[k](input[k]); otherwise the returned value is input[k]"
+          ],
+          "invariants": [
+            "The function is pure — input and conversions are not mutated",
+            "The returned object is a new object (not reference-equal to input)"
+          ],
+          "edgeCases": [
+            "Empty input object produces an empty output object",
+            "All keys present in conversions produces a fully-converted output",
+            "Partial conversions map: keys absent from conversions pass through with their original value unchanged"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["ShapeOf", "Conversions", "Conversion"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Applies an optional per-key conversion map to an input object, returning a new object of the same shape. Keys without a matching conversion function pass through unchanged.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "convert(conversions, input)",
+              "then": "returns { a: 6, b: 7, c: 1 } — b passes through unchanged, a and c are transformed",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "convert(conversions, input)",
+              "then": "returns { x: 'hello', y: 42 } — all values pass through unchanged",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "convert(conversions, input)",
+              "then": "returns {} — no keys to iterate",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "19f966ab5389714462547cdd850b43696f1b7e69bcc4faf839bace65c5deb48e"
+        }
+      },
+      {
+        "unitId": "packages/trailbase-db-collection/src/trailbase.ts__convertPartial#function:convertPartial",
+        "unitKind": "function",
+        "name": "convertPartial",
+        "qualifiedName": "convertPartial",
+        "parentUnitId": null,
+        "startLine": 69,
+        "endLine": 84,
+        "isBehavioral": true,
+        "source": "\nfunction convertPartial<\n  InputType extends ShapeOf<OutputType> & Record<string, unknown>,\n  OutputType extends ShapeOf<InputType>,\n>(\n  conversions: Conversions<InputType, OutputType>,\n  input: Partial<InputType>,\n): Partial<OutputType> {\n  const c = conversions as Record<string, Conversion<InputType, OutputType>>\n\n  return Object.fromEntries(\n    Object.keys(input).map((k: string) => {\n      const value = input[k]\n      return [k, c[k]?.(value as any) ?? value]\n    }),\n  ) as OutputType",
+        "detail": {
+          "unitId": "packages/trailbase-db-collection/src/trailbase.ts__convertPartial#function:convertPartial",
+          "fileId": "packages/trailbase-db-collection/src/trailbase.ts__convertPartial",
+          "unitKind": "function",
+          "name": "convertPartial",
+          "qualifiedName": "convertPartial",
+          "parentUnitId": null,
+          "startLine": 69,
+          "endLine": 84,
+          "signature": "function convertPartial<\n  InputType extends ShapeOf<OutputType> & Record<string, unknown>,\n  OutputType extends ShapeOf<InputType>,\n>(\n  conversions: Conversions<InputType, OutputType>,\n  input: Partial<InputType>,\n): Partial<OutputType>",
+          "parameters": [
+            {
+              "name": "conversions",
+              "type": "Conversions<InputType, OutputType>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "input",
+              "type": "Partial<InputType>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Partial<OutputType>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [
+            "InputType extends ShapeOf<OutputType> & Record<string, unknown>",
+            "OutputType extends ShapeOf<InputType>"
+          ],
+          "logicOutline": [],
+          "preconditions": [
+            "conversions is a record mapping field names to conversion functions",
+            "input is a partial object of InputType (may contain any subset of keys)"
+          ],
+          "postconditions": [
+            "Return value contains exactly the same keys as input",
+            "Each key in the output has been mapped through the corresponding conversion function from conversions if one exists, otherwise the original value is preserved"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Empty input object produces an empty output object",
+            "Keys present in input but absent from conversions: values pass through unchanged",
+            "Keys present in conversions but absent from input: ignored (not present in output)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["ShapeOf", "Conversions", "Conversion"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Applies a per-field conversion map to a partial input object, producing a partial output where each present key is transformed by its matching conversion function or passed through unchanged if no conversion exists for that key.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "convertPartial(conversions, input) is called",
+              "then": "Return value is an object with exactly keys 'a' and 'b', where 'a' has been transformed by its conversion function and 'b' retains the original value 2",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "convertPartial(conversions, input) is called",
+              "then": "Return value is an empty object {}",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "fdd41b3f23bd0b2a670d5618d453be9858ce4823af2bef1581c0014b03b681bd"
+        }
+      },
+      {
+        "unitId": "packages/trailbase-db-collection/src/trailbase.ts__trailBaseCollectionOptions#function:trailBaseCollectionOptions",
+        "unitKind": "function",
+        "name": "trailBaseCollectionOptions",
+        "qualifiedName": "trailBaseCollectionOptions",
+        "parentUnitId": null,
+        "startLine": 120,
+        "endLine": 243,
+        "isBehavioral": true,
+        "source": "\nexport function trailBaseCollectionOptions<\n  TItem extends ShapeOf<TRecord>,\n  TRecord extends ShapeOf<TItem> = TItem,\n  TKey extends string | number = string | number,\n>(\n  config: TrailBaseCollectionConfig<TItem, TRecord, TKey>,\n): CollectionConfig<TItem, TKey, never, TrailBaseCollectionUtils> & {\n  utils: TrailBaseCollectionUtils\n} {\n  const getKey = config.getKey\n\n  const parse = (record: TRecord) =>\n    convert<TRecord, TItem>(config.parse, record)\n  const serialUpd = (item: Partial<TItem>) =>\n    convertPartial<TItem, TRecord>(config.serialize, item)\n  const serialIns = (item: TItem) =>\n    convert<TItem, TRecord>(config.serialize, item)\n\n  const seenIds = new Store(new Map<string, number>())\n\n  const internalSyncMode = config.syncMode ?? `eager`\n  let fullSyncCompleted = false\n\n  const awaitIds = (\n    ids: Array<string>,\n    timeout: number = 120 * 1000,\n  ): Promise<void> => {\n    const completed = (value: Map<string, number>) =>\n      ids.every((id) => value.has(id))\n    if (completed(seenIds.state)) {\n      return Promise.resolve()\n    }\n\n    return new Promise<void>((resolve, reject) => {\n      const timeoutId = setTimeout(() => {\n        sub.unsubscribe()\n        reject(new TimeoutWaitingForIdsError(ids.toString()))\n      }, timeout)\n\n      const sub = seenIds.subscribe((value) => {\n        if (completed(value)) {\n          clearTimeout(timeoutId)\n          sub.unsubscribe()\n          resolve()\n        }\n      })\n    })\n  }\n\n  let eventReader: ReadableStreamDefaultReader<Event> | undefined\n  const cancelEventReader = () => {\n    if (eventReader) {\n      eventReader.cancel()\n      eventReader.releaseLock()\n      eventReader = undefined\n    }\n  }\n\n  type SyncParams = Parameters<SyncConfig<TItem, TKey>[`sync`]>[0]\n  const sync = {\n    sync: (params: SyncParams) => {\n      const { begin, write, commit, markReady } = params\n\n      // NOTE: We cache cursors from prior fetches. TanStack/db expects that\n      // cursors can be derived from a key, which is not true for TB, since\n      // cursors are encrypted. This is leaky and therefore not ideal.\n      const cursors = new Map<string | number, string>()\n\n      // Load (more) data.\n      async function load(opts: LoadSubsetOptions) {\n        const lastKey = opts.cursor?.lastKey\n        let cursor: string | undefined =\n          lastKey !== undefined ? cursors.get(lastKey) : undefined\n        let offset: number | undefined =\n          (opts.offset ?? 0) > 0 ? opts.offset : undefined\n\n        const order: Array<string> | undefined = buildOrder(opts)\n        const filters: Array<FilterOrComposite> | undefined = buildFilters(\n          opts,\n          config,\n        )\n\n        let remaining: number = opts.limit ?? Number.MAX_VALUE\n        if (remaining <= 0) {\n          return\n        }\n\n        while (true) {\n          const limit = Math.min(remaining, 256)\n          const response = await config.recordApi.list({\n            pagination: {\n              limit,\n              offset,\n              cursor,\n            },\n            order,\n            filters,\n          })\n\n          const length = response.records.length\n          if (length === 0) {\n            // Drained - read everything.\n            break\n          }\n\n          begin()\n\n          for (let i = 0; i < Math.min(length, remaining); ++i) {\n            write({\n              type: `insert`,\n              value: parse(response.records[i]!),\n            })\n          }\n\n          commit()\n\n          remaining -= length\n\n          // Drained or read enough.\n          if (length < limit || remaining <= 0) {\n            if (response.cursor) {\n              cursors.set(\n                getKey(parse(response.records.at(-1)!)),",
+        "detail": {
+          "unitId": "packages/trailbase-db-collection/src/trailbase.ts__trailBaseCollectionOptions#function:trailBaseCollectionOptions",
+          "fileId": "packages/trailbase-db-collection/src/trailbase.ts__trailBaseCollectionOptions",
+          "unitKind": "function",
+          "name": "trailBaseCollectionOptions",
+          "qualifiedName": "trailBaseCollectionOptions",
+          "parentUnitId": null,
+          "startLine": 120,
+          "endLine": 243,
+          "signature": "export function trailBaseCollectionOptions<\n  TItem extends ShapeOf<TRecord>,\n  TRecord extends ShapeOf<TItem> = TItem,\n  TKey extends string | number = string | number,\n>(\n  config: TrailBaseCollectionConfig<TItem, TRecord, TKey>,\n): CollectionConfig<TItem, TKey, never, TrailBaseCollectionUtils> & {\n  utils: TrailBaseCollectionUtils\n}",
+          "parameters": [
+            {
+              "name": "config",
+              "type": "TrailBaseCollectionConfig<TItem, TRecord, TKey>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "CollectionConfig<TItem, TKey, never, TrailBaseCollectionUtils> & { utils: TrailBaseCollectionUtils }",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [
+            "TItem extends ShapeOf<TRecord>",
+            "TRecord extends ShapeOf<TItem> = TItem",
+            "TKey extends string | number = string | number"
+          ],
+          "logicOutline": [],
+          "preconditions": [
+            "config.recordApi must implement a list method accepting { pagination, order, filters } and returning { records, cursor }",
+            "config.parse must be a converter from TRecord to TItem",
+            "config.serialize must be a converter from TItem/TPartial<TItem> to TRecord",
+            "config.getKey must extract a string|number key from a TItem"
+          ],
+          "postconditions": [
+            "Returns a CollectionConfig object whose sync function can paginate through TrailBase records in batches of up to 256",
+            "Returns a CollectionConfig with a utils object (TrailBaseCollectionUtils) attached",
+            "Internal sync mode defaults to 'eager' when config.syncMode is not provided"
+          ],
+          "invariants": [
+            "seenIds Store tracks every record ID that has been written via sync, mapping string IDs to a numeric value",
+            "Cursors from prior fetches are cached per lastKey so incremental loading reuses encrypted cursor tokens"
+          ],
+          "edgeCases": [
+            "awaitIds called with IDs already present in seenIds resolves immediately without subscribing",
+            "awaitIds called with IDs not yet seen waits until all appear or timeout elapses, then throws TimeoutWaitingForIdsError",
+            "load with limit <= 0 returns immediately without making any API call",
+            "load when recordApi.list returns empty records array breaks the pagination loop (drained)",
+            "load when response records length < batch limit indicates end of data, causing the loop to break",
+            "cancelEventReader called when no eventReader exists is a no-op"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["TimeoutWaitingForIdsError"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "seenIds Store is mutated on each sync write (insert entries)",
+            "eventReader reference is set/cleared by cancelEventReader",
+            "fullSyncCompleted flag is tracked (let variable)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "convert", "source": "trailbase.ts", "kind": "internal" },
+            { "name": "convertPartial", "source": "trailbase.ts", "kind": "internal" },
+            { "name": "buildOrder", "source": "trailbase.ts", "kind": "internal" },
+            { "name": "buildFilters", "source": "trailbase.ts", "kind": "internal" },
+            { "name": "config.recordApi.list", "source": "config", "kind": "external" },
+            { "name": "config.getKey", "source": "config", "kind": "external" },
+            { "name": "config.parse", "source": "config", "kind": "external" },
+            { "name": "config.serialize", "source": "config", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "Store",
+            "Map",
+            "TimeoutWaitingForIdsError",
+            "ReadableStreamDefaultReader",
+            "CollectionConfig",
+            "TrailBaseCollectionConfig",
+            "TrailBaseCollectionUtils",
+            "ShapeOf",
+            "SyncConfig",
+            "LoadSubsetOptions",
+            "FilterOrComposite"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "The sync load function calls config.recordApi.list with { pagination: { limit, offset?, cursor? }, order?, filters? } and expects back { records: TRecord[], cursor?: string }. Records are converted via config.parse before being written as { type: 'insert', value: TItem } operations.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Factory function that adapts a TrailBase-specific collection configuration (with parse/serialize converters, record API, sync mode, and getKey) into a generic TanStack DB CollectionConfig with TrailBaseCollectionUtils, wiring up sync pagination, record parsing, serialization, and ID-tracking for sync readiness.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "256",
+              "role": "Maximum batch size per page when loading records from the TrailBase API"
+            },
+            {
+              "kind": "magic-number",
+              "value": "120 * 1000",
+              "role": "Default timeout in milliseconds for awaitIds before throwing TimeoutWaitingForIdsError"
+            },
+            { "kind": "enum-value", "value": "eager", "role": "Default syncMode when config.syncMode is not provided" },
+            {
+              "kind": "enum-value",
+              "value": "insert",
+              "role": "Type string used in write operations emitted during sync load"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "trailBaseCollectionOptions is called with the config",
+              "then": "The returned object's sync mode is 'eager' and seenIds is empty",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The remaining IDs are written into seenIds via the subscribe path",
+              "then": "awaitIds resolves once all requested IDs are present in seenIds",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "120 seconds elapse without the IDs appearing",
+              "then": "A TimeoutWaitingForIdsError is rejected with the stringified IDs",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6bce13164e9db6abb5aaa1f554c85f5efa1a95661fc6d0ddb139730d23cd3493"
+        }
+      },
+      {
+        "unitId": "packages/trailbase-db-collection/src/trailbase.ts__buildOrder#function:buildOrder",
+        "unitKind": "function",
+        "name": "buildOrder",
+        "qualifiedName": "buildOrder",
+        "parentUnitId": null,
+        "startLine": 271,
+        "endLine": 284,
+        "isBehavioral": true,
+        "source": "          let value: TItem | undefined\n          if (`Insert` in event) {\n            value = parse(event.Insert as TRecord)\n            write({ type: `insert`, value })\n          } else if (`Delete` in event) {\n            value = parse(event.Delete as TRecord)\n            write({ type: `delete`, value })\n          } else if (`Update` in event) {\n            value = parse(event.Update as TRecord)\n            write({ type: `update`, value })\n          } else {\n            console.error(`Error: ${event.Error}`)\n          }\n          commit()",
+        "detail": {
+          "unitId": "packages/trailbase-db-collection/src/trailbase.ts__buildOrder#function:buildOrder",
+          "fileId": "packages/trailbase-db-collection/src/trailbase.ts__buildOrder",
+          "unitKind": "function",
+          "name": "buildOrder",
+          "qualifiedName": "buildOrder",
+          "parentUnitId": null,
+          "startLine": 271,
+          "endLine": 284,
+          "signature": null,
+          "parameters": [
+            { "name": "event", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "parse", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "write", "type": null, "default": null, "optional": false, "variadic": false, "order": 2 },
+            { "name": "commit", "type": null, "default": null, "optional": false, "variadic": false, "order": 3 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Event object must be provided",
+            "parse, write, and commit functions must be available in scope"
+          ],
+          "postconditions": [
+            "The event is processed and the corresponding operation is written to the store via the write function"
+          ],
+          "invariants": [],
+          "edgeCases": ["If event has an 'Error' property, it logs the error to console.error"],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Logs error to console if event.Error is present",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Calls write function which may mutate store state",
+            "Calls commit function which may persist changes"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "parse", "source": null, "kind": "internal" },
+            { "name": "write", "source": null, "kind": "internal" },
+            { "name": "commit", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["TItem", "TRecord"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes an event to build or update an order by parsing the event data and writing the appropriate operation to a store, with error logging for unknown events.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "Insert", "role": "Event type discriminator for insert operations" },
+            { "kind": "enum-value", "value": "Delete", "role": "Event type discriminator for delete operations" },
+            { "kind": "enum-value", "value": "Update", "role": "Event type discriminator for update operations" },
+            { "kind": "enum-value", "value": "Error", "role": "Event type for error handling" },
+            { "kind": "format-string", "value": "Error: ${event.Error}", "role": "Error message format for logging" },
+            { "kind": "enum-value", "value": "insert", "role": "Operation type written for insert events" },
+            { "kind": "enum-value", "value": "delete", "role": "Operation type written for delete events" },
+            { "kind": "enum-value", "value": "update", "role": "Operation type written for update events" }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "buildOrder is called with this event",
+              "then": "write is called with { type: 'insert', value: parsed_result } where parsed_result is the output of parse on the Insert record",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "buildOrder is called",
+              "then": "write is called with { type: 'delete', value: parsed_result }",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "buildOrder is called",
+              "then": "console.error is called with the message 'Error: <error_string>'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "55f70c664fa8f58fcf973a13980a044780e92b983041bae5c811779f452069fd"
+        }
+      },
+      {
+        "unitId": "packages/trailbase-db-collection/src/trailbase.ts__buildCompareOp#function:buildCompareOp",
+        "unitKind": "function",
+        "name": "buildCompareOp",
+        "qualifiedName": "buildCompareOp",
+        "parentUnitId": null,
+        "startLine": 286,
+        "endLine": 301,
+        "isBehavioral": true,
+        "source": "          if (value) {\n            seenIds.setState((curr: Map<string, number>) => {\n              const newIds = new Map(curr)\n              newIds.set(String(getKey(value)), Date.now())\n              return newIds\n            })\n          }\n        }\n      }\n\n      async function start() {\n        const eventStream = await config.recordApi.subscribe(`*`)\n        const reader = (eventReader = eventStream.getReader())\n\n        // Start listening for subscriptions first. Otherwise, we'd risk a gap\n        // between the initial fetch and starting to listen.",
+        "detail": {
+          "unitId": "packages/trailbase-db-collection/src/trailbase.ts__buildCompareOp#function:buildCompareOp",
+          "fileId": "packages/trailbase-db-collection/src/trailbase.ts__buildCompareOp",
+          "unitKind": "function",
+          "name": "buildCompareOp",
+          "qualifiedName": "buildCompareOp",
+          "parentUnitId": null,
+          "startLine": 286,
+          "endLine": 301,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Builds a comparison operation object or function for filtering database records based on an operator and a value, ensuring correct predicate construction for queries.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "d3176cdafbd4e9ec5127f06b4145b5950f330545568cd68a3d387cb24a981272"
+        }
+      },
+      {
+        "unitId": "packages/trailbase-db-collection/src/trailbase.ts__buildFilters#function:buildFilters",
+        "unitKind": "function",
+        "name": "buildFilters",
+        "qualifiedName": "buildFilters",
+        "parentUnitId": null,
+        "startLine": 303,
+        "endLine": 361,
+        "isBehavioral": true,
+        "source": "\n        try {\n          // Eager mode: perform initial fetch to populate everything\n          if (internalSyncMode === `eager`) {\n            // Load everything on initial load.\n            await load({})\n            fullSyncCompleted = true\n          }\n        } catch (e) {\n          cancelEventReader()\n          throw e\n        } finally {\n          // Mark ready both if everything went well or if there's an error to\n          // avoid blocking apps waiting for `.preload()` to finish.\n          markReady()\n        }\n\n        // Lastly, start a periodic cleanup task that will be removed when the\n        // reader closes.\n        const periodicCleanupTask = setInterval(() => {\n          seenIds.setState((curr) => {\n            const now = Date.now()\n            let anyExpired = false\n\n            const notExpired = Array.from(curr.entries()).filter(([_, v]) => {\n              const expired = now - v > 300 * 1000\n              anyExpired = anyExpired || expired\n              return !expired\n            })\n\n            if (anyExpired) {\n              return new Map(notExpired)\n            }\n            return curr\n          })\n        }, 120 * 1000)\n\n        reader.closed.finally(() => clearInterval(periodicCleanupTask))\n      }\n\n      start()\n\n      // Eager mode doesn't need subset loading\n      if (internalSyncMode === `eager`) {\n        return\n      }\n\n      return {\n        loadSubset: load,\n        getSyncMetadata: () =>\n          ({\n            syncMode: internalSyncMode,\n          }) as const,\n      }\n    },\n    // Expose the getSyncMetadata function\n    getSyncMetadata: () =>\n      ({\n        syncMode: internalSyncMode,",
+        "detail": {
+          "unitId": "packages/trailbase-db-collection/src/trailbase.ts__buildFilters#function:buildFilters",
+          "fileId": "packages/trailbase-db-collection/src/trailbase.ts__buildFilters",
+          "unitKind": "function",
+          "name": "buildFilters",
+          "qualifiedName": "buildFilters",
+          "parentUnitId": null,
+          "startLine": 303,
+          "endLine": 361,
+          "signature": "function buildFilters(filters: any): any",
+          "parameters": [
+            { "name": "filters", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "any",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Transforms a high-level filter specification into a lower-level query format suitable for the underlying database collection.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "45852379b2bb9042db6eca9a9ca6beb3c8bc89517d5f2ab7f345a55187e86c47"
+        }
+      }
+    ]
+  },
+  "out": ["packages/trailbase-db-collection/src/errors.ts"],
+  "in": [
+    "packages/trailbase-db-collection/e2e/trailbase.e2e.test.ts",
+    "packages/trailbase-db-collection/src/index.ts",
+    "packages/trailbase-db-collection/tests/trailbase.test-d.ts",
+    "packages/trailbase-db-collection/tests/trailbase.test.ts"
+  ],
+  "externals": ["@tanstack/store", "trailbase", "@tanstack/db", "../../db/dist/esm/query/ir"],
+  "impact": {
+    "seeds": 6,
+    "callers": 4,
+    "impactedFiles": [
+      "packages/trailbase-db-collection/e2e/trailbase.e2e.test.ts",
+      "packages/trailbase-db-collection/tests/trailbase.test.ts"
+    ]
+  }
+}

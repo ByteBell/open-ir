@@ -1,0 +1,1182 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/sync/src/useSync.ts",
+    "language": "typescript",
+    "sizeBytes": 20190,
+    "tokenCount": 5046,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:17:14.213Z",
+    "module": {
+      "purpose": "Provides the React synchronization hook and configuration types for connecting a tldraw store to a multiplayer server, managing remote synchronization, presence, connection status, permissions, and cleanup.",
+      "summary": "This module constructs a reactive collaborative tldraw store around either a WebSocket URI or a caller-provided persistent socket. It resolves themes, users, presence, schemas, and assets; creates synchronization and presence signals; tracks connection and authorization state; reports analytics and synchronization failures; and closes all resources when the React effect is disposed. It also defines the mutually exclusive URI and custom-connection configuration shapes accepted by the hook.",
+      "businessContext": "Supports real-time collaborative canvas editing with shared document state, presence, comments, and access control. Failure leaves users unable to connect, synchronize edits, see collaborators, or safely use the document.",
+      "classes": [
+        "RemoteTLStoreWithStatus (~L81-95): Remote store status union including synchronized object-lane permissions",
+        "UseSyncOptionsBase (~L447-542): Shared configuration for users, assets, presence, themes, and analytics",
+        "UseSyncOptionsWithUri (~L544-571): Configuration variant connecting through a WebSocket URI",
+        "UseSyncOptionsWithConnectFn (~L573-589): Configuration variant using a custom persistent socket factory"
+      ],
+      "functions": [
+        "useSync (~L173-419): Creates and exposes a reactive store synchronized with multiplayer infrastructure",
+        "getConnectionStatus (~L285-287): Maps socket errors to the public offline connection status"
+      ],
+      "keywords": [
+        "multiplayer synchronization",
+        "WebSocket",
+        "presence derivation",
+        "object access",
+        "persistent client socket",
+        "tldraw store",
+        "remote collaboration",
+        "custom message handler",
+        "sessionId",
+        "storeId"
+      ],
+      "ontologyConcepts": [
+        "real-time collaboration",
+        "reactive state",
+        "presence",
+        "authorization",
+        "connection lifecycle",
+        "schema validation",
+        "resource cleanup"
+      ],
+      "businessEntities": [
+        "user",
+        "document",
+        "canvas",
+        "presence session",
+        "asset",
+        "room",
+        "custom message",
+        "comment"
+      ],
+      "systemCapabilities": [
+        "connects clients to multiplayer sessions",
+        "synchronizes remote document state",
+        "broadcasts collaborative presence",
+        "surfaces connection and access status",
+        "supports custom transport connections",
+        "cleans up sockets and reactive subscriptions"
+      ],
+      "configDependencies": [
+        "uri",
+        "connect",
+        "roomId",
+        "assets",
+        "users",
+        "themes",
+        "getUserPresence",
+        "onCustomMessageReceived",
+        "onMount",
+        "trackAnalyticsEvent"
+      ],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["atom", "transact"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/sync-core",
+          "symbols": [
+            "ClientWebSocketAdapter",
+            "TLCustomMessageHandler",
+            "TLObjectStoreAccess",
+            "TLPersistentClientSocket",
+            "TLPresenceMode",
+            "TLRemoteSyncError",
+            "TLSocketClientSentEvent",
+            "TLSocketServerSentEvent",
+            "TLSyncClient",
+            "TLSyncErrorCloseEventReason"
+          ],
+          "package": "@tldraw/sync-core",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 14 }
+        },
+        {
+          "spec": "react",
+          "symbols": ["useEffect"],
+          "package": "react",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 15, "endLine": 15 }
+        },
+        {
+          "spec": "tldraw",
+          "symbols": [
+            "Editor",
+            "TAB_ID",
+            "TLAssetStore",
+            "TLPresenceStateInfo",
+            "TLRecord",
+            "TLStore",
+            "TLStoreSchemaOptions",
+            "TLStoreWithStatus",
+            "TLThemes",
+            "TLUser",
+            "TLUserStore",
+            "UserRecordType",
+            "computed",
+            "createCachedUserResolve",
+            "createPresenceStateDerivation",
+            "registerColorsFromThemes",
+            "registerFontsFromThemes",
+            "resolveThemes",
+            "createTLStore",
+            "createUserId",
+            "defaultUserPreferences",
+            "defaultUserStore",
+            "getDefaultUserPresence",
+            "getUserPreferences",
+            "uniqueId",
+            "useEvent",
+            "useReactiveEvent",
+            "useRefState",
+            "useTLSchemaFromUtils",
+            "useValue"
+          ],
+          "package": "tldraw",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 16, "endLine": 47 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Logs synchronization errors to the console.",
+          "Invokes configured analytics tracking for load and categorized synchronization failures."
+        ],
+        "network": [
+          "Creates or receives a persistent client socket.",
+          "Adds sessionId and storeId query parameters to URI-based connections.",
+          "Starts and closes a TLSyncClient connection."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "websocket",
+          "role": "consumes",
+          "address": "uri",
+          "payloadRef": "TLSocketClientSentEvent<TLRecord> | TLSocketServerSentEvent<TLRecord>",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "useSync",
+          "shape": "export function useSync(opts: UseSyncOptions & TLStoreSchemaOptions): RemoteTLStoreWithStatus",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "RemoteTLStoreWithStatus",
+          "shape": "export type RemoteTLStoreWithStatus = Exclude<TLStoreWithStatus, { status: 'synced-local' } | { status: 'not-synced' } | { status: 'synced-remote' }> | (Extract<TLStoreWithStatus, { status: 'synced-remote' }> & { readonly objectAccess: TLObjectStoreAccess })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "UseSyncOptionsBase",
+          "shape": "export interface UseSyncOptionsBase",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "UseSyncOptionsWithUri",
+          "shape": "export interface UseSyncOptionsWithUri extends UseSyncOptionsBase",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "UseSyncOptionsWithConnectFn",
+          "shape": "export interface UseSyncOptionsWithConnectFn extends UseSyncOptionsBase",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "UseSyncConnectFn",
+          "shape": "export type UseSyncConnectFn = (query: { sessionId: string; storeId: string }) => TLPersistentClientSocket",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "UseSyncOptions",
+          "shape": "export type UseSyncOptions = UseSyncOptionsWithUri | UseSyncOptionsWithConnectFn",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "remote store status",
+          "shape": "{ status: 'loading' } | { status: 'error'; error: Error } | { status: 'synced-remote'; connectionStatus: string; store: TLStore; objectAccess: TLObjectStoreAccess }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TLSyncClient",
+          "shape": "TLSyncClient<TLRecord, TLStore>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLPersistentClientSocket",
+          "shape": "TLPersistentClientSocket<TLSocketClientSentEvent<TLRecord>, TLSocketServerSentEvent<TLRecord>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLStoreSchemaOptions",
+          "shape": "TLStoreSchemaOptions",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "TLAssetStore", "shape": "TLAssetStore", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLUserStore", "shape": "TLUserStore", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "TLPresenceStateInfo",
+          "shape": "TLPresenceStateInfo | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLCustomMessageHandler",
+          "shape": "TLCustomMessageHandler",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSyncErrorCloseEventReason",
+          "shape": "TLSyncErrorCloseEventReason.NOT_FOUND | TLSyncErrorCloseEventReason.FORBIDDEN | TLSyncErrorCloseEventReason.NOT_AUTHENTICATED | TLSyncErrorCloseEventReason.RATE_LIMITED",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "theme-and-schema-initialization",
+          "intent": "Resolve themes, register theme resources, and construct the store schema.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 194, "endLine": 197 }
+        },
+        {
+          "name": "user-resolution",
+          "intent": "Build configured or default identity and presence-aware user resolution.",
+          "structureKind": "branch",
+          "predicate": "_users",
+          "branchOutcomes": ["configured user store", "default user store"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 207, "endLine": 226 }
+        },
+        {
+          "name": "socket-selection",
+          "intent": "Select custom transport or URI WebSocket and reject invalid configuration.",
+          "structureKind": "branch",
+          "predicate": "if (connect)",
+          "branchOutcomes": ["custom connection", "URI connection", "missing connection"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 243, "endLine": 281 }
+        },
+        {
+          "name": "reserved-query-validation",
+          "intent": "Prevent callers from overriding synchronization identity query parameters.",
+          "structureKind": "branch",
+          "predicate": "withParams.searchParams.has('sessionId')",
+          "branchOutcomes": ["reserved parameter present", "reserved parameter absent"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 264, "endLine": 277 }
+        },
+        {
+          "name": "client-construction",
+          "intent": "Construct synchronized store, presence derivation, and synchronization client.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 288, "endLine": 381 }
+        },
+        {
+          "name": "synchronization-error-routing",
+          "intent": "Track categorized server errors, publish failure state, and close the socket.",
+          "structureKind": "branch",
+          "predicate": "switch (reason)",
+          "branchOutcomes": ["NOT_FOUND", "FORBIDDEN", "NOT_AUTHENTICATED", "RATE_LIMITED", "default"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 333, "endLine": 356 }
+        },
+        {
+          "name": "effect-cleanup",
+          "intent": "Cancel synchronization and release status subscription and socket resources.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 383, "endLine": 388 }
+        },
+        {
+          "name": "public-status-projection",
+          "intent": "Project internal state into loading, error, or synchronized remote status.",
+          "structureKind": "branch",
+          "predicate": "if (!state)",
+          "branchOutcomes": [
+            "loading without state",
+            "error state",
+            "loading before client readiness",
+            "synced remote"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 403, "endLine": 418 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "RemoteTLStoreWithStatus",
+          "signature": "export type RemoteTLStoreWithStatus =",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 81, "endLine": 81 }
+        },
+        {
+          "kind": "function",
+          "name": "useSync",
+          "signature": "export function useSync(opts: UseSyncOptions & TLStoreSchemaOptions): RemoteTLStoreWithStatus {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "RemoteTLStoreWithStatus",
+          "exported": true,
+          "anchor": { "startLine": 173, "endLine": 173 }
+        },
+        {
+          "kind": "interface",
+          "name": "UseSyncOptionsBase",
+          "signature": "export interface UseSyncOptionsBase {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 447, "endLine": 447 }
+        },
+        {
+          "kind": "interface",
+          "name": "UseSyncOptionsWithUri",
+          "signature": "export interface UseSyncOptionsWithUri extends UseSyncOptionsBase {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 545, "endLine": 545 }
+        },
+        {
+          "kind": "interface",
+          "name": "UseSyncOptionsWithConnectFn",
+          "signature": "export interface UseSyncOptionsWithConnectFn extends UseSyncOptionsBase {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 573, "endLine": 573 }
+        },
+        {
+          "kind": "type",
+          "name": "UseSyncConnectFn",
+          "signature": "export type UseSyncConnectFn = (query: {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "TLPersistentClientSocket",
+          "exported": true,
+          "anchor": { "startLine": 589, "endLine": 589 }
+        },
+        {
+          "kind": "type",
+          "name": "UseSyncOptions",
+          "signature": "export type UseSyncOptions = UseSyncOptionsWithUri | UseSyncOptionsWithConnectFn",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 601, "endLine": 601 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "union",
+          "name": "RemoteTLStoreWithStatus",
+          "shape": "| Exclude<\n\t\t\tTLStoreWithStatus,\n\t\t\t{ status: 'synced-local' } | { status: 'not-synced' } | { status: 'synced-remote' }\n\t  >\n\t| (Extract<TLStoreWithStatus, { status: 'synced-remote' }> & {\n\t\t\t/**\n\t\t\t * Write access for object-store lane record types (e.g. comments), as granted by the\n\t\t\t * server for this session. Independent of the canvas read-only state, so a session can be\n\t\t\t * allowed to comment without being allowed to edit. Defaults to 'write'.\n\t\t\t */\n\t\t\treadonly objectAccess: TLObjectStoreAccess\n\t  })",
+          "discriminant": "status",
+          "anchor": { "startLine": 82, "endLine": 95 }
+        },
+        {
+          "kind": "interface",
+          "name": "UseSyncOptionsBase",
+          "shape": "{\n\t/**\n\t * Named theme definitions. When provided, custom color names are automatically\n\t * registered before the store is constructed so persisted data with those\n\t * colors passes validation on load.\n\t */\n\tthemes?: Partial<TLThemes>\n\n\t/**\n\t * Asset store implementation for handling file uploads and storage.\n\t */\n\tassets: TLAssetStore\n\n\t/**\n\t * User store for identity, presence and attribution.\n\t */\n\tusers?: TLUserStore\n\n\tonCustomMessageReceived?(data: any): void\n\tonMount?(editor: Editor): void\n\troomId?: string\n\ttrackAnalyticsEvent?(name: string, data: { [key: string]: any }): void\n\tgetUserPresence?(store: TLStore, user: TLUser): TLPresenceStateInfo | null\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 447, "endLine": 542 }
+        },
+        {
+          "kind": "interface",
+          "name": "UseSyncOptionsWithUri",
+          "shape": "{\n\turi: string | (() => string | Promise<string>)\n\tconnect?: never\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 545, "endLine": 571 }
+        },
+        {
+          "kind": "interface",
+          "name": "UseSyncOptionsWithConnectFn",
+          "shape": "{\n\tconnect: UseSyncConnectFn\n\turi?: never\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 573, "endLine": 589 }
+        },
+        {
+          "kind": "alias",
+          "name": "UseSyncConnectFn",
+          "shape": "(query: {\n\tsessionId: string\n\tstoreId: string\n}) => TLPersistentClientSocket",
+          "discriminant": null,
+          "anchor": { "startLine": 590, "endLine": 594 }
+        },
+        {
+          "kind": "union",
+          "name": "UseSyncOptions",
+          "shape": "UseSyncOptionsWithUri | UseSyncOptionsWithConnectFn",
+          "discriminant": null,
+          "anchor": { "startLine": 601, "endLine": 601 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Both uri and connect are supplied",
+          "handled": true,
+          "behavior": "Throws an error rejecting mutually exclusive connection configuration.",
+          "anchor": { "startLine": 243, "endLine": 246 }
+        },
+        {
+          "inputShape": "Neither uri nor connect is supplied",
+          "handled": true,
+          "behavior": "Throws an error requiring one connection mechanism.",
+          "anchor": { "startLine": 279, "endLine": 281 }
+        },
+        {
+          "inputShape": "URI contains sessionId or storeId",
+          "handled": true,
+          "behavior": "Throws an error instructing the caller to use another query parameter name.",
+          "anchor": { "startLine": 264, "endLine": 272 }
+        },
+        {
+          "inputShape": "Configured current user is null",
+          "handled": true,
+          "behavior": "Creates an anonymous fallback user from local preferences for presence display.",
+          "anchor": { "startLine": 231, "endLine": 236 }
+        },
+        {
+          "inputShape": "No other presence sessions exist",
+          "handled": true,
+          "behavior": "Uses solo presence mode; otherwise uses full presence mode.",
+          "anchor": { "startLine": 317, "endLine": 321 }
+        },
+        {
+          "inputShape": "Synchronization error from server",
+          "handled": true,
+          "behavior": "Tracks the categorized error, stores TLRemoteSyncError, and closes the socket.",
+          "anchor": { "startLine": 333, "endLine": 355 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": "new Error('uri and connect cannot be used together')",
+          "caught": null,
+          "action": "Rejects invalid simultaneous connection options.",
+          "fallback": null,
+          "anchor": { "startLine": 243, "endLine": 246 }
+        },
+        {
+          "thrown": "new Error('useSync. \"sessionId\" is a reserved query param name. Please use a different name')",
+          "caught": null,
+          "action": "Rejects a URI that attempts to provide the reserved session identifier.",
+          "fallback": null,
+          "anchor": { "startLine": 265, "endLine": 267 }
+        },
+        {
+          "thrown": "new Error('useSync. \"storeId\" is a reserved query param name. Please use a different name')",
+          "caught": null,
+          "action": "Rejects a URI that attempts to provide the reserved store identifier.",
+          "fallback": null,
+          "anchor": { "startLine": 269, "endLine": 271 }
+        },
+        {
+          "thrown": "new Error('uri or connect must be provided')",
+          "caught": null,
+          "action": "Rejects missing connection configuration.",
+          "fallback": null,
+          "anchor": { "startLine": 279, "endLine": 281 }
+        },
+        {
+          "thrown": null,
+          "caught": "reason passed to onSyncError",
+          "action": "Logs and categorizes the synchronization failure, updates hook state, and closes the socket.",
+          "fallback": "The hook projects an error status containing TLRemoteSyncError.",
+          "anchor": { "startLine": 333, "endLine": 355 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "A URI and a custom connect function cannot be supplied together.",
+          "anchor": { "startLine": 243, "endLine": 257 }
+        },
+        {
+          "kind": "precondition",
+          "description": "At least one of uri or connect must be provided.",
+          "anchor": { "startLine": 279, "endLine": 281 }
+        },
+        {
+          "kind": "invariant",
+          "description": "The sessionId and storeId query parameters are owned by the synchronization layer.",
+          "anchor": { "startLine": 264, "endLine": 275 }
+        },
+        {
+          "kind": "non-null",
+          "description": "Presence display receives an anonymous fallback user when the configured current user is null.",
+          "anchor": { "startLine": 231, "endLine": 236 }
+        },
+        {
+          "kind": "ordering",
+          "description": "The store is marked usable after the server supplies read-only mode and object access.",
+          "anchor": { "startLine": 357, "endLine": 376 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Disposed effects mark synchronization cancelled and close both client and socket.",
+          "anchor": { "startLine": 383, "endLine": 388 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide either uri or connect and do not provide both.",
+          "anchor": { "startLine": 243, "endLine": 281 }
+        },
+        {
+          "kind": "caller",
+          "description": "URI callers do not reserve sessionId or storeId query parameter names.",
+          "anchor": { "startLine": 264, "endLine": 272 }
+        },
+        {
+          "kind": "schema",
+          "description": "The supplied schema options are stable enough for the hook schema dependency model.",
+          "anchor": { "startLine": 190, "endLine": 197 }
+        },
+        {
+          "kind": "caller",
+          "description": "Consumers interpret loading, error, and synced-remote status before using the returned store.",
+          "anchor": { "startLine": 403, "endLine": 418 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What concrete socket connection statuses can TLPersistentClientSocket emit besides error?",
+          "affects": "connectionStatus surface and concurrency behavior",
+          "anchor": { "startLine": 285, "endLine": 289 },
+          "resolution": null
+        },
+        {
+          "question": "What server-side policy determines objectAccess on each connection or reconnect?",
+          "affects": "authorization and returned objectAccess behavior",
+          "anchor": { "startLine": 357, "endLine": 376 },
+          "resolution": null
+        },
+        {
+          "question": "Does TLSyncClient guarantee that onAfterConnect precedes onLoad for every reconnect?",
+          "affects": "state merge ordering and readiness semantics",
+          "anchor": { "startLine": 328, "endLine": 377 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "React effect lifecycle and asynchronous URI resolution drive socket synchronization; cleanup uses didCancel to prevent continued client activity after disposal."
+      },
+      "stateModel": {
+        "states": ["loading", "synced-remote", "error"],
+        "initialState": "loading",
+        "finalStates": ["synced-remote", "error"],
+        "transitions": [
+          {
+            "from": "loading",
+            "to": "synced-remote",
+            "trigger": "onLoad(client)",
+            "guard": "state.readyClient is undefined and state.error is undefined",
+            "effect": "setState((prev) => ({ ...prev, readyClient: client }))",
+            "anchor": { "startLine": 283, "endLine": 287 }
+          },
+          {
+            "from": "loading",
+            "to": "error",
+            "trigger": "onSyncError(reason)",
+            "guard": null,
+            "effect": "setState({ error: new TLRemoteSyncError(reason) }); socket.close()",
+            "anchor": { "startLine": 288, "endLine": 309 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "requires-uri-or-connect",
+          "scenario": "Neither a URI nor a custom connection function is supplied.",
+          "given": ["useSync({ assets })"],
+          "when": "renderHook(() => useSync(options))",
+          "then": "throws Error('uri or connect must be provided')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "A synchronization session cannot be initialized without a transport."
+        },
+        {
+          "testId": "rejects-mutually-exclusive-transports",
+          "scenario": "Both URI and custom connection options are supplied.",
+          "given": ["useSync({ uri, connect, assets })"],
+          "when": "renderHook(() => useSync(options))",
+          "then": "throws Error('uri and connect cannot be used together')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The discriminated transport configuration must remain exclusive."
+        },
+        {
+          "testId": "rejects-reserved-query-parameters",
+          "scenario": "The WebSocket URI already contains a synchronization-reserved query parameter.",
+          "given": ["uri = 'wss://server/sync?sessionId=existing'"],
+          "when": "await createWebSocketUri()",
+          "then": "throws Error('useSync. \"sessionId\" is a reserved query param name. Please use a different name')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Client-generated session identity must not be overridden by user input."
+        },
+        {
+          "testId": "appends-session-and-store-identifiers",
+          "scenario": "A valid URI is used to create the WebSocket connection.",
+          "given": ["uri = 'wss://server/sync/room-123'"],
+          "when": "await createWebSocketUri()",
+          "then": "the returned URI contains sessionId=TAB_ID and a generated storeId",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Each client connection requires stable session and store correlation identifiers."
+        },
+        {
+          "testId": "reports-loading-before-sync",
+          "scenario": "The hook has mounted but the synchronization client has not loaded.",
+          "given": ["state = null"],
+          "when": "readHookResult()",
+          "then": "result equals { status: 'loading' }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Consumers need an explicit pre-synchronization state."
+        },
+        {
+          "testId": "reports-synced-remote",
+          "scenario": "The synchronization client has loaded successfully.",
+          "given": ["state.readyClient = client", "state.objectAccess = 'write'"],
+          "when": "readHookResult()",
+          "then": "result.status is 'synced-remote' and result.store is client.store",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Successful loading must expose the synchronized store and access level."
+        },
+        {
+          "testId": "reports-sync-error",
+          "scenario": "The synchronization server closes the connection with an error reason.",
+          "given": ["reason = TLSyncErrorCloseEventReason.FORBIDDEN"],
+          "when": "client.onSyncError(reason)",
+          "then": "result.status is 'error' and result.error is a TLRemoteSyncError",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Remote failures must become an observable hook status and close the socket."
+        },
+        {
+          "testId": "propagates-readonly-access",
+          "scenario": "The server accepts the session but marks the canvas read-only.",
+          "given": ["onAfterConnect(_, { isReadonly: true, objectAccess: 'write' })"],
+          "when": "readHookResult()",
+          "then": "result.status is 'synced-remote' and the synchronized store operates in readonly mode",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Canvas editability and object-lane access are independent server-granted capabilities."
+        },
+        {
+          "testId": "defaults-object-access-to-write",
+          "scenario": "The client is synchronized before an object access value is surfaced.",
+          "given": ["state.readyClient = client", "state.objectAccess = undefined"],
+          "when": "readHookResult()",
+          "then": "result.objectAccess equals 'write'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The public status contract specifies write access as the compatibility default."
+        },
+        {
+          "testId": "cleans-up-connection-on-unmount",
+          "scenario": "A mounted synchronized session is unmounted.",
+          "given": ["client and socket are connected"],
+          "when": "unmount()",
+          "then": "the client and socket are closed and status subscriptions are unsubscribed",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Lifecycle cleanup prevents stale connections and reactive leaks."
+        },
+        {
+          "testId": "uses-presence-mode-by-session-count",
+          "scenario": "The synchronized store has no other presence records.",
+          "given": ["store.query.ids('instance_presence').get() = new Set()"],
+          "when": "readPresenceMode()",
+          "then": "presenceMode equals 'solo'",
+          "targets": [],
+          "oracleKind": "property",
+          "rationale": "Solo sessions use the reduced synchronization mode only when no other session is present."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "multiplayer event constant",
+        "default custom message handler",
+        "remote store status type",
+        "useSync hook",
+        "base synchronization options interface",
+        "URI synchronization options interface",
+        "custom connection options interface",
+        "connection factory type",
+        "combined synchronization options type"
+      ],
+      "moduleLevelCode": "import { atom, transact } from '@tldraw/state'\nimport { ClientWebSocketAdapter, TLCustomMessageHandler, TLObjectStoreAccess, TLPersistentClientSocket, TLPresenceMode, TLRemoteSyncError, TLSocketClientSentEvent, TLSocketServerSentEvent, TLSyncClient, TLSyncErrorCloseEventReason } from '@tldraw/sync-core'\nimport { useEffect } from 'react'\nimport { ... } from 'tldraw'",
+      "exports": [
+        { "name": "RemoteTLStoreWithStatus", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "useSync", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "UseSyncOptionsBase", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "UseSyncOptionsWithUri", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "UseSyncOptionsWithConnectFn", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "UseSyncConnectFn", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "UseSyncOptions", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "atom", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "transact", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "ClientWebSocketAdapter", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLCustomMessageHandler", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLObjectStoreAccess", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLPersistentClientSocket", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLPresenceMode", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLRemoteSyncError", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLSocketClientSentEvent", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLSocketServerSentEvent", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLSyncClient", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLSyncErrorCloseEventReason", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "useEffect", "module": "react", "alias": null, "kind": "external" },
+        { "symbol": "Editor", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TAB_ID", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLAssetStore", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLPresenceStateInfo", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLRecord", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLStore", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLStoreSchemaOptions", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLStoreWithStatus", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLThemes", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLUser", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLUserStore", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "UserRecordType", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "computed", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "createCachedUserResolve", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "createPresenceStateDerivation", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "registerColorsFromThemes", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "registerFontsFromThemes", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "resolveThemes", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "createTLStore", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "createUserId", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "defaultUserPreferences", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "defaultUserStore", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "getDefaultUserPresence", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "getUserPreferences", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "uniqueId", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "useEvent", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "useReactiveEvent", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "useRefState", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "useTLSchemaFromUtils", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "useValue", "module": "tldraw", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [
+        { "name": "MULTIPLAYER_EVENT_NAME", "value": "'multiplayer.client'", "kind": "string" },
+        { "name": "defaultCustomMessageHandler", "value": "() => {}", "kind": "function" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/sync/src/useSync.ts__useSync#function:useSync",
+        "unitKind": "function",
+        "name": "useSync",
+        "qualifiedName": "useSync",
+        "parentUnitId": null,
+        "startLine": 173,
+        "endLine": 419,
+        "isBehavioral": true,
+        "source": " *   return <Tldraw store={store.store} />\n * }\n * ```\n *\n * @public\n */\nexport function useSync(opts: UseSyncOptions & TLStoreSchemaOptions): RemoteTLStoreWithStatus {\n\tconst [state, setState] = useRefState<{\n\t\treadyClient?: TLSyncClient<TLRecord, TLStore>\n\t\terror?: Error\n\t\tobjectAccess?: TLObjectStoreAccess\n\t} | null>(null)\n\tconst {\n\t\turi,\n\t\troomId = 'default',\n\t\tassets,\n\t\tusers: _users,\n\t\tonMount,\n\t\tconnect,\n\t\ttrackAnalyticsEvent: track,\n\t\tgetUserPresence: _getUserPresence,\n\t\tonCustomMessageReceived: _onCustomMessageReceived,\n\t\tthemes,\n\t\t...schemaOpts\n\t} = opts\n\n\t// This line will throw a type error if we add any new options to the useSync hook but we don't destructure them\n\t// This is required because otherwise the useTLSchemaFromUtils might return a new schema on every render if the newly-added option\n\t// is allowed to be unstable\n\tconst __never__: never = 0 as any as keyof Omit<typeof schemaOpts, keyof TLStoreSchemaOptions>\n\n\tconst resolvedThemes = resolveThemes(themes)\n\tregisterColorsFromThemes(resolvedThemes)\n\tregisterFontsFromThemes(resolvedThemes)\n\tconst schema = useTLSchemaFromUtils(schemaOpts)\n\n\tconst getUserPresence = useReactiveEvent(\n\t\t(_getUserPresence ?? getDefaultUserPresence) as typeof getDefaultUserPresence\n\t)\n\tconst onCustomMessageReceived = useEvent(_onCustomMessageReceived ?? defaultCustomMessageHandler)\n\n\tuseEffect(() => {\n\t\tconst storeId = uniqueId()\n\n\t\tconst users: Required<TLUserStore> = _users\n\t\t\t? {\n\t\t\t\t\tcurrentUser: _users.currentUser,\n\t\t\t\t\tresolve:\n\t\t\t\t\t\t_users.resolve ??\n\t\t\t\t\t\tcreateCachedUserResolve((userId) => {\n\t\t\t\t\t\t\tconst current = _users.currentUser.get()\n\t\t\t\t\t\t\treturn current && current.id === createUserId(userId) ? current : null\n\t\t\t\t\t\t}),\n\t\t\t\t}\n\t\t\t: {\n\t\t\t\t\tcurrentUser: defaultUserStore.currentUser,\n\t\t\t\t\tresolve: createCachedUserResolve((userId) => {\n\t\t\t\t\t\tconst current = defaultUserStore.currentUser.get()\n\t\t\t\t\t\tif (current && current.id === createUserId(userId)) return current\n\t\t\t\t\t\tconst presences = store.query.records('instance_presence').get()\n\t\t\t\t\t\tconst match = presences.find((p) => p.userId === createUserId(userId))\n\t\t\t\t\t\tif (match) {\n\t\t\t\t\t\t\treturn UserRecordType.create({\n\t\t\t\t\t\t\t\tid: createUserId(userId),\n\t\t\t\t\t\t\t\tname: match.userName,\n\t\t\t\t\t\t\t\tcolor: match.color,\n\t\t\t\t\t\t\t})\n\t\t\t\t\t\t}\n\t\t\t\t\t\treturn null\n\t\t\t\t\t}),\n\t\t\t\t}\n\n\t\t// This always returns a non-null user for presence display, falling back\n\t\t// to anonymous user preferences. The store receives the raw `users` object\n\t\t// (where currentUser may return null), so attribution via\n\t\t// getAttributionUserId() correctly returns null for anonymous sessions.\n\t\tconst currentUser = computed<TLUser>('currentUser', () => {\n\t\t\tconst user = users.currentUser.get()\n\t\t\tif (user) return user\n\t\t\tconst prefs = getUserPreferences()\n\t\t\treturn UserRecordType.create({\n\t\t\t\tid: createUserId(prefs.id),\n\t\t\t\tname: prefs.name ?? '',\n\t\t\t\tcolor: prefs.color ?? defaultUserPreferences.color,\n\t\t\t})\n\t\t})\n\n\t\tlet socket: TLPersistentClientSocket<\n\t\t\tTLSocketClientSentEvent<TLRecord>,\n\t\t\tTLSocketServerSentEvent<TLRecord>\n\t\t>\n\t\tif (connect) {\n\t\t\tif (uri) {\n\t\t\t\tthrow new Error('uri and connect cannot be used together')\n\t\t\t}\n\n\t\t\tsocket = connect({\n\t\t\t\tsessionId: TAB_ID,\n\t\t\t\tstoreId,\n\t\t\t}) as TLPersistentClientSocket<\n\t\t\t\tTLSocketClientSentEvent<TLRecord>,\n\t\t\t\tTLSocketServerSentEvent<TLRecord>\n\t\t\t>\n\t\t} else if (uri) {\n\t\t\tif (connect) {\n\t\t\t\tthrow new Error('uri and connect cannot be used together')\n\t\t\t}\n\n\t\t\tsocket = new ClientWebSocketAdapter(async () => {\n\t\t\t\tconst uriString = typeof uri === 'string' ? uri : await uri()\n\n\t\t\t\t// set sessionId as a query param on the uri\n\t\t\t\tconst withParams = new URL(uriString)\n\t\t\t\tif (withParams.searchParams.has('sessionId')) {\n\t\t\t\t\tthrow new Error(\n\t\t\t\t\t\t'useSync. \"sessionId\" is a reserved query param name. Please use a different name'\n\t\t\t\t\t)\n\t\t\t\t}\n\t\t\t\tif (withParams.searchParams.has('storeId')) {\n\t\t\t\t\tthrow new Error(\n\t\t\t\t\t\t'useSync. \"storeId\" is a reserved query param name. Please use a different name'\n\t\t\t\t\t)\n\t\t\t\t}\n\n\t\t\t\twithParams.searchParams.set('sessionId', TAB_ID)\n\t\t\t\twithParams.searchParams.set('storeId', storeId)\n\t\t\t\treturn withParams.toString()\n\t\t\t})\n\t\t} else {\n\t\t\tthrow new Error('uri or connect must be provided')\n\t\t}\n\n\t\tlet didCancel = false\n\n\t\tfunction getConnectionStatus() {\n\t\t\treturn socket.connectionStatus === 'error' ? 'offline' : socket.connectionStatus\n\t\t}\n\t\tconst collaborationStatusSignal = atom('collaboration status', getConnectionStatus())\n\t\tconst unsubscribeFromConnectionStatus = socket.onStatusChange(() => {\n\t\t\tcollaborationStatusSignal.set(getConnectionStatus())\n\t\t})\n\n\t\tconst syncMode = atom('sync mode', 'readwrite' as 'readonly' | 'readwrite')\n\n\t\tconst store = createTLStore({\n\t\t\tid: storeId,\n\t\t\tschema,\n\t\t\tassets,\n\t\t\tusers,\n\t\t\tonMount,\n\t\t\tcollaboration: {\n\t\t\t\tstatus: collaborationStatusSignal,\n\t\t\t\tmode: syncMode,\n\t\t\t},\n\t\t})\n\n\t\tconst presence = createPresenceStateDerivation(currentUser, {\n\t\t\tgetUserPresence,\n\t\t})(store)\n\n\t\t// Every connected session — each tab, window, or device — pushes its\n\t\t// presence on connect, so the store holds one instance_presence record per\n\t\t// *other* session in the room, including the user's own other tabs. (The\n\t\t// server never echoes a session its own record.) So an empty set means\n\t\t// we're genuinely the only session and can throttle to solo; any other\n\t\t// session — another user, or just another tab of our own — keeps us at the\n\t\t// full sync rate so edits propagate without the solo-mode lag.\n\t\tconst otherSessions = store.query.ids('instance_presence')\n\n\t\tconst presenceMode = computed<TLPresenceMode>('presenceMode', () => {\n\t\t\treturn otherSessions.get().size === 0 ? 'solo' : 'full'\n\t\t})\n\n\t\tconst client = new TLSyncClient<TLRecord, TLStore>({\n\t\t\tstore,\n\t\t\tsocket,\n\t\t\tdidCancel: () => didCancel,\n\t\t\tonLoad(client) {\n\t\t\t\ttrack?.(MULTIPLAYER_EVENT_NAME, { name: 'load', roomId })\n\t\t\t\t// Merge so we don't clobber objectAccess if onAfterConnect ran first.\n\t\t\t\tsetState((prev) => ({ ...prev, readyClient: client }))\n\t\t\t},\n\t\t\tonSyncError(reason) {\n\t\t\t\tconsole.error('sync error', reason)\n\n\t\t\t\tswitch (reason) {\n\t\t\t\t\tcase TLSyncErrorCloseEventReason.NOT_FOUND:\n\t\t\t\t\t\ttrack?.(MULTIPLAYER_EVENT_NAME, { name: 'room-not-found', roomId })\n\t\t\t\t\t\tbreak\n\t\t\t\t\tcase TLSyncErrorCloseEventReason.FORBIDDEN:\n\t\t\t\t\t\ttrack?.(MULTIPLAYER_EVENT_NAME, { name: 'forbidden', roomId })\n\t\t\t\t\t\tbreak\n\t\t\t\t\tcase TLSyncErrorCloseEventReason.NOT_AUTHENTICATED:\n\t\t\t\t\t\ttrack?.(MULTIPLAYER_EVENT_NAME, { name: 'not-authenticated', roomId })\n\t\t\t\t\t\tbreak\n\t\t\t\t\tcase TLSyncErrorCloseEventReason.RATE_LIMITED:\n\t\t\t\t\t\ttrack?.(MULTIPLAYER_EVENT_NAME, { name: 'rate-limited', roomId })\n\t\t\t\t\t\tbreak\n\t\t\t\t\tdefault:\n\t\t\t\t\t\ttrack?.(MULTIPLAYER_EVENT_NAME, { name: 'sync-error:' + reason, roomId })\n\t\t\t\t\t\tbreak\n\t\t\t\t}\n\n\t\t\t\tsetState({ error: new TLRemoteSyncError(reason) })\n\t\t\t\tsocket.close()\n\t\t\t},\n\t\t\tonAfterConnect(_, { isReadonly, objectAccess }) {\n\t\t\t\t// Object-lane (comment) write access is decided per session by the server and can\n\t\t\t\t// change on reconnect (e.g. when the file's share tier changes), so surface it on\n\t\t\t\t// the returned status for consumers that gate comment UI. This fires before the\n\t\t\t\t// first onLoad, hence the merge in both directions.\n\t\t\t\tsetState((prev) => ({ ...prev, objectAccess }))\n\t\t\t\ttransact(() => {\n\t\t\t\t\tsyncMode.set(isReadonly ? 'readonly' : 'readwrite')\n\t\t\t\t\t// if the server crashes and loses all data it can return an empty document\n\t\t\t\t\t// when it comes back up. This is a safety check to make sure that if something like\n\t\t\t\t\t// that happens, it won't render the app broken and require a restart. The user will\n\t\t\t\t\t// most likely lose all their changes though since they'll have been working with pages\n\t\t\t\t\t// that won't exist. There's certainly something we can do to make this better.\n\t\t\t\t\t// but the likelihood of this happening is very low and maybe not worth caring about beyond this.\n\t\t\t\t\tstore.ensureStoreIsUsable()\n\t\t\t\t})\n\t\t\t},\n\t\t\tonCustomMessageReceived,\n\t\t\tpresence,\n\t\t\tpresenceMode,\n\t\t})\n\n\t\treturn () => {\n\t\t\tdidCancel = true\n\t\t\tunsubscribeFromConnectionStatus()\n\t\t\tclient.close()\n\t\t\tsocket.close()\n\t\t}\n\t}, [\n\t\tassets,\n\t\tonMount,\n\t\tconnect,\n\t\t_users,\n\t\troomId,\n\t\tschema,\n\t\tsetState,\n\t\ttrack,\n\t\turi,\n\t\tgetUserPresence,\n\t\tonCustomMessageReceived,\n\t])",
+        "detail": {
+          "unitId": "packages/sync/src/useSync.ts__useSync#function:useSync",
+          "fileId": "packages/sync/src/useSync.ts__useSync",
+          "unitKind": "function",
+          "name": "useSync",
+          "qualifiedName": "useSync",
+          "parentUnitId": null,
+          "startLine": 173,
+          "endLine": 419,
+          "signature": "export function useSync(opts: UseSyncOptions & TLStoreSchemaOptions): RemoteTLStoreWithStatus",
+          "parameters": [
+            {
+              "name": "opts",
+              "type": "UseSyncOptions & TLStoreSchemaOptions",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "RemoteTLStoreWithStatus",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "opts must provide either uri or connect.",
+            "opts must not provide both uri and connect.",
+            "When uri is used, the resolved URI must be a valid URL and must not already contain sessionId or storeId query parameters."
+          ],
+          "postconditions": [
+            "Returns a RemoteTLStoreWithStatus associated with a created synchronized store.",
+            "The synchronization client and socket are closed when the hook effect is cleaned up.",
+            "Connection status is surfaced with a socket status of error mapped to offline.",
+            "The store synchronization mode reflects the server's readonly status after connection."
+          ],
+          "invariants": [
+            "Each effect setup creates a unique storeId.",
+            "The socket receives TAB_ID as its sessionId.",
+            "URI-based connections receive sessionId and storeId as query parameters.",
+            "The collaboration status signal tracks socket status changes and maps error to offline.",
+            "Presence mode is solo when there are no instance_presence records and full otherwise.",
+            "The current presence user is always non-null, falling back to anonymous user preferences when no current user exists.",
+            "Connection lifecycle state merges readyClient and objectAccess updates rather than discarding either value.",
+            "Once cancellation begins, the synchronization client observes didCancel as true."
+          ],
+          "edgeCases": [
+            "If neither uri nor connect is provided, setup throws Error('uri or connect must be provided').",
+            "If both uri and connect are provided, setup throws Error('uri and connect cannot be used together').",
+            "If the resolved URI contains sessionId, setup throws the reserved-query-parameter error before adding connection parameters.",
+            "If the resolved URI contains storeId, setup throws the reserved-query-parameter error before adding connection parameters.",
+            "If the supplied current user is null, presence uses an anonymous user record derived from user preferences.",
+            "If a synchronization error occurs, the error is stored as TLRemoteSyncError and the socket is closed.",
+            "If socket.connectionStatus is error, the exposed collaboration status is offline.",
+            "If the server reports a readonly connection, the store mode becomes readonly; otherwise it becomes readwrite."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error", "TLRemoteSyncError"],
+            "reverts": [],
+            "onInvalidInput": "Throws when neither uri nor connect is supplied, when both are supplied, or when the resolved URI contains reserved sessionId or storeId query parameters.",
+            "returnsOnError": "For synchronization errors, stores the resulting TLRemoteSyncError in hook state and closes the socket; no normal store result is produced for setup validation failures."
+          },
+          "stateMutations": [
+            "Hook state is updated with the ready synchronization client after onLoad.",
+            "Hook state is updated with objectAccess after onAfterConnect.",
+            "Hook state is updated with TLRemoteSyncError after onSyncError.",
+            "The collaboration status signal is updated on socket status changes.",
+            "The synchronization mode signal is updated to readonly or readwrite after connection.",
+            "The created TLStore and synchronization client are closed during cleanup.",
+            "The local didCancel flag is set to true during cleanup.",
+            "Theme colors and fonts are registered for resolved themes."
+          ],
+          "eventsEmitted": [
+            "Tracks MULTIPLAYER_EVENT_NAME with name load after synchronization load.",
+            "Tracks MULTIPLAYER_EVENT_NAME with name room-not-found, forbidden, not-authenticated, rate-limited, or sync-error:<reason> for synchronization errors."
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "resolveThemes", "source": null, "kind": "internal" },
+            { "name": "registerColorsFromThemes", "source": null, "kind": "internal" },
+            { "name": "registerFontsFromThemes", "source": null, "kind": "internal" },
+            { "name": "useTLSchemaFromUtils", "source": null, "kind": "internal" },
+            { "name": "connect", "source": "opts.connect", "kind": "external" },
+            { "name": "ClientWebSocketAdapter", "source": null, "kind": "external" },
+            { "name": "createTLStore", "source": null, "kind": "internal" },
+            { "name": "TLSyncClient", "source": null, "kind": "external" },
+            { "name": "socket.onStatusChange", "source": null, "kind": "external" },
+            { "name": "socket.close", "source": null, "kind": "external" },
+            { "name": "store.ensureStoreIsUsable", "source": null, "kind": "internal" },
+            { "name": "track", "source": "opts.trackAnalyticsEvent", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "UseSyncOptions",
+            "TLStoreSchemaOptions",
+            "RemoteTLStoreWithStatus",
+            "TLSyncClient",
+            "TLRecord",
+            "TLStore",
+            "TLObjectStoreAccess",
+            "TLUserStore",
+            "TLUser",
+            "TLPersistentClientSocket",
+            "TLSocketClientSentEvent",
+            "TLSocketServerSentEvent",
+            "TLStoreSchema",
+            "TLSyncErrorCloseEventReason",
+            "TLRemoteSyncError",
+            "TLStore",
+            "MULTIPLAYER_EVENT_NAME",
+            "TAB_ID",
+            "defaultUserPreferences",
+            "instance_presence"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "For URI-based connections, the resolved URI is serialized with query parameters sessionId=<TAB_ID>&storeId=<unique storeId>; existing sessionId or storeId parameters are rejected. Analytics events use MULTIPLAYER_EVENT_NAME and payloads containing name and roomId.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates and manages a remotely synchronized TLStore using either a supplied socket connection or a URI-based WebSocket connection. It exposes synchronized store state and connection status while updating synchronization state, presence, access information, and cleanup across the connection lifecycle.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "default", "role": "Default roomId when no roomId is supplied." },
+            {
+              "kind": "error-message",
+              "value": "uri and connect cannot be used together",
+              "role": "Validation error when mutually exclusive connection options are both supplied."
+            },
+            {
+              "kind": "error-message",
+              "value": "uri or connect must be provided",
+              "role": "Validation error when no connection option is supplied."
+            },
+            {
+              "kind": "error-message",
+              "value": "useSync. \"sessionId\" is a reserved query param name. Please use a different name",
+              "role": "Validation error when the URI already contains the reserved sessionId query parameter."
+            },
+            {
+              "kind": "error-message",
+              "value": "useSync. \"storeId\" is a reserved query param name. Please use a different name",
+              "role": "Validation error when the URI already contains the reserved storeId query parameter."
+            },
+            {
+              "kind": "enum-value",
+              "value": "error",
+              "role": "Socket status value mapped to the public offline status."
+            },
+            {
+              "kind": "enum-value",
+              "value": "offline",
+              "role": "Public connection status corresponding to a socket error."
+            },
+            {
+              "kind": "enum-value",
+              "value": "solo",
+              "role": "Presence mode used when no other session presence records exist."
+            },
+            {
+              "kind": "enum-value",
+              "value": "full",
+              "role": "Presence mode used when one or more other session presence records exist."
+            },
+            {
+              "kind": "enum-value",
+              "value": "readonly",
+              "role": "Store synchronization mode selected for a readonly server connection."
+            },
+            {
+              "kind": "enum-value",
+              "value": "readwrite",
+              "role": "Store synchronization mode selected for a writable server connection."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "the synchronization effect initializes",
+              "then": "setup throws Error('uri or connect must be provided').",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "the synchronization effect initializes",
+              "then": "setup throws Error('uri and connect cannot be used together').",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "the URI-based socket adapter resolves its connection URL",
+              "then": "it throws Error('useSync. \"sessionId\" is a reserved query param name. Please use a different name') and does not append connection parameters.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "5625f8b0dd6963abb5c9422f952b8a7ecf13a1c66102ff839192bff47f92b9c5"
+        }
+      },
+      {
+        "unitId": "packages/sync/src/useSync.ts__useSync.getConnectionStatus#function:useSync.getConnectionStatus",
+        "unitKind": "function",
+        "name": "getConnectionStatus",
+        "qualifiedName": "useSync.getConnectionStatus",
+        "parentUnitId": "packages/sync/src/useSync.ts__useSync#function:useSync",
+        "startLine": 285,
+        "endLine": 287,
+        "isBehavioral": true,
+        "source": "\t\t\t\tconst withParams = new URL(uriString)\n\t\t\t\tif (withParams.searchParams.has('sessionId')) {\n\t\t\t\t\tthrow new Error(",
+        "detail": {
+          "unitId": "packages/sync/src/useSync.ts__useSync.getConnectionStatus#function:useSync.getConnectionStatus",
+          "fileId": "packages/sync/src/useSync.ts__useSync.getConnectionStatus",
+          "unitKind": "function",
+          "name": "getConnectionStatus",
+          "qualifiedName": "useSync.getConnectionStatus",
+          "parentUnitId": "packages/sync/src/useSync.ts__useSync#function:useSync",
+          "startLine": 285,
+          "endLine": 287,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The URI input must be acceptable to the URL constructor."],
+          "postconditions": [
+            "The URI is parsed before sessionId presence is evaluated.",
+            "A URI without a sessionId query parameter is not rejected by this validation."
+          ],
+          "invariants": [
+            "The sessionId check uses URL.searchParams.has, so the presence of the key is sufficient regardless of its value."
+          ],
+          "edgeCases": [
+            "A URI containing sessionId with an empty value is rejected because the query key is present.",
+            "A URI without sessionId passes this validation step.",
+            "A malformed or otherwise unsupported URI causes the URL constructor to throw before the sessionId check."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error when the parsed URI contains a sessionId query parameter.",
+              "The URL constructor's native URL parsing error for an invalid URI."
+            ],
+            "reverts": [],
+            "onInvalidInput": "Throws rather than returning a status when URI parsing fails or sessionId is present.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "URL", "source": null, "kind": "external" },
+            { "name": "URL.searchParams.has", "source": "URL", "kind": "external" }
+          ],
+          "symbolReferences": ["URL"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Parses the supplied URI and rejects it when its query parameters include a sessionId.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "sessionId",
+              "role": "Query parameter name whose presence causes rejection."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The function is called with that URI.",
+              "then": "The function throws an Error.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The function is called with that URI.",
+              "then": "This validation does not throw for the sessionId condition.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7a51c9bf36d9f014ff2693b5412ac1e90809b7b974342b3df1bfbf52b260f3fa"
+        }
+      }
+    ]
+  },
+  "out": [],
+  "in": ["packages/sync/src/useSyncDemo.ts", "packages/sync/src/useSyncDemo.test.ts", "packages/sync/src/index.ts"],
+  "externals": ["@tldraw/state", "@tldraw/sync-core", "react", "tldraw"],
+  "impact": { "seeds": 2, "callers": 1, "impactedFiles": ["packages/sync/src/useSyncDemo.ts"] }
+}

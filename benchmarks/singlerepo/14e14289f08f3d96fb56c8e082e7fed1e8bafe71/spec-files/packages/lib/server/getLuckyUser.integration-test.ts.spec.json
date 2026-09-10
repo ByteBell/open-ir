@@ -1,0 +1,1124 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/lib/server/getLuckyUser.integration-test.ts",
+    "language": "typescript",
+    "sizeBytes": 26311,
+    "tokenCount": 6578,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-27T17:38:10.683Z",
+    "module": {
+      "purpose": "Integration tests for round-robin lucky-user selection, including no-show handling, weighted ordering, monthly booking calibration, and host creation-date calibration against a Prisma database.",
+      "summary": "This Vitest integration suite provisions event types, users, hosts, bookings, and attendees through Prisma, then exercises lucky-user selection and ordered-list selection. It verifies that no-show bookings are excluded or attributed correctly, weights and current-month booking counts influence ordering, prior-month bookings are ignored, and host creation timing affects calibration. Fake timers provide deterministic date-dependent behavior, while hooks isolate database fixtures between tests.",
+      "businessContext": "The file protects Cal.com round-robin scheduling fairness and host allocation. Failures could assign bookings to the wrong host, violate weighting or calibration rules, or leak test data across integration cases.",
+      "classes": [],
+      "functions": [
+        "deleteUsers (~L10-19): Deletes fixture users and clears their tracked identifiers",
+        "createUserWithBookings (~L92-124): Creates a user with related booking and attendee fixtures",
+        "createHostWithBookings (~L126-164): Creates a round-robin host linked to a fixture user",
+        "expectLuckyUsers (~L166-168): Compares ordered lucky-user email sequences in assertions",
+        "createOrganizerThatShowedUp (~L176-181): Builds a host with a completed booking fixture",
+        "createOrganizerThatDidntShowUp (~L183-193): Builds a host with a host no-show booking"
+      ],
+      "keywords": [
+        "round robin",
+        "lucky user",
+        "booking shortfall",
+        "host calibration",
+        "no-show booking",
+        "Prisma integration",
+        "Vitest fake timers",
+        "weighted routing"
+      ],
+      "ontologyConcepts": [
+        "round-robin allocation",
+        "weighted scheduling",
+        "temporal calibration",
+        "fixture isolation",
+        "integration testing",
+        "attendance classification"
+      ],
+      "businessEntities": ["User", "Host", "Booking", "Attendee", "EventType", "RoutingFormResponse"],
+      "systemCapabilities": [
+        "Create scheduling test fixtures",
+        "Select a lucky round-robin user",
+        "Order available hosts",
+        "Calibrate allocation by booking history",
+        "Exclude no-show participation",
+        "Clean up integration data"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./getLuckyUser",
+          "symbols": ["getLuckyUser", "getOrderedListOfLuckyUsers"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/lib/server/getLuckyUser.ts",
+          "resolvedFileId": "packages/lib/server/getLuckyUser.ts",
+          "resolvedHint": "packages/lib/server/getLuckyUser.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "vitest",
+          "symbols": ["describe", "it", "vi", "expect", "afterEach", "beforeEach", "beforeAll", "afterAll"],
+          "package": "vitest",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Reads and writes integration-test records through Prisma."],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": ["Splices all tracked user identifiers from the module-level userIds array during cleanup."]
+      },
+      "integrationSurface": [
+        { "kind": "table", "role": "consumes", "address": "user", "payloadRef": null, "rawKind": null },
+        { "kind": "table", "role": "consumes", "address": "eventType", "payloadRef": null, "rawKind": null },
+        { "kind": "table", "role": "consumes", "address": "host", "payloadRef": null, "rawKind": null },
+        { "kind": "table", "role": "consumes", "address": "booking", "payloadRef": null, "rawKind": null }
+      ],
+      "contractsProvided": [],
+      "contractsConsumed": [
+        {
+          "name": "getLuckyUser",
+          "shape": "getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })",
+          "resolvedRelativePath": "packages/lib/server/getLuckyUser.ts",
+          "resolvedFileId": "packages/lib/server/getLuckyUser.ts"
+        },
+        {
+          "name": "getOrderedListOfLuckyUsers",
+          "shape": "getOrderedListOfLuckyUsers({ availableUsers, eventType, allRRHosts, routingFormResponse })",
+          "resolvedRelativePath": "packages/lib/server/getLuckyUser.ts",
+          "resolvedFileId": "packages/lib/server/getLuckyUser.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "database fixture setup",
+          "intent": "Creates a shared event type before integration tests run.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 21, "endLine": 34 }
+        },
+        {
+          "name": "fake timer lifecycle",
+          "intent": "Enables deterministic clocks and restores real timers around each test.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 36, "endLine": 45 }
+        },
+        {
+          "name": "fixture creation",
+          "intent": "Persists users, bookings, attendees, and hosts for each scenario.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 92, "endLine": 164 }
+        },
+        {
+          "name": "no-show selection assertions",
+          "intent": "Verifies no-show host and attendee records affect round-robin selection.",
+          "structureKind": "branch",
+          "predicate": null,
+          "branchOutcomes": [
+            "host no-show selected",
+            "attendee no-show selected",
+            "fixed-host attendee no-show selected",
+            "null no-show counted"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 170, "endLine": 399 }
+        },
+        {
+          "name": "available-user ordering",
+          "intent": "Verifies stable ordering when weights and calibration provide no distinction.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 401, "endLine": 458 }
+        },
+        {
+          "name": "weight and booking ordering",
+          "intent": "Verifies weight precedence and current-month booking shortfalls.",
+          "structureKind": "branch",
+          "predicate": null,
+          "branchOutcomes": ["weights enabled", "current-month bookings considered", "previous-month bookings ignored"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 459, "endLine": 577 }
+        },
+        {
+          "name": "host creation calibration",
+          "intent": "Verifies calibration based on host and booking creation dates.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 578, "endLine": 650 }
+        },
+        {
+          "name": "database fixture cleanup",
+          "intent": "Deletes created users and the shared event type after tests complete.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 41, "endLine": 53 }
+        }
+      ],
+      "representationFamily": "test",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "deleteUsers",
+          "signature": "async function deleteUsers()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 10, "endLine": 10 }
+        },
+        {
+          "kind": "function",
+          "name": "createUserWithBookings",
+          "signature": "const createUserWithBookings = async ({",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 92, "endLine": 92 }
+        },
+        {
+          "kind": "function",
+          "name": "createHostWithBookings",
+          "signature": "const createHostWithBookings = async ({",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 126, "endLine": 126 }
+        },
+        {
+          "kind": "function",
+          "name": "expectLuckyUsers",
+          "signature": "function expectLuckyUsers(luckyUsers: { email: string }[], expectedLuckyUsers: { email: string }[])",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 166, "endLine": 166 }
+        },
+        {
+          "kind": "function",
+          "name": "createOrganizerThatShowedUp",
+          "signature": "const createOrganizerThatShowedUp = async (email: string) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 176, "endLine": 176 }
+        },
+        {
+          "kind": "function",
+          "name": "createOrganizerThatDidntShowUp",
+          "signature": "const createOrganizerThatDidntShowUp = async (email: string) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 183, "endLine": 183 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "BookingPropsRelatedToLuckyUserAlgorithm",
+          "shape": "{\n  eventTypeId: number;\n  createdAt: Date;\n  noShowHost?: boolean | null;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 55, "endLine": 59 }
+        },
+        {
+          "kind": "type",
+          "name": "OptionalBookingProps",
+          "shape": "{\n  uid?: string;\n  title?: string;\n  startTime?: Date;\n  endTime?: Date;\n  attendees?: {\n    create: {\n      name: string;\n      email: string;\n      timeZone: string;\n      noShow?: boolean | null;\n    }[];\n  };\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 61, "endLine": 72 }
+        },
+        {
+          "kind": "type",
+          "name": "UserProps",
+          "shape": "{\n  email: string;\n  createdDate?: Date;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 74, "endLine": 77 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Booking with noShowHost set to true",
+          "handled": true,
+          "behavior": "The no-show booking is treated as evidence favoring the host who did not show.",
+          "anchor": { "startLine": 183, "endLine": 193 }
+        },
+        {
+          "inputShape": "Booking with noShowHost set to null",
+          "handled": true,
+          "behavior": "The booking remains counted for round-robin selection.",
+          "anchor": { "startLine": 302, "endLine": 314 }
+        },
+        {
+          "inputShape": "Attendee with noShow set to true",
+          "handled": true,
+          "behavior": "The organizer associated with the attendee no-show is selected according to the tested rule.",
+          "anchor": { "startLine": 222, "endLine": 241 }
+        },
+        {
+          "inputShape": "Hosts with no bookings",
+          "handled": true,
+          "behavior": "Ordering falls back to weights and available-user order.",
+          "anchor": { "startLine": 441, "endLine": 505 }
+        },
+        {
+          "inputShape": "Bookings created in a previous month",
+          "handled": true,
+          "behavior": "Previous-month bookings do not contribute to current-month booking shortfalls.",
+          "anchor": { "startLine": 506, "endLine": 577 }
+        },
+        {
+          "inputShape": "Missing bookingShortfalls or calibrations result data",
+          "handled": true,
+          "behavior": "The test throws an Error rather than continuing with undefined assertion data.",
+          "anchor": { "startLine": 544, "endLine": 546 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": "new Error(\"bookingShortfalls is not defined\")",
+          "caught": null,
+          "action": "Fails the test when booking shortfall data is absent.",
+          "fallback": null,
+          "anchor": { "startLine": 544, "endLine": 544 }
+        },
+        {
+          "thrown": "new Error(\"bookingShortfalls or calibrations is not defined\")",
+          "caught": null,
+          "action": "Fails the test when required calibration data is absent.",
+          "fallback": null,
+          "anchor": { "startLine": 636, "endLine": 636 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Every created fixture user identifier is tracked for post-test deletion.",
+          "anchor": { "startLine": 122, "endLine": 123 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Expected lucky-user ordering is compared by email sequence.",
+          "anchor": { "startLine": 166, "endLine": 168 }
+        },
+        {
+          "kind": "precondition",
+          "description": "The shared event type must be created before host fixtures reference it.",
+          "anchor": { "startLine": 21, "endLine": 34 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Each test restores real timers after deleting its created users.",
+          "anchor": { "startLine": 41, "endLine": 45 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "env",
+          "description": "A configured Prisma test database is available and reachable when the suite runs.",
+          "anchor": { "startLine": 3, "endLine": 3 }
+        },
+        {
+          "kind": "schema",
+          "description": "The Prisma schema supports event types, users, hosts, bookings, attendees, weights, priorities, and no-show fields used by fixtures.",
+          "anchor": { "startLine": 95, "endLine": 120 }
+        },
+        {
+          "kind": "init-order",
+          "description": "beforeAll must create commonEventTypeId before any host or booking fixture is created.",
+          "anchor": { "startLine": 21, "endLine": 34 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the integration suite require a transaction or isolated database schema when tests run concurrently with other suites?",
+          "affects": "fixture isolation and database side effects",
+          "anchor": { "startLine": 10, "endLine": 19 },
+          "resolution": null
+        },
+        {
+          "question": "What exact selection algorithm is implemented by getLuckyUser and getOrderedListOfLuckyUsers beyond the behaviors asserted here?",
+          "affects": "surface and behavioral completeness of imported selectors",
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Tests and hooks perform asynchronous Prisma operations; selected fixture creation uses Promise.all, while assertions depend on deterministic fake time and explicit expected order."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "ignores-no-show-host-bookings",
+          "scenario": "A host with a later booking marked noShowHost competes with a host whose earlier booking was attended.",
+          "given": ["availableUsers: [organizerThatShowedUp, organizerThatDidntShowUp]", "noShowHost: true"],
+          "when": "getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })",
+          "then": "expect(luckyUser.email).toBe(organizerThatDidntShowUp.email)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "No-show host bookings must not count toward round-robin selection."
+        },
+        {
+          "testId": "ignores-no-show-attendees",
+          "scenario": "An organizer whose attendee is marked no-show competes with an organizer whose attendee attended.",
+          "given": [
+            "availableUsers: [organizerWhoseAttendeeShowedUp, organizerWhoseAttendeeDidntShowUp]",
+            "attendees.create[0].noShow: true"
+          ],
+          "when": "getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })",
+          "then": "await expect(getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })).resolves.toStrictEqual(organizerWhoseAttendeeDidntShowUp)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Attendee no-show status determines whether the organizer booking contributes to round robin."
+        },
+        {
+          "testId": "counts-fixed-host-no-show-booking-for-round-robin-host",
+          "scenario": "A fixed host booking has a no-show attendee corresponding to another round-robin host.",
+          "given": [
+            "availableUsers: [organizerWhoseAttendeeShowedUp, fixedHostOrganizerWhoseAttendeeDidNotShowUp, organizerWhoWasAttendeeAndDidntShowUp]",
+            "allRRHosts: []"
+          ],
+          "when": "getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })",
+          "then": "await expect(getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })).resolves.toStrictEqual(organizerWhoWasAttendeeAndDidntShowUp)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Fixed-host no-show attendee bookings are attributed to the round-robin host who missed them."
+        },
+        {
+          "testId": "counts-null-no-show-host",
+          "scenario": "Two hosts have bookings with noShowHost explicitly null and different creation times.",
+          "given": [
+            "noShowHost: null",
+            "availableUsers: [userWithBookingThatHappenedLater, userWithBookingThatHappenedEarlier]"
+          ],
+          "when": "getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })",
+          "then": "await expect(getLuckyUser({ availableUsers, eventType, allRRHosts, routingFormResponse })).resolves.toStrictEqual(userWithBookingThatHappenedEarlier)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Null no-show values represent ordinary bookings and must remain eligible for ordering."
+        },
+        {
+          "testId": "preserves-available-user-order-without-criteria",
+          "scenario": "Hosts have no bookings or distinguishing weight and are supplied in different availableUsers orders.",
+          "given": ["bookings: []", "eventType.isRRWeightsEnabled: false"],
+          "when": "getOrderedListOfLuckyUsers({ availableUsers: [user2, user1, user3], eventType, allRRHosts, routingFormResponse })",
+          "then": "expectLuckyUsers(luckyUsers, [user2, user1, user3])",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "With no ranking criteria, ordering follows the supplied available-user sequence."
+        },
+        {
+          "testId": "prioritizes-higher-weight-host",
+          "scenario": "Hosts with weights 100, 200, and 100 have no bookings while round-robin weights are enabled.",
+          "given": ["isRRWeightsEnabled: true", "bookings: []", "weight: 200"],
+          "when": "getOrderedListOfLuckyUsers({ availableUsers, eventType, allRRHosts, routingFormResponse })",
+          "then": "expectLuckyUsers(luckyUsers, [userWithHighestWeight, user1WithWeight100, user2WithWeight100])",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Higher host weight must rank ahead of equal-weight hosts."
+        },
+        {
+          "testId": "ranks-by-current-month-booking-count",
+          "scenario": "Hosts with weights 200, 100, and 100 have one, two, and three current-month bookings.",
+          "given": [
+            "isRRWeightsEnabled: true",
+            "createdAt: new Date()",
+            "bookings: [{ eventTypeId: commonEventTypeId, createdAt: new Date() }]"
+          ],
+          "when": "getOrderedListOfLuckyUsers({ ...getLuckUserParams, availableUsers: [getLuckUserParams.availableUsers[0], ...getLuckUserParams.availableUsers.slice(1)] })",
+          "then": "expectLuckyUsers(luckyUsers, [userWithOneBookingAndWeight200, userWithTwoBookingsAndWeight100, userWithThreeBookingsAndWeight100])",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Current-month booking counts affect ranking and booking shortfall calibration."
+        },
+        {
+          "testId": "excludes-previous-month-bookings",
+          "scenario": "Hosts have bookings only from the previous month and different weights.",
+          "given": [
+            "vi.setSystemTime(\"2024-11-14T00:00:13Z\")",
+            "createdAt: new Date(\"2024-10-01T00:00:00.000Z\")",
+            "isRRWeightsEnabled: true"
+          ],
+          "when": "getOrderedListOfLuckyUsers({ ...getLuckUserParams, availableUsers: [getLuckUserParams.availableUsers[0], ...getLuckUserParams.availableUsers.slice(1)] })",
+          "then": "expect(perUserData.bookingShortfalls[userWithThreeBookingsInPreviousMonthAndWeight100.id]).toBe(0)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Bookings outside the current month must not affect shortfalls or ranking."
+        },
+        {
+          "testId": "calibrates-by-host-creation-date",
+          "scenario": "Hosts created on the tenth, ninth, and eighth of the month have increasing booking counts.",
+          "given": [
+            "vi.setSystemTime(\"2024-11-14T00:00:13Z\")",
+            "createdAt: tenthOfTheMonth",
+            "createdAt: ninthOfTheMonth",
+            "createdAt: eighthOfTheMonth"
+          ],
+          "when": "getOrderedListOfLuckyUsers({ ...getLuckyUserParams, availableUsers: [getLuckyUserParams.availableUsers[0], ...getLuckyUserParams.availableUsers.slice(1)] })",
+          "then": "expectLuckyUsers(luckyUsers, [host1.user, host3.user, host2.user])",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Host creation timing contributes to calibration alongside weight and booking history."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Vitest imports",
+        "Prisma import",
+        "Lucky-user selector import",
+        "Shared fixture state",
+        "Database and timer lifecycle hooks",
+        "Fixture type aliases",
+        "Common booking and attendee constants",
+        "User and host fixture helpers",
+        "Lucky-user assertion helper",
+        "getLuckyUser integration test suite",
+        "getOrderedListOfLuckyUsers integration test suite"
+      ],
+      "moduleLevelCode": "import { describe, it, vi, expect, afterEach, beforeEach, beforeAll, afterAll } from \"vitest\";\n\nimport prisma from \"@calcom/prisma\";\n\nimport { getLuckyUser, getOrderedListOfLuckyUsers } from \"./getLuckyUser\";",
+      "exports": [],
+      "importSymbolMap": [
+        { "symbol": "describe", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "it", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "vi", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "expect", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "afterEach", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "beforeEach", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "beforeAll", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "afterAll", "module": "vitest", "alias": null, "kind": "external" },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "external" },
+        { "symbol": "getLuckyUser", "module": "./getLuckyUser", "alias": null, "kind": "internal" },
+        { "symbol": "getOrderedListOfLuckyUsers", "module": "./getLuckyUser", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "commonEventTypeId", "value": "number", "kind": "mutable module state" },
+        { "name": "userIds", "value": "[]", "kind": "fixture tracking array" },
+        {
+          "name": "commonBookingData",
+          "value": "{\n  startTime: new Date(),\n  endTime: new Date(),\n}",
+          "kind": "object"
+        },
+        {
+          "name": "commonAttendeesData",
+          "value": "[\n  {\n    name: \"test-attendee\",\n    email: \"test-attendee@example.com\",\n    timeZone: \"Asia/Calcutta\",\n  },\n]",
+          "kind": "array"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__deleteUsers#function:deleteUsers",
+        "unitKind": "function",
+        "name": "deleteUsers",
+        "qualifiedName": "deleteUsers",
+        "parentUnitId": null,
+        "startLine": 10,
+        "endLine": 19,
+        "isBehavioral": true,
+        "source": "async function deleteUsers() {\n  await prisma.user.deleteMany({\n    where: {\n      id: {\n        in: userIds,\n      },\n    },\n  });\n  userIds.splice(0, userIds.length);\n}",
+        "detail": {
+          "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__deleteUsers#function:deleteUsers",
+          "fileId": "packages/lib/server/getLuckyUser.integration-test.ts__deleteUsers",
+          "unitKind": "function",
+          "name": "deleteUsers",
+          "qualifiedName": "deleteUsers",
+          "parentUnitId": null,
+          "startLine": 10,
+          "endLine": 19,
+          "signature": "async function deleteUsers()",
+          "parameters": [],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The shared user ID collection and Prisma user delegate are available."],
+          "postconditions": [
+            "Prisma has been asked to delete all users whose IDs were in the tracked user ID collection at call time.",
+            "After successful deletion, the tracked user ID collection is empty."
+          ],
+          "invariants": ["Only users matching the tracked IDs are targeted for deletion."],
+          "edgeCases": [
+            "When the tracked user ID collection is empty, a deleteMany operation is still invoked with an empty ID filter, and the collection remains empty.",
+            "If the database deletion rejects, the rejection propagates and the tracked user ID collection is not cleared by the subsequent splice operation."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Deletes matching records through prisma.user.deleteMany.",
+            "Mutates the shared userIds collection by removing all elements after successful deletion."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "prisma.user.deleteMany", "source": "Prisma user delegate", "kind": "external" },
+            { "name": "userIds.splice", "source": "shared user ID collection", "kind": "internal" }
+          ],
+          "symbolReferences": ["prisma", "userIds"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Deletes the users whose identifiers are currently tracked in the shared user ID collection, then clears that collection after successful deletion.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteUsers() is awaited.",
+              "then": "deleteMany is called with where.id.in equal to the tracked IDs, and the tracked collection is empty after the promise resolves.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteUsers() is awaited.",
+              "then": "The rejection propagates and the tracked user ID collection is not cleared by this function.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "60f89225a873891613d2b7f44fe8da1be6dc02a660cd4594c7f3176ef85b5acc"
+        }
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createUserWithBookings#function:createUserWithBookings",
+        "unitKind": "function",
+        "name": "createUserWithBookings",
+        "qualifiedName": "createUserWithBookings",
+        "parentUnitId": null,
+        "startLine": 92,
+        "endLine": 124,
+        "isBehavioral": true,
+        "source": "const createUserWithBookings = async ({\n  user: { email, createdDate },\n  bookings,\n}: {\n  user: UserProps;\n  bookings: (BookingPropsRelatedToLuckyUserAlgorithm & OptionalBookingProps)[];\n}) => {\n  const user = await prisma.user.create({\n    data: {\n      email,\n      createdDate,\n      bookings: {\n        create: bookings.map(({ eventTypeId, ...booking }, index) => ({\n          ...commonBookingData,\n          attendees: {\n            create: commonAttendeesData,\n          },\n          uid: `uuid-${email}-booking${index + 1}`,\n          title: `${email} Booking ${index + 1}`,\n          eventTypeId,\n          ...booking,\n        })),\n      },\n    },\n    include: {\n      bookings: true,\n      credentials: true,\n    },\n  });\n  userIds.push(user.id);\n  return user;\n};\n",
+        "detail": {
+          "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createUserWithBookings#function:createUserWithBookings",
+          "fileId": "packages/lib/server/getLuckyUser.integration-test.ts__createUserWithBookings",
+          "unitKind": "function",
+          "name": "createUserWithBookings",
+          "qualifiedName": "createUserWithBookings",
+          "parentUnitId": null,
+          "startLine": 92,
+          "endLine": 124,
+          "signature": "const createUserWithBookings = async ({\n  user: { email, createdDate },\n  bookings,\n}: {\n  user: UserProps;\n  bookings: (BookingPropsRelatedToLuckyUserAlgorithm & OptionalBookingProps)[];\n}) =>",
+          "parameters": [
+            { "name": "user", "type": "UserProps", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "bookings",
+              "type": "(BookingPropsRelatedToLuckyUserAlgorithm & OptionalBookingProps)[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The input contains a user with an email and createdDate accepted by the Prisma user model.",
+            "The bookings value is an array of booking property objects accepted by the Prisma nested create operation.",
+            "The Prisma client and the shared booking and attendee data are available."
+          ],
+          "postconditions": [
+            "A user record is created through prisma.user.create.",
+            "One nested booking is requested for each input booking.",
+            "Each generated booking receives common booking data and common attendee data unless later spread booking properties override generated fields.",
+            "The created user is requested with bookings and credentials included.",
+            "The created user's id is appended to userIds.",
+            "The returned promise resolves to the created user object returned by Prisma."
+          ],
+          "invariants": [
+            "Generated booking numbering is one-based and follows the input bookings order.",
+            "Each generated booking initially uses a UID and title derived from the user's email and its one-based position.",
+            "The nested booking create operation preserves each input booking's remaining properties through object spreading."
+          ],
+          "edgeCases": [
+            "An empty bookings array creates the user with no nested booking creations and still appends the user id to userIds.",
+            "Multiple bookings receive distinct position-based default UIDs and titles.",
+            "If a booking contains properties that overlap generated fields, the final spread of booking properties overrides the generated values.",
+            "If Prisma user creation fails, the rejection propagates and userIds is not appended because the append occurs after the awaited create call."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Invalid input or persistence failures are not handled locally; the async function rejects with the underlying Prisma or runtime error.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Creates a user and nested bookings through the Prisma database.",
+            "Mutates the shared userIds array by appending the created user's id."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "prisma.user.create", "source": "Prisma client", "kind": "external" },
+            { "name": "userIds.push", "source": "shared module state", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "UserProps",
+            "BookingPropsRelatedToLuckyUserAlgorithm",
+            "OptionalBookingProps",
+            "prisma",
+            "commonBookingData",
+            "commonAttendeesData",
+            "userIds"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Calls prisma.user.create with data.user fields email and createdDate, nested data.user.bookings.create as an array of booking objects, and include { bookings: true, credentials: true }. Resolves with the Prisma-created user including the requested relations.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a user with the supplied email and creation date, creates related bookings with common attendee data, and returns the persisted user including bookings and credentials.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "uuid-${email}-booking${index + 1}",
+              "role": "Default UID format for each nested booking."
+            },
+            {
+              "kind": "format-string",
+              "value": "${email} Booking ${index + 1}",
+              "role": "Default title format for each nested booking."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "createUserWithBookings is called.",
+              "then": "The Prisma create request contains two nested bookings whose default UIDs are \"uuid-alice@example.com-booking1\" and \"uuid-alice@example.com-booking2\", whose default titles are \"alice@example.com Booking 1\" and \"alice@example.com Booking 2\", and the returned user's id is appended to userIds.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "createUserWithBookings is called.",
+              "then": "A user is created with an empty nested booking-create array, the created user includes bookings and credentials, and the user id is appended to userIds.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "1a5fec2854eeba431d4c1dd29b26a5b4d1ff0be39b64cc2e8d8a24643de9fb75"
+        }
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createHostWithBookings#function:createHostWithBookings",
+        "unitKind": "function",
+        "name": "createHostWithBookings",
+        "qualifiedName": "createHostWithBookings",
+        "parentUnitId": null,
+        "startLine": 126,
+        "endLine": 164,
+        "isBehavioral": true,
+        "source": "  user: userData,\n  bookings,\n  priority = 2,\n  weight = null,\n  createdAt,\n}: {\n  user: UserProps;\n  bookings: (BookingPropsRelatedToLuckyUserAlgorithm & OptionalBookingProps)[];\n  weight?: number | null;\n  priority?: number;\n  createdAt?: Date;\n}) => {\n  const user = await createUserWithBookings({\n    user: {\n      createdDate: userData.createdDate || new Date(),\n      email: userData.email,\n    },\n    bookings,\n  });\n\n  const host = await prisma.host.create({\n    data: {\n      user: { connect: { id: user.id } },\n      eventType: { connect: { id: commonEventTypeId } },\n      weight,\n      priority,\n      createdAt: createdAt ?? new Date(),\n    },\n    include: {\n      user: {\n        include: {\n          bookings: true,\n          credentials: true,\n        },\n      },\n    },\n  });\n  return {\n    ...host,",
+        "detail": {
+          "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createHostWithBookings#function:createHostWithBookings",
+          "fileId": "packages/lib/server/getLuckyUser.integration-test.ts__createHostWithBookings",
+          "unitKind": "function",
+          "name": "createHostWithBookings",
+          "qualifiedName": "createHostWithBookings",
+          "parentUnitId": null,
+          "startLine": 126,
+          "endLine": 164,
+          "signature": "async ({ user: userData, bookings, priority = 2, weight = null, createdAt, }: { user: UserProps; bookings: (BookingPropsRelatedToLuckyUserAlgorithm & OptionalBookingProps)[]; weight?: number | null; priority?: number; createdAt?: Date; }) =>",
+          "parameters": [
+            {
+              "name": "{ user: userData, bookings, priority = 2, weight = null, createdAt }",
+              "type": "{ user: UserProps; bookings: (BookingPropsRelatedToLuckyUserAlgorithm & OptionalBookingProps)[]; weight?: number | null; priority?: number; createdAt?: Date; }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The input contains a user object with an email and a bookings array.",
+            "commonEventTypeId identifies an existing event type.",
+            "The Prisma database connection is available."
+          ],
+          "postconditions": [
+            "A user is created using the supplied email and either the supplied user.createdDate or the current time.",
+            "A host is created and connected to the created user and commonEventTypeId.",
+            "The created host is loaded with its user, bookings, and credentials before the function resolves."
+          ],
+          "invariants": [
+            "The host's connected user is the user created from userData and bookings.",
+            "The host uses the supplied priority and weight when provided.",
+            "A missing or nullish createdAt value is replaced with the current time."
+          ],
+          "edgeCases": [
+            "When userData.createdDate is absent or otherwise falsy, the user creation date falls back to a new Date().",
+            "When priority is omitted, the host priority is 2.",
+            "When weight is omitted, the host weight is null.",
+            "When createdAt is omitted or nullish, the host creation date falls back to a new Date().",
+            "An empty bookings array is passed to user creation unchanged.",
+            "Database or related creation failures propagate rather than being converted into a fallback result."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Errors thrown by createUserWithBookings", "Prisma errors from prisma.host.create"],
+            "reverts": [],
+            "onInvalidInput": "No explicit validation is performed; downstream creation errors propagate.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Creates a user and its associated bookings through createUserWithBookings.",
+            "Creates a persistent host record through prisma.host.create."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "createUserWithBookings", "source": "local function", "kind": "internal" },
+            { "name": "prisma.host.create", "source": "Prisma client", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "UserProps",
+            "BookingPropsRelatedToLuckyUserAlgorithm",
+            "OptionalBookingProps",
+            "commonEventTypeId",
+            "prisma"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a user with the supplied bookings and creates a host associated with that user and the shared event type. It applies defaults for missing user creation and host creation timestamps, priority, and weight.",
+          "specLiterals": [
+            { "kind": "magic-number", "value": "2", "role": "Default host priority when priority is omitted." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "createHostWithBookings is called.",
+              "then": "It creates a user and a host connected to that user and commonEventTypeId, using priority 2, weight null, and current-time fallbacks for the user and host timestamps.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "createHostWithBookings is called.",
+              "then": "The created host uses the supplied priority, weight, and createdAt values, and its included user contains the created bookings and credentials.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c9e99d9aab18f4ad92dca70f9d8a1071c2cc20ea88d04dbe2076c0ccdbf03e88"
+        }
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__expectLuckyUsers#function:expectLuckyUsers",
+        "unitKind": "function",
+        "name": "expectLuckyUsers",
+        "qualifiedName": "expectLuckyUsers",
+        "parentUnitId": null,
+        "startLine": 166,
+        "endLine": 168,
+        "isBehavioral": true,
+        "source": "      ...host.user,\n      priority,\n      weight,",
+        "detail": {
+          "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__expectLuckyUsers#function:expectLuckyUsers",
+          "fileId": "packages/lib/server/getLuckyUser.integration-test.ts__expectLuckyUsers",
+          "unitKind": "function",
+          "name": "expectLuckyUsers",
+          "qualifiedName": "expectLuckyUsers",
+          "parentUnitId": null,
+          "startLine": 166,
+          "endLine": 168,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides a test helper for asserting the expected lucky users in the integration-test context.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "ce21c1998d35c898b49ac4a8592848fdf34da09139534e18121430efad5fad8b"
+        }
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createOrganizerThatShowedUp#function:createOrganizerThatShowedUp",
+        "unitKind": "function",
+        "name": "createOrganizerThatShowedUp",
+        "qualifiedName": "createOrganizerThatShowedUp",
+        "parentUnitId": null,
+        "startLine": 176,
+        "endLine": 181,
+        "isBehavioral": true,
+        "source": "\ndescribe(\"getLuckyUser Integration tests\", () => {\n  describe(\"should not consider no show bookings for round robin: \", () => {\n    it(\"When a host is no show, that is chosen when competing with another host that showed up for the booking\", async () => {\n      const createOrganizerThatShowedUp = async (email: string) => {\n        return createHostWithBookings({",
+        "detail": {
+          "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createOrganizerThatShowedUp#function:createOrganizerThatShowedUp",
+          "fileId": "packages/lib/server/getLuckyUser.integration-test.ts__createOrganizerThatShowedUp",
+          "unitKind": "function",
+          "name": "createOrganizerThatShowedUp",
+          "qualifiedName": "createOrganizerThatShowedUp",
+          "parentUnitId": null,
+          "startLine": 176,
+          "endLine": 181,
+          "signature": "async (email: string) =>",
+          "parameters": [
+            { "name": "email", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["A host/organizer fixture is created through the booking fixture helper."],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "createHostWithBookings",
+              "source": "sibling function in packages/lib/server/getLuckyUser.integration-test.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Asynchronously creates a host/organizer test fixture associated with the supplied email and configured as having shown up.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e137e3f97393c6b7d9d29be2ce0a2939554e73880722c0c3f9413126ddd271c2"
+        }
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createOrganizerThatDidntShowUp#function:createOrganizerThatDidntShowUp",
+        "unitKind": "function",
+        "name": "createOrganizerThatDidntShowUp",
+        "qualifiedName": "createOrganizerThatDidntShowUp",
+        "parentUnitId": null,
+        "startLine": 183,
+        "endLine": 193,
+        "isBehavioral": true,
+        "source": "          bookings: [{ eventTypeId: commonEventTypeId, createdAt: new Date(\"2022-01-25T05:30:00.000Z\") }],\n        });\n      };\n\n      const createOrganizerThatDidntShowUp = async (email: string) => {\n        return createHostWithBookings({\n          user: { email },\n          bookings: [\n            {\n              eventTypeId: commonEventTypeId,\n              createdAt: new Date(\"2022-01-25T06:30:00.000Z\"),",
+        "detail": {
+          "unitId": "packages/lib/server/getLuckyUser.integration-test.ts__createOrganizerThatDidntShowUp#function:createOrganizerThatDidntShowUp",
+          "fileId": "packages/lib/server/getLuckyUser.integration-test.ts__createOrganizerThatDidntShowUp",
+          "unitKind": "function",
+          "name": "createOrganizerThatDidntShowUp",
+          "qualifiedName": "createOrganizerThatDidntShowUp",
+          "parentUnitId": null,
+          "startLine": 183,
+          "endLine": 193,
+          "signature": "const createOrganizerThatDidntShowUp = async (email: string) =>",
+          "parameters": [
+            { "name": "email", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "A host with the supplied email is created through createHostWithBookings.",
+            "The created host has one booking for commonEventTypeId at 2022-01-25T06:30:00.000Z."
+          ],
+          "invariants": [
+            "The booking uses commonEventTypeId.",
+            "The booking creation timestamp is 2022-01-25T06:30:00.000Z."
+          ],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Creates a host/user and booking through createHostWithBookings."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "createHostWithBookings", "source": null, "kind": "internal" }],
+          "symbolReferences": ["commonEventTypeId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates an organizer test user with one booking scheduled at the specified non-show-up time for the common event type.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "2022-01-25T06:30:00.000Z",
+              "role": "Exact timestamp used as the booking creation time."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6db36836e12e78fb66c5311517c2bc8867ade969ef7406070565b3e6aa515228"
+        }
+      }
+    ]
+  },
+  "out": ["packages/lib/server/getLuckyUser.ts"],
+  "in": [],
+  "externals": ["vitest", "@calcom/prisma"],
+  "impact": { "seeds": 6, "callers": 3, "impactedFiles": [] }
+}

@@ -1,0 +1,804 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/bookings/lib/handleSeats/handleSeats.ts",
+    "language": "typescript",
+    "sizeBytes": 5159,
+    "tokenCount": 1290,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-27T17:29:32.336Z",
+    "module": {
+      "purpose": "Handles seat-specific booking operations by locating an accepted booking, creating or rescheduling a seated attendee, and triggering workflow reminders and webhooks.",
+      "summary": "This module coordinates the booking-seat flow. It queries Prisma for the relevant accepted booking, prevents duplicate attendee enrollment, dispatches either seat creation or seated-booking rescheduling, then schedules reminders and emits webhook payloads when a booking result exists. Dry runs exit before database access, while reminder failures are logged without preventing webhook delivery.",
+      "businessContext": "Supports multi-attendee event bookings where invitees occupy individual seats. Failures can prevent seat assignment, reminders, or downstream booking integrations from being updated.",
+      "classes": [],
+      "functions": [
+        "handleSeats (~L16-161): Locates seated bookings, mutates seat assignments, and triggers downstream notifications"
+      ],
+      "keywords": [
+        "seated booking",
+        "booking seats",
+        "workflow reminders",
+        "webhook trigger",
+        "rescheduling",
+        "duplicate attendee",
+        "Prisma booking query",
+        "dry run"
+      ],
+      "ontologyConcepts": [
+        "seat allocation",
+        "booking rescheduling",
+        "duplicate prevention",
+        "workflow orchestration",
+        "webhook notification",
+        "dry-run execution"
+      ],
+      "businessEntities": ["Booking", "Attendee", "Seat", "Invitee", "Event", "Workflow", "Webhook"],
+      "systemCapabilities": [
+        "Find accepted seated bookings",
+        "Create booking seats",
+        "Reschedule seated bookings",
+        "Schedule workflow reminders",
+        "Emit booking webhooks",
+        "Reject duplicate attendees"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/handleWebhookTrigger",
+          "symbols": ["handleWebhookTrigger"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "symbols": ["scheduleWorkflowReminders"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/sendPayload",
+          "symbols": ["EventPayloadType"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/errorCodes",
+          "symbols": ["ErrorCode"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/http-error",
+          "symbols": ["HttpError"],
+          "anchor": { "startLine": 7, "endLine": 7 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "anchor": { "startLine": 8, "endLine": 8 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["BookingStatus"],
+          "anchor": { "startLine": 9, "endLine": 9 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "../handleNewBooking/logger",
+          "symbols": ["createLoggerWithEventDetails"],
+          "anchor": { "startLine": 11, "endLine": 11 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/logger.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/logger.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/logger.ts"
+        },
+        {
+          "spec": "./create/createNewSeat",
+          "symbols": ["createNewSeat"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleSeats/create/createNewSeat.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleSeats/create/createNewSeat.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleSeats/create/createNewSeat.ts"
+        },
+        {
+          "spec": "./reschedule/rescheduleSeatedBooking",
+          "symbols": ["rescheduleSeatedBooking"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleSeats/reschedule/rescheduleSeatedBooking.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleSeats/reschedule/rescheduleSeatedBooking.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleSeats/reschedule/rescheduleSeatedBooking.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": ["NewSeatedBookingObject", "SeatedBooking", "HandleSeatsResultBooking"],
+          "anchor": { "startLine": 14, "endLine": 14 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "packages/features/bookings/lib/handleSeats/types.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [
+          "Queries Prisma for the accepted booking matching a reschedule or event-time criterion.",
+          "Logs reminder scheduling errors through the booking event logger."
+        ],
+        "network": [
+          "Schedules workflow reminders for the resulting seated booking.",
+          "Triggers downstream booking webhooks for the resulting seated booking."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        { "kind": "table", "role": "consumes", "address": "booking", "payloadRef": "SeatedBooking", "rawKind": null }
+      ],
+      "contractsProvided": [
+        {
+          "name": "handleSeats",
+          "shape": "const handleSeats = async (newSeatedBookingObject: NewSeatedBookingObject) =>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "NewSeatedBookingObject",
+          "shape": "NewSeatedBookingObject",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SeatedBooking",
+          "shape": "SeatedBooking | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "HandleSeatsResultBooking",
+          "shape": "HandleSeatsResultBooking = null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingStatus.ACCEPTED",
+          "shape": "status: BookingStatus.ACCEPTED",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ErrorCode.BookingNotFound",
+          "shape": "message: ErrorCode.BookingNotFound",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ErrorCode.AlreadySignedUpForBooking",
+          "shape": "message: ErrorCode.AlreadySignedUpForBooking",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleWebhookTrigger",
+          "shape": "handleWebhookTrigger({ subscriberOptions, eventTrigger, webhookData, isDryRun })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "scheduleWorkflowReminders",
+          "shape": "scheduleWorkflowReminders({ workflows, calendarEvent, isNotConfirmed, isRescheduleEvent, isFirstRecurringEvent, emailAttendeeSendToOverride, seatReferenceUid, isDryRun })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "createNewSeat",
+          "shape": "createNewSeat(newSeatedBookingObject, seatedBooking, reqBodyMetadata)",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleSeats/create/createNewSeat.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleSeats/create/createNewSeat.ts"
+        },
+        {
+          "name": "rescheduleSeatedBooking",
+          "shape": "rescheduleSeatedBooking({ ...newSeatedBookingObject, rescheduleUid }, seatedBooking, resultBooking, loggerWithEventDetails)",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleSeats/reschedule/rescheduleSeatedBooking.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleSeats/reschedule/rescheduleSeatedBooking.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "dry-run guard",
+          "intent": "Stops processing before logger creation or database access during dry runs.",
+          "structureKind": "branch",
+          "predicate": "if (isDryRun) return;",
+          "branchOutcomes": ["dry run returns immediately", "normal execution continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 38, "endLine": 39 }
+        },
+        {
+          "name": "accepted booking lookup",
+          "intent": "Loads the accepted booking and related attendee, user, and seat data.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 44, "endLine": 69 }
+        },
+        {
+          "name": "missing rescheduled booking",
+          "intent": "Rejects rescheduling when no matching accepted booking exists.",
+          "structureKind": "branch",
+          "predicate": "if (!seatedBooking && rescheduleUid)",
+          "branchOutcomes": ["throws booking-not-found error", "continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 71, "endLine": 73 }
+        },
+        {
+          "name": "missing booking exit",
+          "intent": "Treats an absent booking without reschedule context as a no-op.",
+          "structureKind": "branch",
+          "predicate": "if (!seatedBooking)",
+          "branchOutcomes": ["returns undefined", "continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 75, "endLine": 78 }
+        },
+        {
+          "name": "duplicate attendee guard",
+          "intent": "Rejects an attendee already assigned to the same booking timeslot.",
+          "structureKind": "branch",
+          "predicate": "if (\n    seatedBooking.attendees.find((attendee) => {\n      return attendee.email === invitee[0].email;\n    }) &&\n    dayjs.utc(seatedBooking.startTime).format() === evt.startTime\n  )",
+          "branchOutcomes": ["throws already-signed-up error", "continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 80, "endLine": 89 }
+        },
+        {
+          "name": "seat mutation dispatch",
+          "intent": "Selects rescheduling or new-seat creation based on reschedule context.",
+          "structureKind": "branch",
+          "predicate": "if (rescheduleUid)",
+          "branchOutcomes": ["reschedules seated booking", "creates new seat"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 91, "endLine": 103 }
+        },
+        {
+          "name": "reminder orchestration",
+          "intent": "Schedules reminders and logs scheduling failures without aborting webhook processing.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 105, "endLine": 135 }
+        },
+        {
+          "name": "webhook emission",
+          "intent": "Builds an accepted-booking payload and sends it to webhook subscribers.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 137, "endLine": 157 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "handleSeats",
+          "signature": "const handleSeats = async (newSeatedBookingObject: NewSeatedBookingObject) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "isDryRun is true",
+          "handled": true,
+          "behavior": "Returns immediately without querying or mutating bookings.",
+          "anchor": { "startLine": 38, "endLine": 39 }
+        },
+        {
+          "inputShape": "No accepted booking and rescheduleUid is provided",
+          "handled": true,
+          "behavior": "Throws HttpError with status 404 and BookingNotFound.",
+          "anchor": { "startLine": 71, "endLine": 73 }
+        },
+        {
+          "inputShape": "No accepted booking without rescheduleUid",
+          "handled": true,
+          "behavior": "Returns undefined as a no-op.",
+          "anchor": { "startLine": 75, "endLine": 78 }
+        },
+        {
+          "inputShape": "Invitee email already exists and formatted start time matches",
+          "handled": true,
+          "behavior": "Throws HttpError with status 409 and AlreadySignedUpForBooking.",
+          "anchor": { "startLine": 80, "endLine": 89 }
+        },
+        {
+          "inputShape": "Reminder scheduling rejects or throws",
+          "handled": true,
+          "behavior": "Logs the error and continues to construct and emit the webhook.",
+          "anchor": { "startLine": 111, "endLine": 135 }
+        },
+        {
+          "inputShape": "Seat operation returns null or undefined",
+          "handled": true,
+          "behavior": "Skips reminder and webhook orchestration, then returns the empty result.",
+          "anchor": { "startLine": 105, "endLine": 106 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "attendee.email",
+          "right": "invitee[0].email",
+          "inclusive": true,
+          "intent": "Detects whether the invitee email is already assigned to an attendee.",
+          "anchor": { "startLine": 82, "endLine": 84 }
+        },
+        {
+          "operator": "==",
+          "left": "dayjs.utc(seatedBooking.startTime).format()",
+          "right": "evt.startTime",
+          "inclusive": true,
+          "intent": "Requires the duplicate attendee check to target the same formatted timeslot.",
+          "anchor": { "startLine": 85, "endLine": 85 }
+        },
+        {
+          "operator": "==",
+          "left": "typeof resultBooking.metadata",
+          "right": "\"object\"",
+          "inclusive": true,
+          "intent": "Includes existing metadata only when the result metadata is object-shaped.",
+          "anchor": { "startLine": 107, "endLine": 109 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new HttpError({ statusCode: 404, message: ErrorCode.BookingNotFound })",
+          "caught": null,
+          "action": "Aborts processing when a requested rescheduled booking cannot be found.",
+          "fallback": null,
+          "anchor": { "startLine": 71, "endLine": 73 }
+        },
+        {
+          "thrown": "new HttpError({ statusCode: 409, message: ErrorCode.AlreadySignedUpForBooking })",
+          "caught": null,
+          "action": "Aborts processing when the invitee is already signed up for the same timeslot.",
+          "fallback": null,
+          "anchor": { "startLine": 86, "endLine": 89 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs the reminder scheduling error and continues with webhook construction.",
+          "fallback": null,
+          "anchor": { "startLine": 133, "endLine": 135 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "The input object supplies event, invitee, event, and booking context required by downstream seat handlers.",
+          "anchor": { "startLine": 16, "endLine": 37 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Only bookings with ACCEPTED status are eligible for seat operations.",
+          "anchor": { "startLine": 54, "endLine": 56 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Reminder scheduling and webhook emission occur only when a seat operation returns a result booking.",
+          "anchor": { "startLine": 105, "endLine": 106 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Seat mutation completes before workflow reminders and webhook notification are attempted.",
+          "anchor": { "startLine": 92, "endLine": 157 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "The function returns the resulting booking when downstream seat processing produces one.",
+          "anchor": { "startLine": 160, "endLine": 161 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies invitee[0] and valid event and booking context expected by the seat handlers.",
+          "anchor": { "startLine": 17, "endLine": 37 }
+        },
+        {
+          "kind": "schema",
+          "description": "Prisma returns attendee, booking, user, reference, and seat relations matching the selected shape.",
+          "anchor": { "startLine": 57, "endLine": 68 }
+        },
+        {
+          "kind": "caller",
+          "description": "Downstream seat handlers return a result booking when reminder and webhook orchestration should occur.",
+          "anchor": { "startLine": 92, "endLine": 106 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the database OR query intentionally allow a booking found by event time to substitute for a missing requested booking UID?",
+          "affects": "accepted booking lookup and missing-booking behavior",
+          "anchor": { "startLine": 45, "endLine": 56 },
+          "resolution": null
+        },
+        {
+          "question": "Can scheduleWorkflowReminders perform externally visible work that requires stronger failure handling than logging?",
+          "affects": "error_handling and reminder orchestration",
+          "anchor": { "startLine": 111, "endLine": 135 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Each invocation awaits database lookup, seat mutation, reminder scheduling, and webhook triggering in sequence; no shared mutable state is declared."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "dry-run-does-not-mutate",
+          "scenario": "A dry-run seat operation is requested.",
+          "given": ["newSeatedBookingObject.isDryRun = true"],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "resolves with undefined without querying or mutating bookings",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Dry runs must exit before database access and side effects."
+        },
+        {
+          "testId": "missing-rescheduled-booking-returns-not-found",
+          "scenario": "A reschedule UID does not identify an accepted booking.",
+          "given": ["rescheduleUid is defined", "prisma.booking.findFirst(...) resolves to null"],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "throws HttpError with statusCode 404 and message ErrorCode.BookingNotFound",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Rescheduling requires an existing accepted booking."
+        },
+        {
+          "testId": "missing-non-rescheduled-booking-is-ignored",
+          "scenario": "No accepted booking matches the requested seat operation and no reschedule UID is supplied.",
+          "given": ["rescheduleUid is undefined", "prisma.booking.findFirst(...) resolves to null"],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "resolves with undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "New seat creation is skipped when there is no seated booking."
+        },
+        {
+          "testId": "rejects-duplicate-attendee",
+          "scenario": "The invitee is already an attendee for the same booking start time.",
+          "given": [
+            "seatedBooking.attendees contains an attendee whose email equals invitee[0].email",
+            "dayjs.utc(seatedBooking.startTime).format() === evt.startTime"
+          ],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "throws HttpError with statusCode 409 and message ErrorCode.AlreadySignedUpForBooking",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "An attendee cannot be seated twice in the same timeslot."
+        },
+        {
+          "testId": "creates-new-seat-without-reschedule",
+          "scenario": "An accepted seated booking exists and the request is not a reschedule.",
+          "given": ["seatedBooking is present", "rescheduleUid is undefined"],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "calls createNewSeat(newSeatedBookingObject, seatedBooking, reqBodyMetadata)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Non-reschedule requests must use the seat creation path."
+        },
+        {
+          "testId": "reschedules-existing-seat-booking",
+          "scenario": "An accepted seated booking exists and a reschedule UID is supplied.",
+          "given": ["seatedBooking is present", "rescheduleUid is defined"],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "calls rescheduleSeatedBooking({ ...newSeatedBookingObject, rescheduleUid }, seatedBooking, resultBooking, loggerWithEventDetails)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Reschedule requests must preserve the explicit reschedule path."
+        },
+        {
+          "testId": "triggers-workflows-and-webhooks-for-result",
+          "scenario": "Seat creation or rescheduling returns a result booking.",
+          "given": ["resultBooking is truthy"],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "calls scheduleWorkflowReminders(...) and handleWebhookTrigger(...)",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Successful seat operations publish workflow and webhook notifications."
+        },
+        {
+          "testId": "returns-result-booking",
+          "scenario": "The selected seat operation produces a booking result.",
+          "given": ["resultBooking is truthy"],
+          "when": "handleSeats(newSeatedBookingObject)",
+          "then": "resolves with resultBooking",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Callers receive the created or rescheduled booking."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "ESLint import exception directive",
+        "external and internal import declarations",
+        "handleSeats asynchronous arrow function declaration",
+        "default export of handleSeats"
+      ],
+      "moduleLevelCode": "// eslint-disable-next-line no-restricted-imports\nimport dayjs from \"@calcom/dayjs\";\nimport { handleWebhookTrigger } from \"@calcom/features/bookings/lib/handleWebhookTrigger\";\nimport { scheduleWorkflowReminders } from \"@calcom/features/ee/workflows/lib/reminders/reminderScheduler\";\nimport type { EventPayloadType } from \"@calcom/features/webhooks/lib/sendPayload\";\nimport { ErrorCode } from \"@calcom/lib/errorCodes\";\nimport { HttpError } from \"@calcom/lib/http-error\";\nimport prisma from \"@calcom/prisma\";\nimport { BookingStatus } from \"@calcom/prisma/enums\";\n\nimport { createLoggerWithEventDetails } from \"../handleNewBooking/logger\";\nimport createNewSeat from \"./create/createNewSeat\";\nimport rescheduleSeatedBooking from \"./reschedule/rescheduleSeatedBooking\";\nimport type { NewSeatedBookingObject, SeatedBooking, HandleSeatsResultBooking } from \"./types\";",
+      "exports": [{ "name": "handleSeats", "kind": "own", "fromSpec": null, "exportedAs": "default" }],
+      "importSymbolMap": [
+        { "symbol": "dayjs", "module": "@calcom/dayjs", "alias": null, "kind": "internal" },
+        {
+          "symbol": "handleWebhookTrigger",
+          "module": "@calcom/features/bookings/lib/handleWebhookTrigger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "scheduleWorkflowReminders",
+          "module": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventPayloadType",
+          "module": "@calcom/features/webhooks/lib/sendPayload",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "ErrorCode", "module": "@calcom/lib/errorCodes", "alias": null, "kind": "internal" },
+        { "symbol": "HttpError", "module": "@calcom/lib/http-error", "alias": null, "kind": "internal" },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "internal" },
+        { "symbol": "BookingStatus", "module": "@calcom/prisma/enums", "alias": null, "kind": "internal" },
+        {
+          "symbol": "createLoggerWithEventDetails",
+          "module": "../handleNewBooking/logger",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "createNewSeat", "module": "./create/createNewSeat", "alias": null, "kind": "internal" },
+        {
+          "symbol": "rescheduleSeatedBooking",
+          "module": "./reschedule/rescheduleSeatedBooking",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "NewSeatedBookingObject", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "SeatedBooking", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "HandleSeatsResultBooking", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/bookings/lib/handleSeats/handleSeats.ts__handleSeats#function:handleSeats",
+        "unitKind": "function",
+        "name": "handleSeats",
+        "qualifiedName": "handleSeats",
+        "parentUnitId": null,
+        "startLine": 16,
+        "endLine": 161,
+        "isBehavioral": true,
+        "source": "const handleSeats = async (newSeatedBookingObject: NewSeatedBookingObject) => {\n  const {\n    eventType,\n    reqBodyUser,\n    rescheduleUid,\n    reqBookingUid,\n    invitee,\n    bookerEmail,\n    smsReminderNumber,\n    eventTypeInfo,\n    uid,\n    originalRescheduledBooking,\n    reqBodyMetadata,\n    eventTypeId,\n    subscriberOptions,\n    eventTrigger,\n    evt,\n    workflows,\n    rescheduledBy,\n    rescheduleReason,\n    isDryRun = false,\n  } = newSeatedBookingObject;\n  // TODO: We could allow doing more things to support good dry run for seats\n  if (isDryRun) return;\n  const loggerWithEventDetails = createLoggerWithEventDetails(eventType.id, reqBodyUser, eventType.slug);\n\n  let resultBooking: HandleSeatsResultBooking = null;\n\n  const seatedBooking: SeatedBooking | null = await prisma.booking.findFirst({\n    where: {\n      OR: [\n        {\n          uid: rescheduleUid || reqBookingUid,\n        },\n\n        {\n          eventTypeId: eventType.id,\n          startTime: new Date(evt.startTime),\n        },\n      ],\n      status: BookingStatus.ACCEPTED,\n    },\n    select: {\n      uid: true,\n      id: true,\n      attendees: { include: { bookingSeat: true } },\n      userId: true,\n      references: true,\n      startTime: true,\n      user: true,\n      status: true,\n      smsReminderNumber: true,\n      endTime: true,\n    },\n  });\n\n  if (!seatedBooking && rescheduleUid) {\n    throw new HttpError({ statusCode: 404, message: ErrorCode.BookingNotFound });\n  }\n\n  // We might be trying to create a new booking\n  if (!seatedBooking) {\n    return;\n  }\n\n  // See if attendee is already signed up for timeslot\n  if (\n    seatedBooking.attendees.find((attendee) => {\n      return attendee.email === invitee[0].email;\n    }) &&\n    dayjs.utc(seatedBooking.startTime).format() === evt.startTime\n  ) {\n    throw new HttpError({ statusCode: 409, message: ErrorCode.AlreadySignedUpForBooking });\n  }\n\n  // There are two paths here, reschedule a booking with seats and booking seats without reschedule\n  if (rescheduleUid) {\n    resultBooking = await rescheduleSeatedBooking(\n      // Assert that the rescheduleUid is defined\n      { ...newSeatedBookingObject, rescheduleUid },\n      seatedBooking,\n      resultBooking,\n      loggerWithEventDetails\n    );\n  } else {\n    resultBooking = await createNewSeat(newSeatedBookingObject, seatedBooking, reqBodyMetadata);\n  }\n\n  // If the resultBooking is defined we should trigger workflows else, trigger in handleNewBooking\n  if (resultBooking) {\n    const metadata = {\n      ...(typeof resultBooking.metadata === \"object\" && resultBooking.metadata),\n      ...reqBodyMetadata,\n    };\n    try {\n      await scheduleWorkflowReminders({\n        workflows,\n        smsReminderNumber: smsReminderNumber || null,\n        calendarEvent: {\n          ...evt,\n          rescheduleReason,\n          ...{\n            metadata,\n            eventType: {\n              slug: eventType.slug,\n              schedulingType: eventType.schedulingType,\n              hosts: eventType.hosts,\n            },\n          },\n        },\n        isNotConfirmed: evt.requiresConfirmation || false,\n        isRescheduleEvent: !!rescheduleUid,\n        isFirstRecurringEvent: true,\n        emailAttendeeSendToOverride: bookerEmail,\n        seatReferenceUid: evt.attendeeSeatId,\n        isDryRun,\n      });\n    } catch (error) {\n      loggerWithEventDetails.error(\"Error while scheduling workflow reminders\", JSON.stringify({ error }));\n    }\n\n    const webhookData: EventPayloadType = {\n      ...evt,\n      ...eventTypeInfo,\n      uid: resultBooking?.uid || uid,\n      bookingId: seatedBooking?.id,\n      attendeeSeatId: resultBooking?.seatReferenceUid,\n      rescheduleUid,\n      rescheduleStartTime: originalRescheduledBooking?.startTime\n        ? dayjs(originalRescheduledBooking?.startTime).utc().format()\n        : undefined,\n      rescheduleEndTime: originalRescheduledBooking?.endTime\n        ? dayjs(originalRescheduledBooking?.endTime).utc().format()\n        : undefined,\n      metadata,\n      eventTypeId,\n      status: \"ACCEPTED\",\n      smsReminderNumber: seatedBooking?.smsReminderNumber || undefined,\n      rescheduledBy,\n    };\n\n    await handleWebhookTrigger({ subscriberOptions, eventTrigger, webhookData, isDryRun });\n  }\n\n  return resultBooking;\n};",
+        "detail": {
+          "unitId": "packages/features/bookings/lib/handleSeats/handleSeats.ts__handleSeats#function:handleSeats",
+          "fileId": "packages/features/bookings/lib/handleSeats/handleSeats.ts__handleSeats",
+          "unitKind": "function",
+          "name": "handleSeats",
+          "qualifiedName": "handleSeats",
+          "parentUnitId": null,
+          "startLine": 16,
+          "endLine": 161,
+          "signature": "const handleSeats = async (newSeatedBookingObject: NewSeatedBookingObject) =>",
+          "parameters": [
+            {
+              "name": "newSeatedBookingObject",
+              "type": "NewSeatedBookingObject",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "newSeatedBookingObject provides an eventType with an id and slug, an evt with startTime, and an invitee array whose first element has an email.",
+            "For rescheduling, rescheduleUid identifies an accepted booking.",
+            "The referenced event and booking data are available through the configured persistence and booking dependencies."
+          ],
+          "postconditions": [
+            "If isDryRun is true, the function returns without querying or mutating booking state.",
+            "If no accepted booking matches and rescheduleUid is absent, the function returns without creating a result.",
+            "If a seat booking operation produces a result, workflow reminders are attempted and a webhook is triggered.",
+            "On successful completion after a seat operation, the result booking is returned."
+          ],
+          "invariants": [
+            "Only bookings with status ACCEPTED are selected for processing.",
+            "An attendee already registered for the same UTC-formatted start time cannot be registered again.",
+            "Workflow-reminder failures do not prevent webhook triggering or result return.",
+            "Webhook data reports status as ACCEPTED."
+          ],
+          "edgeCases": [
+            "isDryRun true: returns immediately without database lookup, booking operation, reminder scheduling, or webhook triggering.",
+            "No matching accepted booking and no rescheduleUid: returns without a booking result.",
+            "No matching accepted booking with rescheduleUid: throws an HttpError with status code 404 and the booking-not-found error code.",
+            "The first invitee is already an attendee and the stored booking start time formatted in UTC equals evt.startTime: throws an HttpError with status code 409 and the already-signed-up error code.",
+            "A workflow reminder dependency rejects: the error is logged and webhook processing continues.",
+            "A matching booking with rescheduleUid uses the reschedule path; otherwise it uses the new-seat path."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "HttpError with statusCode 404 when rescheduleUid is provided but no accepted booking is found",
+              "HttpError with statusCode 409 when the first invitee is already signed up for the same timeslot",
+              "Errors from booking lookup, seat creation/rescheduling, or webhook triggering propagate unless handled by their dependencies"
+            ],
+            "reverts": [],
+            "onInvalidInput": "Duplicate signup is rejected with HttpError status 409; a missing booking during rescheduling is rejected with HttpError status 404.",
+            "returnsOnError": "Workflow reminder errors are logged and do not alter the returned booking result; dry runs and non-reschedule missing bookings return undefined."
+          },
+          "stateMutations": [
+            "May create or reschedule booking-seat state through createNewSeat or rescheduleSeatedBooking.",
+            "May cause workflow reminder scheduling and webhook side effects."
+          ],
+          "eventsEmitted": [
+            "Webhook trigger via handleWebhookTrigger when a result booking is produced.",
+            "Workflow reminders via scheduleWorkflowReminders when a result booking is produced."
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "createLoggerWithEventDetails", "source": null, "kind": "internal" },
+            { "name": "prisma.booking.findFirst", "source": "Prisma booking persistence", "kind": "external" },
+            { "name": "rescheduleSeatedBooking", "source": null, "kind": "internal" },
+            { "name": "createNewSeat", "source": null, "kind": "internal" },
+            { "name": "scheduleWorkflowReminders", "source": null, "kind": "internal" },
+            { "name": "handleWebhookTrigger", "source": null, "kind": "internal" },
+            { "name": "dayjs.utc", "source": "dayjs", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "NewSeatedBookingObject",
+            "HandleSeatsResultBooking",
+            "SeatedBooking",
+            "BookingStatus.ACCEPTED",
+            "HttpError",
+            "ErrorCode.BookingNotFound",
+            "ErrorCode.AlreadySignedUpForBooking",
+            "EventPayloadType"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Queries the accepted booking matching uid rescheduleUid || reqBookingUid or matching eventTypeId and exact startTime. When a result exists, reminder scheduling receives a calendarEvent formed from evt plus rescheduleReason, merged metadata, and event type details; webhook payload combines evt and eventTypeInfo with booking, seat, reschedule, metadata, status, and SMS fields.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles seat assignment for an accepted booking, either by rescheduling an existing seated booking or creating a new seat booking. When a booking result is produced, it schedules workflow reminders and triggers the corresponding webhook.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "ACCEPTED",
+              "role": "Only accepted bookings are eligible for seat handling, and emitted webhook data reports this status."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleSeats is invoked.",
+              "then": "It resolves immediately with undefined and does not perform booking lookup, seat processing, reminder scheduling, or webhook triggering.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleSeats is invoked.",
+              "then": "It rejects with an HttpError whose statusCode is 404 and whose message is ErrorCode.BookingNotFound.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleSeats is invoked.",
+              "then": "It rejects with an HttpError whose statusCode is 409 and whose message is ErrorCode.AlreadySignedUpForBooking.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "5e1e8c02574b8eb9884111600dbd997531242e79f78e20aac67f3c1ee0118f4e"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/features/bookings/lib/handleNewBooking/logger.ts",
+    "packages/features/bookings/lib/handleSeats/reschedule/rescheduleSeatedBooking.ts",
+    "packages/features/bookings/lib/handleSeats/create/createNewSeat.ts"
+  ],
+  "in": [],
+  "externals": [
+    "@calcom/dayjs",
+    "@calcom/features/bookings/lib/handleWebhookTrigger",
+    "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+    "@calcom/features/webhooks/lib/sendPayload",
+    "@calcom/lib/errorCodes",
+    "@calcom/lib/http-error",
+    "@calcom/prisma",
+    "@calcom/prisma/enums",
+    "./types"
+  ],
+  "impact": { "seeds": 1, "callers": 0, "impactedFiles": [] }
+}

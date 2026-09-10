@@ -1,0 +1,2215 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "db",
+  "commitHash": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+  "generatedAt": "2026-07-18T07:32:21.777Z",
+  "file": {
+    "relativePath": "packages/db/src/query/compiler/group-by.ts",
+    "language": "typescript",
+    "sizeBytes": 31010,
+    "tokenCount": 7752,
+    "model": "poolside/laguna-xs-2.1",
+    "analysedAt": "2026-07-17T16:01:51.616Z",
+    "module": {
+      "purpose": "Implements GROUP BY query compilation for a database query system, transforming data streams into grouped aggregations with support for aggregate functions, HAVING clauses, and SELECT expressions.",
+      "summary": "This file provides the core GROUP BY processing logic for a database query compiler. It handles both single-group (empty GROUP BY) and multi-group aggregations, manages aggregate function compilation (sum, count, avg, min, max), validates that non-aggregate SELECT expressions appear in GROUP BY, processes HAVING clauses, and maintains virtual row metadata for sync status and local origin tracking.",
+      "businessContext": "Enables SQL-like GROUP BY operations in a reactive database query system. Critical for data aggregation features; failures cause incorrect aggregated results and query failures.",
+      "classes": [],
+      "functions": [
+        "getRowVirtualMetadata (~L27-55): Extracts sync and local origin metadata from a namespaced row",
+        "validateAndCreateMapping (~L65-92): Validates SELECT expressions against GROUP BY and creates lookup mapping",
+        "processGroupBy (~L94-321): Main exported function for GROUP BY processing with HAVING and SELECT support",
+        "expressionsEqual (~L323-355): Deep equality comparison for expression AST nodes",
+        "getAggregateFunction (~L357-397): Creates appropriate aggregate function (sum, count, avg, min, max) from expression",
+        "replaceAggregatesByRefs (~L399-436): Transforms aggregate expressions to references for HAVING evaluation",
+        "evaluateWrappedAggregates (~L438-463): Evaluates aggregate expressions wrapped in other functions",
+        "containsAggregate (~L465-488): Checks if expression tree contains any aggregate function",
+        "extractAndReplaceAggregates (~L490-540): Extracts nested aggregates and replaces with references",
+        "replaceGroupByRefsInSelectValue (~L542-562): Replaces GROUP BY references in SELECT value expressions",
+        "replaceGroupByRefsInExpression (~L564-574): Replaces GROUP BY references in basic expressions",
+        "compileGroupedSelectValue (~L576-598): Compiles SELECT value expressions for grouped evaluation",
+        "compileGroupedSelectObject (~L600-633): Compiles nested SELECT objects for grouped evaluation",
+        "compileGroupedConditionalSelect (~L635-653): Compiles conditional SELECT expressions for grouped evaluation",
+        "isNestedSelectObject (~L655-663): Type guard for nested SELECT object detection",
+        "isConditionalSelect (~L665-673): Type guard for conditional SELECT detection",
+        "aggregatesEqual (~L675-683): Compares two aggregate expressions for equality"
+      ],
+      "keywords": ["group by", "aggregate", "having", "select", "query compilation", "stream processing"],
+      "ontologyConcepts": [
+        "Query compilation",
+        "Data aggregation",
+        "Expression transformation",
+        "Stream processing",
+        "HAVING filtering",
+        "Virtual row metadata"
+      ],
+      "businessEntities": ["Row", "Aggregate", "Select", "GroupBy", "Having", "NamespacedRow"],
+      "systemCapabilities": [
+        "GROUP BY clause processing",
+        "Aggregate function compilation",
+        "HAVING clause filtering",
+        "Expression validation",
+        "Virtual metadata management"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../ir.js",
+          "symbols": ["ConditionalSelect", "Func", "PropRef", "getHavingExpression", "isExpressionLike"],
+          "anchor": { "startLine": 5, "endLine": 9 },
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts",
+          "resolvedHint": "packages/db/src/query/ir.ts"
+        },
+        {
+          "spec": "../../errors.js",
+          "symbols": [
+            "AggregateFunctionNotInSelectError",
+            "NonAggregateExpressionNotInGroupByError",
+            "UnknownHavingExpressionTypeError",
+            "UnsupportedAggregateFunctionError"
+          ],
+          "anchor": { "startLine": 10, "endLine": 13 },
+          "resolvedRelativePath": "packages/db/src/errors.ts",
+          "resolvedFileId": "packages/db/src/errors.ts",
+          "resolvedHint": "packages/db/src/errors.ts"
+        },
+        {
+          "spec": "./evaluators.js",
+          "symbols": ["compileExpression", "isCaseWhenConditionTrue", "toBooleanPredicate"],
+          "anchor": { "startLine": 14, "endLine": 16 },
+          "resolvedRelativePath": "packages/db/src/query/compiler/evaluators.ts",
+          "resolvedFileId": "packages/db/src/query/compiler/evaluators.ts",
+          "resolvedHint": "packages/db/src/query/compiler/evaluators.ts"
+        },
+        {
+          "spec": "../ir.js",
+          "symbols": ["Aggregate", "BasicExpression", "GroupBy", "Having", "Select", "SelectValueExpression"],
+          "anchor": { "startLine": 17, "endLine": 23 },
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts",
+          "resolvedHint": "packages/db/src/query/ir.ts"
+        },
+        {
+          "spec": "../../types.js",
+          "symbols": ["NamespacedAndKeyedStream", "NamespacedRow"],
+          "anchor": { "startLine": 24, "endLine": 25 },
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts",
+          "resolvedHint": "packages/db/src/types.ts"
+        },
+        {
+          "spec": "../../virtual-props.js",
+          "symbols": ["VirtualOrigin"],
+          "anchor": { "startLine": 26, "endLine": 26 },
+          "resolvedRelativePath": "packages/db/src/virtual-props.ts",
+          "resolvedFileId": "packages/db/src/virtual-props.ts",
+          "resolvedHint": "packages/db/src/virtual-props.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tanstack/db-ivm",
+          "symbols": ["filter", "groupBy", "groupByOperators", "map", "serializeValue"],
+          "package": "@tanstack/db-ivm",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 4 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": ["Transforms pipeline stream through groupBy and map operators"]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "processGroupBy",
+          "shape": "(pipeline: NamespacedAndKeyedStream, groupByClause: GroupBy, havingClauses?: Array<Having>, selectClause?: Select, fnHavingClauses?: Array<(row: any) => any>, aggregateCollectionId?: string, mainSource?: string) => NamespacedAndKeyedStream",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "replaceAggregatesByRefs",
+          "shape": "(havingExpr: BasicExpression | Aggregate, selectClause: Select, resultAlias?: string) => BasicExpression",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "containsAggregate",
+          "shape": "(expr: BasicExpression | Aggregate | Select | { type: string }) => boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "filter", "shape": "from '@tanstack/db-ivm'", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "groupBy", "shape": "from '@tanstack/db-ivm'", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "groupByOperators",
+          "shape": "from '@tanstack/db-ivm'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "map", "shape": "from '@tanstack/db-ivm'", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "serializeValue",
+          "shape": "from '@tanstack/db-ivm'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ConditionalSelect",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "Func",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "PropRef",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "getHavingExpression",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "isExpressionLike",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "AggregateFunctionNotInSelectError",
+          "shape": "from '../../errors.js'",
+          "resolvedRelativePath": "packages/db/src/errors.ts",
+          "resolvedFileId": "packages/db/src/errors.ts"
+        },
+        {
+          "name": "NonAggregateExpressionNotInGroupByError",
+          "shape": "from '../../errors.js'",
+          "resolvedRelativePath": "packages/db/src/errors.ts",
+          "resolvedFileId": "packages/db/src/errors.ts"
+        },
+        {
+          "name": "UnknownHavingExpressionTypeError",
+          "shape": "from '../../errors.js'",
+          "resolvedRelativePath": "packages/db/src/errors.ts",
+          "resolvedFileId": "packages/db/src/errors.ts"
+        },
+        {
+          "name": "UnsupportedAggregateFunctionError",
+          "shape": "from '../../errors.js'",
+          "resolvedRelativePath": "packages/db/src/errors.ts",
+          "resolvedFileId": "packages/db/src/errors.ts"
+        },
+        {
+          "name": "compileExpression",
+          "shape": "from './evaluators.js'",
+          "resolvedRelativePath": "packages/db/src/query/compiler/evaluators.ts",
+          "resolvedFileId": "packages/db/src/query/compiler/evaluators.ts"
+        },
+        {
+          "name": "isCaseWhenConditionTrue",
+          "shape": "from './evaluators.js'",
+          "resolvedRelativePath": "packages/db/src/query/compiler/evaluators.ts",
+          "resolvedFileId": "packages/db/src/query/compiler/evaluators.ts"
+        },
+        {
+          "name": "toBooleanPredicate",
+          "shape": "from './evaluators.js'",
+          "resolvedRelativePath": "packages/db/src/query/compiler/evaluators.ts",
+          "resolvedFileId": "packages/db/src/query/compiler/evaluators.ts"
+        },
+        {
+          "name": "Aggregate",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "BasicExpression",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "GroupBy",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "Having",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "Select",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "SelectValueExpression",
+          "shape": "from '../ir.js'",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "NamespacedAndKeyedStream",
+          "shape": "from '../../types.js'",
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts"
+        },
+        {
+          "name": "NamespacedRow",
+          "shape": "from '../../types.js'",
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts"
+        },
+        {
+          "name": "VirtualOrigin",
+          "shape": "from '../../virtual-props.js'",
+          "resolvedRelativePath": "packages/db/src/virtual-props.ts",
+          "resolvedFileId": "packages/db/src/virtual-props.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "empty_group_by_handling",
+          "intent": "Process single-group aggregation when GROUP BY clause is empty",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 143, "endLine": 203 }
+        },
+        {
+          "name": "having_clause_filtering",
+          "intent": "Apply HAVING clauses to filter grouped results",
+          "structureKind": "loop",
+          "predicate": "havingClauses && havingClauses.length > 0",
+          "branchOutcomes": [],
+          "bounds": "havingClauses.length",
+          "terminationCondition": null,
+          "anchor": { "startLine": 147, "endLine": 161 }
+        },
+        {
+          "name": "multi_group_aggregation",
+          "intent": "Process multi-group aggregation with multiple GROUP BY expressions",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 205, "endLine": 321 }
+        },
+        {
+          "name": "expression_validation",
+          "intent": "Validate SELECT expressions against GROUP BY clause",
+          "structureKind": "loop",
+          "predicate": "Object.entries(selectClause)",
+          "branchOutcomes": [],
+          "bounds": "Object.entries(selectClause).length",
+          "terminationCondition": null,
+          "anchor": { "startLine": 79, "endLine": 88 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "processGroupBy",
+          "signature": "export function processGroupBy(\n  pipeline: NamespacedAndKeyedStream,\n  groupByClause: GroupBy,\n  havingClauses?: Array<Having>,\n  selectClause?: Select,\n  fnHavingClauses?: Array<(row: any) => any>,\n  aggregateCollectionId?: string,\n  mainSource?: string,\n): NamespacedAndKeyedStream",
+          "generics": null,
+          "decorators": [],
+          "returnType": "NamespacedAndKeyedStream",
+          "exported": true,
+          "anchor": { "startLine": 94, "endLine": 98 }
+        },
+        {
+          "kind": "function",
+          "name": "replaceAggregatesByRefs",
+          "signature": "export function replaceAggregatesByRefs(\n  havingExpr: BasicExpression | Aggregate,\n  selectClause: Select,\n  resultAlias: string = `$selected`,\n): BasicExpression",
+          "generics": null,
+          "decorators": [],
+          "returnType": "BasicExpression",
+          "exported": true,
+          "anchor": { "startLine": 399, "endLine": 403 }
+        },
+        {
+          "kind": "function",
+          "name": "containsAggregate",
+          "signature": "export function containsAggregate(\n  expr: BasicExpression | Aggregate | Select | { type: string },\n): boolean",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 465, "endLine": 469 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "RowVirtualMetadata",
+          "shape": "{\n  synced: boolean\n  hasLocal: boolean\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 22, "endLine": 26 }
+        },
+        {
+          "kind": "interface",
+          "name": "GroupBySelectMapping",
+          "shape": "{\n  selectToGroupByIndex: Map<string, number>\n  groupByExpressions: Array<any>\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 60, "endLine": 63 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Empty GROUP BY clause",
+          "handled": true,
+          "behavior": "Creates single-group aggregation with all data",
+          "anchor": { "startLine": 145, "endLine": 147 }
+        },
+        {
+          "inputShape": "SELECT without GROUP BY",
+          "handled": true,
+          "behavior": "Allows aggregate-only SELECT expressions",
+          "anchor": { "startLine": 75, "endLine": 77 }
+        },
+        {
+          "inputShape": "Aggregate function not in SELECT for HAVING",
+          "handled": true,
+          "behavior": "Throws AggregateFunctionNotInSelectError",
+          "anchor": { "startLine": 419, "endLine": 421 }
+        },
+        {
+          "inputShape": "Non-aggregate expression not in GROUP BY",
+          "handled": true,
+          "behavior": "Throws NonAggregateExpressionNotInGroupByError",
+          "anchor": { "startLine": 86, "endLine": 88 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "groupByClause.length",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Check for empty GROUP BY clause triggering single-group aggregation",
+          "anchor": { "startLine": 145, "endLine": 145 }
+        },
+        {
+          "operator": "==",
+          "left": "groupIndex",
+          "right": "-1",
+          "inclusive": false,
+          "intent": "Check if GROUP BY expression found for SELECT validation",
+          "anchor": { "startLine": 82, "endLine": 82 }
+        },
+        {
+          "operator": "==",
+          "left": "i",
+          "right": "groupByClause.length",
+          "inclusive": false,
+          "intent": "Loop bound for group key extraction in keyExtractor",
+          "anchor": { "startLine": 239, "endLine": 239 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "NonAggregateExpressionNotInGroupByError",
+          "caught": null,
+          "action": "Validate and throw when non-aggregate SELECT not in GROUP BY",
+          "fallback": null,
+          "anchor": { "startLine": 86, "endLine": 88 }
+        },
+        {
+          "thrown": "AggregateFunctionNotInSelectError",
+          "caught": null,
+          "action": "Throw when aggregate used in HAVING but not in SELECT",
+          "fallback": null,
+          "anchor": { "startLine": 419, "endLine": 421 }
+        },
+        {
+          "thrown": "UnknownHavingExpressionTypeError",
+          "caught": null,
+          "action": "Throw for unsupported expression types in HAVING",
+          "fallback": null,
+          "anchor": { "startLine": 433, "endLine": 434 }
+        },
+        {
+          "thrown": "UnsupportedAggregateFunctionError",
+          "caught": null,
+          "action": "Throw for unknown aggregate function name",
+          "fallback": null,
+          "anchor": { "startLine": 395, "endLine": 396 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "Non-aggregate SELECT expressions must appear in GROUP BY clause",
+          "anchor": { "startLine": 86, "endLine": 88 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Result rows have $selected populated with aggregate and group key values",
+          "anchor": { "startLine": 193, "endLine": 197 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Virtual metadata keys are preserved and cleaned from final results",
+          "anchor": { "startLine": 456, "endLine": 461 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Caller must ensure pipeline is a valid NamespacedAndKeyedStream",
+          "anchor": { "startLine": 94, "endLine": 94 }
+        },
+        {
+          "kind": "caller",
+          "description": "HAVING expressions must reference aggregate functions present in SELECT",
+          "anchor": { "startLine": 408, "endLine": 412 }
+        },
+        {
+          "kind": "schema",
+          "description": "Expression types (ref, val, func, agg, includesSubquery) must match IR definitions",
+          "anchor": { "startLine": 323, "endLine": 355 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What is the expected behavior when GROUP BY expression evaluates to undefined/null?",
+          "affects": "keyExtractor function behavior",
+          "anchor": { "startLine": 237, "endLine": 247 },
+          "resolution": null
+        },
+        {
+          "question": "How are complex nested expressions in GROUP BY handled for equality comparison?",
+          "affects": "expressionsEqual function completeness",
+          "anchor": { "startLine": 325, "endLine": 355 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "fifo",
+        "notes": "Pipeline operations are applied sequentially in order; stream processing is synchronous"
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports from @tanstack/db-ivm",
+        "imports from ../ir.js",
+        "imports from ../../errors.js",
+        "imports from ./evaluators.js",
+        "type imports from ../ir.js",
+        "type imports from ../../types.js",
+        "type imports from ../../virtual-props.js",
+        "constants VIRTUAL_SYNCED_KEY, VIRTUAL_HAS_LOCAL_KEY, GROUP_KEY_REF_PREFIX",
+        "type RowVirtualMetadata",
+        "function getRowVirtualMetadata",
+        "destructured groupByOperators",
+        "interface GroupBySelectMapping",
+        "function validateAndCreateMapping",
+        "function processGroupBy",
+        "function expressionsEqual",
+        "function getAggregateFunction",
+        "function replaceAggregatesByRefs",
+        "function evaluateWrappedAggregates",
+        "function containsAggregate",
+        "function extractAndReplaceAggregates",
+        "function replaceGroupByRefsInSelectValue",
+        "function replaceGroupByRefsInExpression",
+        "function compileGroupedSelectValue",
+        "function compileGroupedSelectObject",
+        "function compileGroupedConditionalSelect",
+        "function isNestedSelectObject",
+        "function isConditionalSelect",
+        "function aggregatesEqual"
+      ],
+      "moduleLevelCode": "import statements and constants at module scope",
+      "exports": [
+        { "name": "processGroupBy", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "replaceAggregatesByRefs", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "containsAggregate", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "filter", "module": "@tanstack/db-ivm", "alias": null, "kind": "external" },
+        { "symbol": "groupBy", "module": "@tanstack/db-ivm", "alias": null, "kind": "external" },
+        { "symbol": "groupByOperators", "module": "@tanstack/db-ivm", "alias": null, "kind": "external" },
+        { "symbol": "map", "module": "@tanstack/db-ivm", "alias": null, "kind": "external" },
+        { "symbol": "serializeValue", "module": "@tanstack/db-ivm", "alias": null, "kind": "external" },
+        { "symbol": "ConditionalSelect", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "Func", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "PropRef", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "getHavingExpression", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "isExpressionLike", "module": "../ir.js", "alias": null, "kind": "internal" },
+        {
+          "symbol": "AggregateFunctionNotInSelectError",
+          "module": "../../errors.js",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "NonAggregateExpressionNotInGroupByError",
+          "module": "../../errors.js",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "UnknownHavingExpressionTypeError",
+          "module": "../../errors.js",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "UnsupportedAggregateFunctionError",
+          "module": "../../errors.js",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "compileExpression", "module": "./evaluators.js", "alias": null, "kind": "internal" },
+        { "symbol": "isCaseWhenConditionTrue", "module": "./evaluators.js", "alias": null, "kind": "internal" },
+        { "symbol": "toBooleanPredicate", "module": "./evaluators.js", "alias": null, "kind": "internal" },
+        { "symbol": "Aggregate", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "BasicExpression", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "GroupBy", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "Having", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "Select", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "SelectValueExpression", "module": "../ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "NamespacedAndKeyedStream", "module": "../../types.js", "alias": null, "kind": "internal" },
+        { "symbol": "NamespacedRow", "module": "../../types.js", "alias": null, "kind": "internal" },
+        { "symbol": "VirtualOrigin", "module": "../../virtual-props.js", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "VIRTUAL_SYNCED_KEY", "value": "`__virtual_synced__`", "kind": "string" },
+        { "name": "VIRTUAL_HAS_LOCAL_KEY", "value": "`__virtual_has_local__`", "kind": "string" },
+        { "name": "GROUP_KEY_REF_PREFIX", "value": "`__group_key_`", "kind": "string" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__getRowVirtualMetadata#function:getRowVirtualMetadata",
+        "unitKind": "function",
+        "name": "getRowVirtualMetadata",
+        "qualifiedName": "getRowVirtualMetadata",
+        "parentUnitId": null,
+        "startLine": 27,
+        "endLine": 55,
+        "isBehavioral": true,
+        "source": "  Aggregate,\n  BasicExpression,\n  GroupBy,\n  Having,\n  Select,\n  SelectValueExpression,\n} from '../ir.js'\nimport type { NamespacedAndKeyedStream, NamespacedRow } from '../../types.js'\nimport type { VirtualOrigin } from '../../virtual-props.js'\n\nconst VIRTUAL_SYNCED_KEY = `__virtual_synced__`\nconst VIRTUAL_HAS_LOCAL_KEY = `__virtual_has_local__`\nconst GROUP_KEY_REF_PREFIX = `__group_key_`\n\ntype RowVirtualMetadata = {\n  synced: boolean\n  hasLocal: boolean\n}\n\nfunction getRowVirtualMetadata(row: NamespacedRow): RowVirtualMetadata {\n  let found = false\n  let allSynced = true\n  let hasLocal = false\n\n  for (const [alias, value] of Object.entries(row as Record<string, unknown>)) {\n    if (alias === `$selected`) continue\n    if (value === null || typeof value !== `object`) continue\n    const asRecord = value as Record<string, unknown>\n    const hasSyncedProp = `$synced` in asRecord",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__getRowVirtualMetadata#function:getRowVirtualMetadata",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__getRowVirtualMetadata",
+          "unitKind": "function",
+          "name": "getRowVirtualMetadata",
+          "qualifiedName": "getRowVirtualMetadata",
+          "parentUnitId": null,
+          "startLine": 27,
+          "endLine": 55,
+          "signature": "function getRowVirtualMetadata(row: NamespacedRow): RowVirtualMetadata",
+          "parameters": [
+            {
+              "name": "row",
+              "type": "NamespacedRow",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "RowVirtualMetadata",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "row is a NamespacedRow (an object whose values may be scalar or nested record-like objects)"
+          ],
+          "postconditions": [
+            "Returns { synced: boolean, hasLocal: boolean }",
+            "synced is true only if every object-typed column entry (excluding $selected) that has a $synced property is truthy-synced; if no object columns are found (found === false), synced defaults to true",
+            "hasLocal is true if any object-typed column entry (excluding $selected) indicates local data"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Empty row (no entries): returns { synced: true, hasLocal: false } (found remains false, allSynced defaults true)",
+            "Row where every non-$selected value is null or non-object: treated same as empty — no columns examined",
+            "$selected key is always skipped regardless of its value",
+            "A column value that is null or not an object is skipped",
+            "If no object-typed columns are found, synced defaults to true (allSynced initial value)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["NamespacedRow", "RowVirtualMetadata"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Inspects a namespaced row object to determine the aggregate virtual-origin metadata — whether all object-typed column values are synced and whether any have local data. Returns a RowVirtualMetadata with synced and hasLocal booleans.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "$selected",
+              "role": "Key name skipped during iteration; denotes metadata envelope in row objects"
+            },
+            {
+              "kind": "magic-number",
+              "value": "$synced",
+              "role": "Property name checked on nested column objects to determine sync status"
+            },
+            {
+              "kind": "magic-number",
+              "value": "$hasLocal",
+              "role": "Property name checked on nested column objects to determine local-data presence"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRowVirtualMetadata is called",
+              "then": "Returns { synced: true, hasLocal: false }",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRowVirtualMetadata is called",
+              "then": "Returns { synced: true, hasLocal: false } since only $selected is skipped and non-object values are ignored",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRowVirtualMetadata is called",
+              "then": "Returns { synced: true, hasLocal: false }",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7860b4338e760dc00085cc1fd906bf4cb49bf390a8f5ac6f63488a3d3d1c54b6"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__validateAndCreateMapping#function:validateAndCreateMapping",
+        "unitKind": "function",
+        "name": "validateAndCreateMapping",
+        "qualifiedName": "validateAndCreateMapping",
+        "parentUnitId": null,
+        "startLine": 65,
+        "endLine": 92,
+        "isBehavioral": true,
+        "source": "      hasLocal = true\n    }\n  }\n\n  return {\n    synced: found ? allSynced : true,\n    hasLocal,\n  }\n}\n\nconst { sum, count, avg, min, max } = groupByOperators\n\n/**\n * Interface for caching the mapping between GROUP BY expressions and SELECT expressions\n */\ninterface GroupBySelectMapping {\n  selectToGroupByIndex: Map<string, number> // Maps SELECT alias to GROUP BY expression index\n  groupByExpressions: Array<any> // The GROUP BY expressions for reference\n}\n\n/**\n * Validates that all non-aggregate expressions in SELECT are present in GROUP BY\n * and creates a cached mapping for efficient lookup during processing\n */\nfunction validateAndCreateMapping(\n  groupByClause: GroupBy,\n  selectClause?: Select,\n): GroupBySelectMapping {",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__validateAndCreateMapping#function:validateAndCreateMapping",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__validateAndCreateMapping",
+          "unitKind": "function",
+          "name": "validateAndCreateMapping",
+          "qualifiedName": "validateAndCreateMapping",
+          "parentUnitId": null,
+          "startLine": 65,
+          "endLine": 92,
+          "signature": "function validateAndCreateMapping(groupByClause: GroupBy, selectClause?: Select): GroupBySelectMapping",
+          "parameters": [
+            {
+              "name": "groupByClause",
+              "type": "GroupBy",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "selectClause",
+              "type": "Select",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "GroupBySelectMapping",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["GroupBy", "Select", "GroupBySelectMapping"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates that all non-aggregate expressions in SELECT are present in GROUP BY and creates a cached mapping for efficient lookup during processing.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "8f329f5d87b7cc231e57ba25561bfb39e23f0bb3a64cc2f09adbfd5a2dd0b8fd"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__processGroupBy#function:processGroupBy",
+        "unitKind": "function",
+        "name": "processGroupBy",
+        "qualifiedName": "processGroupBy",
+        "parentUnitId": null,
+        "startLine": 94,
+        "endLine": 321,
+        "isBehavioral": true,
+        "source": "  const groupByExpressions = [...groupByClause]\n\n  if (!selectClause) {\n    return { selectToGroupByIndex, groupByExpressions }\n  }\n\n  // Validate each SELECT expression\n  for (const [alias, expr] of Object.entries(selectClause)) {\n    if (expr.type === `agg` || containsAggregate(expr)) {\n      // Aggregate expressions (plain or wrapped) are allowed and don't need to be in GROUP BY\n      continue\n    }\n\n    // Non-aggregate expression must be in GROUP BY\n    const groupIndex = groupByExpressions.findIndex((groupExpr) =>\n      expressionsEqual(expr, groupExpr),\n    )\n\n    if (groupIndex === -1) {\n      throw new NonAggregateExpressionNotInGroupByError(alias)\n    }\n\n    // Cache the mapping\n    selectToGroupByIndex.set(alias, groupIndex)\n  }\n\n  return { selectToGroupByIndex, groupByExpressions }\n}\n\n/**\n * Processes the GROUP BY clause with optional HAVING and SELECT\n * Works with the new $selected structure from early SELECT processing\n */\nexport function processGroupBy(\n  pipeline: NamespacedAndKeyedStream,\n  groupByClause: GroupBy,\n  havingClauses?: Array<Having>,\n  selectClause?: Select,\n  fnHavingClauses?: Array<(row: any) => any>,\n  aggregateCollectionId?: string,\n  mainSource?: string,\n): NamespacedAndKeyedStream {\n  const virtualAggregates: Record<string, any> = {\n    [VIRTUAL_SYNCED_KEY]: {\n      preMap: ([, row]: [string, NamespacedRow]) =>\n        getRowVirtualMetadata(row).synced,\n      reduce: (values: Array<[boolean, number]>) => {\n        for (const [isSynced, multiplicity] of values) {\n          if (!isSynced && multiplicity > 0) {\n            return false\n          }\n        }\n        return true\n      },\n    },\n    [VIRTUAL_HAS_LOCAL_KEY]: {\n      preMap: ([, row]: [string, NamespacedRow]) =>\n        getRowVirtualMetadata(row).hasLocal,\n      reduce: (values: Array<[boolean, number]>) => {\n        for (const [isLocal, multiplicity] of values) {\n          if (isLocal && multiplicity > 0) {\n            return true\n          }\n        }\n        return false\n      },\n    },\n  }\n\n  // Handle empty GROUP BY (single-group aggregation)\n  if (groupByClause.length === 0) {\n    // For single-group aggregation, create a single group with all data\n    const aggregates: Record<string, any> = virtualAggregates\n\n    // Expressions that wrap aggregates (e.g. coalesce(count(...), 0)).\n    // Keys are the original SELECT aliases; values are pre-compiled evaluators\n    // over the transformed (aggregate-free) expression.\n    const wrappedAggExprs: Record<string, (data: any) => any> = {}\n    const aggCounter = { value: 0 }\n\n    if (selectClause) {\n      // Scan the SELECT clause for aggregate functions\n      for (const [alias, expr] of Object.entries(selectClause)) {\n        if (expr.type === `agg`) {\n          aggregates[alias] = getAggregateFunction(expr)\n        } else if (containsAggregate(expr)) {\n          const { transformed, extracted } = extractAndReplaceAggregates(\n            expr as SelectValueExpression,\n            aggCounter,\n          )\n          for (const [syntheticAlias, aggExpr] of Object.entries(extracted)) {\n            aggregates[syntheticAlias] = getAggregateFunction(aggExpr)\n          }\n          wrappedAggExprs[alias] = compileGroupedSelectValue(transformed)\n        }\n      }\n    }\n\n    // Use a constant key for single group.\n    // When mainSource is set (includes mode), include __correlationKey so that\n    // rows from different parents aggregate separately.\n    const keyExtractor = mainSource\n      ? ([, row]: [string, NamespacedRow]) => ({\n          __singleGroup: true,\n          __correlationKey: (row as any)?.[mainSource]?.__correlationKey,\n        })\n      : () => ({ __singleGroup: true })\n\n    // Apply the groupBy operator with single group\n    pipeline = pipeline.pipe(\n      groupBy(keyExtractor, aggregates),\n    ) as NamespacedAndKeyedStream\n\n    // Update $selected to include aggregate values\n    pipeline = pipeline.pipe(\n      map(([, aggregatedRow]) => {\n        // Start with the existing $selected from early SELECT processing\n        const selectResults = (aggregatedRow as any).$selected || {}\n        const finalResults: Record<string, any> = { ...selectResults }\n\n        if (selectClause) {\n          // First pass: populate plain aggregate results and synthetic aliases\n          for (const [alias, expr] of Object.entries(selectClause)) {\n            if (expr.type === `agg`) {\n              finalResults[alias] = aggregatedRow[alias]\n            }\n          }\n          evaluateWrappedAggregates(\n            finalResults,\n            aggregatedRow as Record<string, any>,\n            wrappedAggExprs,\n          )\n        }\n\n        // Use a single key for the result and update $selected.\n        // When in includes mode, restore the namespaced source structure with\n        // __correlationKey so output extraction can route results per-parent.\n        const correlationKey = mainSource\n          ? (aggregatedRow as any).__correlationKey\n          : undefined\n        const resultKey =\n          correlationKey !== undefined\n            ? `single_group_${serializeValue(correlationKey)}`\n            : `single_group`\n        const resultRow: Record<string, any> = {\n          ...(aggregatedRow as Record<string, any>),\n          $selected: finalResults,\n        }\n        const groupSynced = (aggregatedRow as Record<string, any>)[\n          VIRTUAL_SYNCED_KEY\n        ]\n        const groupHasLocal = (aggregatedRow as Record<string, any>)[\n          VIRTUAL_HAS_LOCAL_KEY\n        ]\n        resultRow.$synced = groupSynced ?? true\n        resultRow.$origin = (\n          groupHasLocal ? `local` : `remote`\n        ) satisfies VirtualOrigin\n        resultRow.$key = resultKey\n        resultRow.$collectionId =\n          aggregateCollectionId ?? resultRow.$collectionId\n        if (mainSource && correlationKey !== undefined) {\n          resultRow[mainSource] = { __correlationKey: correlationKey }\n        }\n        return [resultKey, resultRow] as [unknown, Record<string, any>]\n      }),\n    )\n\n    // Apply HAVING clauses if present\n    if (havingClauses && havingClauses.length > 0) {\n      for (const havingClause of havingClauses) {\n        const havingExpression = getHavingExpression(havingClause)\n        const transformedHavingClause = replaceAggregatesByRefs(\n          havingExpression,\n          selectClause || {},\n          `$selected`,\n        )\n        const compiledHaving = compileExpression(transformedHavingClause)\n\n        pipeline = pipeline.pipe(\n          filter(([, row]) => {\n            // Create a namespaced row structure for HAVING evaluation\n            const namespacedRow = { $selected: (row as any).$selected }\n            return toBooleanPredicate(compiledHaving(namespacedRow))\n          }),\n        )\n      }\n    }\n\n    // Apply functional HAVING clauses if present\n    if (fnHavingClauses && fnHavingClauses.length > 0) {\n      for (const fnHaving of fnHavingClauses) {\n        pipeline = pipeline.pipe(\n          filter(([, row]) => {\n            // Create a namespaced row structure for functional HAVING evaluation\n            const namespacedRow = { $selected: (row as any).$selected }\n            return toBooleanPredicate(fnHaving(namespacedRow))\n          }),\n        )\n      }\n    }\n\n    return pipeline\n  }\n\n  // Multi-group aggregation logic...\n  // Validate and create mapping for non-aggregate expressions in SELECT\n  const mapping = validateAndCreateMapping(groupByClause, selectClause)\n\n  // Pre-compile groupBy expressions\n  const compiledGroupByExpressions = groupByClause.map((e) =>\n    compileExpression(e),\n  )\n\n  // Create a key extractor function using simple __key_X format.\n  // When mainSource is set (includes mode), include __correlationKey so that\n  // rows from different parents with the same group key aggregate separately.\n  const keyExtractor = ([, row]: [\n    string,\n    NamespacedRow & { $selected?: any },\n  ]) => {\n    // Use the original namespaced row for GROUP BY expressions, not $selected\n    const namespacedRow = { ...row }\n    delete (namespacedRow as any).$selected\n\n    const key: Record<string, unknown> = {}\n\n    // Use simple __key_X format for each groupBy expression",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__processGroupBy#function:processGroupBy",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__processGroupBy",
+          "unitKind": "function",
+          "name": "processGroupBy",
+          "qualifiedName": "processGroupBy",
+          "parentUnitId": null,
+          "startLine": 94,
+          "endLine": 321,
+          "signature": "export function processGroupBy(pipeline: NamespacedAndKeyedStream, groupByClause: GroupBy, havingClauses?: Array<Having>, selectClause?: Select, fnHavingClauses?: Array<(row: any) => any>, aggregateCollectionId?: string, mainSource?: string): NamespacedAndKeyedStream",
+          "parameters": [
+            {
+              "name": "pipeline",
+              "type": "NamespacedAndKeyedStream",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "groupByClause",
+              "type": "GroupBy",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "havingClauses",
+              "type": "Array<Having>",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "selectClause",
+              "type": "Select",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "fnHavingClauses",
+              "type": "Array<(row: any) => any>",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 4
+            },
+            {
+              "name": "aggregateCollectionId",
+              "type": "string",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 5
+            },
+            { "name": "mainSource", "type": "string", "default": null, "optional": true, "variadic": false, "order": 6 }
+          ],
+          "returnType": "NamespacedAndKeyedStream",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "pipeline is a valid NamespacedAndKeyedStream",
+            "groupByClause is an array (possibly empty) of GroupBy expressions",
+            "selectClause, if provided, is a Select object mapping aliases to SelectValueExpression or aggregate entries"
+          ],
+          "postconditions": [
+            "Returns a NamespacedAndKeyedStream where each element is a [key, row] tuple",
+            "Every output row contains a $selected field with aggregate and non-aggregate computed values",
+            "Every output row contains $synced (boolean), $origin ('local' | 'remote'), $key (string), and $collectionId fields",
+            "When groupByClause is empty, all input rows collapse into a single output row (single-group aggregation)",
+            "When groupByClause is non-empty, rows are grouped by the compiled GROUP BY expressions and each group produces one output row"
+          ],
+          "invariants": [
+            "Output rows always carry $selected, $synced, $origin, $key, and $collectionId",
+            "VIRTUAL_SYNCED_KEY aggregate returns false for any group containing a non-synced row with positive multiplicity",
+            "VIRTUAL_HAS_LOCAL_KEY aggregate returns true for any group containing a local row with positive multiplicity"
+          ],
+          "edgeCases": [
+            "Empty GROUP BY clause (groupByClause.length === 0): creates a single virtual group; key is 'single_group' or 'single_group_<serialized correlationKey>' when mainSource is provided",
+            "Empty selectClause or no selectClause: skips aggregate scanning and $selected population; virtual aggregates (synced/hasLocal) are still computed",
+            "Non-aggregate SELECT expression not present in GROUP BY: throws NonAggregateExpressionNotInGroupByError with the alias as context",
+            "Wrapped aggregate expressions (e.g. coalesce(count(...), 0)): extracted into synthetic aggregate aliases; the wrapper is compiled as a post-aggregate evaluator applied via evaluateWrappedAggregates",
+            "mainSource provided: key extractor includes __correlationKey from the row to separate aggregation per parent in includes mode",
+            "havingClauses provided: each HAVING expression is transformed to replace aggregate references with $selected refs, compiled, and applied as a filter",
+            "fnHavingClauses provided: each functional HAVING predicate is applied as a filter against a namespaced row wrapping $selected"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["NonAggregateExpressionNotInGroupByError"],
+            "reverts": [],
+            "onInvalidInput": "Throws NonAggregateExpressionNotInGroupByError when a non-aggregate SELECT expression has no matching GROUP BY expression",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Mutates the pipeline parameter by appending groupBy, map, and filter pipes",
+            "SelectClause entries of type 'agg' are consumed by getAggregateFunction to build the aggregates registry",
+            "Wrapped aggregate expressions are extracted and compiled into local wrappedAggExprs and transformed expressions"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "containsAggregate", "source": "group-by.ts", "kind": "internal" },
+            { "name": "expressionsEqual", "source": "group-by.ts", "kind": "internal" },
+            { "name": "getAggregateFunction", "source": "group-by.ts", "kind": "internal" },
+            { "name": "extractAndReplaceAggregates", "source": "group-by.ts", "kind": "internal" },
+            { "name": "compileGroupedSelectValue", "source": "group-by.ts", "kind": "internal" },
+            { "name": "compileExpression", "source": null, "kind": "internal" },
+            { "name": "evaluateWrappedAggregates", "source": "group-by.ts", "kind": "internal" },
+            { "name": "replaceAggregatesByRefs", "source": "group-by.ts", "kind": "internal" },
+            { "name": "validateAndCreateMapping", "source": "group-by.ts", "kind": "internal" },
+            { "name": "getRowVirtualMetadata", "source": "group-by.ts", "kind": "internal" },
+            { "name": "getHavingExpression", "source": null, "kind": "internal" },
+            { "name": "toBooleanPredicate", "source": null, "kind": "internal" },
+            { "name": "serializeValue", "source": null, "kind": "internal" },
+            { "name": "groupBy", "source": null, "kind": "external" },
+            { "name": "map", "source": null, "kind": "external" },
+            { "name": "filter", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": [
+            "NonAggregateExpressionNotInGroupByError",
+            "NamespacedAndKeyedStream",
+            "GroupBy",
+            "Having",
+            "Select",
+            "SelectValueExpression",
+            "NamespacedRow",
+            "VirtualOrigin",
+            "VIRTUAL_SYNCED_KEY",
+            "VIRTUAL_HAS_LOCAL_KEY"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Each pipeline element is a [key: unknown, row: Record<string, any>] tuple. Output rows contain: $selected (Record<string, any> with aggregate and non-aggregate values), $synced (boolean), $origin ('local' | 'remote'), $key (string, e.g. 'single_group' or 'single_group_<serialized>'), $collectionId (string). When mainSource is provided, row[mainSource] contains { __correlationKey }.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes a GROUP BY clause over a NamespacedAndKeyedStream pipeline, performing single-group aggregation when the GROUP BY is empty or multi-group aggregation otherwise. Validates that non-aggregate SELECT expressions appear in GROUP BY, compiles aggregate and wrapped-aggregate evaluators, applies HAVING filters, and decorates output rows with $selected, $synced, $origin, $key, and $collectionId metadata.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "Length threshold distinguishing single-group (empty) from multi-group aggregation"
+            },
+            {
+              "kind": "enum-value",
+              "value": "$selected",
+              "role": "Property name on output rows holding the computed aggregate and non-aggregate results"
+            },
+            {
+              "kind": "enum-value",
+              "value": "$synced",
+              "role": "Property name on output rows holding the group-level sync status"
+            },
+            {
+              "kind": "enum-value",
+              "value": "$origin",
+              "role": "Property name on output rows holding 'local' or 'remote' virtual origin"
+            },
+            {
+              "kind": "enum-value",
+              "value": "$key",
+              "role": "Property name on output rows holding the group key string"
+            },
+            {
+              "kind": "enum-value",
+              "value": "$collectionId",
+              "role": "Property name on output rows; overridden by aggregateCollectionId when provided"
+            },
+            {
+              "kind": "format-string",
+              "value": "__singleGroup",
+              "role": "Key name used in the single-group key extractor result"
+            },
+            {
+              "kind": "format-string",
+              "value": "__correlationKey",
+              "role": "Key used to separate aggregation per parent in includes mode"
+            },
+            {
+              "kind": "format-string",
+              "value": "__key_X",
+              "role": "Format pattern for multi-group key extractor field names"
+            },
+            {
+              "kind": "format-string",
+              "value": "single_group_${serializeValue(correlationKey)}",
+              "role": "Result key format when mainSource is provided with a correlationKey"
+            },
+            {
+              "kind": "enum-value",
+              "value": "local",
+              "role": "$origin value when group contains at least one local row"
+            },
+            { "kind": "enum-value", "value": "remote", "role": "$origin value when group has no local rows" }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "processGroupBy is called with the pipeline, empty groupByClause, and selectClause",
+              "then": "The output contains a single row whose $selected.count_all equals 2, $key is 'single_group', and both input rows are collapsed into one group",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "processGroupBy is called",
+              "then": "A NonAggregateExpressionNotInGroupByError is thrown with the alias 'name'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "processGroupBy is called with the pipeline and empty groupByClause",
+              "then": "The single output row has $synced === false if any input row was non-synced, and $origin is 'local' if any input row had hasLocal metadata set",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "0b2e865949be7b5a6446ce3d8aa641d7383f4c98529a3e737ca501231d64064d"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__expressionsEqual#function:expressionsEqual",
+        "unitKind": "function",
+        "name": "expressionsEqual",
+        "qualifiedName": "expressionsEqual",
+        "parentUnitId": null,
+        "startLine": 323,
+        "endLine": 355,
+        "isBehavioral": true,
+        "source": "      const compiledExpr = compiledGroupByExpressions[i]!\n      const value = compiledExpr(namespacedRow)\n      key[`__key_${i}`] = value\n    }\n\n    if (mainSource) {\n      key.__correlationKey = (row as any)?.[mainSource]?.__correlationKey\n    }\n\n    return key\n  }\n\n  // Create aggregate functions for any aggregated columns in the SELECT clause\n  const aggregates: Record<string, any> = virtualAggregates\n  const wrappedAggExprs: Record<string, (data: any) => any> = {}\n  const aggCounter = { value: 0 }\n\n  if (selectClause) {\n    // Scan the SELECT clause for aggregate functions\n    for (const [alias, expr] of Object.entries(selectClause)) {\n      if (expr.type === `agg`) {\n        aggregates[alias] = getAggregateFunction(expr)\n      } else if (containsAggregate(expr)) {\n        const { transformed, extracted } = extractAndReplaceAggregates(\n          expr as SelectValueExpression,\n          aggCounter,\n        )\n        for (const [syntheticAlias, aggExpr] of Object.entries(extracted)) {\n          aggregates[syntheticAlias] = getAggregateFunction(aggExpr)\n        }\n        wrappedAggExprs[alias] = compileGroupedSelectValue(\n          replaceGroupByRefsInSelectValue(transformed, groupByClause),\n        )",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__expressionsEqual#function:expressionsEqual",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__expressionsEqual",
+          "unitKind": "function",
+          "name": "expressionsEqual",
+          "qualifiedName": "expressionsEqual",
+          "parentUnitId": null,
+          "startLine": 323,
+          "endLine": 355,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["Both input expressions must be non-null and of compatible types for comparison."],
+          "postconditions": ["Returns true if the expressions are equal, false otherwise."],
+          "invariants": [],
+          "edgeCases": [
+            "If either input is null or undefined, returns false.",
+            "For complex nested expressions, performs recursive comparison."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns false if inputs are invalid.",
+            "returnsOnError": "false"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Compares two expressions and returns a boolean indicating if they are structurally equal.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6646b9b4aefafd865ebdd82ecfed37367c6edfdfdaf7038567caa3ff0eec4879"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__getAggregateFunction#function:getAggregateFunction",
+        "unitKind": "function",
+        "name": "getAggregateFunction",
+        "qualifiedName": "getAggregateFunction",
+        "parentUnitId": null,
+        "startLine": 357,
+        "endLine": 397,
+        "isBehavioral": true,
+        "source": "    }\n  }\n\n  // Apply the groupBy operator\n  pipeline = pipeline.pipe(groupBy(keyExtractor, aggregates))\n\n  // Update $selected to handle GROUP BY results\n  pipeline = pipeline.pipe(\n    map(([, aggregatedRow]) => {\n      // Start with the existing $selected from early SELECT processing\n      const selectResults = (aggregatedRow as any).$selected || {}\n      const finalResults: Record<string, any> = {}\n\n      if (selectClause) {\n        // First pass: populate group keys, plain aggregates, and synthetic aliases\n        for (const [alias, expr] of Object.entries(selectClause)) {\n          if (expr.type === `agg`) {\n            finalResults[alias] = aggregatedRow[alias]\n          } else if (!wrappedAggExprs[alias]) {\n            // Use cached mapping to get the corresponding __key_X for non-aggregates\n            const groupIndex = mapping.selectToGroupByIndex.get(alias)\n            if (groupIndex !== undefined) {\n              finalResults[alias] = aggregatedRow[`__key_${groupIndex}`]\n            } else {\n              // Fallback to original SELECT results\n              finalResults[alias] = selectResults[alias]\n            }\n          }\n        }\n        evaluateWrappedAggregates(\n          finalResults,\n          aggregatedRow as Record<string, any>,\n          wrappedAggExprs,\n          groupByClause.length,\n        )\n      } else {\n        // No SELECT clause - just use the group keys\n        for (let i = 0; i < groupByClause.length; i++) {\n          finalResults[`__key_${i}`] = aggregatedRow[`__key_${i}`]\n        }\n      }",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__getAggregateFunction#function:getAggregateFunction",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__getAggregateFunction",
+          "unitKind": "function",
+          "name": "getAggregateFunction",
+          "qualifiedName": "getAggregateFunction",
+          "parentUnitId": null,
+          "startLine": 357,
+          "endLine": 397,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Retrieves aggregate function definitions for use in GROUP BY query compilation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "13ee390b8bbcd9478f0f4be4864cfa628deca70cbe6f7d25b2189853e831df69"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__replaceAggregatesByRefs#function:replaceAggregatesByRefs",
+        "unitKind": "function",
+        "name": "replaceAggregatesByRefs",
+        "qualifiedName": "replaceAggregatesByRefs",
+        "parentUnitId": null,
+        "startLine": 399,
+        "endLine": 436,
+        "isBehavioral": true,
+        "source": "      // Generate a simple key for the live collection using group values.\n      // When in includes mode, include the correlation key so that groups\n      // from different parents don't collide.\n      const correlationKey = mainSource\n        ? (aggregatedRow as any).__correlationKey\n        : undefined\n      const keyParts: Array<unknown> = []\n      for (let i = 0; i < groupByClause.length; i++) {\n        keyParts.push(aggregatedRow[`__key_${i}`])\n      }\n      if (correlationKey !== undefined) {\n        keyParts.push(correlationKey)\n      }\n      const finalKey =\n        keyParts.length === 1 ? keyParts[0] : serializeValue(keyParts)\n\n      // When in includes mode, restore the namespaced source structure with\n      // __correlationKey so output extraction can route results per-parent.\n      const resultRow: Record<string, any> = {\n        ...(aggregatedRow as Record<string, any>),\n        $selected: finalResults,\n      }\n      const groupSynced = (aggregatedRow as Record<string, any>)[\n        VIRTUAL_SYNCED_KEY\n      ]\n      const groupHasLocal = (aggregatedRow as Record<string, any>)[\n        VIRTUAL_HAS_LOCAL_KEY\n      ]\n      resultRow.$synced = groupSynced ?? true\n      resultRow.$origin = (\n        groupHasLocal ? `local` : `remote`\n      ) satisfies VirtualOrigin\n      resultRow.$key = finalKey\n      resultRow.$collectionId = aggregateCollectionId ?? resultRow.$collectionId\n      if (mainSource && correlationKey !== undefined) {\n        resultRow[mainSource] = { __correlationKey: correlationKey }\n      }\n      return [finalKey, resultRow] as [unknown, Record<string, any>]",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__replaceAggregatesByRefs#function:replaceAggregatesByRefs",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__replaceAggregatesByRefs",
+          "unitKind": "function",
+          "name": "replaceAggregatesByRefs",
+          "qualifiedName": "replaceAggregatesByRefs",
+          "parentUnitId": null,
+          "startLine": 399,
+          "endLine": 436,
+          "signature": null,
+          "parameters": [],
+          "returnType": "[unknown, Record<string, any>]",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "aggregatedRow must contain __key_<i> properties for each index in groupByClause",
+            "When mainSource is provided, aggregatedRow must contain __correlationKey",
+            "finalResults must already be computed and available for assignment to $selected"
+          ],
+          "postconditions": [
+            "Returns a tuple [unknown, Record<string, any>] where the first element is the unique group key",
+            "Returned resultRow contains $selected set to finalResults",
+            "Returned resultRow contains $key set to the computed finalKey",
+            "Returned resultRow contains $synced reflecting the group-level VIRTUAL_SYNCED_KEY value, defaulting to true",
+            "Returned resultRow contains $origin as 'local' or 'remote' based on VIRTUAL_HAS_LOCAL_KEY",
+            "Returned resultRow contains $collectionId, overridden by aggregateCollectionId when provided"
+          ],
+          "invariants": [
+            "When groupByClause has exactly one element and no correlationKey, finalKey equals the single key part directly without serialization",
+            "When multiple key parts exist, finalKey is the result of serializeValue on the keyParts array",
+            "$origin satisfies VirtualOrigin ('local' | 'remote')"
+          ],
+          "edgeCases": [
+            "Single group key with no correlation key: finalKey is the raw __key_0 value (no serialization)",
+            "Multiple group keys: finalKey is produced by serializeValue(keyParts)",
+            "mainSource is undefined or correlationKey is undefined: no mainSource namespace is added to resultRow",
+            "groupSynced is undefined: $synced defaults to true",
+            "aggregateCollectionId is undefined: $collectionId retains the value from aggregatedRow"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "serializeValue", "source": null, "kind": "internal" }],
+          "symbolReferences": ["VIRTUAL_SYNCED_KEY", "VIRTUAL_HAS_LOCAL_KEY", "VirtualOrigin"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Takes an aggregated row produced by group-by processing and replaces raw aggregate values with a structured result row keyed by the group key. Builds a unique key from group-by clause values (and optional correlation key for includes-mode), sets standard virtual fields ($selected, $synced, $origin, $key, $collectionId), and returns the [key, resultRow] tuple for downstream collection routing.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "local", "role": "VirtualOrigin value used when groupHasLocal is truthy" },
+            { "kind": "enum-value", "value": "remote", "role": "VirtualOrigin value used when groupHasLocal is falsy" },
+            {
+              "kind": "format-string",
+              "value": "__key_${i}",
+              "role": "Naming convention for group-by key parts extracted from the aggregated row"
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "Single-element keyParts array triggers direct assignment instead of serializeValue"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "181f1de189e0adba7bc10f0e06adb6bd1e1b864f4d06abec83bd9b373ed84f70"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__evaluateWrappedAggregates#function:evaluateWrappedAggregates",
+        "unitKind": "function",
+        "name": "evaluateWrappedAggregates",
+        "qualifiedName": "evaluateWrappedAggregates",
+        "parentUnitId": null,
+        "startLine": 438,
+        "endLine": 463,
+        "isBehavioral": true,
+        "source": "  )\n\n  // Apply HAVING clauses if present\n  if (havingClauses && havingClauses.length > 0) {\n    for (const havingClause of havingClauses) {\n      const havingExpression = getHavingExpression(havingClause)\n      const transformedHavingClause = replaceAggregatesByRefs(\n        havingExpression,\n        selectClause || {},\n      )\n      const compiledHaving = compileExpression(transformedHavingClause)\n\n      pipeline = pipeline.pipe(\n        filter(([, row]) => {\n          // Create a namespaced row structure for HAVING evaluation\n          const namespacedRow = { $selected: (row as any).$selected }\n          return compiledHaving(namespacedRow)\n        }),\n      )\n    }\n  }\n\n  // Apply functional HAVING clauses if present\n  if (fnHavingClauses && fnHavingClauses.length > 0) {\n    for (const fnHaving of fnHavingClauses) {\n      pipeline = pipeline.pipe(",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__evaluateWrappedAggregates#function:evaluateWrappedAggregates",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__evaluateWrappedAggregates",
+          "unitKind": "function",
+          "name": "evaluateWrappedAggregates",
+          "qualifiedName": "evaluateWrappedAggregates",
+          "parentUnitId": null,
+          "startLine": 438,
+          "endLine": 463,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Aggregate expressions in rows must have been previously replaced by reference keys via replaceAggregatesByRefs or extractAndReplaceAggregates",
+            "The caller must provide aggregate result data corresponding to the wrapped references"
+          ],
+          "postconditions": [
+            "Rows are returned with aggregate references resolved to their computed values",
+            "The structure of the row data (non-aggregate columns) is preserved"
+          ],
+          "invariants": ["Non-aggregate row values are not modified"],
+          "edgeCases": [
+            "If no aggregate references are present, rows are returned unchanged",
+            "Empty input rows produce empty output"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "replaceAggregatesByRefs",
+              "source": "packages/db/src/query/compiler/group-by.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Evaluates aggregate expressions that have been wrapped with references (from replaceAggregatesByRefs) during GROUP BY compilation, producing final row data with computed aggregate values.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "17103473f9c7f010b9bc85527c23e3a878fc5700d620d9e1c9314b8ff5167489"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__containsAggregate#function:containsAggregate",
+        "unitKind": "function",
+        "name": "containsAggregate",
+        "qualifiedName": "containsAggregate",
+        "parentUnitId": null,
+        "startLine": 465,
+        "endLine": 488,
+        "isBehavioral": true,
+        "source": "          // Create a namespaced row structure for functional HAVING evaluation\n          const namespacedRow = { $selected: (row as any).$selected }\n          return toBooleanPredicate(fnHaving(namespacedRow))\n        }),\n      )\n    }\n  }\n\n  return pipeline\n}\n\n/**\n * Helper function to check if two expressions are equal\n */\nfunction expressionsEqual(expr1: any, expr2: any): boolean {\n  if (!expr1 || !expr2) return false\n  if (expr1.type !== expr2.type) return false\n\n  switch (expr1.type) {\n    case `ref`:\n      // Compare paths as arrays\n      if (!expr1.path || !expr2.path) return false\n      if (expr1.path.length !== expr2.path.length) return false\n      return expr1.path.every(",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__containsAggregate#function:containsAggregate",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__containsAggregate",
+          "unitKind": "function",
+          "name": "containsAggregate",
+          "qualifiedName": "containsAggregate",
+          "parentUnitId": null,
+          "startLine": 465,
+          "endLine": 488,
+          "signature": "function containsAggregate(expr: any): boolean",
+          "parameters": [
+            { "name": "expr", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The expression argument should be a valid expression object (AST node) with a 'type' property."
+          ],
+          "postconditions": [
+            "Returns true if the expression or any of its sub-expressions contain an aggregate function, false otherwise."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Returns false for null/undefined input.",
+            "Returns false for non-object input.",
+            "Recursively traverses nested 'children' arrays or object properties.",
+            "Handles different expression node types (e.g., ref, function_call, etc.).",
+            "Identifies aggregate functions by matching a known set of function names."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "Returns false", "returnsOnError": "false" },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether a given expression contains an aggregate function (like SUM, COUNT, AVG, etc.) by recursively inspecting its AST structure.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "sum", "role": "Aggregate function name to identify" },
+            { "kind": "enum-value", "value": "count", "role": "Aggregate function name to identify" },
+            { "kind": "enum-value", "value": "avg", "role": "Aggregate function name to identify" }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "b439c0d622e2f7a5a29047342fdc568002adf29bc5f82522b51412e943e7952d"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__extractAndReplaceAggregates#function:extractAndReplaceAggregates",
+        "unitKind": "function",
+        "name": "extractAndReplaceAggregates",
+        "qualifiedName": "extractAndReplaceAggregates",
+        "parentUnitId": null,
+        "startLine": 490,
+        "endLine": 540,
+        "isBehavioral": true,
+        "source": "      )\n    case `val`:\n      return expr1.value === expr2.value\n    case `func`:\n      return (\n        expr1.name === expr2.name &&\n        expr1.args?.length === expr2.args?.length &&\n        (expr1.args || []).every((arg: any, i: number) =>\n          expressionsEqual(arg, expr2.args[i]),\n        )\n      )\n    case `agg`:\n      return (\n        expr1.name === expr2.name &&\n        expr1.args?.length === expr2.args?.length &&\n        (expr1.args || []).every((arg: any, i: number) =>\n          expressionsEqual(arg, expr2.args[i]),\n        )\n      )\n    default:\n      return false\n  }\n}\n\n/**\n * Helper function to get an aggregate function based on the Agg expression\n */\nfunction getAggregateFunction(aggExpr: Aggregate) {\n  // Pre-compile the value extractor expression\n  const compiledExpr = compileExpression(aggExpr.args[0]!)\n\n  // Create a value extractor function for the expression to aggregate\n  const valueExtractor = ([, namespacedRow]: [string, NamespacedRow]) => {\n    const value = compiledExpr(namespacedRow)\n    // Ensure we return a number for numeric aggregate functions\n    if (typeof value === `number`) {\n      return value\n    }\n    return value != null ? Number(value) : 0\n  }\n\n  // Create a value extractor function for min/max that preserves comparable types\n  const valueExtractorForMinMax = ([, namespacedRow]: [\n    string,\n    NamespacedRow,\n  ]) => {\n    const value = compiledExpr(namespacedRow)\n    // Preserve strings, numbers, Dates, and bigints for comparison\n    if (\n      typeof value === `number` ||\n      typeof value === `string` ||",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__extractAndReplaceAggregates#function:extractAndReplaceAggregates",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__extractAndReplaceAggregates",
+          "unitKind": "function",
+          "name": "extractAndReplaceAggregates",
+          "qualifiedName": "extractAndReplaceAggregates",
+          "parentUnitId": null,
+          "startLine": 490,
+          "endLine": 540,
+          "signature": "function extractAndReplaceAggregates(expr: Expression)",
+          "parameters": [
+            { "name": "expr", "type": "Expression", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "{ expr: Expression; aggregates: AggregateMapping }",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "expr is a valid Expression AST node (may be a val, col, func, agg, or compound expression)"
+          ],
+          "postconditions": [
+            "Returns an object containing the transformed expression with aggregates replaced by references and a mapping from reference identifiers to their original aggregate definitions",
+            "The returned expression is structurally equivalent to the input except all aggregate nodes have been replaced with placeholder references",
+            "The returned aggregates mapping contains one entry per unique aggregate found in the expression tree"
+          ],
+          "invariants": [
+            "Every aggregate node in the original expression tree corresponds to exactly one entry in the returned aggregates mapping",
+            "The returned expression tree contains no agg-type nodes — all have been replaced by reference nodes",
+            "Reference identifiers assigned to aggregates are unique within the returned mapping"
+          ],
+          "edgeCases": [
+            "Input expression contains no aggregates — returns the original expression unchanged with an empty aggregates mapping",
+            "Input expression is itself a single aggregate node — extracts it and replaces the entire expression with a single reference",
+            "Input expression contains nested aggregates (e.g. aggregate inside a function argument) — each nested aggregate is independently extracted and replaced",
+            "Input expression contains multiple identical aggregate expressions — each occurrence is replaced with its own reference (not deduplicated at this stage)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "containsAggregate", "source": "packages/db/src/query/compiler/group-by.ts", "kind": "internal" },
+            {
+              "name": "replaceAggregatesByRefs",
+              "source": "packages/db/src/query/compiler/group-by.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["Expression", "Aggregate", "AggregateMapping"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Traverses an expression tree, identifies aggregate expressions (SUM, COUNT, MIN, MAX, AVG, etc.), extracts them into a separate mapping, and replaces their original positions with reference placeholders so the group-by compilation pipeline can evaluate aggregates independently from row-level expressions.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "extractAndReplaceAggregates is called with the aggregate expression",
+              "then": "Returns { expr: <reference placeholder node>, aggregates: { <refId>: <original aggregate> } } with one entry in the mapping and no agg nodes remaining in expr",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "extractAndReplaceAggregates is called with the compound expression",
+              "then": "The returned expr has the aggregate replaced by a reference within the func's args, and the aggregates mapping contains the extracted count aggregate",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "extractAndReplaceAggregates is called with the non-aggregate expression",
+              "then": "Returns the original expression unchanged with an empty aggregates mapping",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "0e001a0d8af701f2c014a6fa7c41678ab8e389175233eda5c5e73a8861e7bbbf"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__replaceGroupByRefsInSelectValue#function:replaceGroupByRefsInSelectValue",
+        "unitKind": "function",
+        "name": "replaceGroupByRefsInSelectValue",
+        "qualifiedName": "replaceGroupByRefsInSelectValue",
+        "parentUnitId": null,
+        "startLine": 542,
+        "endLine": 562,
+        "isBehavioral": true,
+        "source": "      value instanceof Date\n    ) {\n      return value\n    }\n    return value != null ? Number(value) : 0\n  }\n\n  // Create a raw value extractor function for the expression to aggregate\n  const rawValueExtractor = ([, namespacedRow]: [string, NamespacedRow]) => {\n    return compiledExpr(namespacedRow)\n  }\n\n  // Return the appropriate aggregate function\n  switch (aggExpr.name.toLowerCase()) {\n    case `sum`:\n      return sum(valueExtractor)\n    case `count`:\n      return count(rawValueExtractor)\n    case `avg`:\n      return avg(valueExtractor)\n    case `min`:",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__replaceGroupByRefsInSelectValue#function:replaceGroupByRefsInSelectValue",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__replaceGroupByRefsInSelectValue",
+          "unitKind": "function",
+          "name": "replaceGroupByRefsInSelectValue",
+          "qualifiedName": "replaceGroupByRefsInSelectValue",
+          "parentUnitId": null,
+          "startLine": 542,
+          "endLine": 562,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "This function is intended to replace group-by references within a SELECT value expression, likely as part of query compilation for grouped SELECT operations.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "51fe0dbb10a4d8559027467e4d0a21279b47f1444543d97a56bd0855f9028252"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__replaceGroupByRefsInExpression#function:replaceGroupByRefsInExpression",
+        "unitKind": "function",
+        "name": "replaceGroupByRefsInExpression",
+        "qualifiedName": "replaceGroupByRefsInExpression",
+        "parentUnitId": null,
+        "startLine": 564,
+        "endLine": 574,
+        "isBehavioral": true,
+        "source": "    case `max`:\n      return max(valueExtractorForMinMax)\n    default:\n      throw new UnsupportedAggregateFunctionError(aggExpr.name)\n  }\n}\n\n/**\n * Transforms expressions to replace aggregate functions with references to computed values.\n *\n * For aggregate expressions, finds matching aggregates in the SELECT clause and replaces them",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__replaceGroupByRefsInExpression#function:replaceGroupByRefsInExpression",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__replaceGroupByRefsInExpression",
+          "unitKind": "function",
+          "name": "replaceGroupByRefsInExpression",
+          "qualifiedName": "replaceGroupByRefsInExpression",
+          "parentUnitId": null,
+          "startLine": 564,
+          "endLine": 574,
+          "signature": "function replaceGroupByRefsInExpression(expression: any, aggregates: any): any",
+          "parameters": [
+            { "name": "expression", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "aggregates", "type": "any", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "any",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": "export",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The expression must be a valid expression AST node",
+            "The aggregates mapping must contain entries for all aggregates present in the expression"
+          ],
+          "postconditions": [
+            "Returns a transformed expression with all aggregate function calls replaced by references",
+            "If no aggregates are present in the expression, returns the expression unchanged"
+          ],
+          "invariants": [
+            "The transformation is pure and does not mutate input parameters",
+            "The structure of non-aggregate parts of the expression is preserved"
+          ],
+          "edgeCases": [
+            "Handles nested expressions containing multiple aggregate functions",
+            "Preserves expression structure when no aggregates are found",
+            "Works with different aggregate function types (min, max, sum, etc.)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["UnsupportedAggregateFunctionError"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "getAggregateFunction", "source": null, "kind": "internal" }],
+          "symbolReferences": ["UnsupportedAggregateFunctionError"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Transforms an expression by recursively replacing aggregate function calls with references to precomputed aggregate values. For each aggregate function found in the expression, it finds the corresponding aggregate in the provided mapping and replaces the function call with a reference to that aggregate's computed value.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "46a06070e1e9ec80226c6da9e13894882d56d91c477ba9a8bfde9a9fcf65268a"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__compileGroupedSelectValue#function:compileGroupedSelectValue",
+        "unitKind": "function",
+        "name": "compileGroupedSelectValue",
+        "qualifiedName": "compileGroupedSelectValue",
+        "parentUnitId": null,
+        "startLine": 576,
+        "endLine": 598,
+        "isBehavioral": true,
+        "source": " *\n * Ref expressions (table columns and $selected fields) and value expressions are passed through unchanged.\n * Function expressions are recursively transformed.\n *\n * @param havingExpr - The expression to transform (can be aggregate, ref, func, or val)\n * @param selectClause - The SELECT clause containing aliases and aggregate definitions\n * @param resultAlias - The namespace alias for SELECT results (default: '$selected')\n * @returns A transformed BasicExpression that references computed values instead of raw expressions\n */\nexport function replaceAggregatesByRefs(\n  havingExpr: BasicExpression | Aggregate,\n  selectClause: Select,\n  resultAlias: string = `$selected`,\n): BasicExpression {\n  switch (havingExpr.type) {\n    case `agg`: {\n      const aggExpr = havingExpr\n      // Find matching aggregate in SELECT clause\n      for (const [alias, selectExpr] of Object.entries(selectClause)) {\n        if (selectExpr.type === `agg` && aggregatesEqual(aggExpr, selectExpr)) {\n          // Replace with a reference to the computed aggregate\n          return new PropRef([resultAlias, alias])\n        }",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__compileGroupedSelectValue#function:compileGroupedSelectValue",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__compileGroupedSelectValue",
+          "unitKind": "function",
+          "name": "compileGroupedSelectValue",
+          "qualifiedName": "compileGroupedSelectValue",
+          "parentUnitId": null,
+          "startLine": 576,
+          "endLine": 598,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Compiles a select value expression for grouped queries, ensuring aggregate functions are referenced correctly and other expressions are passed through unchanged.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "bfa5f1d17c0ed2bff27c86cdb971a1154171408704cad2d83c1011b37a0a40e6"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__compileGroupedSelectObject#function:compileGroupedSelectObject",
+        "unitKind": "function",
+        "name": "compileGroupedSelectObject",
+        "qualifiedName": "compileGroupedSelectObject",
+        "parentUnitId": null,
+        "startLine": 600,
+        "endLine": 633,
+        "isBehavioral": true,
+        "source": "      // If no matching aggregate found in SELECT, throw error\n      throw new AggregateFunctionNotInSelectError(aggExpr.name)\n    }\n\n    case `func`: {\n      const funcExpr = havingExpr\n      // Transform function arguments recursively\n      const transformedArgs = funcExpr.args.map(\n        (arg: BasicExpression | Aggregate) =>\n          replaceAggregatesByRefs(arg, selectClause),\n      )\n      return new Func(funcExpr.name, transformedArgs)\n    }\n\n    case `ref`:\n      // Ref expressions are passed through unchanged - they reference either:\n      // - $selected fields (which are already in the correct namespace)\n      // - Table column references (which remain valid)\n      return havingExpr as BasicExpression\n\n    case `val`:\n      // Return as-is\n      return havingExpr as BasicExpression\n\n    default:\n      throw new UnknownHavingExpressionTypeError((havingExpr as any).type)\n  }\n}\n\n/**\n * Evaluates wrapped-aggregate expressions against the aggregated row.\n * Copies synthetic __agg_N values into finalResults so the compiled wrapper\n * expressions can reference them, evaluates each wrapper, then removes the\n * synthetic keys so they don't leak onto user-visible result rows.",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__compileGroupedSelectObject#function:compileGroupedSelectObject",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__compileGroupedSelectObject",
+          "unitKind": "function",
+          "name": "compileGroupedSelectObject",
+          "qualifiedName": "compileGroupedSelectObject",
+          "parentUnitId": null,
+          "startLine": 600,
+          "endLine": 633,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Compiles a grouped SELECT clause containing nested select or conditional select objects into an intermediate form suitable for group-by query processing.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "9f1ded84c3c380b1b9c4554fe2da0a67e78b72952b3c0dc8b5fc4dc455378cda"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__compileGroupedConditionalSelect#function:compileGroupedConditionalSelect",
+        "unitKind": "function",
+        "name": "compileGroupedConditionalSelect",
+        "qualifiedName": "compileGroupedConditionalSelect",
+        "parentUnitId": null,
+        "startLine": 635,
+        "endLine": 653,
+        "isBehavioral": true,
+        "source": "function evaluateWrappedAggregates(\n  finalResults: Record<string, any>,\n  aggregatedRow: Record<string, any>,\n  wrappedAggExprs: Record<string, (data: any) => any>,\n  groupKeyCount: number = 0,\n): void {\n  for (const key of Object.keys(aggregatedRow)) {\n    if (key.startsWith(`__agg_`)) {\n      finalResults[key] = aggregatedRow[key]\n    }\n  }\n  for (let i = 0; i < groupKeyCount; i++) {\n    finalResults[`${GROUP_KEY_REF_PREFIX}${i}`] = aggregatedRow[`__key_${i}`]\n  }\n  for (const [alias, evaluator] of Object.entries(wrappedAggExprs)) {\n    finalResults[alias] = evaluator({ $selected: finalResults })\n  }\n  for (const key of Object.keys(finalResults)) {\n    if (key.startsWith(`__agg_`) || key.startsWith(GROUP_KEY_REF_PREFIX)) {",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__compileGroupedConditionalSelect#function:compileGroupedConditionalSelect",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__compileGroupedConditionalSelect",
+          "unitKind": "function",
+          "name": "compileGroupedConditionalSelect",
+          "qualifiedName": "compileGroupedConditionalSelect",
+          "parentUnitId": null,
+          "startLine": 635,
+          "endLine": 653,
+          "signature": "function compileGroupedConditionalSelect(conditionalSelect: any, mapping: Record<string, any>, aggregateFunction: (expr: string) => string, groupKeyCount: number, wrappedAggExprs: Record<string, (data: any) => any>): any",
+          "parameters": [
+            {
+              "name": "conditionalSelect",
+              "type": "any",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "mapping",
+              "type": "Record<string, any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "aggregateFunction",
+              "type": "(expr: string) => string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "groupKeyCount",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "wrappedAggExprs",
+              "type": "Record<string, (data: any) => any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            }
+          ],
+          "returnType": "any",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "conditionalSelect must be a recognized conditional select structure (as verified by isConditionalSelect)",
+            "mapping must contain valid column/alias mappings for the current query context",
+            "aggregateFunction must be a valid transformation function for aggregate expressions",
+            "groupKeyCount must be non-negative"
+          ],
+          "postconditions": [
+            "Returns a compiled conditional expression that can be evaluated against grouped row data",
+            "Any aggregate expressions within conditional branches are replaced with aggregate function references",
+            "Group key references within the conditional structure are replaced with appropriate key accessors"
+          ],
+          "invariants": [
+            "The structure of the conditional select (condition-then-else pattern) is preserved through compilation",
+            "Each branch of the conditional is independently compiled for aggregation handling"
+          ],
+          "edgeCases": [
+            "Conditional select with no conditions (empty branches) — should handle gracefully",
+            "Branches containing no aggregate expressions — should pass through without wrapping",
+            "Nested conditional selects within branches — should delegate compilation recursively",
+            "Branches with mixed aggregate and non-aggregate expressions"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "compileGroupedSelectValue", "source": "same file", "kind": "internal" },
+            { "name": "isConditionalSelect", "source": "same file", "kind": "internal" },
+            { "name": "containsAggregate", "source": "same file", "kind": "internal" },
+            { "name": "extractAndReplaceAggregates", "source": "same file", "kind": "internal" }
+          ],
+          "symbolReferences": ["GROUP_KEY_REF_PREFIX"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Compiles a conditional select expression (CASE-like branching) for grouped queries, delegating each branch to compileGroupedSelectValue while properly handling aggregation expressions and group key references within conditions and branches.",
+          "specLiterals": [
+            {
+              "kind": "regex",
+              "value": "^__agg_",
+              "role": "Prefix used to identify aggregate expression result keys in compiled output"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "compileGroupedConditionalSelect is called with the conditional, a valid mapping, and aggregate function",
+              "then": "Returns a compiled conditional expression with each branch properly resolved through compileGroupedSelectValue",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "compileGroupedConditionalSelect processes the branches",
+              "then": "Aggregate expressions are replaced with aggregate function references and recorded in wrappedAggExprs",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "compileGroupedConditionalSelect compiles the conditions",
+              "then": "Group key references are replaced with appropriate group key accessors (GROUP_KEY_REF_PREFIX + index)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4e87e42a6ed4f2f0c593d928d24f3f0d71868877cd1154207a28be8c2671ec51"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__isNestedSelectObject#function:isNestedSelectObject",
+        "unitKind": "function",
+        "name": "isNestedSelectObject",
+        "qualifiedName": "isNestedSelectObject",
+        "parentUnitId": null,
+        "startLine": 655,
+        "endLine": 663,
+        "isBehavioral": false,
+        "source": "    }\n  }\n}\n\n/**\n * Checks whether an expression contains an aggregate anywhere in its tree.\n * Returns true for a top-level Aggregate, or a Func whose args (recursively)\n * contain an Aggregate. Safely returns false for nested Select objects.\n */",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__isNestedSelectObject#function:isNestedSelectObject",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__isNestedSelectObject",
+          "unitKind": "function",
+          "name": "isNestedSelectObject",
+          "qualifiedName": "isNestedSelectObject",
+          "parentUnitId": null,
+          "startLine": 655,
+          "endLine": 663,
+          "signature": "function isNestedSelectObject(expr: any): expr is NestedSelectObject",
+          "parameters": [
+            { "name": "expr", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "expr is NestedSelectObject",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["Input expression is not undefined"],
+          "postconditions": ["Returns true if expr is a NestedSelectObject, false otherwise"],
+          "invariants": [],
+          "edgeCases": [
+            "Returns false for null/undefined expressions",
+            "Returns false for non-object expressions",
+            "Returns true only when expr has the structure of a NestedSelectObject"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "returns false", "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["NestedSelectObject"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Type guard that determines if an expression is a NestedSelectObject (a select subquery embedded in an object) rather than a scalar or aggregate expression.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isNestedSelectObject is called with this object",
+              "then": "Returns true",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isNestedSelectObject is called with this value",
+              "then": "Returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isNestedSelectObject is called with this object",
+              "then": "Returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "9b09048fa911215ce6f7143eb73f893bf4ddf4065284fefeeb06ac08288190e3"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__isConditionalSelect#function:isConditionalSelect",
+        "unitKind": "function",
+        "name": "isConditionalSelect",
+        "qualifiedName": "isConditionalSelect",
+        "parentUnitId": null,
+        "startLine": 665,
+        "endLine": 673,
+        "isBehavioral": false,
+        "source": "  expr: BasicExpression | Aggregate | Select | { type: string },\n): boolean {\n  if (isConditionalSelect(expr)) {\n    const branchHasAggregate = expr.branches.some(\n      (branch) =>\n        containsAggregate(branch.condition) || containsAggregate(branch.value),\n    )\n\n    return (",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__isConditionalSelect#function:isConditionalSelect",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__isConditionalSelect",
+          "unitKind": "function",
+          "name": "isConditionalSelect",
+          "qualifiedName": "isConditionalSelect",
+          "parentUnitId": null,
+          "startLine": 665,
+          "endLine": 673,
+          "signature": "function isConditionalSelect(expr: BasicExpression | Aggregate | Select | { type: string }): boolean",
+          "parameters": [
+            {
+              "name": "expr",
+              "type": "BasicExpression | Aggregate | Select | { type: string }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["Returns true if expr is a conditional select, false otherwise."],
+          "invariants": [],
+          "edgeCases": [
+            "Returns false for null/undefined expr.",
+            "Returns false for expressions without a branches property.",
+            "Returns false for malformed branches (non-array or missing condition/value)."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "Returns false", "returnsOnError": "false" },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["BasicExpression", "Aggregate", "Select"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Type guard that determines if an expression is a conditional select (has a branches property with condition/value pairs).",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3657765ed889dc499eb2f7a996b3c44a0326349a35599832fdc341167165ebf0"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/compiler/group-by.ts__aggregatesEqual#function:aggregatesEqual",
+        "unitKind": "function",
+        "name": "aggregatesEqual",
+        "qualifiedName": "aggregatesEqual",
+        "parentUnitId": null,
+        "startLine": 675,
+        "endLine": 683,
+        "isBehavioral": true,
+        "source": "      (expr.defaultValue !== undefined && containsAggregate(expr.defaultValue))\n    )\n  }\n\n  if (isNestedSelectObject(expr)) {\n    return Object.values(expr).some((value) =>\n      containsAggregate(value as BasicExpression | Aggregate | Select),\n    )\n  }",
+        "detail": {
+          "unitId": "packages/db/src/query/compiler/group-by.ts__aggregatesEqual#function:aggregatesEqual",
+          "fileId": "packages/db/src/query/compiler/group-by.ts__aggregatesEqual",
+          "unitKind": "function",
+          "name": "aggregatesEqual",
+          "qualifiedName": "aggregatesEqual",
+          "parentUnitId": null,
+          "startLine": 675,
+          "endLine": 683,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns a boolean indicating whether the aggregates in the expression are equal based on the checks performed."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If expr.defaultValue is undefined, the check for aggregate containment in defaultValue is skipped; if expr is a nested select object, all values are checked for aggregate containment using containsAggregate."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "containsAggregate", "source": null, "kind": "internal" },
+            { "name": "isNestedSelectObject", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["BasicExpression", "Aggregate", "Select"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Evaluates whether aggregate expressions are equal by checking for aggregate containment in default values and nested select objects.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3a3b23bc1bc6fa6371cea334b423bb51a34dacf1aa89ef315d6e9e67bcefc34e"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/db/src/types.ts",
+    "packages/db/src/query/ir.ts",
+    "packages/db/src/errors.ts",
+    "packages/db/src/virtual-props.ts",
+    "packages/db/src/query/compiler/evaluators.ts"
+  ],
+  "in": ["packages/db/src/query/compiler/order-by.ts", "packages/db/src/query/compiler/select.ts"],
+  "externals": ["@tanstack/db-ivm"],
+  "impact": {
+    "seeds": 17,
+    "callers": 10,
+    "impactedFiles": ["packages/db/src/query/compiler/select.ts", "packages/db/src/query/compiler/order-by.ts"]
+  }
+}

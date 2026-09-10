@@ -1,0 +1,1547 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts",
+    "language": "typescript",
+    "sizeBytes": 29154,
+    "tokenCount": 7289,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-09-04T07:30:17.332Z",
+    "module": {
+      "purpose": "Provides the application workflow for manually reassigning managed-event bookings to another user, including validation, transactional booking replacement, calendar synchronization, workflow rescheduling, notifications, and assignment-reason recording.",
+      "summary": "This TypeScript service coordinates managed-event reassignment across booking persistence, event-type and user repositories, calendar integrations, conferencing details, workflow reminders, email and SMS notifications, and assignment auditing. It resolves the source and target entities, creates a replacement booking while cancelling the original, removes and recreates calendar events, updates booking metadata and references, optionally reschedules workflows, notifies affected hosts and attendees, and records whether the reassignment was manual or automatic. External operations are guarded with logging so calendar, workflow, notification, and audit failures do not prevent completion of the broader reassignment flow.",
+      "businessContext": "Supports appointment ownership changes in a scheduling platform when managed-event bookings move between hosts. Failure can leave bookings, calendars, reminders, notifications, or audit records inconsistent.",
+      "classes": [
+        "ManagedEventManualReassignmentService (~L62-827): Orchestrates managed booking reassignment across database, calendars, workflows, notifications, and audit records.",
+        "ManagedEventManualReassignmentServiceDeps (~L44-50): Defines repositories and services required to perform managed event reassignment.",
+        "ManagedEventManualReassignmentParams (~L52-60): Captures booking, users, organization, notification, and reason inputs for reassignment."
+      ],
+      "functions": [
+        "constructor (~L70-76): Initializes repository, database, user, event type, and assignment reason dependencies.",
+        "execute (~L78-237): Validates reassignment, recreates booking, updates calendars, sends notifications, and records reason.",
+        "resolveTargetEntities (~L243-309): Loads event types, users, booking details, and localized translation resources.",
+        "executeBookingReassignmentTransaction (~L311-343): Performs transactional booking cancellation and creation while preserving metadata and references.",
+        "removeOriginalCalendarEvents (~L348-400): Deletes original host calendar events using configured credentials and booking references.",
+        "createCalendarEventsForNewUser (~L405-645): Creates destination calendar events, resolves conferencing, and persists location references and metadata.",
+        "sendReassignmentNotifications (~L651-795): Builds localized event messages and sends reassignment updates to hosts and attendees.",
+        "recordAssignmentReason (~L800-826): Persists whether reassignment was manual or automatic with its explanatory reason."
+      ],
+      "keywords": [
+        "managed event reassignment",
+        "booking reassignment transaction",
+        "calendar event synchronization",
+        "workflow reminder rescheduling",
+        "reassignment notifications",
+        "assignment reason recording",
+        "conference credential resolution",
+        "calendar references",
+        "event type hierarchy",
+        "booking metadata"
+      ],
+      "ontologyConcepts": [
+        "Booking reassignment",
+        "Transactional replacement",
+        "Calendar synchronization",
+        "Workflow scheduling",
+        "Notification delivery",
+        "Assignment auditing",
+        "Event ownership",
+        "Localization"
+      ],
+      "businessEntities": [
+        "Booking",
+        "User",
+        "Event type",
+        "Calendar event",
+        "Workflow reminder",
+        "Assignment reason",
+        "Attendee",
+        "Organization"
+      ],
+      "systemCapabilities": [
+        "Reassign managed bookings between users",
+        "Replace cancelled bookings transactionally",
+        "Synchronize external calendars and conferencing",
+        "Reschedule workflow reminders",
+        "Notify hosts and attendees",
+        "Record reassignment audit reasons"
+      ],
+      "configDependencies": [],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@calcom/app-store/zod-utils",
+          "symbols": ["eventTypeAppMetadataOptionalSchema"],
+          "package": "@calcom/app-store",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs"],
+          "package": "@calcom/dayjs",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@calcom/emails/email-manager",
+          "symbols": [
+            "sendReassignedEmailsAndSMS",
+            "sendReassignedScheduledEmailsAndSMS",
+            "sendReassignedUpdatedEmailsAndSMS"
+          ],
+          "package": "@calcom/emails",
+          "subpath": "email-manager",
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 7 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/EventManager",
+          "symbols": ["EventManager"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/EventManager",
+          "isBuiltin": false,
+          "anchor": { "startLine": 8, "endLine": 8 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "symbols": ["getAllCredentialsIncludeServiceAccountKey"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "isBuiltin": false,
+          "anchor": { "startLine": 9, "endLine": 9 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/handleNewBooking/getEventTypesFromDB",
+          "symbols": ["getEventTypesFromDB"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/handleNewBooking/getEventTypesFromDB",
+          "isBuiltin": false,
+          "anchor": { "startLine": 10, "endLine": 10 }
+        },
+        {
+          "spec": "@calcom/features/bookings/repositories/BookingRepository",
+          "symbols": ["BookingRepository", "ManagedEventReassignmentCreatedBooking", "ManagedEventCancellationResult"],
+          "package": "@calcom/features",
+          "subpath": "bookings/repositories/BookingRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 11, "endLine": 15 }
+        },
+        {
+          "spec": "@calcom/features/eventtypes/repositories/eventTypeRepository",
+          "symbols": ["EventTypeRepository"],
+          "package": "@calcom/features",
+          "subpath": "eventtypes/repositories/eventTypeRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        },
+        {
+          "spec": "@calcom/features/CalendarEventBuilder",
+          "symbols": ["CalendarEventBuilder"],
+          "package": "@calcom/features",
+          "subpath": "CalendarEventBuilder",
+          "isBuiltin": false,
+          "anchor": { "startLine": 17, "endLine": 17 }
+        },
+        {
+          "spec": "@calcom/features/users/repositories/UserRepository",
+          "symbols": ["UserRepository"],
+          "package": "@calcom/features",
+          "subpath": "users/repositories/UserRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 18, "endLine": 18 }
+        },
+        {
+          "spec": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "symbols": ["getBookerBaseUrl"],
+          "package": "@calcom/features",
+          "subpath": "ee/organizations/lib/getBookerUrlServer",
+          "isBuiltin": false,
+          "anchor": { "startLine": 19, "endLine": 19 }
+        },
+        {
+          "spec": "@calcom/features/ee/round-robin/lib/bookingLocationService",
+          "symbols": ["BookingLocationService"],
+          "package": "@calcom/features",
+          "subpath": "ee/round-robin/lib/bookingLocationService",
+          "isBuiltin": false,
+          "anchor": { "startLine": 20, "endLine": 20 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "symbols": ["WorkflowService"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/service/WorkflowService",
+          "isBuiltin": false,
+          "anchor": { "startLine": 21, "endLine": 21 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/repositories/WorkflowRepository",
+          "symbols": ["WorkflowRepository"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/repositories/WorkflowRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 22, "endLine": 22 }
+        },
+        {
+          "spec": "@calcom/features/ee/billing/credit-service",
+          "symbols": ["CreditService"],
+          "package": "@calcom/features",
+          "subpath": "ee/billing/credit-service",
+          "isBuiltin": false,
+          "anchor": { "startLine": 23, "endLine": 23 }
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["AdditionalInformation", "CalendarEvent"],
+          "package": "@calcom/types",
+          "subpath": "Calendar",
+          "isBuiltin": false,
+          "anchor": { "startLine": 24, "endLine": 24 }
+        },
+        {
+          "spec": "@calcom/lib/timeFormat",
+          "symbols": ["getTimeFormatStringFromUserTimeFormat"],
+          "package": "@calcom/lib",
+          "subpath": "timeFormat",
+          "isBuiltin": false,
+          "anchor": { "startLine": 25, "endLine": 25 }
+        },
+        {
+          "spec": "@calcom/lib/CalEventParser",
+          "symbols": ["getVideoCallUrlFromCalEvent"],
+          "package": "@calcom/lib",
+          "subpath": "CalEventParser",
+          "isBuiltin": false,
+          "anchor": { "startLine": 26, "endLine": 26 }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": { "startLine": 27, "endLine": 27 }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["loggerType"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": { "startLine": 28, "endLine": 28 }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["PrismaClient"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 29, "endLine": 29 }
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["EventTypeMetadata"],
+          "package": "@calcom/prisma",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": { "startLine": 32, "endLine": 32 }
+        },
+        {
+          "spec": "@calcom/features/ee/managed-event-types/reassignment/services/ManagedEventAssignmentReasonRecorder",
+          "symbols": ["ManagedEventAssignmentReasonService", "ManagedEventReassignmentType"],
+          "package": "@calcom/features",
+          "subpath": "ee/managed-event-types/reassignment/services/ManagedEventAssignmentReasonRecorder",
+          "isBuiltin": false,
+          "anchor": { "startLine": 34, "endLine": 37 }
+        },
+        {
+          "spec": "@calcom/features/ee/managed-event-types/reassignment/utils",
+          "symbols": ["findTargetChildEventType", "validateManagedEventReassignment", "buildNewBookingPlan"],
+          "package": "@calcom/features",
+          "subpath": "ee/managed-event-types/reassignment/utils",
+          "isBuiltin": false,
+          "anchor": { "startLine": 38, "endLine": 42 }
+        },
+        {
+          "spec": "@calcom/lib/server/i18n",
+          "symbols": ["getTranslation"],
+          "package": "@calcom/lib",
+          "subpath": "server/i18n",
+          "isBuiltin": false,
+          "anchor": { "startLine": 267, "endLine": 267 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Logs reassignment initiation, progress, warnings, errors, and completion through sub-loggers.",
+          "Loads user translations dynamically for both the new and original users."
+        ],
+        "network": [
+          "Deletes calendar events and meetings for the original user.",
+          "Creates calendar events for the new user through configured calendar integrations.",
+          "Schedules workflow reminders for the new booking.",
+          "Sends reassignment and update emails and SMS notifications."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "ManagedEventManualReassignmentParams",
+          "shape": "export interface ManagedEventManualReassignmentParams",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ManagedEventManualReassignmentService",
+          "shape": "export class ManagedEventManualReassignmentService",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ManagedEventManualReassignmentService.execute",
+          "shape": "async execute({ bookingId, newUserId, orgId, reassignReason, reassignedById, emailsEnabled = true, isAutoReassignment = false }: ManagedEventManualReassignmentParams)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "BookingRepository.managedEventReassignmentTransaction",
+          "shape": "managedEventReassignmentTransaction({ bookingId, cancellationReason, metadata, newBookingPlan })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingRepository.updateLocationById",
+          "shape": "updateLocationById({ where: { id: newBooking.id }, data: { location, metadata, referencesToCreate, responses, iCalSequence } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ManagedEventAssignmentReasonService.recordReassignment",
+          "shape": "recordReassignment({ newBookingId, reassignById: reassignedById, reassignReason, reassignmentType })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "sendReassignedScheduledEmailsAndSMS",
+          "shape": "sendReassignedScheduledEmailsAndSMS({ calEvent, members, eventTypeMetadata, reassigned })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "sendReassignedEmailsAndSMS",
+          "shape": "sendReassignedEmailsAndSMS({ calEvent: cancelledCalEvent, members, reassignedTo, eventTypeMetadata })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "sendReassignedUpdatedEmailsAndSMS",
+          "shape": "sendReassignedUpdatedEmailsAndSMS({ calEvent, eventTypeMetadata, showAttendees })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EventManager.deleteEventsAndMeetings",
+          "shape": "deleteEventsAndMeetings({ event, bookingReferences: originalBookingFull.references })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "EventManager.create", "shape": "create(evt)", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "WorkflowService.scheduleWorkflowsForNewBooking",
+          "shape": "scheduleWorkflowsForNewBooking({ workflows, smsReminderNumber, calendarEvent, hideBranding, seatReferenceUid, isDryRun, isConfirmedByDefault, isNormalBookingOrFirstRecurringSlot, isRescheduleEvent, creditCheckFn })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "execute",
+          "intent": "Validate, resolve, duplicate, synchronize, notify, and record a managed event reassignment.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 78, "endLine": 237 }
+        },
+        {
+          "name": "workflow reminder handling",
+          "intent": "Cancel old workflow reminders and schedule reminders for the new booking.",
+          "structureKind": "branch",
+          "predicate": "targetEventTypeDetails.workflows && targetEventTypeDetails.workflows.length > 0",
+          "branchOutcomes": ["workflows present: schedule reminders", "workflows absent: skip scheduling"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 152, "endLine": 200 }
+        },
+        {
+          "name": "resolveTargetEntities",
+          "intent": "Resolve event types, users, booking data, and translations required for reassignment.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 243, "endLine": 308 }
+        },
+        {
+          "name": "executeBookingReassignmentTransaction",
+          "intent": "Atomically cancel the original booking and create the reassigned booking.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 311, "endLine": 343 }
+        },
+        {
+          "name": "removeOriginalCalendarEvents",
+          "intent": "Delete the original booking's calendar events and meetings.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 348, "endLine": 400 }
+        },
+        {
+          "name": "createCalendarEventsForNewUser",
+          "intent": "Build, create, and persist calendar events and conference metadata for the new user.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 405, "endLine": 645 }
+        },
+        {
+          "name": "sendReassignmentNotifications",
+          "intent": "Send scheduled, cancellation, and future-attendee reassignment notifications.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 651, "endLine": 795 }
+        },
+        {
+          "name": "recordAssignmentReason",
+          "intent": "Persist whether the reassignment was manual or automatic and its reason.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 800, "endLine": 825 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "ManagedEventManualReassignmentServiceDeps",
+          "signature": "interface ManagedEventManualReassignmentServiceDeps {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 44, "endLine": 44 }
+        },
+        {
+          "kind": "interface",
+          "name": "ManagedEventManualReassignmentParams",
+          "signature": "export interface ManagedEventManualReassignmentParams {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 52, "endLine": 52 }
+        },
+        {
+          "kind": "class",
+          "name": "ManagedEventManualReassignmentService",
+          "signature": "export class ManagedEventManualReassignmentService {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 62, "endLine": 62 }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "  constructor(deps: ManagedEventManualReassignmentServiceDeps) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 70, "endLine": 70 }
+        },
+        {
+          "kind": "method",
+          "name": "execute",
+          "signature": "  async execute({\n    bookingId,\n    newUserId,\n    orgId,\n    reassignReason,\n    reassignedById,\n    emailsEnabled = true,\n    isAutoReassignment = false,\n  }: ManagedEventManualReassignmentParams) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 78, "endLine": 86 }
+        },
+        {
+          "kind": "method",
+          "name": "resolveTargetEntities",
+          "signature": "  private async resolveTargetEntities(bookingId: number, newUserId: number, reassignLogger: typeof logger) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 243, "endLine": 243 }
+        },
+        {
+          "kind": "method",
+          "name": "executeBookingReassignmentTransaction",
+          "signature": "  private async executeBookingReassignmentTransaction({\n    originalBookingFull,\n    newBookingPlan,\n    newUser,\n    reassignLogger,\n  }: {\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    newBookingPlan: Parameters<BookingRepository[\"managedEventReassignmentTransaction\"]>[0][\"newBookingPlan\"];\n    newUser: { name: string | null; email: string };\n    reassignLogger: typeof logger;\n  }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 311, "endLine": 323 }
+        },
+        {
+          "kind": "method",
+          "name": "removeOriginalCalendarEvents",
+          "signature": "  private async removeOriginalCalendarEvents({\n    originalUser,\n    currentEventTypeDetails,\n    originalBookingFull,\n    originalUserT,\n    apps,\n    logger,\n  }: {\n    originalUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    currentEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    originalUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    apps: ReturnType<typeof eventTypeAppMetadataOptionalSchema.parse>;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 348, "endLine": 364 }
+        },
+        {
+          "kind": "method",
+          "name": "createCalendarEventsForNewUser",
+          "signature": "  private async createCalendarEventsForNewUser({\n    newUser,\n    newUserT,\n    targetEventTypeDetails,\n    newBooking,\n    originalBookingFull,\n    apps,\n    logger,\n  }: {\n    newUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    newUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    targetEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    newBooking: ManagedEventReassignmentCreatedBooking;\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    apps: ReturnType<typeof eventTypeAppMetadataOptionalSchema.parse>;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }): Promise<{\n    bookingLocation: string | null;\n    videoCallUrl: string | null;\n    videoCallData: CalendarEvent[\"videoCallData\"];\n    additionalInformation: AdditionalInformation;\n  }> {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<{\n    bookingLocation: string | null;\n    videoCallUrl: string | null;\n    videoCallData: CalendarEvent[\"videoCallData\"];\n    additionalInformation: AdditionalInformation;\n  }>",
+          "exported": false,
+          "anchor": { "startLine": 405, "endLine": 428 }
+        },
+        {
+          "kind": "method",
+          "name": "sendReassignmentNotifications",
+          "signature": "  private async sendReassignmentNotifications({\n    newBooking,\n    targetEventTypeDetails,\n    parentEventType,\n    newUser,\n    newUserT,\n    originalUser,\n    originalUserT,\n    bookingLocation,\n    videoCallData,\n    additionalInformation,\n    reassignReason,\n    logger,\n  }: {\n    newBooking: ManagedEventReassignmentCreatedBooking;\n    targetEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    parentEventType: Awaited<ReturnType<typeof findTargetChildEventType>>[\"parentEventType\"];\n    newUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    newUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    originalUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    originalUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    bookingLocation: string | null;\n    videoCallData: CalendarEvent[\"videoCallData\"];\n    additionalInformation: AdditionalInformation;\n    reassignReason?: string;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 651, "endLine": 677 }
+        },
+        {
+          "kind": "method",
+          "name": "recordAssignmentReason",
+          "signature": "  private async recordAssignmentReason({\n    newBookingId,\n    reassignedById,\n    reassignReason,\n    isAutoReassignment,\n    logger,\n  }: {\n    newBookingId: number;\n    reassignedById: number;\n    reassignReason?: string;\n    isAutoReassignment: boolean;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 800, "endLine": 812 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "ManagedEventManualReassignmentServiceDeps",
+          "shape": "{\n  prisma: PrismaClient;\n  bookingRepository: BookingRepository;\n  userRepository: UserRepository;\n  eventTypeRepository: EventTypeRepository;\n  assignmentReasonService: ManagedEventAssignmentReasonService;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 44, "endLine": 50 }
+        },
+        {
+          "kind": "interface",
+          "name": "ManagedEventManualReassignmentParams",
+          "shape": "{\n  bookingId: number;\n  newUserId: number;\n  orgId: number | null;\n  reassignReason?: string;\n  reassignedById: number;\n  emailsEnabled?: boolean;\n  isAutoReassignment?: boolean;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 52, "endLine": 60 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "event type details missing",
+          "handled": true,
+          "behavior": "Throws Error(\"Failed to load event type details\"); execute rejects because the error is not caught locally.",
+          "anchor": { "startLine": 267, "endLine": 269 }
+        },
+        {
+          "inputShape": "new user not found",
+          "handled": true,
+          "behavior": "Throws an error identifying the requested user; execute rejects because the error is not caught locally.",
+          "anchor": { "startLine": 271, "endLine": 277 }
+        },
+        {
+          "inputShape": "original booking user not found",
+          "handled": true,
+          "behavior": "Throws Error(\"Original booking user not found\"); execute rejects because the error is not caught locally.",
+          "anchor": { "startLine": 279, "endLine": 285 }
+        },
+        {
+          "inputShape": "original booking not found",
+          "handled": true,
+          "behavior": "Throws Error(\"Original booking not found\"); execute rejects because the error is not caught locally.",
+          "anchor": { "startLine": 287, "endLine": 293 }
+        },
+        {
+          "inputShape": "emailsEnabled is false",
+          "handled": true,
+          "behavior": "Skips all reassignment notification email and SMS sending.",
+          "anchor": { "startLine": 202, "endLine": 217 }
+        },
+        {
+          "inputShape": "target event type has no workflows",
+          "handled": true,
+          "behavior": "Skips workflow reminder scheduling.",
+          "anchor": { "startLine": 152, "endLine": 153 }
+        },
+        {
+          "inputShape": "original booking metadata is null, non-object, or absent",
+          "handled": true,
+          "behavior": "Passes undefined metadata to the reassignment transaction.",
+          "anchor": { "startLine": 324, "endLine": 332 }
+        },
+        {
+          "inputShape": "calendar event builder returns no event",
+          "handled": true,
+          "behavior": "Throws Error(\"Failed to build CalendarEvent\") inside the calendar creation try block, logs the error, and returns the accumulated calendar result.",
+          "anchor": { "startLine": 528, "endLine": 532 }
+        },
+        {
+          "inputShape": "calendar integration results all fail or partially fail",
+          "handled": true,
+          "behavior": "Logs an error when all integrations fail or a warning when only some fail, then continues processing.",
+          "anchor": { "startLine": 538, "endLine": 565 }
+        },
+        {
+          "inputShape": "new booking has no video call URL",
+          "handled": true,
+          "behavior": "Leaves videoCallUrl null unless calendar result data or event parsing supplies one.",
+          "anchor": { "startLine": 567, "endLine": 581 }
+        },
+        {
+          "inputShape": "booking is not in the future",
+          "handled": true,
+          "behavior": "Skips attendee update emails after reassignment notifications.",
+          "anchor": { "startLine": 784, "endLine": 791 }
+        },
+        {
+          "inputShape": "optional reassignment reason omitted",
+          "handled": true,
+          "behavior": "Passes undefined as the reassignment reason to notifications and assignment-reason recording.",
+          "anchor": { "startLine": 675, "endLine": 675 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new Error(\"Failed to load event type details\")",
+          "caught": null,
+          "action": "Rejects the reassignment execution.",
+          "fallback": null,
+          "anchor": { "startLine": 267, "endLine": 269 }
+        },
+        {
+          "thrown": "new Error(`User ${newUserId} not found`)",
+          "caught": null,
+          "action": "Rejects the reassignment execution.",
+          "fallback": null,
+          "anchor": { "startLine": 275, "endLine": 277 }
+        },
+        {
+          "thrown": "new Error(\"Original booking user not found\")",
+          "caught": null,
+          "action": "Rejects the reassignment execution.",
+          "fallback": null,
+          "anchor": { "startLine": 283, "endLine": 285 }
+        },
+        {
+          "thrown": "new Error(\"Original booking not found\")",
+          "caught": null,
+          "action": "Rejects the reassignment execution.",
+          "fallback": null,
+          "anchor": { "startLine": 291, "endLine": 293 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs an error when cancelling workflow reminders and continues.",
+          "fallback": null,
+          "anchor": { "startLine": 145, "endLine": 150 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs an error when deleting original calendar events and continues.",
+          "fallback": null,
+          "anchor": { "startLine": 376, "endLine": 399 }
+        },
+        {
+          "thrown": "new Error(\"Failed to build CalendarEvent\")",
+          "caught": "error",
+          "action": "Logs an error when creating calendar events and returns the current calendar result values.",
+          "fallback": "Returns bookingLocation, videoCallUrl, videoCallData, and additionalInformation accumulated before the failure.",
+          "anchor": { "startLine": 530, "endLine": 537 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs an error when updating booking location and references and continues.",
+          "fallback": null,
+          "anchor": { "startLine": 586, "endLine": 632 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs an error when sending notification emails or SMS and continues.",
+          "fallback": null,
+          "anchor": { "startLine": 792, "endLine": 794 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs an error when recording the assignment reason and continues.",
+          "fallback": null,
+          "anchor": { "startLine": 813, "endLine": 825 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a valid bookingId, newUserId, reassignedById, and organization identifier or null.",
+          "anchor": { "startLine": 52, "endLine": 60 }
+        },
+        {
+          "kind": "schema",
+          "description": "targetEventTypeDetails.metadata.apps is compatible with eventTypeAppMetadataOptionalSchema.parse.",
+          "anchor": { "startLine": 122, "endLine": 122 }
+        },
+        {
+          "kind": "schema",
+          "description": "The reassignment result contains newBooking and cancelledBooking values with the repository-defined shapes.",
+          "anchor": { "startLine": 334, "endLine": 335 }
+        },
+        {
+          "kind": "platform",
+          "description": "Configured calendar integrations and credentials support EventManager deletion and creation operations.",
+          "anchor": { "startLine": 367, "endLine": 377 }
+        },
+        {
+          "kind": "config",
+          "description": "Workflow and email services are available when the target event type enables them.",
+          "anchor": { "startLine": 152, "endLine": 158 }
+        },
+        {
+          "kind": "init-order",
+          "description": "The original booking is reassigned before original calendar deletion, new calendar creation, notifications, and reason recording.",
+          "anchor": { "startLine": 115, "endLine": 225 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact validation rules does validateManagedEventReassignment enforce, including which booking states are rejected?",
+          "affects": "edge_cases and error_handling",
+          "anchor": { "startLine": 93, "endLine": 93 },
+          "resolution": null
+        },
+        {
+          "question": "What exact booking, calendar, workflow, and notification side effects are performed by the imported services?",
+          "affects": "side_effects",
+          "anchor": { "startLine": 324, "endLine": 332 },
+          "resolution": null
+        },
+        {
+          "question": "What does eventTypeAppMetadataOptionalSchema.parse return or throw for malformed application metadata?",
+          "affects": "edge_cases and error_handling",
+          "anchor": { "startLine": 122, "endLine": 122 },
+          "resolution": null
+        },
+        {
+          "question": "How does BookingLocationService.getLocationForHost select bookingLocation and conferenceCredentialId for each location configuration?",
+          "affects": "behavior of createCalendarEventsForNewUser",
+          "anchor": { "startLine": 448, "endLine": 457 },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-invalid-reassignment",
+          "scenario": "The requested booking does not satisfy managed-event reassignment validation.",
+          "given": [
+            "validateManagedEventReassignment({ bookingId, bookingRepository: this.bookingRepository }) throws"
+          ],
+          "when": "service.execute({ bookingId, newUserId, orgId, reassignedById })",
+          "then": "the promise rejects and no booking reassignment transaction is executed",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validation must prevent any mutation when the booking is not eligible."
+        },
+        {
+          "testId": "creates-and-cancels-reassignment-bookings",
+          "scenario": "A valid booking is reassigned to an available target user.",
+          "given": [
+            "findTargetChildEventType(...) returns valid current, target, parent, and original booking entities",
+            "bookingRepository.managedEventReassignmentTransaction(...) returns { newBooking, cancelledBooking }"
+          ],
+          "when": "service.execute({ bookingId, newUserId, orgId, reassignedById })",
+          "then": "the result contains newBooking and cancelledBooking and the original booking is cancelled by the transaction",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "The core reassignment contract requires atomic duplication and cancellation."
+        },
+        {
+          "testId": "skips-notifications-when-disabled",
+          "scenario": "A valid reassignment is executed with email notifications disabled.",
+          "given": [
+            "emailsEnabled = false",
+            "bookingRepository.managedEventReassignmentTransaction(...) returns { newBooking, cancelledBooking }"
+          ],
+          "when": "service.execute({ bookingId, newUserId, orgId, reassignedById, emailsEnabled: false })",
+          "then": "the reassignment completes and sendReassignedScheduledEmailsAndSMS, sendReassignedEmailsAndSMS, and sendReassignedUpdatedEmailsAndSMS are not called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The emailsEnabled parameter explicitly controls notification side effects."
+        },
+        {
+          "testId": "records-manual-assignment-reason",
+          "scenario": "A successful non-automatic reassignment includes an optional reason.",
+          "given": ["isAutoReassignment = false", "reassignReason = \"Schedule conflict\""],
+          "when": "service.execute({ bookingId, newUserId, orgId, reassignedById, reassignReason })",
+          "then": "assignmentReasonService.recordReassignment is called with reassignmentType = ManagedEventReassignmentType.MANUAL and reassignReason = \"Schedule conflict\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Manual versus automatic reassignment classification is persisted as part of the contract."
+        },
+        {
+          "testId": "continues-after-calendar-failure",
+          "scenario": "Calendar deletion or creation fails during an otherwise valid reassignment.",
+          "given": ["EventManager.deleteEventsAndMeetings(...) throws", "EventManager.create(...) throws"],
+          "when": "service.execute({ bookingId, newUserId, orgId, reassignedById })",
+          "then": "the promise still resolves with newBooking and cancelledBooking",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Calendar integration failures are logged and must not roll back the completed booking reassignment."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "ManagedEventManualReassignmentServiceDeps",
+        "ManagedEventManualReassignmentParams",
+        "ManagedEventManualReassignmentService"
+      ],
+      "moduleLevelCode": "import { eventTypeAppMetadataOptionalSchema } from \"@calcom/app-store/zod-utils\";\nimport dayjs from \"@calcom/dayjs\";\nimport {\n  sendReassignedEmailsAndSMS,\n  sendReassignedScheduledEmailsAndSMS,\n  sendReassignedUpdatedEmailsAndSMS,\n} from \"@calcom/emails/email-manager\";\nimport EventManager from \"@calcom/features/bookings/lib/EventManager\";\nimport { getAllCredentialsIncludeServiceAccountKey } from \"@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials\";\nimport { getEventTypesFromDB } from \"@calcom/features/bookings/lib/handleNewBooking/getEventTypesFromDB\";\nimport {\n  BookingRepository,\n  type ManagedEventReassignmentCreatedBooking,\n  type ManagedEventCancellationResult,\n} from \"@calcom/features/bookings/repositories/BookingRepository\";\nimport { EventTypeRepository } from \"@calcom/features/eventtypes/repositories/eventTypeRepository\";\nimport { CalendarEventBuilder } from \"@calcom/features/CalendarEventBuilder\";\nimport { UserRepository } from \"@calcom/features/users/repositories/UserRepository\";\nimport { getBookerBaseUrl } from \"@calcom/features/ee/organizations/lib/getBookerUrlServer\";\nimport { BookingLocationService } from \"@calcom/features/ee/round-robin/lib/bookingLocationService\";\nimport { WorkflowService } from \"@calcom/features/ee/workflows/lib/service/WorkflowService\";\nimport { WorkflowRepository } from \"@calcom/features/ee/workflows/repositories/WorkflowRepository\";\nimport { CreditService } from \"@calcom/features/ee/billing/credit-service\";\nimport type { AdditionalInformation, CalendarEvent } from \"@calcom/types/Calendar\";\nimport { getTimeFormatStringFromUserTimeFormat } from \"@calcom/lib/timeFormat\";\nimport { getVideoCallUrlFromCalEvent } from \"@calcom/lib/CalEventParser\";\nimport logger from \"@calcom/lib/logger\";\nimport type loggerType from \"@calcom/lib/logger\";\nimport type { PrismaClient } from \"@calcom/prisma\";\n\n\nimport type { EventTypeMetadata } from \"@calcom/prisma/zod-utils\";\n\nimport {\n  ManagedEventAssignmentReasonService,\n  ManagedEventReassignmentType,\n} from \"@calcom/features/ee/managed-event-types/reassignment/services/ManagedEventAssignmentReasonRecorder\";\nimport {\n  findTargetChildEventType,\n  validateManagedEventReassignment,\n  buildNewBookingPlan,\n} from \"@calcom/features/ee/managed-event-types/reassignment/utils\";",
+      "exports": [
+        { "name": "ManagedEventManualReassignmentParams", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ManagedEventManualReassignmentService", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "eventTypeAppMetadataOptionalSchema",
+          "module": "@calcom/app-store/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "dayjs", "module": "@calcom/dayjs", "alias": null, "kind": "external" },
+        {
+          "symbol": "sendReassignedEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "sendReassignedScheduledEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "sendReassignedUpdatedEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventManager",
+          "module": "@calcom/features/bookings/lib/EventManager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getAllCredentialsIncludeServiceAccountKey",
+          "module": "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getEventTypesFromDB",
+          "module": "@calcom/features/bookings/lib/handleNewBooking/getEventTypesFromDB",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingRepository",
+          "module": "@calcom/features/bookings/repositories/BookingRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ManagedEventReassignmentCreatedBooking",
+          "module": "@calcom/features/bookings/repositories/BookingRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ManagedEventCancellationResult",
+          "module": "@calcom/features/bookings/repositories/BookingRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventTypeRepository",
+          "module": "@calcom/features/eventtypes/repositories/eventTypeRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CalendarEventBuilder",
+          "module": "@calcom/features/CalendarEventBuilder",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "UserRepository",
+          "module": "@calcom/features/users/repositories/UserRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBookerBaseUrl",
+          "module": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingLocationService",
+          "module": "@calcom/features/ee/round-robin/lib/bookingLocationService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowRepository",
+          "module": "@calcom/features/ee/workflows/repositories/WorkflowRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CreditService",
+          "module": "@calcom/features/ee/billing/credit-service",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "AdditionalInformation", "module": "@calcom/types/Calendar", "alias": null, "kind": "external" },
+        { "symbol": "CalendarEvent", "module": "@calcom/types/Calendar", "alias": null, "kind": "external" },
+        {
+          "symbol": "getTimeFormatStringFromUserTimeFormat",
+          "module": "@calcom/lib/timeFormat",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getVideoCallUrlFromCalEvent",
+          "module": "@calcom/lib/CalEventParser",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "logger", "module": "@calcom/lib/logger", "alias": null, "kind": "external" },
+        { "symbol": "loggerType", "module": "@calcom/lib/logger", "alias": "loggerType", "kind": "external" },
+        { "symbol": "PrismaClient", "module": "@calcom/prisma", "alias": null, "kind": "external" },
+        { "symbol": "EventTypeMetadata", "module": "@calcom/prisma/zod-utils", "alias": null, "kind": "external" },
+        {
+          "symbol": "ManagedEventAssignmentReasonService",
+          "module": "@calcom/features/ee/managed-event-types/reassignment/services/ManagedEventAssignmentReasonRecorder",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ManagedEventReassignmentType",
+          "module": "@calcom/features/ee/managed-event-types/reassignment/services/ManagedEventAssignmentReasonRecorder",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "findTargetChildEventType",
+          "module": "@calcom/features/ee/managed-event-types/reassignment/utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "validateManagedEventReassignment",
+          "module": "@calcom/features/ee/managed-event-types/reassignment/utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "buildNewBookingPlan",
+          "module": "@calcom/features/ee/managed-event-types/reassignment/utils",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "getTranslation", "module": "@calcom/lib/server/i18n", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentServiceDeps_1#interface:ManagedEventManualReassignmentServiceDeps",
+        "unitKind": "interface",
+        "name": "ManagedEventManualReassignmentServiceDeps",
+        "qualifiedName": "ManagedEventManualReassignmentServiceDeps",
+        "parentUnitId": null,
+        "startLine": 44,
+        "endLine": 50,
+        "isBehavioral": false,
+        "source": "interface ManagedEventManualReassignmentServiceDeps {\n  prisma: PrismaClient;\n  bookingRepository: BookingRepository;\n  userRepository: UserRepository;\n  eventTypeRepository: EventTypeRepository;\n  assignmentReasonService: ManagedEventAssignmentReasonService;\n}"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentParams_2#interface:ManagedEventManualReassignmentParams",
+        "unitKind": "interface",
+        "name": "ManagedEventManualReassignmentParams",
+        "qualifiedName": "ManagedEventManualReassignmentParams",
+        "parentUnitId": null,
+        "startLine": 52,
+        "endLine": 60,
+        "isBehavioral": false,
+        "source": "export interface ManagedEventManualReassignmentParams {\n  bookingId: number;\n  newUserId: number;\n  orgId: number | null;\n  reassignReason?: string;\n  reassignedById: number;\n  emailsEnabled?: boolean;\n  isAutoReassignment?: boolean;\n}"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "unitKind": "class",
+        "name": "ManagedEventManualReassignmentService",
+        "qualifiedName": "ManagedEventManualReassignmentService",
+        "parentUnitId": null,
+        "startLine": 62,
+        "endLine": 827,
+        "isBehavioral": false,
+        "source": "export class ManagedEventManualReassignmentService {\n  private readonly prisma: PrismaClient;\n  private readonly bookingRepository: BookingRepository;\n  private readonly userRepository: UserRepository;\n  private readonly eventTypeRepository: EventTypeRepository;\n  private readonly assignmentReasonService: ManagedEventAssignmentReasonService;\n  private readonly log = logger.getSubLogger({ prefix: [\"ManagedEventManualReassignmentService\"] });\n\n  constructor(deps: ManagedEventManualReassignmentServiceDeps) {\n    this.prisma = deps.prisma;\n    this.bookingRepository = deps.bookingRepository;\n    this.userRepository = deps.userRepository;\n    this.eventTypeRepository = deps.eventTypeRepository;\n    this.assignmentReasonService = deps.assignmentReasonService;\n  }\n\n  async execute({\n    bookingId,\n    newUserId,\n    orgId,\n    reassignReason,\n    reassignedById,\n    emailsEnabled = true,\n    isAutoReassignment = false,\n  }: ManagedEventManualReassignmentParams) {\n    const reassignLogger = this.log.getSubLogger({\n      prefix: [\"manualReassignment\", `${bookingId}`],\n    });\n\n    reassignLogger.info(`User ${reassignedById} initiating manual reassignment to user ${newUserId}`);\n\n    await validateManagedEventReassignment({ bookingId, bookingRepository: this.bookingRepository });\n\n    const {\n      parentEventType,\n      currentEventTypeDetails,\n      targetEventTypeDetails,\n      originalUser,\n      newUser,\n      originalBookingFull,\n      originalUserT,\n      newUserT,\n    } = await this.resolveTargetEntities(bookingId, newUserId, reassignLogger);\n\n    const newBookingPlan = buildNewBookingPlan({\n      originalBookingFull,\n      targetEventTypeDetails,\n      newUser,\n      newUserT,\n      reassignedById,\n    });\n\n\n    const { newBooking, cancelledBooking } = await this.executeBookingReassignmentTransaction({\n      originalBookingFull,\n      newBookingPlan,\n      newUser,\n      reassignLogger,\n    });\n\n    const apps = eventTypeAppMetadataOptionalSchema.parse(targetEventTypeDetails?.metadata?.apps);\n\n    await this.removeOriginalCalendarEvents({\n      originalUser,\n      currentEventTypeDetails,\n      originalBookingFull,\n      originalUserT,\n      apps,\n      logger: reassignLogger,\n    });\n\n    const calendarResult = await this.createCalendarEventsForNewUser({\n      newUser,\n      newUserT,\n      targetEventTypeDetails,\n      newBooking,\n      originalBookingFull,\n      apps,\n      logger: reassignLogger,\n    });\n\n    const { bookingLocation, videoCallUrl, videoCallData, additionalInformation } = calendarResult;\n\n    try {\n      await WorkflowRepository.deleteAllWorkflowReminders(originalBookingFull.workflowReminders);\n      reassignLogger.info(`Cancelled ${originalBookingFull.workflowReminders.length} workflow reminders`);\n    } catch (error) {\n      reassignLogger.error(\"Error cancelling workflow reminders\", error);\n    }\n\n    if (targetEventTypeDetails.workflows && targetEventTypeDetails.workflows.length > 0) {\n      try {\n        const creditService = new CreditService();\n        const bookerBaseUrl = await getBookerBaseUrl(orgId);\n        const bookerUrl = `${bookerBaseUrl}/${newUser.username}/${targetEventTypeDetails.slug}`;\n\n        await WorkflowService.scheduleWorkflowsForNewBooking({\n          workflows: targetEventTypeDetails.workflows.map((w) => w.workflow),\n          smsReminderNumber: newBooking.smsReminderNumber || null,\n          calendarEvent: {\n            type: targetEventTypeDetails.slug,\n            uid: newBooking.uid,\n            title: newBooking.title,\n            startTime: dayjs(newBooking.startTime).utc().format(),\n            endTime: dayjs(newBooking.endTime).utc().format(),\n            organizer: {\n              id: newUser.id,\n              name: newUser.name || \"\",\n              email: newUser.email,\n              timeZone: newUser.timeZone,\n              language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n            },\n            attendees: newBooking.attendees.map(\n              (att: { name: string; email: string; timeZone: string; locale: string | null }) => ({\n                name: att.name,\n                email: att.email,\n                timeZone: att.timeZone,\n                language: { translate: newUserT, locale: att.locale ?? \"en\" },\n              })\n            ),\n            location: bookingLocation || undefined,\n            description: newBooking.description || undefined,\n            eventType: { slug: targetEventTypeDetails.slug },\n            bookerUrl,\n            metadata: videoCallUrl ? { videoCallUrl, ...additionalInformation } : undefined,\n          },\n          hideBranding: !!targetEventTypeDetails.owner?.hideBranding,\n          seatReferenceUid: undefined,\n          isDryRun: false,\n          isConfirmedByDefault: targetEventTypeDetails.requiresConfirmation ? false : true,\n          isNormalBookingOrFirstRecurringSlot: true,\n          isRescheduleEvent: false,\n          creditCheckFn: creditService.hasAvailableCredits.bind(creditService),\n        });\n        reassignLogger.info(\"Scheduled workflow reminders for new booking\");\n      } catch (error) {\n        reassignLogger.error(\"Error scheduling workflow reminders for new booking\", error);\n      }\n    }\n\n    if (emailsEnabled) {\n      await this.sendReassignmentNotifications({\n        newBooking,\n        targetEventTypeDetails,\n        parentEventType,\n        newUser,\n        newUserT,\n        originalUser,\n        originalUserT,\n        bookingLocation,\n        videoCallData,\n        additionalInformation,\n        reassignReason,\n        logger: reassignLogger,\n      });\n    }\n\n    await this.recordAssignmentReason({\n      newBookingId: newBooking.id,\n      reassignedById,\n      reassignReason,\n      isAutoReassignment,\n      logger: reassignLogger,\n    });\n\n    reassignLogger.info(\"Reassignment completed successfully\", {\n      originalBookingId: cancelledBooking.id,\n      newBookingId: newBooking.id,\n      fromUserId: originalUser.id,\n      toUserId: newUser.id,\n    });\n\n    return {\n      newBooking,\n      cancelledBooking,\n    };\n  }\n\n  /**\n   * Resolves and validates all entities needed for reassignment\n   */\n  private async resolveTargetEntities(bookingId: number, newUserId: number, reassignLogger: typeof logger) {\n    const {\n      currentChildEventType,\n      parentEventType,\n      targetChildEventType,\n      originalBooking,\n    } = await findTargetChildEventType({\n      bookingId,\n      newUserId,\n      bookingRepository: this.bookingRepository,\n      eventTypeRepository: this.eventTypeRepository,\n    });\n\n    reassignLogger.info(\"Found target child event type\", {\n      currentChildId: currentChildEventType.id,\n      targetChildId: targetChildEventType.id,\n      parentId: parentEventType.id,\n    });\n\n    const [currentEventTypeDetails, targetEventTypeDetails] = await Promise.all([\n      getEventTypesFromDB(currentChildEventType.id),\n      getEventTypesFromDB(targetChildEventType.id),\n    ]);\n\n    if (!currentEventTypeDetails || !targetEventTypeDetails) {\n      throw new Error(\"Failed to load event type details\");\n    }\n\n    const newUser = await this.userRepository.findByIdWithCredentialsAndCalendar({\n      userId: newUserId,\n    });\n\n    if (!newUser) {\n      throw new Error(`User ${newUserId} not found`);\n    }\n\n    const originalUser = await this.userRepository.findByIdWithCredentialsAndCalendar({\n      userId: originalBooking.userId ?? 0,\n    });\n\n    if (!originalUser) {\n      throw new Error(\"Original booking user not found\");\n    }\n\n    const originalBookingFull = await this.bookingRepository.findByIdWithAttendeesPaymentAndReferences(\n      bookingId\n    );\n\n    if (!originalBookingFull) {\n      throw new Error(\"Original booking not found\");\n    }\n\n    const { getTranslation } = await import(\"@calcom/lib/server/i18n\");\n    const newUserT = await getTranslation(newUser.locale ?? \"en\", \"common\");\n    const originalUserT = await getTranslation(originalUser.locale ?? \"en\", \"common\");\n\n    return {\n      parentEventType,\n      currentEventTypeDetails,\n      targetEventTypeDetails,\n      originalUser,\n      newUser,\n      originalBookingFull,\n      originalUserT,\n      newUserT,\n    };\n  }\n\n  private async executeBookingReassignmentTransaction({\n    originalBookingFull,\n    newBookingPlan,\n    newUser,\n    reassignLogger,\n  }: {\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    newBookingPlan: Parameters<BookingRepository[\"managedEventReassignmentTransaction\"]>[0][\"newBookingPlan\"];\n    newUser: { name: string | null; email: string };\n    reassignLogger: typeof logger;\n  }) {\n    const reassignmentResult = await this.bookingRepository.managedEventReassignmentTransaction({\n      bookingId: originalBookingFull.id,\n      cancellationReason: `Reassigned to ${newUser.name || newUser.email}`,\n      metadata:\n        typeof originalBookingFull.metadata === \"object\" && originalBookingFull.metadata !== null\n          ? (originalBookingFull.metadata as Record<string, unknown>)\n          : undefined,\n      newBookingPlan,\n    });\n\n    const newBooking: ManagedEventReassignmentCreatedBooking = reassignmentResult.newBooking;\n    const cancelledBooking: ManagedEventCancellationResult = reassignmentResult.cancelledBooking;\n\n    reassignLogger.info(\"Booking duplication completed\", {\n      originalBookingId: cancelledBooking.id,\n      newBookingId: newBooking.id,\n    });\n\n    return { newBooking, cancelledBooking };\n  }\n\n  /**\n   * Removes calendar events from the original user's calendar\n   */\n  private async removeOriginalCalendarEvents({\n    originalUser,\n    currentEventTypeDetails,\n    originalBookingFull,\n    originalUserT,\n    apps,\n    logger,\n  }: {\n    originalUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    currentEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    originalUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    apps: ReturnType<typeof eventTypeAppMetadataOptionalSchema.parse>;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {\n    if (!originalUser) return;\n\n    const originalUserCredentials = await getAllCredentialsIncludeServiceAccountKey(\n      originalUser,\n      currentEventTypeDetails\n    );\n    const originalEventManager = new EventManager(\n      { ...originalUser, credentials: originalUserCredentials },\n      apps\n    );\n\n    try {\n      await originalEventManager.deleteEventsAndMeetings({\n        event: {\n          type: currentEventTypeDetails.slug,\n          organizer: {\n            id: originalUser.id,\n            name: originalUser.name || \"\",\n            email: originalUser.email,\n            timeZone: originalUser.timeZone,\n            language: { translate: originalUserT, locale: originalUser.locale ?? \"en\" },\n          },\n          startTime: dayjs(originalBookingFull.startTime).utc().format(),\n          endTime: dayjs(originalBookingFull.endTime).utc().format(),\n          title: originalBookingFull.title,\n          uid: originalBookingFull.uid,\n          attendees: [],\n          iCalUID: originalBookingFull.iCalUID,\n        },\n        bookingReferences: originalBookingFull.references,\n      });\n      logger.info(\"Deleted calendar events from original user\");\n    } catch (error) {\n      logger.error(\"Error deleting calendar events\", error);\n    }\n  }\n\n  /**\n   * Creates calendar events for the new user and updates the booking with location/video details\n   */\n  private async createCalendarEventsForNewUser({\n    newUser,\n    newUserT,\n    targetEventTypeDetails,\n    newBooking,\n    originalBookingFull,\n    apps,\n    logger,\n  }: {\n    newUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    newUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    targetEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    newBooking: ManagedEventReassignmentCreatedBooking;\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    apps: ReturnType<typeof eventTypeAppMetadataOptionalSchema.parse>;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }): Promise<{\n    bookingLocation: string | null;\n    videoCallUrl: string | null;\n    videoCallData: CalendarEvent[\"videoCallData\"];\n    additionalInformation: AdditionalInformation;\n  }> {\n    const newUserCredentialsWithServiceAccountKey = await getAllCredentialsIncludeServiceAccountKey(\n      newUser,\n      targetEventTypeDetails\n    );\n\n    const newUserForEventManager = {\n      ...newUser,\n      credentials: newUserCredentialsWithServiceAccountKey,\n      destinationCalendar: newUser.destinationCalendar,\n    };\n\n    const newEventManager = new EventManager(newUserForEventManager, apps);\n\n    let bookingLocation = originalBookingFull.location || newBooking.location || null;\n    let conferenceCredentialId: number | null = null;\n\n    const isManagedEventType = !!targetEventTypeDetails.parentId;\n    const isTeamEventType = !!targetEventTypeDetails.team;\n\n    const locationResult = BookingLocationService.getLocationForHost({\n      hostMetadata: newUser.metadata,\n      eventTypeLocations: targetEventTypeDetails.locations || [],\n      isManagedEventType,\n      isTeamEventType,\n    });\n\n    bookingLocation = locationResult.bookingLocation;\n    if (locationResult.requiresActualLink) {\n      conferenceCredentialId = locationResult.conferenceCredentialId;\n    }\n\n    let videoCallUrl: string | null = null;\n    let videoCallData: CalendarEvent[\"videoCallData\"] = undefined;\n    const additionalInformation: AdditionalInformation = {};\n\n    try {\n      const bookerUrl = await getBookerBaseUrl(targetEventTypeDetails.team?.parentId ?? null);\n\n      const attendees = newBooking.attendees.map(\n        (att: { name: string; email: string; timeZone: string; locale: string | null }) => ({\n          name: att.name,\n          email: att.email,\n          timeZone: att.timeZone,\n          language: { translate: newUserT, locale: att.locale ?? \"en\" },\n        })\n      );\n\n      const builder = new CalendarEventBuilder()\n        .withBasicDetails({\n          bookerUrl,\n          title: newBooking.title,\n          startTime: dayjs(newBooking.startTime).utc().format(),\n          endTime: dayjs(newBooking.endTime).utc().format(),\n          additionalNotes: newBooking.description || undefined,\n        })\n        .withEventType({\n          id: targetEventTypeDetails.id,\n          slug: targetEventTypeDetails.slug,\n          description: newBooking.description,\n          hideOrganizerEmail: targetEventTypeDetails.hideOrganizerEmail,\n          schedulingType: targetEventTypeDetails.schedulingType,\n        })\n        .withOrganizer({\n          id: newUser.id,\n          name: newUser.name,\n          email: newUser.email,\n          timeZone: newUser.timeZone,\n          language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n        })\n        .withAttendees(attendees)\n        .withLocation({\n          location: bookingLocation || null,\n          conferenceCredentialId: conferenceCredentialId ?? undefined,\n        })\n        .withIdentifiers({\n          iCalUID: newBooking.iCalUID || undefined,\n        })\n        .withUid(newBooking.uid);\n\n      if (newUser.destinationCalendar) {\n        builder.withDestinationCalendar([newUser.destinationCalendar]);\n      }\n\n      if (targetEventTypeDetails.team) {\n        builder.withTeam({\n          id: targetEventTypeDetails.team.id || 0,\n          name: targetEventTypeDetails.team.name || \"\",\n          members: [\n            {\n              id: newUser.id,\n              name: newUser.name || \"\",\n              email: newUser.email,\n              timeZone: newUser.timeZone,\n              language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n            },\n          ],\n        });\n      }\n\n      const evt = builder.build();\n\n      if (!evt) {\n        throw new Error(\"Failed to build CalendarEvent\");\n      }\n\n      const createManager = await newEventManager.create(evt);\n      const results = createManager.results || [];\n      const referencesToCreate = createManager.referencesToCreate || [];\n\n      if (results.length > 0) {\n        const allFailed = results.every((res) => !res.success);\n        const someFailed = results.some((res) => !res.success);\n\n        if (allFailed) {\n          logger.error(\"All calendar integrations failed during reassignment\", {\n            eventTypeId: targetEventTypeDetails.id,\n            eventTypeSlug: targetEventTypeDetails.slug,\n            userId: newUser.id,\n            results: results.map((res) => ({\n              type: res.type,\n              success: res.success,\n              error: res.error,\n            })),\n          });\n        } else if (someFailed) {\n          logger.warn(\"Some calendar integrations failed during reassignment\", {\n            eventTypeId: targetEventTypeDetails.id,\n            userId: newUser.id,\n            failedIntegrations: results\n              .filter((res) => !res.success)\n              .map((res) => ({\n                type: res.type,\n                error: res.error,\n              })),\n          });\n        }\n      }\n\n      videoCallUrl = evt.videoCallData?.url ?? null;\n\n      if (results.length) {\n        const createdEvent = results[0]?.createdEvent;\n\n        additionalInformation.hangoutLink = createdEvent?.hangoutLink;\n        additionalInformation.conferenceData = createdEvent?.conferenceData;\n        additionalInformation.entryPoints = createdEvent?.entryPoints;\n        evt.additionalInformation = additionalInformation;\n\n        videoCallUrl =\n          additionalInformation.hangoutLink ||\n          createdEvent?.url ||\n          getVideoCallUrlFromCalEvent(evt) ||\n          videoCallUrl;\n      }\n\n      videoCallData = evt.videoCallData;\n\n      try {\n        const responses = {\n          ...(typeof newBooking.responses === \"object\" && newBooking.responses),\n          location: {\n            value: bookingLocation,\n            optionValue: \"\",\n          },\n        };\n\n        const finalVideoCallUrlForMetadata = videoCallUrl\n          ? getVideoCallUrlFromCalEvent(evt) || videoCallUrl\n          : null;\n        const bookingMetadataUpdate = finalVideoCallUrlForMetadata\n          ? { videoCallUrl: finalVideoCallUrlForMetadata }\n          : {};\n\n        const referencesToCreateForDb = referencesToCreate.map((reference) => {\n          const { credentialId, ...restReference } = reference;\n          return {\n            ...restReference,\n            ...(credentialId && credentialId > 0 ? { credentialId } : {}),\n          };\n        });\n\n        await this.bookingRepository.updateLocationById({\n          where: { id: newBooking.id },\n          data: {\n            location: bookingLocation,\n            metadata: {\n              ...(typeof newBooking.metadata === \"object\" && newBooking.metadata\n                ? newBooking.metadata\n                : {}),\n              ...bookingMetadataUpdate,\n            },\n            referencesToCreate: referencesToCreateForDb,\n            responses,\n            iCalSequence: (newBooking.iCalSequence || 0) + 1,\n          },\n        });\n\n        logger.info(\"Updated booking location and created calendar references\", {\n          referencesCount: referencesToCreate.length,\n          videoCallUrl: bookingMetadataUpdate.videoCallUrl ? \"[redacted]\" : null,\n        });\n      } catch (error) {\n        logger.error(\"Error updating booking location and references\", error);\n      }\n\n      logger.info(\"Created calendar events for new user\");\n    } catch (error) {\n      logger.error(\"Error creating calendar events for new user\", error);\n    }\n\n    return {\n      bookingLocation,\n      videoCallUrl,\n      videoCallData,\n      additionalInformation,\n    };\n  }\n\n\n  /**\n   * Sends reassignment notification emails to all parties\n   */\n  private async sendReassignmentNotifications({\n    newBooking,\n    targetEventTypeDetails,\n    parentEventType,\n    newUser,\n    newUserT,\n    originalUser,\n    originalUserT,\n    bookingLocation,\n    videoCallData,\n    additionalInformation,\n    reassignReason,\n    logger,\n  }: {\n    newBooking: ManagedEventReassignmentCreatedBooking;\n    targetEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    parentEventType: Awaited<ReturnType<typeof findTargetChildEventType>>[\"parentEventType\"];\n    newUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    newUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    originalUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    originalUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    bookingLocation: string | null;\n    videoCallData: CalendarEvent[\"videoCallData\"];\n    additionalInformation: AdditionalInformation;\n    reassignReason?: string;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {\n    try {\n      const eventTypeMetadata = targetEventTypeDetails.metadata as EventTypeMetadata | undefined;\n\n      const bookerUrlForEmail = await getBookerBaseUrl(targetEventTypeDetails.team?.parentId ?? null);\n\n      const attendeesForEmail = newBooking.attendees.map(\n        (att: { name: string; email: string; timeZone: string; locale: string | null }) => ({\n          name: att.name,\n          email: att.email,\n          timeZone: att.timeZone,\n          language: { translate: newUserT, locale: att.locale ?? \"en\" },\n        })\n      );\n\n      const emailBuilder = new CalendarEventBuilder()\n        .withBasicDetails({\n          bookerUrl: bookerUrlForEmail,\n          title: newBooking.title,\n          startTime: dayjs(newBooking.startTime).utc().format(),\n          endTime: dayjs(newBooking.endTime).utc().format(),\n          additionalNotes: newBooking.description || undefined,\n        })\n        .withEventType({\n          id: targetEventTypeDetails.id,\n          slug: targetEventTypeDetails.slug,\n          description: newBooking.description,\n          schedulingType: parentEventType.schedulingType,\n          seatsPerTimeSlot: targetEventTypeDetails.seatsPerTimeSlot,\n        })\n        .withOrganizer({\n          id: newUser.id,\n          name: newUser.name,\n          email: newUser.email,\n          timeZone: newUser.timeZone,\n          timeFormat: getTimeFormatStringFromUserTimeFormat(newUser.timeFormat),\n          language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n        })\n        .withAttendees(attendeesForEmail)\n        .withLocation({\n          location: bookingLocation || null,\n        })\n        .withUid(newBooking.uid);\n\n      if (videoCallData) {\n        emailBuilder.withVideoCallData(videoCallData);\n      }\n\n      const calEvent = emailBuilder.build();\n\n      if (!calEvent) {\n        throw new Error(\"Failed to build CalendarEvent for emails\");\n      }\n\n      calEvent.additionalInformation = additionalInformation;\n\n      await sendReassignedScheduledEmailsAndSMS({\n        calEvent,\n        members: [\n          {\n            ...newUser,\n            name: newUser.name || \"\",\n            username: newUser.username || \"\",\n            timeFormat: getTimeFormatStringFromUserTimeFormat(newUser.timeFormat),\n            language: { translate: newUserT, locale: newUser.locale || \"en\" },\n          },\n        ],\n        eventTypeMetadata,\n        reassigned: {\n          name: newUser.name,\n          email: newUser.email,\n          reason: reassignReason,\n          byUser: originalUser.name || undefined,\n        },\n      });\n      logger.info(\"Sent scheduled email to new host\");\n\n      if (originalUser) {\n        const cancelledCalEvent = {\n          ...calEvent,\n          organizer: {\n            id: originalUser.id,\n            name: originalUser.name || \"\",\n            email: originalUser.email,\n            timeZone: originalUser.timeZone,\n            language: { translate: originalUserT, locale: originalUser.locale ?? \"en\" },\n            timeFormat: getTimeFormatStringFromUserTimeFormat(originalUser.timeFormat),\n          },\n        };\n\n        await sendReassignedEmailsAndSMS({\n          calEvent: cancelledCalEvent,\n          members: [\n            {\n              ...originalUser,\n              name: originalUser.name || \"\",\n              username: originalUser.username || \"\",\n              timeFormat: getTimeFormatStringFromUserTimeFormat(originalUser.timeFormat),\n              language: { translate: originalUserT, locale: originalUser.locale || \"en\" },\n            },\n          ],\n          reassignedTo: { name: newUser.name, email: newUser.email },\n          eventTypeMetadata,\n        });\n        logger.info(\"Sent reassignment email to original host\");\n      }\n\n      if (dayjs(calEvent.startTime).isAfter(dayjs())) {\n        await sendReassignedUpdatedEmailsAndSMS({\n          calEvent,\n          eventTypeMetadata,\n          showAttendees: !!targetEventTypeDetails.seatsShowAttendees,\n        });\n        logger.info(\"Sent update emails to attendees\");\n      }\n    } catch (error) {\n      logger.error(\"Error sending notification emails\", error);\n    }\n  }\n\n  /**\n   * Records the assignment reason for the reassignment\n   */\n  private async recordAssignmentReason({\n    newBookingId,\n    reassignedById,\n    reassignReason,\n    isAutoReassignment,\n    logger,\n  }: {\n    newBookingId: number;\n    reassignedById: number;\n    reassignReason?: string;\n    isAutoReassignment: boolean;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {\n    try {\n      const assignmentResult = await this.assignmentReasonService.recordReassignment({\n        newBookingId,\n        reassignById: reassignedById,\n        reassignReason,\n        reassignmentType: isAutoReassignment\n          ? ManagedEventReassignmentType.AUTO\n          : ManagedEventReassignmentType.MANUAL,\n      });\n      logger.info(\"Recorded assignment reason\", assignmentResult);\n    } catch (error) {\n      logger.error(\"Error recording assignment reason\", error);\n    }\n  }\n}",
+        "detail": {
+          "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+          "fileId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3",
+          "unitKind": "class",
+          "name": "ManagedEventManualReassignmentService",
+          "qualifiedName": "ManagedEventManualReassignmentService",
+          "parentUnitId": null,
+          "startLine": 62,
+          "endLine": 827,
+          "signature": "export class ManagedEventManualReassignmentService",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "prisma",
+              "kind": "field",
+              "type": "PrismaClient",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "bookingRepository",
+              "kind": "field",
+              "type": "BookingRepository",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "userRepository",
+              "kind": "field",
+              "type": "UserRepository",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "eventTypeRepository",
+              "kind": "field",
+              "type": "EventTypeRepository",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "assignmentReasonService",
+              "kind": "field",
+              "type": "ManagedEventAssignmentReasonService",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "log",
+              "kind": "field",
+              "type": "any",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "execute",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "resolveTargetEntities",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "executeBookingReassignmentTransaction",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "removeOriginalCalendarEvents",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "createCalendarEventsForNewUser",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "sendReassignmentNotifications",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "recordAssignmentReason",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Service class that handles manual reassignment of managed events, coordinating repository updates, calendar event management, notifications and assignment reason recording.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "01290d13cb63c9d2c77f619abf835e8cded585bae2715a8b24aa7a8366a30473"
+        }
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.constructor_4#method:ManagedEventManualReassignmentService.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "ManagedEventManualReassignmentService.constructor",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 70,
+        "endLine": 76,
+        "isBehavioral": true,
+        "source": "  constructor(deps: ManagedEventManualReassignmentServiceDeps) {\n    this.prisma = deps.prisma;\n    this.bookingRepository = deps.bookingRepository;\n    this.userRepository = deps.userRepository;\n    this.eventTypeRepository = deps.eventTypeRepository;\n    this.assignmentReasonService = deps.assignmentReasonService;\n  }"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.execute_5#method:ManagedEventManualReassignmentService.execute",
+        "unitKind": "method",
+        "name": "execute",
+        "qualifiedName": "ManagedEventManualReassignmentService.execute",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 78,
+        "endLine": 238,
+        "isBehavioral": true,
+        "source": "  async execute({\n    bookingId,\n    newUserId,\n    orgId,\n    reassignReason,\n    reassignedById,\n    emailsEnabled = true,\n    isAutoReassignment = false,\n  }: ManagedEventManualReassignmentParams) {\n    const reassignLogger = this.log.getSubLogger({\n      prefix: [\"manualReassignment\", `${bookingId}`],\n    });\n\n    reassignLogger.info(`User ${reassignedById} initiating manual reassignment to user ${newUserId}`);\n\n    await validateManagedEventReassignment({ bookingId, bookingRepository: this.bookingRepository });\n\n    const {\n      parentEventType,\n      currentEventTypeDetails,\n      targetEventTypeDetails,\n      originalUser,\n      newUser,\n      originalBookingFull,\n      originalUserT,\n      newUserT,\n    } = await this.resolveTargetEntities(bookingId, newUserId, reassignLogger);\n\n    const newBookingPlan = buildNewBookingPlan({\n      originalBookingFull,\n      targetEventTypeDetails,\n      newUser,\n      newUserT,\n      reassignedById,\n    });\n\n\n    const { newBooking, cancelledBooking } = await this.executeBookingReassignmentTransaction({\n      originalBookingFull,\n      newBookingPlan,\n      newUser,\n      reassignLogger,\n    });\n\n    const apps = eventTypeAppMetadataOptionalSchema.parse(targetEventTypeDetails?.metadata?.apps);\n\n    await this.removeOriginalCalendarEvents({\n      originalUser,\n      currentEventTypeDetails,\n      originalBookingFull,\n      originalUserT,\n      apps,\n      logger: reassignLogger,\n    });\n\n    const calendarResult = await this.createCalendarEventsForNewUser({\n      newUser,\n      newUserT,\n      targetEventTypeDetails,\n      newBooking,\n      originalBookingFull,\n      apps,\n      logger: reassignLogger,\n    });\n\n    const { bookingLocation, videoCallUrl, videoCallData, additionalInformation } = calendarResult;\n\n    try {\n      await WorkflowRepository.deleteAllWorkflowReminders(originalBookingFull.workflowReminders);\n      reassignLogger.info(`Cancelled ${originalBookingFull.workflowReminders.length} workflow reminders`);\n    } catch (error) {\n      reassignLogger.error(\"Error cancelling workflow reminders\", error);\n    }\n\n    if (targetEventTypeDetails.workflows && targetEventTypeDetails.workflows.length > 0) {\n      try {\n        const creditService = new CreditService();\n        const bookerBaseUrl = await getBookerBaseUrl(orgId);\n        const bookerUrl = `${bookerBaseUrl}/${newUser.username}/${targetEventTypeDetails.slug}`;\n\n        await WorkflowService.scheduleWorkflowsForNewBooking({\n          workflows: targetEventTypeDetails.workflows.map((w) => w.workflow),\n          smsReminderNumber: newBooking.smsReminderNumber || null,\n          calendarEvent: {\n            type: targetEventTypeDetails.slug,\n            uid: newBooking.uid,\n            title: newBooking.title,\n            startTime: dayjs(newBooking.startTime).utc().format(),\n            endTime: dayjs(newBooking.endTime).utc().format(),\n            organizer: {\n              id: newUser.id,\n              name: newUser.name || \"\",\n              email: newUser.email,\n              timeZone: newUser.timeZone,\n              language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n            },\n            attendees: newBooking.attendees.map(\n              (att: { name: string; email: string; timeZone: string; locale: string | null }) => ({\n                name: att.name,\n                email: att.email,\n                timeZone: att.timeZone,\n                language: { translate: newUserT, locale: att.locale ?? \"en\" },\n              })\n            ),\n            location: bookingLocation || undefined,\n            description: newBooking.description || undefined,\n            eventType: { slug: targetEventTypeDetails.slug },\n            bookerUrl,\n            metadata: videoCallUrl ? { videoCallUrl, ...additionalInformation } : undefined,\n          },\n          hideBranding: !!targetEventTypeDetails.owner?.hideBranding,\n          seatReferenceUid: undefined,\n          isDryRun: false,\n          isConfirmedByDefault: targetEventTypeDetails.requiresConfirmation ? false : true,\n          isNormalBookingOrFirstRecurringSlot: true,\n          isRescheduleEvent: false,\n          creditCheckFn: creditService.hasAvailableCredits.bind(creditService),\n        });\n        reassignLogger.info(\"Scheduled workflow reminders for new booking\");\n      } catch (error) {\n        reassignLogger.error(\"Error scheduling workflow reminders for new booking\", error);\n      }\n    }\n\n    if (emailsEnabled) {\n      await this.sendReassignmentNotifications({\n        newBooking,\n        targetEventTypeDetails,\n        parentEventType,\n        newUser,\n        newUserT,\n        originalUser,\n        originalUserT,\n        bookingLocation,\n        videoCallData,\n        additionalInformation,\n        reassignReason,\n        logger: reassignLogger,\n      });\n    }\n\n    await this.recordAssignmentReason({\n      newBookingId: newBooking.id,\n      reassignedById,\n      reassignReason,\n      isAutoReassignment,\n      logger: reassignLogger,\n    });\n\n    reassignLogger.info(\"Reassignment completed successfully\", {\n      originalBookingId: cancelledBooking.id,\n      newBookingId: newBooking.id,\n      fromUserId: originalUser.id,\n      toUserId: newUser.id,\n    });\n\n    return {\n      newBooking,\n      cancelledBooking,\n    };\n  }"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.resolveTargetEntities_6#method:ManagedEventManualReassignmentService.resolveTargetEntities",
+        "unitKind": "method",
+        "name": "resolveTargetEntities",
+        "qualifiedName": "ManagedEventManualReassignmentService.resolveTargetEntities",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 243,
+        "endLine": 309,
+        "isBehavioral": true,
+        "source": "  private async resolveTargetEntities(bookingId: number, newUserId: number, reassignLogger: typeof logger) {\n    const {\n      currentChildEventType,\n      parentEventType,\n      targetChildEventType,\n      originalBooking,\n    } = await findTargetChildEventType({\n      bookingId,\n      newUserId,\n      bookingRepository: this.bookingRepository,\n      eventTypeRepository: this.eventTypeRepository,\n    });\n\n    reassignLogger.info(\"Found target child event type\", {\n      currentChildId: currentChildEventType.id,\n      targetChildId: targetChildEventType.id,\n      parentId: parentEventType.id,\n    });\n\n    const [currentEventTypeDetails, targetEventTypeDetails] = await Promise.all([\n      getEventTypesFromDB(currentChildEventType.id),\n      getEventTypesFromDB(targetChildEventType.id),\n    ]);\n\n    if (!currentEventTypeDetails || !targetEventTypeDetails) {\n      throw new Error(\"Failed to load event type details\");\n    }\n\n    const newUser = await this.userRepository.findByIdWithCredentialsAndCalendar({\n      userId: newUserId,\n    });\n\n    if (!newUser) {\n      throw new Error(`User ${newUserId} not found`);\n    }\n\n    const originalUser = await this.userRepository.findByIdWithCredentialsAndCalendar({\n      userId: originalBooking.userId ?? 0,\n    });\n\n    if (!originalUser) {\n      throw new Error(\"Original booking user not found\");\n    }\n\n    const originalBookingFull = await this.bookingRepository.findByIdWithAttendeesPaymentAndReferences(\n      bookingId\n    );\n\n    if (!originalBookingFull) {\n      throw new Error(\"Original booking not found\");\n    }\n\n    const { getTranslation } = await import(\"@calcom/lib/server/i18n\");\n    const newUserT = await getTranslation(newUser.locale ?? \"en\", \"common\");\n    const originalUserT = await getTranslation(originalUser.locale ?? \"en\", \"common\");\n\n    return {\n      parentEventType,\n      currentEventTypeDetails,\n      targetEventTypeDetails,\n      originalUser,\n      newUser,\n      originalBookingFull,\n      originalUserT,\n      newUserT,\n    };\n  }"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.executeBookingReassignmentTransaction_7#method:ManagedEventManualReassignmentService.executeBookingReassignmentTransaction",
+        "unitKind": "method",
+        "name": "executeBookingReassignmentTransaction",
+        "qualifiedName": "ManagedEventManualReassignmentService.executeBookingReassignmentTransaction",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 311,
+        "endLine": 343,
+        "isBehavioral": true,
+        "source": "  private async executeBookingReassignmentTransaction({\n    originalBookingFull,\n    newBookingPlan,\n    newUser,\n    reassignLogger,\n  }: {\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    newBookingPlan: Parameters<BookingRepository[\"managedEventReassignmentTransaction\"]>[0][\"newBookingPlan\"];\n    newUser: { name: string | null; email: string };\n    reassignLogger: typeof logger;\n  }) {\n    const reassignmentResult = await this.bookingRepository.managedEventReassignmentTransaction({\n      bookingId: originalBookingFull.id,\n      cancellationReason: `Reassigned to ${newUser.name || newUser.email}`,\n      metadata:\n        typeof originalBookingFull.metadata === \"object\" && originalBookingFull.metadata !== null\n          ? (originalBookingFull.metadata as Record<string, unknown>)\n          : undefined,\n      newBookingPlan,\n    });\n\n    const newBooking: ManagedEventReassignmentCreatedBooking = reassignmentResult.newBooking;\n    const cancelledBooking: ManagedEventCancellationResult = reassignmentResult.cancelledBooking;\n\n    reassignLogger.info(\"Booking duplication completed\", {\n      originalBookingId: cancelledBooking.id,\n      newBookingId: newBooking.id,\n    });\n\n    return { newBooking, cancelledBooking };\n  }"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.removeOriginalCalendarEvents_8#method:ManagedEventManualReassignmentService.removeOriginalCalendarEvents",
+        "unitKind": "method",
+        "name": "removeOriginalCalendarEvents",
+        "qualifiedName": "ManagedEventManualReassignmentService.removeOriginalCalendarEvents",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 348,
+        "endLine": 400,
+        "isBehavioral": true,
+        "source": "  private async removeOriginalCalendarEvents({\n    originalUser,\n    currentEventTypeDetails,\n    originalBookingFull,\n    originalUserT,\n    apps,\n    logger,\n  }: {\n    originalUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    currentEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    originalUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    apps: ReturnType<typeof eventTypeAppMetadataOptionalSchema.parse>;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {\n    if (!originalUser) return;\n\n    const originalUserCredentials = await getAllCredentialsIncludeServiceAccountKey(\n      originalUser,\n      currentEventTypeDetails\n    );\n    const originalEventManager = new EventManager(\n      { ...originalUser, credentials: originalUserCredentials },\n      apps\n    );\n\n    try {\n      await originalEventManager.deleteEventsAndMeetings({\n        event: {\n          type: currentEventTypeDetails.slug,\n          organizer: {\n            id: originalUser.id,\n            name: originalUser.name || \"\",\n            email: originalUser.email,\n            timeZone: originalUser.timeZone,\n            language: { translate: originalUserT, locale: originalUser.locale ?? \"en\" },\n          },\n          startTime: dayjs(originalBookingFull.startTime).utc().format(),\n          endTime: dayjs(originalBookingFull.endTime).utc().format(),\n          title: originalBookingFull.title,\n          uid: originalBookingFull.uid,\n          attendees: [],\n          iCalUID: originalBookingFull.iCalUID,\n        },\n        bookingReferences: originalBookingFull.references,\n      });\n      logger.info(\"Deleted calendar events from original user\");\n    } catch (error) {\n      logger.error(\"Error deleting calendar events\", error);\n    }\n  }"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.createCalendarEventsForNewUser_9#method:ManagedEventManualReassignmentService.createCalendarEventsForNewUser",
+        "unitKind": "method",
+        "name": "createCalendarEventsForNewUser",
+        "qualifiedName": "ManagedEventManualReassignmentService.createCalendarEventsForNewUser",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 405,
+        "endLine": 645,
+        "isBehavioral": true,
+        "source": "  private async createCalendarEventsForNewUser({\n    newUser,\n    newUserT,\n    targetEventTypeDetails,\n    newBooking,\n    originalBookingFull,\n    apps,\n    logger,\n  }: {\n    newUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    newUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    targetEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    newBooking: ManagedEventReassignmentCreatedBooking;\n    originalBookingFull: NonNullable<\n      Awaited<ReturnType<BookingRepository[\"findByIdWithAttendeesPaymentAndReferences\"]>>\n    >;\n    apps: ReturnType<typeof eventTypeAppMetadataOptionalSchema.parse>;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }): Promise<{\n    bookingLocation: string | null;\n    videoCallUrl: string | null;\n    videoCallData: CalendarEvent[\"videoCallData\"];\n    additionalInformation: AdditionalInformation;\n  }> {\n    const newUserCredentialsWithServiceAccountKey = await getAllCredentialsIncludeServiceAccountKey(\n      newUser,\n      targetEventTypeDetails\n    );\n\n    const newUserForEventManager = {\n      ...newUser,\n      credentials: newUserCredentialsWithServiceAccountKey,\n      destinationCalendar: newUser.destinationCalendar,\n    };\n\n    const newEventManager = new EventManager(newUserForEventManager, apps);\n\n    let bookingLocation = originalBookingFull.location || newBooking.location || null;\n    let conferenceCredentialId: number | null = null;\n\n    const isManagedEventType = !!targetEventTypeDetails.parentId;\n    const isTeamEventType = !!targetEventTypeDetails.team;\n\n    const locationResult = BookingLocationService.getLocationForHost({\n      hostMetadata: newUser.metadata,\n      eventTypeLocations: targetEventTypeDetails.locations || [],\n      isManagedEventType,\n      isTeamEventType,\n    });\n\n    bookingLocation = locationResult.bookingLocation;\n    if (locationResult.requiresActualLink) {\n      conferenceCredentialId = locationResult.conferenceCredentialId;\n    }\n\n    let videoCallUrl: string | null = null;\n    let videoCallData: CalendarEvent[\"videoCallData\"] = undefined;\n    const additionalInformation: AdditionalInformation = {};\n\n    try {\n      const bookerUrl = await getBookerBaseUrl(targetEventTypeDetails.team?.parentId ?? null);\n\n      const attendees = newBooking.attendees.map(\n        (att: { name: string; email: string; timeZone: string; locale: string | null }) => ({\n          name: att.name,\n          email: att.email,\n          timeZone: att.timeZone,\n          language: { translate: newUserT, locale: att.locale ?? \"en\" },\n        })\n      );\n\n      const builder = new CalendarEventBuilder()\n        .withBasicDetails({\n          bookerUrl,\n          title: newBooking.title,\n          startTime: dayjs(newBooking.startTime).utc().format(),\n          endTime: dayjs(newBooking.endTime).utc().format(),\n          additionalNotes: newBooking.description || undefined,\n        })\n        .withEventType({\n          id: targetEventTypeDetails.id,\n          slug: targetEventTypeDetails.slug,\n          description: newBooking.description,\n          hideOrganizerEmail: targetEventTypeDetails.hideOrganizerEmail,\n          schedulingType: targetEventTypeDetails.schedulingType,\n        })\n        .withOrganizer({\n          id: newUser.id,\n          name: newUser.name,\n          email: newUser.email,\n          timeZone: newUser.timeZone,\n          language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n        })\n        .withAttendees(attendees)\n        .withLocation({\n          location: bookingLocation || null,\n          conferenceCredentialId: conferenceCredentialId ?? undefined,\n        })\n        .withIdentifiers({\n          iCalUID: newBooking.iCalUID || undefined,\n        })\n        .withUid(newBooking.uid);\n\n      if (newUser.destinationCalendar) {\n        builder.withDestinationCalendar([newUser.destinationCalendar]);\n      }\n\n      if (targetEventTypeDetails.team) {\n        builder.withTeam({\n          id: targetEventTypeDetails.team.id || 0,\n          name: targetEventTypeDetails.team.name || \"\",\n          members: [\n            {\n              id: newUser.id,\n              name: newUser.name || \"\",\n              email: newUser.email,\n              timeZone: newUser.timeZone,\n              language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n            },\n          ],\n        });\n      }\n\n      const evt = builder.build();\n\n      if (!evt) {\n        throw new Error(\"Failed to build CalendarEvent\");\n      }\n\n      const createManager = await newEventManager.create(evt);\n      const results = createManager.results || [];\n      const referencesToCreate = createManager.referencesToCreate || [];\n\n      if (results.length > 0) {\n        const allFailed = results.every((res) => !res.success);\n        const someFailed = results.some((res) => !res.success);\n\n        if (allFailed) {\n          logger.error(\"All calendar integrations failed during reassignment\", {\n            eventTypeId: targetEventTypeDetails.id,\n            eventTypeSlug: targetEventTypeDetails.slug,\n            userId: newUser.id,\n            results: results.map((res) => ({\n              type: res.type,\n              success: res.success,\n              error: res.error,\n            })),\n          });\n        } else if (someFailed) {\n          logger.warn(\"Some calendar integrations failed during reassignment\", {\n            eventTypeId: targetEventTypeDetails.id,\n            userId: newUser.id,\n            failedIntegrations: results\n              .filter((res) => !res.success)\n              .map((res) => ({\n                type: res.type,\n                error: res.error,\n              })),\n          });\n        }\n      }\n\n      videoCallUrl = evt.videoCallData?.url ?? null;\n\n      if (results.length) {\n        const createdEvent = results[0]?.createdEvent;\n\n        additionalInformation.hangoutLink = createdEvent?.hangoutLink;\n        additionalInformation.conferenceData = createdEvent?.conferenceData;\n        additionalInformation.entryPoints = createdEvent?.entryPoints;\n        evt.additionalInformation = additionalInformation;\n\n        videoCallUrl =\n          additionalInformation.hangoutLink ||\n          createdEvent?.url ||\n          getVideoCallUrlFromCalEvent(evt) ||\n          videoCallUrl;\n      }\n\n      videoCallData = evt.videoCallData;\n\n      try {\n        const responses = {\n          ...(typeof newBooking.responses === \"object\" && newBooking.responses),\n          location: {\n            value: bookingLocation,\n            optionValue: \"\",\n          },\n        };\n\n        const finalVideoCallUrlForMetadata = videoCallUrl\n          ? getVideoCallUrlFromCalEvent(evt) || videoCallUrl\n          : null;\n        const bookingMetadataUpdate = finalVideoCallUrlForMetadata\n          ? { videoCallUrl: finalVideoCallUrlForMetadata }\n          : {};\n\n        const referencesToCreateForDb = referencesToCreate.map((reference) => {\n          const { credentialId, ...restReference } = reference;\n          return {\n            ...restReference,\n            ...(credentialId && credentialId > 0 ? { credentialId } : {}),\n          };\n        });\n\n        await this.bookingRepository.updateLocationById({\n          where: { id: newBooking.id },\n          data: {\n            location: bookingLocation,\n            metadata: {\n              ...(typeof newBooking.metadata === \"object\" && newBooking.metadata\n                ? newBooking.metadata\n                : {}),\n              ...bookingMetadataUpdate,\n            },\n            referencesToCreate: referencesToCreateForDb,\n            responses,\n            iCalSequence: (newBooking.iCalSequence || 0) + 1,\n          },\n        });\n\n        logger.info(\"Updated booking location and created calendar references\", {\n          referencesCount: referencesToCreate.length,\n          videoCallUrl: bookingMetadataUpdate.videoCallUrl ? \"[redacted]\" : null,\n        });\n      } catch (error) {\n        logger.error(\"Error updating booking location and references\", error);\n      }\n\n      logger.info(\"Created calendar events for new user\");\n    } catch (error) {\n      logger.error(\"Error creating calendar events for new user\", error);\n    }\n\n    return {\n      bookingLocation,\n      videoCallUrl,\n      videoCallData,\n      additionalInformation,\n    };\n  }"
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.sendReassignmentNotifications_10#method:ManagedEventManualReassignmentService.sendReassignmentNotifications",
+        "unitKind": "method",
+        "name": "sendReassignmentNotifications",
+        "qualifiedName": "ManagedEventManualReassignmentService.sendReassignmentNotifications",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 651,
+        "endLine": 795,
+        "isBehavioral": true,
+        "source": "  private async sendReassignmentNotifications({\n    newBooking,\n    targetEventTypeDetails,\n    parentEventType,\n    newUser,\n    newUserT,\n    originalUser,\n    originalUserT,\n    bookingLocation,\n    videoCallData,\n    additionalInformation,\n    reassignReason,\n    logger,\n  }: {\n    newBooking: ManagedEventReassignmentCreatedBooking;\n    targetEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>;\n    parentEventType: Awaited<ReturnType<typeof findTargetChildEventType>>[\"parentEventType\"];\n    newUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    newUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    originalUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>;\n    originalUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>;\n    bookingLocation: string | null;\n    videoCallData: CalendarEvent[\"videoCallData\"];\n    additionalInformation: AdditionalInformation;\n    reassignReason?: string;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {\n    try {\n      const eventTypeMetadata = targetEventTypeDetails.metadata as EventTypeMetadata | undefined;\n\n      const bookerUrlForEmail = await getBookerBaseUrl(targetEventTypeDetails.team?.parentId ?? null);\n\n      const attendeesForEmail = newBooking.attendees.map(\n        (att: { name: string; email: string; timeZone: string; locale: string | null }) => ({\n          name: att.name,\n          email: att.email,\n          timeZone: att.timeZone,\n          language: { translate: newUserT, locale: att.locale ?? \"en\" },\n        })\n      );\n\n      const emailBuilder = new CalendarEventBuilder()\n        .withBasicDetails({\n          bookerUrl: bookerUrlForEmail,\n          title: newBooking.title,\n          startTime: dayjs(newBooking.startTime).utc().format(),\n          endTime: dayjs(newBooking.endTime).utc().format(),\n          additionalNotes: newBooking.description || undefined,\n        })\n        .withEventType({\n          id: targetEventTypeDetails.id,\n          slug: targetEventTypeDetails.slug,\n          description: newBooking.description,\n          schedulingType: parentEventType.schedulingType,\n          seatsPerTimeSlot: targetEventTypeDetails.seatsPerTimeSlot,\n        })\n        .withOrganizer({\n          id: newUser.id,\n          name: newUser.name,\n          email: newUser.email,\n          timeZone: newUser.timeZone,\n          timeFormat: getTimeFormatStringFromUserTimeFormat(newUser.timeFormat),\n          language: { translate: newUserT, locale: newUser.locale ?? \"en\" },\n        })\n        .withAttendees(attendeesForEmail)\n        .withLocation({\n          location: bookingLocation || null,\n        })\n        .withUid(newBooking.uid);\n\n      if (videoCallData) {\n        emailBuilder.withVideoCallData(videoCallData);\n      }\n\n      const calEvent = emailBuilder.build();\n\n      if (!calEvent) {\n        throw new Error(\"Failed to build CalendarEvent for emails\");\n      }\n\n      calEvent.additionalInformation = additionalInformation;\n\n      await sendReassignedScheduledEmailsAndSMS({\n        calEvent,\n        members: [\n          {\n            ...newUser,\n            name: newUser.name || \"\",\n            username: newUser.username || \"\",\n            timeFormat: getTimeFormatStringFromUserTimeFormat(newUser.timeFormat),\n            language: { translate: newUserT, locale: newUser.locale || \"en\" },\n          },\n        ],\n        eventTypeMetadata,\n        reassigned: {\n          name: newUser.name,\n          email: newUser.email,\n          reason: reassignReason,\n          byUser: originalUser.name || undefined,\n        },\n      });\n      logger.info(\"Sent scheduled email to new host\");\n\n      if (originalUser) {\n        const cancelledCalEvent = {\n          ...calEvent,\n          organizer: {\n            id: originalUser.id,\n            name: originalUser.name || \"\",\n            email: originalUser.email,\n            timeZone: originalUser.timeZone,\n            language: { translate: originalUserT, locale: originalUser.locale ?? \"en\" },\n            timeFormat: getTimeFormatStringFromUserTimeFormat(originalUser.timeFormat),\n          },\n        };\n\n        await sendReassignedEmailsAndSMS({\n          calEvent: cancelledCalEvent,\n          members: [\n            {\n              ...originalUser,\n              name: originalUser.name || \"\",\n              username: originalUser.username || \"\",\n              timeFormat: getTimeFormatStringFromUserTimeFormat(originalUser.timeFormat),\n              language: { translate: originalUserT, locale: originalUser.locale || \"en\" },\n            },\n          ],\n          reassignedTo: { name: newUser.name, email: newUser.email },\n          eventTypeMetadata,\n        });\n        logger.info(\"Sent reassignment email to original host\");\n      }\n\n      if (dayjs(calEvent.startTime).isAfter(dayjs())) {\n        await sendReassignedUpdatedEmailsAndSMS({\n          calEvent,\n          eventTypeMetadata,\n          showAttendees: !!targetEventTypeDetails.seatsShowAttendees,\n        });\n        logger.info(\"Sent update emails to attendees\");\n      }\n    } catch (error) {\n      logger.error(\"Error sending notification emails\", error);\n    }\n  }",
+        "detail": {
+          "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.sendReassignmentNotifications_10#method:ManagedEventManualReassignmentService.sendReassignmentNotifications",
+          "fileId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.sendReassignmentNotifications_10",
+          "unitKind": "method",
+          "name": "sendReassignmentNotifications",
+          "qualifiedName": "ManagedEventManualReassignmentService.sendReassignmentNotifications",
+          "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+          "startLine": 651,
+          "endLine": 795,
+          "signature": "private async sendReassignmentNotifications({ newBooking, targetEventTypeDetails, parentEventType, newUser, newUserT, originalUser, originalUserT, bookingLocation, videoCallData, additionalInformation, reassignReason, logger }: { newBooking: ManagedEventReassignmentCreatedBooking; targetEventTypeDetails: NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>; parentEventType: Awaited<ReturnType<typeof findTargetChildEventType>>[\"parentEventType\"]; newUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>; newUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>; originalUser: NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>; originalUserT: Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>; bookingLocation: string | null; videoCallData: CalendarEvent[\"videoCallData\"]; additionalInformation: AdditionalInformation; reassignReason?: string; logger: ReturnType<typeof loggerType.getSubLogger>; })",
+          "parameters": [
+            {
+              "name": "newBooking",
+              "type": "ManagedEventReassignmentCreatedBooking",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "targetEventTypeDetails",
+              "type": "NonNullable<Awaited<ReturnType<typeof getEventTypesFromDB>>>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "parentEventType",
+              "type": "Awaited<ReturnType<typeof findTargetChildEventType>>[\"parentEventType\"]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "newUser",
+              "type": "NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "newUserT",
+              "type": "Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            },
+            {
+              "name": "originalUser",
+              "type": "NonNullable<Awaited<ReturnType<UserRepository[\"findByIdWithCredentialsAndCalendar\"]>>>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 5
+            },
+            {
+              "name": "originalUserT",
+              "type": "Awaited<ReturnType<typeof import(\"@calcom/lib/server/i18n\")[\"getTranslation\"]>>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 6
+            },
+            {
+              "name": "bookingLocation",
+              "type": "string | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 7
+            },
+            {
+              "name": "videoCallData",
+              "type": "CalendarEvent[\"videoCallData\"]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 8
+            },
+            {
+              "name": "additionalInformation",
+              "type": "AdditionalInformation",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 9
+            },
+            {
+              "name": "reassignReason",
+              "type": "string",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 10
+            },
+            {
+              "name": "logger",
+              "type": "ReturnType<typeof loggerType.getSubLogger>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 11
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "private",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "All required parameters are provided and valid (non‑null newBooking, targetEventTypeDetails, newUser, originalUser).",
+            "logger is a functional sub‑logger instance."
+          ],
+          "postconditions": [
+            "Scheduled emails/SMS for the new host are sent.",
+            "If an original host exists, reassignment cancellation emails/SMS are sent to them.",
+            "If the event start time is in the future, update emails/SMS are sent to attendees."
+          ],
+          "invariants": ["The built CalendarEvent (calEvent) must contain the same core data as the input booking."],
+          "edgeCases": [
+            "If CalendarEventBuilder fails to build a calEvent, an error is thrown and caught, and no notifications are sent.",
+            "If videoCallData is undefined, emailBuilder skips adding video call information.",
+            "If bookingLocation is null, the location field is set to null in the email payload."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getBookerBaseUrl", "source": "local utility", "kind": "internal" },
+            { "name": "CalendarEventBuilder", "source": "local class", "kind": "internal" },
+            { "name": "dayjs", "source": "external library", "kind": "external" },
+            { "name": "getTimeFormatStringFromUserTimeFormat", "source": "local utility", "kind": "internal" },
+            { "name": "sendReassignedScheduledEmailsAndSMS", "source": "local service", "kind": "internal" },
+            { "name": "sendReassignedEmailsAndSMS", "source": "local service", "kind": "internal" },
+            { "name": "sendReassignedUpdatedEmailsAndSMS", "source": "local service", "kind": "internal" },
+            { "name": "logger.info", "source": "logger instance", "kind": "internal" },
+            { "name": "logger.error", "source": "logger instance", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "ManagedEventReassignmentCreatedBooking",
+            "EventTypeMetadata",
+            "CalendarEvent",
+            "AdditionalInformation",
+            "UserRepository",
+            "loggerType"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Sends email and SMS notifications to the new host, the original host (if any), and attendees after a manual event reassignment, handling optional video call data and location details.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Failed to build CalendarEvent for emails",
+              "role": "error thrown when the email builder cannot produce a CalendarEvent"
+            },
+            {
+              "kind": "format-string",
+              "value": "Sent scheduled email to new host",
+              "role": "log message indicating successful dispatch to new host"
+            },
+            {
+              "kind": "format-string",
+              "value": "Sent reassignment email to original host",
+              "role": "log message indicating successful dispatch to original host"
+            },
+            {
+              "kind": "format-string",
+              "value": "Sent update emails to attendees",
+              "role": "log message indicating successful dispatch of update notifications"
+            },
+            {
+              "kind": "format-string",
+              "value": "Error sending notification emails",
+              "role": "log prefix for caught errors"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "b0505941b049b0e3c66b0a53fb932fca884e5cf6557d442cc13372d9dba4d240"
+        }
+      },
+      {
+        "unitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService.recordAssignmentReason_11#method:ManagedEventManualReassignmentService.recordAssignmentReason",
+        "unitKind": "method",
+        "name": "recordAssignmentReason",
+        "qualifiedName": "ManagedEventManualReassignmentService.recordAssignmentReason",
+        "parentUnitId": "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts__ManagedEventManualReassignmentService_3#class:ManagedEventManualReassignmentService",
+        "startLine": 800,
+        "endLine": 826,
+        "isBehavioral": true,
+        "source": "  private async recordAssignmentReason({\n    newBookingId,\n    reassignedById,\n    reassignReason,\n    isAutoReassignment,\n    logger,\n  }: {\n    newBookingId: number;\n    reassignedById: number;\n    reassignReason?: string;\n    isAutoReassignment: boolean;\n    logger: ReturnType<typeof loggerType.getSubLogger>;\n  }) {\n    try {\n      const assignmentResult = await this.assignmentReasonService.recordReassignment({\n        newBookingId,\n        reassignById: reassignedById,\n        reassignReason,\n        reassignmentType: isAutoReassignment\n          ? ManagedEventReassignmentType.AUTO\n          : ManagedEventReassignmentType.MANUAL,\n      });\n      logger.info(\"Recorded assignment reason\", assignmentResult);\n    } catch (error) {\n      logger.error(\"Error recording assignment reason\", error);\n    }\n  }"
+      }
+    ]
+  },
+  "out": [],
+  "in": [
+    "packages/features/ee/managed-event-types/reassignment/managedEventManualReassignment.ts",
+    "packages/features/ee/managed-event-types/reassignment/services/container.ts"
+  ],
+  "externals": [
+    "@calcom/app-store/zod-utils",
+    "@calcom/dayjs",
+    "@calcom/emails/email-manager",
+    "@calcom/features/bookings/lib/EventManager",
+    "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+    "@calcom/features/bookings/lib/handleNewBooking/getEventTypesFromDB",
+    "@calcom/features/bookings/repositories/BookingRepository",
+    "@calcom/features/eventtypes/repositories/eventTypeRepository",
+    "@calcom/features/CalendarEventBuilder",
+    "@calcom/features/users/repositories/UserRepository",
+    "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+    "@calcom/features/ee/round-robin/lib/bookingLocationService",
+    "@calcom/features/ee/workflows/lib/service/WorkflowService",
+    "@calcom/features/ee/workflows/repositories/WorkflowRepository",
+    "@calcom/features/ee/billing/credit-service",
+    "@calcom/types/Calendar",
+    "@calcom/lib/timeFormat",
+    "@calcom/lib/CalEventParser",
+    "@calcom/lib/logger",
+    "@calcom/prisma",
+    "@calcom/prisma/zod-utils",
+    "@calcom/features/ee/managed-event-types/reassignment/services/ManagedEventAssignmentReasonRecorder",
+    "@calcom/features/ee/managed-event-types/reassignment/utils",
+    "@calcom/lib/server/i18n"
+  ],
+  "impact": {
+    "seeds": 11,
+    "callers": 1,
+    "impactedFiles": ["packages/features/ee/managed-event-types/reassignment/services/container.ts"]
+  }
+}

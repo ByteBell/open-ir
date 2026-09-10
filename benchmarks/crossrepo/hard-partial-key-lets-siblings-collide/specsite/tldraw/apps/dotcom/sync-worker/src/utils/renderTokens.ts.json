@@ -1,0 +1,2001 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "apps/dotcom/sync-worker/src/utils/renderTokens.ts",
+    "language": "typescript",
+    "sizeBytes": 17769,
+    "tokenCount": 4430,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:28:10.955Z",
+    "module": {
+      "purpose": "Provides signed thumbnail-render job tokens and R2-backed token-record lifecycle operations for the sync worker's published-board, shared-file, OG, and MCP rendering flows.",
+      "summary": "This module defines the serialized render-job contract, signs jobs with an HMAC secret, verifies signatures and expiry, and validates supported job fields. It also namespaces token records by board and rendering surface, records only private render jobs, supports legacy key lookup during rolling deployment, deletes per-capture records best effort, and removes all records during board cleanup.",
+      "businessContext": "Supports secure thumbnail and screenshot generation for tldraw boards. Failure can block OG images, MCP captures, private-board rendering, or cleanup while token validation prevents unauthorized snapshot access.",
+      "classes": [
+        "ThumbnailRenderJob (~L14-79): Serialized signed payload describing board identity and render parameters"
+      ],
+      "functions": [
+        "mintThumbnailRenderToken (~L84-99): Signs a serialized render job with the configured HMAC secret",
+        "verifyThumbnailRenderToken (~L101-154): Authenticates, decodes, validates, and expires render jobs",
+        "renderJobAccess (~L160-162): Resolves absent access metadata to the public gate",
+        "renderJobSurface (~L168-170): Resolves absent surface metadata to the OG pipeline",
+        "getHmacKey (~L172-177): Imports the configured secret as an HMAC signing key",
+        "renderTokenRecordPrefix (~L218-220): Builds the board-wide token-record prefix",
+        "isPerCaptureRecordKey (~L226-228): Identifies surfaces requiring unique capture record keys",
+        "renderTokenRecordKey (~L230-241): Builds namespaced token-record keys for captures",
+        "recordMintedRenderToken (~L252-263): Persists private render-token ownership metadata",
+        "deleteMintedRenderToken (~L279-292): Best-effort deletes a completed per-capture token record",
+        "isMintedRenderToken (~L309-331): Checks token ownership through current or legacy records",
+        "legacyRenderTokenRecordKey (~L335-337): Builds the pre-namespacing token-record key",
+        "deleteRenderTokenRecord (~L363-385): Best-effort deletes all token records for a board"
+      ],
+      "keywords": [
+        "HMAC token",
+        "thumbnail rendering",
+        "R2 custom metadata",
+        "render-token records",
+        "OG pipeline",
+        "MCP screenshot",
+        "rolling deployment",
+        "base64url payload",
+        "private board access",
+        "token expiry"
+      ],
+      "ontologyConcepts": [
+        "authentication",
+        "authorization",
+        "signed capability",
+        "token lifecycle",
+        "content-addressed storage",
+        "backward compatibility",
+        "concurrency isolation",
+        "best-effort cleanup"
+      ],
+      "businessEntities": [
+        "board",
+        "render job",
+        "thumbnail",
+        "shared file",
+        "published board",
+        "snapshot",
+        "capture",
+        "token record"
+      ],
+      "systemCapabilities": [
+        "Mint signed render tokens",
+        "Verify render-token authenticity and expiry",
+        "Authorize private render jobs",
+        "Persist token ownership in R2",
+        "Clean up capture and board records",
+        "Support legacy token records during deployment"
+      ],
+      "configDependencies": ["MCP_SCREENSHOT_TOKEN_SECRET", "THUMBNAILS"],
+      "importsInternal": [
+        {
+          "spec": "../types",
+          "symbols": [
+            "Environment",
+            "ThumbnailBoardAccess",
+            "ThumbnailBoardKind",
+            "ThumbnailBoardRef",
+            "ThumbnailRenderSurface"
+          ],
+          "anchor": { "startLine": 1, "endLine": 7 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "spec": "./base64",
+          "symbols": ["base64UrlDecode", "base64UrlEncode"],
+          "anchor": { "startLine": 8, "endLine": 8 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/base64.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/base64.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/utils/base64.ts"
+        },
+        {
+          "spec": "./hash",
+          "symbols": ["sha256"],
+          "anchor": { "startLine": 9, "endLine": 9 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/hash.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/hash.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/utils/hash.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [
+          "Reads MCP_SCREENSHOT_TOKEN_SECRET from the environment object.",
+          "Reads the THUMBNAILS R2 binding from the environment object."
+        ],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "blob",
+          "role": "consumes",
+          "address": "render-tokens/{kind}/{slug}/",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "ThumbnailRenderJob",
+          "shape": "interface ThumbnailRenderJob { v: 1; kind: ThumbnailBoardKind; slug: string; access?: ThumbnailBoardAccess; surface?: ThumbnailRenderSurface; version: string | number; camera?: 'content'; pageId?: string; shapeIds?: string[]; mode?: 'screenshot' | 'measure'; x: number; y: number; z: number; width: number; height: number; theme: 'light' | 'dark'; exp: number }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "mintThumbnailRenderToken",
+          "shape": "async function mintThumbnailRenderToken(env: Environment, job: ThumbnailRenderJob): Promise<string>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "verifyThumbnailRenderToken",
+          "shape": "async function verifyThumbnailRenderToken(env: Environment, token: string, now = Date.now()): Promise<ThumbnailRenderJob | null>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "renderJobAccess",
+          "shape": "function renderJobAccess(job: Pick<ThumbnailRenderJob, 'access'>): ThumbnailBoardAccess",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "recordMintedRenderToken",
+          "shape": "async function recordMintedRenderToken(env: Environment, job: ThumbnailRenderJob, token: string): Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "deleteMintedRenderToken",
+          "shape": "async function deleteMintedRenderToken(env: Environment, job: ThumbnailRenderJob, token: string): Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isMintedRenderToken",
+          "shape": "async function isMintedRenderToken(env: Environment, job: ThumbnailRenderJob, token: string): Promise<boolean>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "deleteRenderTokenRecord",
+          "shape": "async function deleteRenderTokenRecord(env: Environment, board: ThumbnailBoardRef): Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Environment",
+          "shape": "Environment",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "name": "ThumbnailBoardAccess",
+          "shape": "ThumbnailBoardAccess",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "name": "ThumbnailBoardKind",
+          "shape": "ThumbnailBoardKind",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "name": "ThumbnailBoardRef",
+          "shape": "ThumbnailBoardRef",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "name": "ThumbnailRenderSurface",
+          "shape": "ThumbnailRenderSurface",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "name": "base64UrlDecode",
+          "shape": "base64UrlDecode(value)",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/base64.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/base64.ts"
+        },
+        {
+          "name": "base64UrlEncode",
+          "shape": "base64UrlEncode(value)",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/base64.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/base64.ts"
+        },
+        {
+          "name": "sha256",
+          "shape": "sha256(value)",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/hash.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/hash.ts"
+        },
+        {
+          "name": "THUMBNAILS",
+          "shape": "env.THUMBNAILS.put(key, value, options), env.THUMBNAILS.head(key), env.THUMBNAILS.delete(key), env.THUMBNAILS.list({ prefix })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "crypto.subtle",
+          "shape": "crypto.subtle.sign('HMAC', key, data), crypto.subtle.verify('HMAC', key, signature, data), crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify'])",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "token-minting",
+          "intent": "Serialize a job and produce an HMAC-signed token.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 84, "endLine": 99 }
+        },
+        {
+          "name": "token-verification",
+          "intent": "Decode, authenticate, validate, and expire an incoming render token.",
+          "structureKind": "branch",
+          "predicate": "if (\n\t\t!job ||\n\t\tjob.v !== 1 ||\n\t\t(job.kind !== 'published' && job.kind !== 'shared_file') ||\n\t\ttypeof job.slug !== 'string' ||\n\t\t(job.access !== undefined && job.access !== 'public' && job.access !== 'render') ||\n\t\t(job.surface !== undefined && job.surface !== 'og' && job.surface !== 'mcp') ||\n\t\t(job.camera !== undefined && job.camera !== 'content') ||\n\t\t(job.pageId !== undefined && typeof job.pageId !== 'string') ||\n\t\t(job.mode !== undefined && job.mode !== 'screenshot' && job.mode !== 'measure') ||\n\t\t(job.shapeIds !== undefined &&\n\t\t\t(!Array.isArray(job.shapeIds) ||\n\t\t\t\tjob.shapeIds.length === 0 ||\n\t\t\t\t!job.shapeIds.every((id) => typeof id === 'string'))) ||\n\t\ttypeof job.exp !== 'number'\n\t)",
+          "branchOutcomes": ["invalid token returns null", "valid token continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 101, "endLine": 154 }
+        },
+        {
+          "name": "record-write",
+          "intent": "Record private tokens in R2 unless the binding or access gate disables recording.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 252, "endLine": 263 }
+        },
+        {
+          "name": "capture-record-deletion",
+          "intent": "Delete per-capture records without failing the completed render.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 279, "endLine": 292 }
+        },
+        {
+          "name": "record-lookup",
+          "intent": "Check current namespaced records and legacy records for ownership.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 309, "endLine": 331 }
+        },
+        {
+          "name": "board-record-cleanup",
+          "intent": "List and delete all current and legacy records for a board.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 363, "endLine": 385 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "ThumbnailRenderJob",
+          "signature": "export interface ThumbnailRenderJob",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 14, "endLine": 14 }
+        },
+        {
+          "kind": "function",
+          "name": "mintThumbnailRenderToken",
+          "signature": "export async function mintThumbnailRenderToken(\n\tenv: Environment,\n\tjob: ThumbnailRenderJob\n): Promise<string>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<string>",
+          "exported": true,
+          "anchor": { "startLine": 84, "endLine": 87 }
+        },
+        {
+          "kind": "function",
+          "name": "verifyThumbnailRenderToken",
+          "signature": "export async function verifyThumbnailRenderToken(\n\tenv: Environment,\n\ttoken: string,\n\tnow = Date.now()\n): Promise<ThumbnailRenderJob | null>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<ThumbnailRenderJob | null>",
+          "exported": true,
+          "anchor": { "startLine": 101, "endLine": 105 }
+        },
+        {
+          "kind": "function",
+          "name": "renderJobAccess",
+          "signature": "export function renderJobAccess(job: Pick<ThumbnailRenderJob, 'access'>): ThumbnailBoardAccess",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ThumbnailBoardAccess",
+          "exported": true,
+          "anchor": { "startLine": 160, "endLine": 160 }
+        },
+        {
+          "kind": "function",
+          "name": "renderJobSurface",
+          "signature": "function renderJobSurface(job: Pick<ThumbnailRenderJob, 'surface'>): ThumbnailRenderSurface",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ThumbnailRenderSurface",
+          "exported": false,
+          "anchor": { "startLine": 168, "endLine": 168 }
+        },
+        {
+          "kind": "function",
+          "name": "getHmacKey",
+          "signature": "async function getHmacKey(secret: string)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 172, "endLine": 172 }
+        },
+        {
+          "kind": "function",
+          "name": "recordMintedRenderToken",
+          "signature": "export async function recordMintedRenderToken(\n\tenv: Environment,\n\tjob: ThumbnailRenderJob,\n\ttoken: string\n): Promise<void>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": true,
+          "anchor": { "startLine": 252, "endLine": 256 }
+        },
+        {
+          "kind": "function",
+          "name": "deleteMintedRenderToken",
+          "signature": "export async function deleteMintedRenderToken(\n\tenv: Environment,\n\tjob: ThumbnailRenderJob,\n\ttoken: string\n): Promise<void>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": true,
+          "anchor": { "startLine": 279, "endLine": 283 }
+        },
+        {
+          "kind": "function",
+          "name": "isMintedRenderToken",
+          "signature": "export async function isMintedRenderToken(\n\tenv: Environment,\n\tjob: ThumbnailRenderJob,\n\ttoken: string\n): Promise<boolean>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<boolean>",
+          "exported": true,
+          "anchor": { "startLine": 309, "endLine": 313 }
+        },
+        {
+          "kind": "function",
+          "name": "deleteRenderTokenRecord",
+          "signature": "export async function deleteRenderTokenRecord(\n\tenv: Environment,\n\tboard: ThumbnailBoardRef\n): Promise<void>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": true,
+          "anchor": { "startLine": 363, "endLine": 366 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "ThumbnailRenderJob",
+          "shape": "{\n\tv: 1\n\tkind: ThumbnailBoardKind\n\tslug: string\n\taccess?: ThumbnailBoardAccess\n\tsurface?: ThumbnailRenderSurface\n\tversion: string | number\n\tcamera?: 'content'\n\tpageId?: string\n\tshapeIds?: string[]\n\tmode?: 'screenshot' | 'measure'\n\tx: number\n\ty: number\n\tz: number\n\twidth: number\n\theight: number\n\ttheme: 'light' | 'dark'\n\texp: number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 14, "endLine": 79 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Missing signing secret during minting",
+          "handled": true,
+          "behavior": "Throws an Error instead of producing a token.",
+          "anchor": { "startLine": 88, "endLine": 91 }
+        },
+        {
+          "inputShape": "Missing signing secret during verification",
+          "handled": true,
+          "behavior": "Returns null.",
+          "anchor": { "startLine": 106, "endLine": 107 }
+        },
+        {
+          "inputShape": "Malformed token structure or invalid base64url signature",
+          "handled": true,
+          "behavior": "Returns null.",
+          "anchor": { "startLine": 109, "endLine": 118 }
+        },
+        {
+          "inputShape": "Invalid signature or malformed decoded payload",
+          "handled": true,
+          "behavior": "Returns null.",
+          "anchor": { "startLine": 120, "endLine": 133 }
+        },
+        {
+          "inputShape": "Unsupported, incomplete, or expired render job",
+          "handled": true,
+          "behavior": "Returns null.",
+          "anchor": { "startLine": 135, "endLine": 151 }
+        },
+        {
+          "inputShape": "Unbound THUMBNAILS storage",
+          "handled": true,
+          "behavior": "Recording, ownership checks, and deletion become no-ops or trust the signature.",
+          "anchor": { "startLine": 261, "endLine": 262 }
+        },
+        {
+          "inputShape": "R2 deletion or listing failure",
+          "handled": true,
+          "behavior": "The error is swallowed and the caller continues.",
+          "anchor": { "startLine": 287, "endLine": 291 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "!=",
+          "left": "job.v",
+          "right": "1",
+          "inclusive": false,
+          "intent": "Rejects payload versions other than one.",
+          "anchor": { "startLine": 137, "endLine": 137 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.kind",
+          "right": "'published'",
+          "inclusive": false,
+          "intent": "Rejects non-published jobs unless the shared-file alternative matches.",
+          "anchor": { "startLine": 138, "endLine": 138 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.kind",
+          "right": "'shared_file'",
+          "inclusive": false,
+          "intent": "Rejects kinds other than the two supported board kinds.",
+          "anchor": { "startLine": 138, "endLine": 138 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.access",
+          "right": "undefined",
+          "inclusive": false,
+          "intent": "Allows access metadata to be omitted for legacy tokens.",
+          "anchor": { "startLine": 140, "endLine": 140 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.access",
+          "right": "'public'",
+          "inclusive": false,
+          "intent": "Accepts public as one supported access value.",
+          "anchor": { "startLine": 140, "endLine": 140 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.access",
+          "right": "'render'",
+          "inclusive": false,
+          "intent": "Accepts render as one supported access value.",
+          "anchor": { "startLine": 140, "endLine": 140 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.surface",
+          "right": "undefined",
+          "inclusive": false,
+          "intent": "Allows surface metadata to be omitted for legacy tokens.",
+          "anchor": { "startLine": 141, "endLine": 141 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.surface",
+          "right": "'og'",
+          "inclusive": false,
+          "intent": "Accepts OG as one supported rendering surface.",
+          "anchor": { "startLine": 141, "endLine": 141 }
+        },
+        {
+          "operator": "!=",
+          "left": "job.surface",
+          "right": "'mcp'",
+          "inclusive": false,
+          "intent": "Accepts MCP as one supported rendering surface.",
+          "anchor": { "startLine": 141, "endLine": 141 }
+        },
+        {
+          "operator": "<=",
+          "left": "job.exp",
+          "right": "now",
+          "inclusive": true,
+          "intent": "Rejects tokens expiring at or before the verification time.",
+          "anchor": { "startLine": 151, "endLine": 151 }
+        },
+        {
+          "operator": "!=",
+          "left": "renderJobSurface(job)",
+          "right": "'mcp'",
+          "inclusive": false,
+          "intent": "Uses stable board/surface keys for non-MCP records.",
+          "anchor": { "startLine": 227, "endLine": 227 }
+        },
+        {
+          "operator": "!=",
+          "left": "renderJobAccess(job)",
+          "right": "'render'",
+          "inclusive": false,
+          "intent": "Skips record writes and deletions for public jobs.",
+          "anchor": { "startLine": 257, "endLine": 258 }
+        },
+        {
+          "operator": "!=",
+          "left": "renderJobAccess(job)",
+          "right": "'render'",
+          "inclusive": false,
+          "intent": "Treats public jobs as already authorized without a record.",
+          "anchor": { "startLine": 314, "endLine": 315 }
+        },
+        {
+          "operator": "==",
+          "left": "job.surface",
+          "right": "undefined",
+          "inclusive": true,
+          "intent": "Enables legacy record lookup only for pre-namespaced jobs.",
+          "anchor": { "startLine": 328, "endLine": 328 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new Error('MCP_SCREENSHOT_TOKEN_SECRET is not configured')",
+          "caught": null,
+          "action": "Abort token minting.",
+          "fallback": null,
+          "anchor": { "startLine": 90, "endLine": 90 }
+        },
+        {
+          "thrown": null,
+          "caught": "base64UrlDecode(signature) error",
+          "action": "Return null.",
+          "fallback": "null",
+          "anchor": { "startLine": 114, "endLine": 118 }
+        },
+        {
+          "thrown": null,
+          "caught": "JSON.parse or payload base64 decoding error",
+          "action": "Return null.",
+          "fallback": "null",
+          "anchor": { "startLine": 129, "endLine": 133 }
+        },
+        {
+          "thrown": null,
+          "caught": "THUMBNAILS.delete error",
+          "action": "Ignore the deletion failure.",
+          "fallback": null,
+          "anchor": { "startLine": 287, "endLine": 291 }
+        },
+        {
+          "thrown": null,
+          "caught": "THUMBNAILS.list or delete error",
+          "action": "Ignore cleanup failure.",
+          "fallback": null,
+          "anchor": { "startLine": 368, "endLine": 385 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "non-null",
+          "description": "A configured signing secret is required before minting a token.",
+          "anchor": { "startLine": 88, "endLine": 91 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Only version-one jobs with supported discriminated values and string payload fields are accepted.",
+          "anchor": { "startLine": 135, "endLine": 150 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "A verified token has an expiry strictly later than the supplied current time.",
+          "anchor": { "startLine": 151, "endLine": 151 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Public jobs bypass R2 ownership records, while render jobs require matching token metadata when R2 is bound.",
+          "anchor": { "startLine": 257, "endLine": 262 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Token records are checked only after signature and expiry verification by the caller.",
+          "anchor": { "startLine": 294, "endLine": 308 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "isMintedRenderToken is called only after signature and expiry verification.",
+          "anchor": { "startLine": 294, "endLine": 308 }
+        },
+        {
+          "kind": "config",
+          "description": "Deployed environments bind THUMBNAILS when private render authorization is required.",
+          "anchor": { "startLine": 259, "endLine": 262 }
+        },
+        {
+          "kind": "schema",
+          "description": "The render page and snapshot route interpret the signed job fields consistently.",
+          "anchor": { "startLine": 14, "endLine": 79 }
+        },
+        {
+          "kind": "platform",
+          "description": "The runtime provides Web Crypto HMAC APIs and Cloudflare R2-compatible storage methods.",
+          "anchor": { "startLine": 93, "endLine": 97 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What runtime-specific type is inferred for getHmacKey's return value?",
+          "affects": "public_signatures",
+          "anchor": { "startLine": 172, "endLine": 177 },
+          "resolution": null
+        },
+        {
+          "question": "Which external route consumes each optional render-job field?",
+          "affects": "type_shapes",
+          "anchor": { "startLine": 49, "endLine": 69 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "unordered",
+        "notes": "Cryptographic operations and R2 operations are asynchronous. MCP records use token-derived keys to avoid concurrent capture collisions; OG records intentionally overwrite a shared board/surface key."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-missing-secret",
+          "scenario": "The environment has no configured screenshot token secret.",
+          "given": ["env.MCP_SCREENSHOT_TOKEN_SECRET = undefined"],
+          "when": "mintThumbnailRenderToken(env, job)",
+          "then": "rejects with Error('MCP_SCREENSHOT_TOKEN_SECRET is not configured')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "round-trips-signed-job",
+          "scenario": "A valid job is minted and verified before its expiry.",
+          "given": ["env.MCP_SCREENSHOT_TOKEN_SECRET = 'secret'", "job.exp > now"],
+          "when": "verifyThumbnailRenderToken(env, await mintThumbnailRenderToken(env, job), now)",
+          "then": "returns a job equivalent to job",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the signed payload format and validation-compatible round trip."
+        },
+        {
+          "testId": "rejects-tampered-token",
+          "scenario": "A token payload or signature is modified after minting.",
+          "given": [
+            "const token = await mintThumbnailRenderToken(env, job)",
+            "const tamperedToken = token.replace(/.$/, token.endsWith('a') ? 'b' : 'a')"
+          ],
+          "when": "verifyThumbnailRenderToken(env, tamperedToken)",
+          "then": "returns null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards authenticity of board identity and render parameters."
+        },
+        {
+          "testId": "rejects-expired-token",
+          "scenario": "A correctly signed token is checked at or after its expiry.",
+          "given": ["job.exp <= now"],
+          "when": "verifyThumbnailRenderToken(env, token, now)",
+          "then": "returns null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "defaults-legacy-job-fields",
+          "scenario": "A verified legacy job omits access and surface.",
+          "given": ["job.access = undefined", "job.surface = undefined"],
+          "when": "renderJobAccess(job) and isMintedRenderToken(env, job, token)",
+          "then": "renderJobAccess(job) === 'public' and token verification uses the legacy record fallback",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "Preserves rolling-deploy compatibility for tokens minted before field introduction."
+        },
+        {
+          "testId": "public-token-skips-record",
+          "scenario": "A valid public job is recorded or checked without a thumbnail bucket.",
+          "given": ["job.access = 'public'", "env.THUMBNAILS = undefined"],
+          "when": "recordMintedRenderToken(env, job, token) and isMintedRenderToken(env, job, token)",
+          "then": "recordMintedRenderToken resolves and isMintedRenderToken(env, job, token) === true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Public renders rely on the signature because they grant no private-board access."
+        },
+        {
+          "testId": "deletes-only-per-capture-record",
+          "scenario": "A render-surface token record is cleaned up after capture.",
+          "given": ["job.access = 'render'", "job.surface = 'mcp'", "env.THUMBNAILS is bound"],
+          "when": "deleteMintedRenderToken(env, job, token)",
+          "then": "deletes the token-specific record and does not delete a shared surface record",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Prevents concurrent captures from invalidating each other while avoiding orphaned MCP records."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import block",
+        "ThumbnailRenderJob interface",
+        "mintThumbnailRenderToken",
+        "verifyThumbnailRenderToken",
+        "renderJobAccess",
+        "renderJobSurface",
+        "getHmacKey",
+        "RENDER_TOKEN_RECORD_PREFIX constant",
+        "renderTokenRecordPrefix",
+        "isPerCaptureRecordKey",
+        "renderTokenRecordKey",
+        "recordMintedRenderToken",
+        "deleteMintedRenderToken",
+        "isMintedRenderToken",
+        "legacyRenderTokenRecordKey",
+        "deleteRenderTokenRecord"
+      ],
+      "moduleLevelCode": "import {\n\tEnvironment,\n\tThumbnailBoardAccess,\n\tThumbnailBoardKind,\n\tThumbnailBoardRef,\n\tThumbnailRenderSurface,\n} from '../types'\nimport { base64UrlDecode, base64UrlEncode } from './base64'\nimport { sha256 } from './hash'",
+      "exports": [
+        { "name": "ThumbnailRenderJob", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "mintThumbnailRenderToken", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "verifyThumbnailRenderToken", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "renderJobAccess", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "recordMintedRenderToken", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "deleteMintedRenderToken", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "isMintedRenderToken", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "deleteRenderTokenRecord", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Environment", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "ThumbnailBoardAccess", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "ThumbnailBoardKind", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "ThumbnailBoardRef", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "ThumbnailRenderSurface", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "base64UrlDecode", "module": "./base64", "alias": null, "kind": "internal" },
+        { "symbol": "base64UrlEncode", "module": "./base64", "alias": null, "kind": "internal" },
+        { "symbol": "sha256", "module": "./hash", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "RENDER_TOKEN_RECORD_PREFIX", "value": "'render-tokens'", "kind": "string" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__mintThumbnailRenderToken#function:mintThumbnailRenderToken",
+        "unitKind": "function",
+        "name": "mintThumbnailRenderToken",
+        "qualifiedName": "mintThumbnailRenderToken",
+        "parentUnitId": null,
+        "startLine": 84,
+        "endLine": 99,
+        "isBehavioral": true,
+        "source": "\t/** Unix ms expiry */\n\texp: number\n}\n\n// The token lifetime (THUMBNAIL_RENDER_TOKEN_TTL_MS) lives in config.ts; expiry rides inside the\n// signed payload as `exp`, minted immediately before the capture.\n\nexport async function mintThumbnailRenderToken(\n\tenv: Environment,\n\tjob: ThumbnailRenderJob\n): Promise<string> {\n\tconst secret = env.MCP_SCREENSHOT_TOKEN_SECRET\n\tif (!secret) {\n\t\tthrow new Error('MCP_SCREENSHOT_TOKEN_SECRET is not configured')\n\t}\n\tconst payload = base64UrlEncode(new TextEncoder().encode(JSON.stringify(job)))",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__mintThumbnailRenderToken#function:mintThumbnailRenderToken",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__mintThumbnailRenderToken",
+          "unitKind": "function",
+          "name": "mintThumbnailRenderToken",
+          "qualifiedName": "mintThumbnailRenderToken",
+          "parentUnitId": null,
+          "startLine": 84,
+          "endLine": 99,
+          "signature": "export async function mintThumbnailRenderToken(\n\tenv: Environment,\n\tjob: ThumbnailRenderJob\n): Promise<string>",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "job",
+              "type": "ThumbnailRenderJob",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Promise<string>",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "env.MCP_SCREENSHOT_TOKEN_SECRET is configured with a truthy value.",
+            "job is serializable by JSON.stringify."
+          ],
+          "postconditions": [
+            "On success, resolves to a string token representing the supplied job payload.",
+            "The supplied job is JSON-serialized and base64url-encoded as part of the token payload."
+          ],
+          "invariants": [
+            "The token payload is derived from the JSON serialization of job.",
+            "The configured MCP_SCREENSHOT_TOKEN_SECRET is required for token minting."
+          ],
+          "edgeCases": [
+            "When env.MCP_SCREENSHOT_TOKEN_SECRET is missing or falsy, the function rejects with an Error instead of returning a token.",
+            "When job contains values with JSON serialization semantics, the serialized JSON result is the value used for encoding."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Rejects when MCP_SCREENSHOT_TOKEN_SECRET is not configured.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "JSON.stringify", "source": null, "kind": "external" },
+            { "name": "TextEncoder", "source": null, "kind": "external" },
+            {
+              "name": "base64UrlEncode",
+              "source": "apps/dotcom/sync-worker/src/utils/renderTokens.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["Environment", "ThumbnailRenderJob"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "The job is serialized with JSON.stringify, encoded with TextEncoder, and then base64url-encoded as the token payload.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Mints and returns a thumbnail render token for a job using the configured screenshot-token secret. The secret must be configured before a token can be minted.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "MCP_SCREENSHOT_TOKEN_SECRET is not configured",
+              "role": "Error message returned when the required signing secret is absent."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call mintThumbnailRenderToken(env, job).",
+              "then": "The returned promise rejects with an Error whose message is exactly \"MCP_SCREENSHOT_TOKEN_SECRET is not configured\".",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "efb7927574a34efb4a3ca9800197621b9932f54b03dc14c419338a70e977dcea"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__verifyThumbnailRenderToken#function:verifyThumbnailRenderToken",
+        "unitKind": "function",
+        "name": "verifyThumbnailRenderToken",
+        "qualifiedName": "verifyThumbnailRenderToken",
+        "parentUnitId": null,
+        "startLine": 101,
+        "endLine": 154,
+        "isBehavioral": true,
+        "source": "\t\t'HMAC',\n\t\tawait getHmacKey(secret),\n\t\tnew TextEncoder().encode(payload)\n\t)\n\treturn `${payload}.${base64UrlEncode(new Uint8Array(signature))}`\n}\n\nexport async function verifyThumbnailRenderToken(\n\tenv: Environment,\n\ttoken: string,\n\tnow = Date.now()\n): Promise<ThumbnailRenderJob | null> {\n\tconst secret = env.MCP_SCREENSHOT_TOKEN_SECRET\n\tif (!secret) return null\n\n\tconst parts = token.split('.')\n\tif (parts.length !== 2 || !parts[0] || !parts[1]) return null\n\tconst [payload, signature] = parts\n\n\tlet signatureBytes: Uint8Array<ArrayBuffer>\n\ttry {\n\t\tsignatureBytes = base64UrlDecode(signature)\n\t} catch {\n\t\treturn null\n\t}\n\n\tconst isValid = await crypto.subtle.verify(\n\t\t'HMAC',\n\t\tawait getHmacKey(secret),\n\t\tsignatureBytes,\n\t\tnew TextEncoder().encode(payload)\n\t)\n\tif (!isValid) return null\n\n\tlet job: ThumbnailRenderJob\n\ttry {\n\t\tjob = JSON.parse(new TextDecoder().decode(base64UrlDecode(payload)))\n\t} catch {\n\t\treturn null\n\t}\n\n\tif (\n\t\t!job ||\n\t\tjob.v !== 1 ||\n\t\t(job.kind !== 'published' && job.kind !== 'shared_file') ||\n\t\ttypeof job.slug !== 'string' ||\n\t\t(job.access !== undefined && job.access !== 'public' && job.access !== 'render') ||\n\t\t(job.surface !== undefined && job.surface !== 'og' && job.surface !== 'mcp') ||\n\t\t(job.camera !== undefined && job.camera !== 'content') ||\n\t\t(job.pageId !== undefined && typeof job.pageId !== 'string') ||\n\t\t(job.mode !== undefined && job.mode !== 'screenshot' && job.mode !== 'measure') ||\n\t\t(job.shapeIds !== undefined &&\n\t\t\t(!Array.isArray(job.shapeIds) ||\n\t\t\t\tjob.shapeIds.length === 0 ||",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__verifyThumbnailRenderToken#function:verifyThumbnailRenderToken",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__verifyThumbnailRenderToken",
+          "unitKind": "function",
+          "name": "verifyThumbnailRenderToken",
+          "qualifiedName": "verifyThumbnailRenderToken",
+          "parentUnitId": null,
+          "startLine": 101,
+          "endLine": 154,
+          "signature": "export async function verifyThumbnailRenderToken(env: Environment, token: string, now = Date.now()): Promise<ThumbnailRenderJob | null>",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "token", "type": "string", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "now", "type": null, "default": "Date.now()", "optional": true, "variadic": false, "order": 2 }
+          ],
+          "returnType": "Promise<ThumbnailRenderJob | null>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["env is an Environment value.", "token is a string."],
+          "postconditions": [
+            "Returns a validated ThumbnailRenderJob when the token has the required two-part format, a valid HMAC signature, decodable JSON payload, and supported payload fields.",
+            "Returns null when the screenshot token secret is absent or token validation fails."
+          ],
+          "invariants": [
+            "The HMAC is verified over the exact payload segment encoded as UTF-8.",
+            "The token must contain exactly two non-empty dot-separated segments.",
+            "Accepted payload versions have v equal to 1.",
+            "The payload kind must be either published or shared_file.",
+            "The payload slug must be a string.",
+            "Optional access, surface, camera, pageId, mode, and shapeIds fields are restricted to their supported types and values."
+          ],
+          "edgeCases": [
+            "When env.MCP_SCREENSHOT_TOKEN_SECRET is absent or falsy, returns null without verifying the token.",
+            "When token does not split into exactly two non-empty dot-separated segments, returns null.",
+            "When the signature segment is not valid base64url, returns null.",
+            "When HMAC verification returns false, returns null.",
+            "When the payload cannot be base64url-decoded, UTF-8-decoded, or parsed as JSON, returns null.",
+            "When the decoded payload has an unsupported version or kind, a non-string slug, an unsupported optional field value, or an invalid shapeIds value, returns null."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns null for missing configuration, malformed token structure, invalid signature encoding, failed signature verification, malformed payload JSON, or unsupported payload fields.",
+            "returnsOnError": "null"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getHmacKey", "source": "local utility", "kind": "internal" },
+            { "name": "crypto.subtle.verify", "source": "Web Crypto API", "kind": "external" },
+            { "name": "base64UrlDecode", "source": "local utility", "kind": "internal" },
+            { "name": "JSON.parse", "source": "JavaScript runtime", "kind": "external" }
+          ],
+          "symbolReferences": ["Environment", "ThumbnailRenderJob"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Input token format is <base64url-encoded JSON payload>.<base64url-encoded HMAC signature>. The HMAC is computed with algorithm HMAC over the UTF-8 payload segment using env.MCP_SCREENSHOT_TOKEN_SECRET. On success, returns the decoded ThumbnailRenderJob object; otherwise returns null.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Asynchronously verifies a thumbnail render token using the configured screenshot-token secret and returns its validated render job. Invalid, malformed, unsigned, or structurally unsupported tokens produce null.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "HMAC",
+              "role": "Web Crypto algorithm identifier used for signature verification."
+            },
+            { "kind": "magic-number", "value": "1", "role": "Required thumbnail render token payload version." },
+            { "kind": "enum-value", "value": "published", "role": "Supported thumbnail render job kind." },
+            { "kind": "enum-value", "value": "shared_file", "role": "Supported thumbnail render job kind." },
+            { "kind": "enum-value", "value": "public", "role": "Supported optional access mode." },
+            { "kind": "enum-value", "value": "render", "role": "Supported optional access mode." },
+            { "kind": "enum-value", "value": "og", "role": "Supported optional render surface." },
+            { "kind": "enum-value", "value": "mcp", "role": "Supported optional render surface." },
+            { "kind": "enum-value", "value": "content", "role": "Supported optional camera value." },
+            { "kind": "enum-value", "value": "screenshot", "role": "Supported optional render mode." },
+            { "kind": "enum-value", "value": "measure", "role": "Supported optional render mode." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "verifyThumbnailRenderToken is called with any token.",
+              "then": "The promise resolves to null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "verifyThumbnailRenderToken is called.",
+              "then": "The promise resolves to null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "verifyThumbnailRenderToken is called.",
+              "then": "The promise resolves to null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a016cc123011634c68d54646dede923525fb1d923d5f17e5883232668a86d7e3"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderJobAccess#function:renderJobAccess",
+        "unitKind": "function",
+        "name": "renderJobAccess",
+        "qualifiedName": "renderJobAccess",
+        "parentUnitId": null,
+        "startLine": 160,
+        "endLine": 162,
+        "isBehavioral": true,
+        "source": "\tif (job.exp <= now) return null\n\n\treturn job",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderJobAccess#function:renderJobAccess",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderJobAccess",
+          "unitKind": "function",
+          "name": "renderJobAccess",
+          "qualifiedName": "renderJobAccess",
+          "parentUnitId": null,
+          "startLine": 160,
+          "endLine": 162,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The job has an expiration value available as job.exp.",
+            "The current time is available as now."
+          ],
+          "postconditions": [
+            "Returns null when job.exp is less than or equal to now.",
+            "Returns the job unchanged when job.exp is greater than now."
+          ],
+          "invariants": ["A job is considered expired at its expiration time itself."],
+          "edgeCases": [
+            "When job.exp equals now, the function returns null.",
+            "When job.exp is earlier than now, the function returns null.",
+            "When job.exp is later than now, the function returns the job."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether a render job is still accessible at the supplied current time. It returns no access for expired jobs and preserves the job for jobs that have not expired.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "The expiration comparison returns no access when the expiration condition evaluates as expired."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "renderJobAccess is called.",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "renderJobAccess is called.",
+              "then": "The result is the same job value.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f361d4cb44ebca468ce82fed87f8e8d8295e73833d8dbf7f2ffb32fa361b8d66"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderJobSurface#function:renderJobSurface",
+        "unitKind": "function",
+        "name": "renderJobSurface",
+        "qualifiedName": "renderJobSurface",
+        "parentUnitId": null,
+        "startLine": 168,
+        "endLine": 170,
+        "isBehavioral": true,
+        "source": " */\nexport function renderJobAccess(job: Pick<ThumbnailRenderJob, 'access'>): ThumbnailBoardAccess {\n\treturn job.access ?? 'public'",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderJobSurface#function:renderJobSurface",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderJobSurface",
+          "unitKind": "function",
+          "name": "renderJobSurface",
+          "qualifiedName": "renderJobSurface",
+          "parentUnitId": null,
+          "startLine": 168,
+          "endLine": 170,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The provided source does not define renderJobSurface; it defines renderJobAccess instead, so no verifiable contract for renderJobSurface can be derived.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "efbb68c15951337219e19754a0890a717f65450e59ca0765beaf24cda16694f1"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__getHmacKey#function:getHmacKey",
+        "unitKind": "function",
+        "name": "getHmacKey",
+        "qualifiedName": "getHmacKey",
+        "parentUnitId": null,
+        "startLine": 172,
+        "endLine": 177,
+        "isBehavioral": true,
+        "source": "\n/**\n * The surface a job is read under. Absent means a token minted before the field existed, read as\n * `og` — the only surface that was writing records then. See ThumbnailRenderJob.surface.\n */\nfunction renderJobSurface(job: Pick<ThumbnailRenderJob, 'surface'>): ThumbnailRenderSurface {",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__getHmacKey#function:getHmacKey",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__getHmacKey",
+          "unitKind": "function",
+          "name": "getHmacKey",
+          "qualifiedName": "getHmacKey",
+          "parentUnitId": null,
+          "startLine": 172,
+          "endLine": 177,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the HMAC key used by the render-token utilities.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "7ac4b0b2e6d3a791297db6bd507b78e88c44508521462cff611b854a72de1282"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderTokenRecordPrefix#function:renderTokenRecordPrefix",
+        "unitKind": "function",
+        "name": "renderTokenRecordPrefix",
+        "qualifiedName": "renderTokenRecordPrefix",
+        "parentUnitId": null,
+        "startLine": 218,
+        "endLine": 220,
+        "isBehavioral": true,
+        "source": " * All of them live under `render-tokens/{kind}/{slug}/` so hard-delete cleanup can clear a board's\n * records with one prefix listing rather than having to know every surface.\n *",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderTokenRecordPrefix#function:renderTokenRecordPrefix",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderTokenRecordPrefix",
+          "unitKind": "function",
+          "name": "renderTokenRecordPrefix",
+          "qualifiedName": "renderTokenRecordPrefix",
+          "parentUnitId": null,
+          "startLine": 218,
+          "endLine": 220,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "The resulting prefix identifies the render-token records for the specified kind and slug.",
+            "The prefix follows the shared render-tokens/{kind}/{slug}/ hierarchy."
+          ],
+          "invariants": [
+            "All render-token record prefixes use the render-tokens/{kind}/{slug}/ hierarchy.",
+            "The prefix terminates with a separator so it can be used for prefix-based listing."
+          ],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns a storage-key prefix in the form render-tokens/{kind}/{slug}/.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Constructs the shared storage-key prefix for render-token records, grouping records by token kind and slug so board cleanup can remove them with one prefix listing.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "render-tokens/{kind}/{slug}/",
+              "role": "Defines the shared storage-key hierarchy used to group render-token records for prefix-based cleanup."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "cb9da553e0cee4766f5c49edf688f95f3e369ce586091b418cca55720e0fe977"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__isPerCaptureRecordKey#function:isPerCaptureRecordKey",
+        "unitKind": "function",
+        "name": "isPerCaptureRecordKey",
+        "qualifiedName": "isPerCaptureRecordKey",
+        "parentUnitId": null,
+        "startLine": 226,
+        "endLine": 228,
+        "isBehavioral": true,
+        "source": " * costs no stored bytes.\n */\nconst RENDER_TOKEN_RECORD_PREFIX = 'render-tokens'",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__isPerCaptureRecordKey#function:isPerCaptureRecordKey",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__isPerCaptureRecordKey",
+          "unitKind": "function",
+          "name": "isPerCaptureRecordKey",
+          "qualifiedName": "isPerCaptureRecordKey",
+          "parentUnitId": null,
+          "startLine": 226,
+          "endLine": 228,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["RENDER_TOKEN_RECORD_PREFIX"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "This function is intended to determine whether a render-token record key is associated with a per-capture record. The supplied source excerpt does not expose its signature or implementation, so no stronger behavioral guarantee can be verified.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6b8955623b4b0cd25f777269dd61169ad3b9b3ef0ca9210436f7d4ce24226194"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderTokenRecordKey#function:renderTokenRecordKey",
+        "unitKind": "function",
+        "name": "renderTokenRecordKey",
+        "qualifiedName": "renderTokenRecordKey",
+        "parentUnitId": null,
+        "startLine": 230,
+        "endLine": 241,
+        "isBehavioral": true,
+        "source": "/** The prefix holding every surface's records for one board. Hard-delete cleanup lists this. */\nfunction renderTokenRecordPrefix(board: ThumbnailBoardRef) {\n\treturn `${RENDER_TOKEN_RECORD_PREFIX}/${board.kind}/${board.slug}/`\n}\n\n/**\n * Whether a job's record key names this one capture rather than something that outlives it. Those keys\n * are never reused, so nothing overwrites them and each has to be deleted once its capture is done —\n * and equally, deleting one cannot pull a record out from under a concurrent capture. See\n * `deleteMintedRenderToken`.\n */\nfunction isPerCaptureRecordKey(job: Pick<ThumbnailRenderJob, 'surface'>) {",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderTokenRecordKey#function:renderTokenRecordKey",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__renderTokenRecordKey",
+          "unitKind": "function",
+          "name": "renderTokenRecordKey",
+          "qualifiedName": "renderTokenRecordKey",
+          "parentUnitId": null,
+          "startLine": 230,
+          "endLine": 241,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Constructs the record key used to identify a rendered-token record.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "daa2c7e1167af643c121271554ffcabcd4a90737d2a20bd561ac2c69ee412221"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__recordMintedRenderToken#function:recordMintedRenderToken",
+        "unitKind": "function",
+        "name": "recordMintedRenderToken",
+        "qualifiedName": "recordMintedRenderToken",
+        "parentUnitId": null,
+        "startLine": 252,
+        "endLine": 263,
+        "isBehavioral": true,
+        "source": "\t// Keyed by the capture rather than by what it draws: two identical MCP captures are an ordinary\n\t// concurrent case, not a race, and a content key would have them invalidate each other. Hashed\n\t// rather than used raw because the token is a credential and this is an object name. The mode\n\t// segment carries no meaning for the lookup — it is there so a listing reads.\n\treturn `${base}/${job.mode === 'measure' ? 'measure' : 'screenshot'}/${await sha256(token)}`\n}\n\n/**\n * Records a freshly minted token as ours. Errors are **not** swallowed: a record that failed to write\n * means the render is about to fail its own token check, and a confusing \"invalid token\" is worse to\n * debug than the write error that caused it.\n *",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__recordMintedRenderToken#function:recordMintedRenderToken",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__recordMintedRenderToken",
+          "unitKind": "function",
+          "name": "recordMintedRenderToken",
+          "qualifiedName": "recordMintedRenderToken",
+          "parentUnitId": null,
+          "startLine": 252,
+          "endLine": 263,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The token is freshly minted and its associated render context is valid."],
+          "postconditions": [
+            "A record identifying the minted token is written to the backing store when the operation succeeds."
+          ],
+          "invariants": [
+            "A failure to write the token record is not converted into a successful or silently ignored result."
+          ],
+          "edgeCases": [
+            "When the backing-store write fails, the original write error propagates instead of being suppressed.",
+            "Concurrent records for distinct captures remain independently representable."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["The underlying backing-store write error"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": ["Creates or updates the backing-store record for the minted render token."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Records a freshly minted render token as owned by this system. Write failures propagate to the caller rather than being swallowed.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The token-recording function is invoked and the backing-store write succeeds.",
+              "then": "The token is recorded successfully.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The backing-store write fails.",
+              "then": "The write error is propagated to the caller rather than swallowed or replaced with an invalid-token result.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "5c0c60c4a252780b3775ed8f0274ece62a9ced89256ec3fc0ea4f3293dcc3ff8"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__deleteMintedRenderToken#function:deleteMintedRenderToken",
+        "unitKind": "function",
+        "name": "deleteMintedRenderToken",
+        "qualifiedName": "deleteMintedRenderToken",
+        "parentUnitId": null,
+        "startLine": 279,
+        "endLine": 292,
+        "isBehavioral": true,
+        "source": "\tawait env.THUMBNAILS.put(await renderTokenRecordKey(job, token), new Uint8Array(), {\n\t\tcustomMetadata: { tokenHash: await sha256(token) },\n\t})\n}\n\n/**\n * Drops one capture's record, for the keys that do not overwrite in place — every MCP job, measure and\n * screenshot alike, since their key carries the token and so nothing later reuses it. Each capture would\n * otherwise leave an object behind forever; see recordMintedRenderToken. Call it once the render is done\n * with the token, which is after the snapshot fetch this record guards has already happened.\n *\n * A no-op for the surfaces whose key outlives one capture. Deleting an OG record here would be worse\n * than pointless: that key is per board, so a finishing render could drop the record a *newer* in-flight\n * mint had just written, and 403 it.",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__deleteMintedRenderToken#function:deleteMintedRenderToken",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__deleteMintedRenderToken",
+          "unitKind": "function",
+          "name": "deleteMintedRenderToken",
+          "qualifiedName": "deleteMintedRenderToken",
+          "parentUnitId": null,
+          "startLine": 279,
+          "endLine": 292,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The render-token record corresponds to the supplied job and token.",
+            "For deletion to occur, the record key must be one of the per-capture key forms."
+          ],
+          "postconditions": [
+            "The per-capture minted-token record is deleted from the thumbnails storage after the render completes.",
+            "Records whose keys outlive a single capture remain unchanged."
+          ],
+          "invariants": [
+            "An OG record is not deleted by this function.",
+            "Deletion is scoped to the supplied render job and token."
+          ],
+          "edgeCases": [
+            "For MCP, measure, or screenshot records whose key carries the token, the corresponding stored record is deleted.",
+            "For a surface with a key that outlives one capture, including an OG record, the function is a no-op.",
+            "If the storage deletion operation fails, the failure is not converted into a successful cleanup result."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["The underlying storage deletion error, if the thumbnails storage operation fails"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Deletes the matching minted render-token object from env.THUMBNAILS for per-capture records."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "renderTokenRecordKey",
+              "source": "apps/dotcom/sync-worker/src/utils/renderTokens.ts",
+              "kind": "internal"
+            },
+            { "name": "env.THUMBNAILS.delete", "source": null, "kind": "external" },
+            {
+              "name": "isPerCaptureRecordKey",
+              "source": "apps/dotcom/sync-worker/src/utils/renderTokens.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["env.THUMBNAILS"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Deletes a minted render-token record after the guarded render has completed when the record is specific to a single capture. It leaves longer-lived surface records, such as OG records, untouched.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteMintedRenderToken is called after the render completes.",
+              "then": "The corresponding object is deleted from the thumbnails storage.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteMintedRenderToken is called for that record.",
+              "then": "No deletion is performed and the newer record remains protected.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "9d19cc05e51a73cc01c44bd8a8750fda41b501f73141e5293ee5893e0f469b36"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__isMintedRenderToken#function:isMintedRenderToken",
+        "unitKind": "function",
+        "name": "isMintedRenderToken",
+        "qualifiedName": "isMintedRenderToken",
+        "parentUnitId": null,
+        "startLine": 309,
+        "endLine": 331,
+        "isBehavioral": true,
+        "source": "\t\t// Ignored — see above.\n\t}\n}\n\n/**\n * Whether this token is one we minted. Call only after `verifyThumbnailRenderToken` has accepted the\n * signature and expiry — the `job` argument is what that returns, so the key is derived from signed\n * data rather than from anything the caller supplied.\n *\n * Vacuously true for a `public` job, which is not recorded: the board it names is one the caller could\n * fetch without any of this, so the signature is the whole gate. See recordMintedRenderToken.\n */\nexport async function isMintedRenderToken(\n\tenv: Environment,\n\tjob: ThumbnailRenderJob,\n\ttoken: string\n): Promise<boolean> {\n\tif (renderJobAccess(job) !== 'render') return true\n\t// See recordMintedRenderToken: with no bucket there is no record to check against, so this trusts\n\t// the signature alone rather than refusing every render.\n\tif (!env.THUMBNAILS) return true\n\n\tconst record =",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__isMintedRenderToken#function:isMintedRenderToken",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__isMintedRenderToken",
+          "unitKind": "function",
+          "name": "isMintedRenderToken",
+          "qualifiedName": "isMintedRenderToken",
+          "parentUnitId": null,
+          "startLine": 309,
+          "endLine": 331,
+          "signature": "export async function isMintedRenderToken(env: Environment, job: ThumbnailRenderJob, token: string): Promise<boolean>",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "job",
+              "type": "ThumbnailRenderJob",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            { "name": "token", "type": "string", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": "Promise<boolean>",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The token has already passed verifyThumbnailRenderToken, including signature and expiry validation.",
+            "The job argument is the signed job data returned by verifyThumbnailRenderToken."
+          ],
+          "postconditions": [
+            "Returns a boolean indicating whether the token is recorded as minted for a non-public render job when thumbnail storage is available.",
+            "Returns true for public jobs.",
+            "Returns true when thumbnail storage is unavailable."
+          ],
+          "invariants": [
+            "The access classification is derived from the supplied job rather than from caller-controlled unsigned data.",
+            "A public job is considered minted without requiring a storage record.",
+            "A missing THUMBNAILS bucket does not cause the check to reject the token."
+          ],
+          "edgeCases": [
+            "When renderJobAccess(job) is not 'render', returns true without requiring a minted-token record.",
+            "When env.THUMBNAILS is absent, returns true for a render job without checking storage.",
+            "For a render job with thumbnail storage, checks the minted-token record associated with the signed job and token."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "renderJobAccess", "source": "local utility", "kind": "internal" },
+            { "name": "renderTokenRecordKey", "source": "local utility", "kind": "internal" },
+            { "name": "THUMBNAILS record lookup", "source": "env.THUMBNAILS", "kind": "external" }
+          ],
+          "symbolReferences": ["Environment", "ThumbnailRenderJob", "THUMBNAILS"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether a verified thumbnail render token was minted for the supplied job. Public jobs and environments without thumbnail storage are accepted without a minted-token record lookup.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "render",
+              "role": "Render-job access classification that requires a minted-token record check."
+            },
+            {
+              "kind": "enum-value",
+              "value": "public",
+              "role": "Non-recorded job access classification accepted vacuously."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call isMintedRenderToken(env, job, token).",
+              "then": "The function resolves to true without requiring a minted-token record.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call isMintedRenderToken(env, job, token).",
+              "then": "The function resolves to true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call isMintedRenderToken(env, job, token).",
+              "then": "The function resolves according to whether the storage record for the signed job identifies the supplied token as minted.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b3bffca2eef30f503cc217ef4d3362a825896faf8c9590524be360617a44535c"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__legacyRenderTokenRecordKey#function:legacyRenderTokenRecordKey",
+        "unitKind": "function",
+        "name": "legacyRenderTokenRecordKey",
+        "qualifiedName": "legacyRenderTokenRecordKey",
+        "parentUnitId": null,
+        "startLine": 335,
+        "endLine": 337,
+        "isBehavioral": true,
+        "source": "\t\t// deploy that introduced the field has finished — and without it every OG render already in\n\t\t// flight across that deploy would 403 until its 60s token expired.\n\t\t(job.surface === undefined ? await env.THUMBNAILS.head(legacyRenderTokenRecordKey(job)) : null)",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__legacyRenderTokenRecordKey#function:legacyRenderTokenRecordKey",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__legacyRenderTokenRecordKey",
+          "unitKind": "function",
+          "name": "legacyRenderTokenRecordKey",
+          "qualifiedName": "legacyRenderTokenRecordKey",
+          "parentUnitId": null,
+          "startLine": 335,
+          "endLine": 337,
+          "signature": "legacyRenderTokenRecordKey(job)",
+          "parameters": [
+            { "name": "job", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The job argument must provide the fields required by the legacy key format."],
+          "postconditions": ["Returns the legacy record key associated with the supplied job."],
+          "invariants": ["The same job produces the same legacy record key."],
+          "edgeCases": [
+            "Jobs using the legacy-compatible shape produce a key for the legacy record lookup.",
+            "Jobs missing fields required by the legacy key format cannot be expected to produce a valid legacy record key."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Not specified by the available source.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Derives the legacy render-token record key associated with a render job. The resulting key is used to look up token records created under the legacy storage-key format.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "9419bae59ffdcf659f1a65e7146470fb4005636c29ffe530be4840798fec0ebb"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__deleteRenderTokenRecord#function:deleteRenderTokenRecord",
+        "unitKind": "function",
+        "name": "deleteRenderTokenRecord",
+        "qualifiedName": "deleteRenderTokenRecord",
+        "parentUnitId": null,
+        "startLine": 363,
+        "endLine": 385,
+        "isBehavioral": true,
+        "source": "\tenv: Environment,\n\tboard: ThumbnailBoardRef\n): Promise<void> {\n\tif (!env.THUMBNAILS) return\n\ttry {\n\t\tconst prefix = renderTokenRecordPrefix(board)\n\t\t// A board's records number in the low tens at most — surfaces × pages × themes, plus any measure\n\t\t// record whose own cleanup failed — so a single unpaginated listing covers it; `truncated` is not\n\t\t// chased because leaving a few orphans behind is exactly the cost this function already accepts on\n\t\t// failure.\n\t\tconst listed = await env.THUMBNAILS.list({ prefix })\n\t\tawait Promise.all([\n\t\t\t...listed.objects.map((object) => env.THUMBNAILS!.delete(object.key)),\n\t\t\t// The pre-namespacing record sits at that prefix *without* its trailing slash, so the listing\n\t\t\t// cannot see it and it has to go by name. Every board rendered by a worker older than the\n\t\t\t// namespacing has one, and this is the only thing that would ever collect them.\n\t\t\tenv.THUMBNAILS.delete(legacyRenderTokenRecordKey(board)),\n\t\t])\n\t} catch {\n\t\t// Ignored — see above.\n\t}\n}\n",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__deleteRenderTokenRecord#function:deleteRenderTokenRecord",
+          "fileId": "apps/dotcom/sync-worker/src/utils/renderTokens.ts__deleteRenderTokenRecord",
+          "unitKind": "function",
+          "name": "deleteRenderTokenRecord",
+          "qualifiedName": "deleteRenderTokenRecord",
+          "parentUnitId": null,
+          "startLine": 363,
+          "endLine": 385,
+          "signature": "function deleteRenderTokenRecord(env: Environment, board: ThumbnailBoardRef): Promise<void>",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "board",
+              "type": "ThumbnailBoardRef",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "env and board are valid arguments.",
+            "If env.THUMBNAILS is present, it provides list and delete operations compatible with the thumbnail storage interface."
+          ],
+          "postconditions": [
+            "If env.THUMBNAILS is absent, no storage operation is performed and the promise resolves.",
+            "If env.THUMBNAILS is present and listing succeeds, every object returned by the unpaginated prefix listing is scheduled for deletion.",
+            "The legacy render-token record key for the board is scheduled for deletion.",
+            "Storage errors encountered during listing or deletion are not propagated."
+          ],
+          "invariants": [
+            "Only records identified by the board-specific current prefix or legacy board-specific key are targeted.",
+            "Listing pagination is not followed; a truncated listing may leave unlisted records behind.",
+            "The function resolves to undefined."
+          ],
+          "edgeCases": [
+            "When env.THUMBNAILS is absent, the function returns immediately without listing or deleting.",
+            "When the prefix listing returns no objects, the legacy record deletion is still attempted.",
+            "When the listing is truncated, only the returned objects plus the legacy key are deleted; additional pages are not requested.",
+            "When listing or any deletion rejects, the rejection is caught and the function resolves without throwing; later deletion scheduling may not occur if listing fails."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Not explicitly validated; operational errors from thumbnail storage are ignored.",
+            "returnsOnError": "Resolves with undefined."
+          },
+          "stateMutations": ["Deletes matching objects from env.THUMBNAILS storage."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "renderTokenRecordPrefix", "source": "internal", "kind": "internal" },
+            { "name": "env.THUMBNAILS.list", "source": "thumbnail storage binding", "kind": "external" },
+            { "name": "env.THUMBNAILS.delete", "source": "thumbnail storage binding", "kind": "external" },
+            { "name": "legacyRenderTokenRecordKey", "source": "internal", "kind": "internal" },
+            { "name": "Promise.all", "source": "standard library", "kind": "external" }
+          ],
+          "symbolReferences": ["Environment", "ThumbnailBoardRef"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Uses thumbnail object storage list({ prefix }) to obtain objects with key fields, then deletes each listed key and the legacyRenderTokenRecordKey(board).",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Removes all render-token records associated with a board from the thumbnail storage, including the legacy pre-namespacing record. Storage absence and cleanup failures are tolerated so the function resolves without propagating errors.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteRenderTokenRecord(env, board) is awaited",
+              "then": "It resolves to undefined without invoking thumbnail storage operations.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteRenderTokenRecord(env, board) is awaited",
+              "then": "It attempts deletion of \"a\", \"b\", and the legacy render-token record key for board.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "deleteRenderTokenRecord(env, board) is awaited",
+              "then": "The returned promise resolves rather than propagating the storage error.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "0556ca02125f5c3d2cce48f3edbe6bea4080f55b67997ca03f9b9dbd96d467d4"
+        }
+      }
+    ]
+  },
+  "out": [
+    "apps/dotcom/sync-worker/src/utils/base64.ts",
+    "apps/dotcom/sync-worker/src/types.ts",
+    "apps/dotcom/sync-worker/src/utils/hash.ts"
+  ],
+  "in": [
+    "apps/dotcom/sync-worker/src/utils/renderTokens.test.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/getThumbnailSnapshot.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/getThumbnailSnapshot.test.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/thumbnailRender.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.test.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/putThumbnailRenderResult.ts"
+  ],
+  "externals": [],
+  "impact": {
+    "seeds": 13,
+    "callers": 9,
+    "impactedFiles": [
+      "apps/dotcom/sync-worker/src/routes/tla/putThumbnailRenderResult.ts",
+      "apps/dotcom/sync-worker/src/utils/renderTokens.test.ts",
+      "apps/dotcom/sync-worker/src/routes/tla/getThumbnailSnapshot.ts",
+      "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts",
+      "apps/dotcom/sync-worker/src/routes/tla/thumbnailRender.ts"
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "id": "xrepo-v6-1-failed-first-load-is-a-one-way-door-hard",
+  "question": "When a container's very first population fails, the failure is swallowed rather than delivered: every caller already waiting on that first settled state - a callback registered before the failure, a promise someone is awaiting - never learns the attempt failed, and the container is left facing outward as still-loading forever. Worse, once the container is explicitly marked as having failed, nothing it does afterward - not even a fully successful retry - is allowed to bring it back to a working state; the failure is a one-way door. The same two-part contract, delivered exactly once and never a dead end, is honored deliberately elsewhere in the folder: an asynchronous outcome must reach everyone who registered for the first settlement of a value, and a later successful attempt must be able to undo an earlier failure rather than being permanently blocked by it. Which files implement the one-way trap that has to be reopened, and which own the deliver-once / recoverable-afterward machinery it needs to match?",
+  "anchor": {
+    "repo": "db",
+    "pinned_commit": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+    "fix_pr": "https://github.com/TanStack/db/pull/1751",
+    "pr_number": 1751,
+    "pr_title": "fix(db): propagate initial query errors",
+    "fix_merged": "2026-08-21",
+    "fix_merge_commit": "c521b5d6503d",
+    "parent_is_buggy": true
+  },
+  "counts": {
+    "min_repos": 5,
+    "min_files": 15
+  },
+  "repo_commits": {
+    "db": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+    "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+    "jotai": "5c4ca26b0db5571114be58393e17854a771f7790",
+    "redux-toolkit": "b1c5130154c454ca8387f55da6122fcb507c560c",
+    "tldraw": "5590d14d8edd4faab7dc1177b6e1adb28876fd23"
+  },
+  "expected": [
+    {
+      "repo": "db",
+      "knowledgeId": "659659a1-0515-4ae1-92a9-1961c8c10abe",
+      "files": [
+        "packages/db/src/collection/lifecycle.ts",
+        "packages/db/src/collection/index.ts",
+        "packages/db/src/collection/sync.ts",
+        "packages/db/src/query/live/collection-config-builder.ts",
+        "packages/db/src/query/subset-dedupe.ts",
+        "packages/db/src/types.ts",
+        "packages/electric-db-collection/src/electric.ts",
+        "packages/powersync-db-collection/src/powersync.ts",
+        "packages/query-db-collection/src/query.ts",
+        "packages/rxdb-db-collection/src/rxdb.ts",
+        "packages/trailbase-db-collection/src/trailbase.ts"
+      ]
+    },
+    {
+      "repo": "query",
+      "knowledgeId": "0c574639-1088-4233-a793-3a4397e6c431",
+      "files": ["packages/query-core/src/query.ts"]
+    },
+    {
+      "repo": "jotai",
+      "knowledgeId": "581a242e-3f4c-45db-8e84-c69cf159ac44",
+      "files": ["src/vanilla/utils/unwrap.ts"]
+    },
+    {
+      "repo": "redux-toolkit",
+      "knowledgeId": "5129210f7edc89d624231a57a3b76770",
+      "files": ["packages/toolkit/src/createAsyncThunk.ts"]
+    },
+    {
+      "repo": "tldraw",
+      "knowledgeId": null,
+      "files": ["packages/sync-core/src/lib/TLSyncClient.ts"]
+    }
+  ],
+  "grader_notes": {
+    "why_cross_repo": "ANCHOR (real bug, TanStack/db PR #1751 'fix(db): propagate initial query errors', merged 2026-08-21 as c521b5d6503d - AFTER the pinned commit, verified bug-live-at-pin by direct read of the pin, not just the fix's diff pre-image: at the pin, CollectionLifecycleManager.validTransitions declares `error: ['cleaned-up','idle']` - there is NO error->ready edge - and there is no markError() method at all; onFirstReadyCallbacks (an array of callbacks registered via onFirstReady()) is drained ONLY inside markReady(), so a sync that fails before its first successful commit never calls any registered callback and the collection is stuck in `loading` or an unrecoverable `error` forever. The fix adds markError()/syncError tracking, widens the transition table to error->ready, and threads AbortSignal-aware settlement through collection/sync.ts, collection-config-builder.ts (per-source error tracking distinguishing a fatal top-level error from a recoverable per-source one, plus 'no transition can be missed between observation and subscription' exactly-once registration), subset-dedupe.ts (a deduplicating in-flight-request observer must not treat the ORIGINAL caller's transport failure as its own), and all five collection adapters (electric, powersync, query-db-collection, rxdb, trailbase) which each independently wire their backend's error/ready events into this same lifecycle surface. ECOSYSTEM (reference-correct implementations of the same two-part contract, verified by direct source read at each repo's own pin, not merely mentioned): query.ts's #dispatch reducer has NO guard on the 'fetch' transition - a query can move error->fetching->success unconditionally (recoverable-afterward), and every dispatch runs inside notifyManager.batch so ALL registered observers, not just the first, hear about the transition (deliver-once semantics enforced by React Query's own architecture, not by this file, but this file is where the transition table would have to change if it ever grew a db-style guard). jotai's unwrap.ts explicitly implements the recoverable half with a comment naming the hazard - 'ignore previous errors to avoid getting stuck in error state' - inside the atom read that re-derives PromiseAndValue on every dependency change, and settles promiseErrorCache/promiseResultCache exactly once per promise identity via the `promise !== prev?.p` guard before re-subscribing .then(). redux-toolkit's createAsyncThunk.ts dispatches independent pending/fulfilled/rejected action creators with no state-machine gate at all - Redux reducers are pure functions of the current state and a rejected thunk can always be re-dispatched, so recoverability is structural rather than something this file could get wrong, but it is the reference createAsyncThunk implementations elsewhere in the ecosystem (RTK Query's own build-on-top) inherit from. tldraw's TLSyncClient.ts guards its first-load callback with a `didLoad` boolean exactly analogous to db's onFirstReadyCallbacks-drained-once-in-markReady, and its onStatusChange handler calls config.onSyncError exactly once per transition into the 'error' socket status before closing, rather than leaving callers to poll.",
+    "excluded_from_gold": "packages/db/src/client.ts and packages/db/src/query/ir-stable-identity.ts are touched by sibling PRs in the same db release cycle (#1769, #1768) but are NOT part of PR #1751's diff and were confirmed to be introduced by OTHER post-pin commits; they are excluded to keep gold anchored to the single verified fix. Two additional db files touched by #1751 (packages/db/src/collection/state.ts, packages/db/src/errors.ts) contain only pure line additions with no removed lines to verify against the pin and were excluded out of caution rather than asserted as gold without a verbatim bug-liveness check.",
+    "verification_method": "Every anchor file was checked against the pin using `git show <pin>:<file>` DIRECTLY (not the fix commit's diff pre-image, which can differ from the pin if intervening commits touched the same lines) - see the query-core cache-key candidate below for why this distinction matters.",
+    "rejected_candidate": "An earlier draft anchored this same 'derive a key once, do not recompute it differently on a second path' contract on TanStack/query PR 'store cache-key' (f7e8581fd92a) + 'switch to on-demand weakmap cache' (60cd3d108359). It was REJECTED after direct verification at query's pin (46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76, 2026-08-03) showed the entire `valueSerializer`/`serializeCacheKey`-in-getQueryDefaults subsystem those fixes touch was itself introduced by a LATER commit (0753acefaec2, 'serializer', 2026-08-21) - the bug and its fix both postdate the pin, so it is not live in the checked-out tree and cannot be asked about."
+  }
+}

@@ -1,0 +1,709 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "apps/dotcom/sync-worker/src/authorizeFileRecord.ts",
+    "language": "typescript",
+    "sizeBytes": 2624,
+    "tokenCount": 655,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:28:03.638Z",
+    "module": {
+      "purpose": "Defines server-side authorization for file-room records, enforcing note attribution and comment authorship against authenticated session metadata.",
+      "summary": "This module combines shared comment, thread, and reaction authorizers with a custom shape authorizer for notes. It permits deletions, preserves unchanged note attribution during updates, and accepts only null or the current session user when attribution changes. Non-note shapes bypass attribution checks, while forged note creates or attribution changes are rejected by returning null.",
+      "businessContext": "Supports collaborative document editing and commenting with trustworthy user attribution. If authorization fails, users could create notes or comments in another person's name.",
+      "classes": [
+        "SessionMeta (~L13-16): Per-session socket metadata containing store and authenticated user identifiers",
+        "FileRecord (~L19): Union of file, comment, thread, and reaction record types"
+      ],
+      "functions": [
+        "getNoteAttribution (~L22-26): Extracts current text attribution from note shapes",
+        "authorizeShape (~L29-42): Validates note attribution changes against session identity"
+      ],
+      "keywords": [
+        "record authorization",
+        "note attribution",
+        "comment authorship",
+        "session metadata",
+        "authenticated user",
+        "TLRecordAuthorizer",
+        "object-lane comments",
+        "forged create"
+      ],
+      "ontologyConcepts": [
+        "authorization",
+        "identity attribution",
+        "access control",
+        "session context",
+        "record validation",
+        "collaborative editing"
+      ],
+      "businessEntities": ["File", "Note", "Comment", "Comment Thread", "Comment Reaction", "User", "Session"],
+      "systemCapabilities": [
+        "Authorize collaborative file records",
+        "Enforce note text attribution",
+        "Enforce comment authorship",
+        "Prevent forged identity changes"
+      ],
+      "configDependencies": [],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/sync-collaboration",
+          "symbols": ["createCommentAuthorizers"],
+          "package": "@tldraw/sync-collaboration",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/sync-core",
+          "symbols": ["TLRecordAuthorizer", "TLRecordAuthorizers"],
+          "package": "@tldraw/sync-core",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["TLComment", "TLCommentReaction", "TLCommentThread", "TLNoteShape", "TLRecord", "TLShape"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 10 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "SessionMeta",
+          "shape": "interface SessionMeta {\n\tstoreId: string\n\tuserId: string | null\n}",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "authorizeFileRecord",
+          "shape": "TLRecordAuthorizers<FileRecord, SessionMeta>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "createCommentAuthorizers",
+          "shape": "createCommentAuthorizers<SessionMeta>({ getUserId: (session) => session.meta.userId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLRecordAuthorizer",
+          "shape": "TLRecordAuthorizer<TLShape, SessionMeta>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLRecordAuthorizers",
+          "shape": "TLRecordAuthorizers<FileRecord, SessionMeta>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "TLComment", "shape": "TLComment", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "TLCommentReaction",
+          "shape": "TLCommentReaction",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "TLCommentThread", "shape": "TLCommentThread", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLNoteShape", "shape": "TLNoteShape", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLRecord", "shape": "TLRecord", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLShape", "shape": "TLShape", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "note-attribution-extraction",
+          "intent": "Extract note attribution while bypassing non-note shapes",
+          "structureKind": "branch",
+          "predicate": "shape.type !== 'note'",
+          "branchOutcomes": ["non-note returns undefined", "note returns textLastEditedBy"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 22, "endLine": 26 }
+        },
+        {
+          "name": "shape-authorization",
+          "intent": "Authorize deletion and validate note attribution changes",
+          "structureKind": "branch",
+          "predicate": "type === 'delete'",
+          "branchOutcomes": ["delete returns previous record", "create or update validates attribution"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 29, "endLine": 42 }
+        },
+        {
+          "name": "attribution-change-rejection",
+          "intent": "Reject attribution changes not owned by the current session",
+          "structureKind": "branch",
+          "predicate": "after !== before && after != null && after !== session.meta.userId",
+          "branchOutcomes": ["invalid attribution returns null", "allowed attribution returns next record"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 38, "endLine": 41 }
+        },
+        {
+          "name": "file-record-authorizer-composition",
+          "intent": "Compose shared comment authorizers with custom shape authorization",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 45, "endLine": 48 }
+        }
+      ],
+      "representationFamily": "binding",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "SessionMeta",
+          "signature": "export interface SessionMeta {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 13, "endLine": 13 }
+        },
+        {
+          "kind": "function",
+          "name": "getNoteAttribution",
+          "signature": "function getNoteAttribution(shape: TLShape): string | null | undefined {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string | null | undefined",
+          "exported": false,
+          "anchor": { "startLine": 22, "endLine": 22 }
+        },
+        {
+          "kind": "function",
+          "name": "authorizeShape",
+          "signature": "const authorizeShape: TLRecordAuthorizer<TLShape, SessionMeta> = ({\n\tsession,\n\ttype,\n\tprev,\n\tnext,\n}) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 29, "endLine": 35 }
+        },
+        {
+          "kind": "object",
+          "name": "authorizeFileRecord",
+          "signature": "export const authorizeFileRecord = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 45, "endLine": 45 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "SessionMeta",
+          "shape": "{\n\tstoreId: string\n\tuserId: string | null\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 13, "endLine": 16 }
+        },
+        {
+          "kind": "type",
+          "name": "FileRecord",
+          "shape": "TLRecord | TLComment | TLCommentThread | TLCommentReaction",
+          "discriminant": null,
+          "anchor": { "startLine": 19, "endLine": 19 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Deletion operation",
+          "handled": true,
+          "behavior": "Returns the previous shape without attribution validation.",
+          "anchor": { "startLine": 36, "endLine": 36 }
+        },
+        {
+          "inputShape": "Non-note shape",
+          "handled": true,
+          "behavior": "Attribution is undefined and the incoming record is accepted.",
+          "anchor": { "startLine": 23, "endLine": 25 }
+        },
+        {
+          "inputShape": "Note with null attribution",
+          "handled": true,
+          "behavior": "Null attribution is allowed, including anonymous or emptied notes.",
+          "anchor": { "startLine": 40, "endLine": 40 }
+        },
+        {
+          "inputShape": "Unchanged attribution belonging to another user",
+          "handled": true,
+          "behavior": "The unchanged attribution is accepted during updates.",
+          "anchor": { "startLine": 37, "endLine": 39 }
+        },
+        {
+          "inputShape": "Changed attribution belonging to another user",
+          "handled": true,
+          "behavior": "The authorization rejects the record by returning null.",
+          "anchor": { "startLine": 40, "endLine": 40 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "!=",
+          "left": "shape.type",
+          "right": "'note'",
+          "inclusive": false,
+          "intent": "Identifies shapes that are not notes.",
+          "anchor": { "startLine": 23, "endLine": 23 }
+        },
+        {
+          "operator": "==",
+          "left": "type",
+          "right": "'delete'",
+          "inclusive": true,
+          "intent": "Identifies deletion operations.",
+          "anchor": { "startLine": 36, "endLine": 36 }
+        },
+        {
+          "operator": "!=",
+          "left": "after",
+          "right": "before",
+          "inclusive": false,
+          "intent": "Detects a changed attribution.",
+          "anchor": { "startLine": 40, "endLine": 40 }
+        },
+        {
+          "operator": "!=",
+          "left": "after",
+          "right": "null",
+          "inclusive": false,
+          "intent": "Requires changed attribution to be non-null before identity comparison.",
+          "anchor": { "startLine": 40, "endLine": 40 }
+        },
+        {
+          "operator": "!=",
+          "left": "after",
+          "right": "session.meta.userId",
+          "inclusive": false,
+          "intent": "Rejects attribution owned by a different session user.",
+          "anchor": { "startLine": 40, "endLine": 40 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Rejects unauthorized attribution by returning null.",
+          "fallback": "null",
+          "anchor": { "startLine": 40, "endLine": 40 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Non-note shapes have no attribution constraint and return their incoming record.",
+          "anchor": { "startLine": 22, "endLine": 26 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Deletion is handled before attribution extraction and validation.",
+          "anchor": { "startLine": 36, "endLine": 36 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A changed note attribution must be null or equal to the session user.",
+          "anchor": { "startLine": 38, "endLine": 40 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Authorized non-deletion records return the next record unchanged.",
+          "anchor": { "startLine": 40, "endLine": 41 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "Incoming shapes use the current schema field textLastEditedBy for note attribution.",
+          "anchor": { "startLine": 21, "endLine": 25 }
+        },
+        {
+          "kind": "caller",
+          "description": "The caller supplies session.meta.userId as the authenticated identity.",
+          "anchor": { "startLine": 46, "endLine": 46 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the surrounding authorization framework interpret a null authorizer result as a rejected record without throwing?",
+          "affects": "error_handling",
+          "anchor": { "startLine": 40, "endLine": 40 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Authorization functions are synchronous and stateless apart from the supplied session and records."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "allows-delete-with-previous-record",
+          "scenario": "A shape deletion is authorized for an existing record.",
+          "given": [
+            "session.meta.userId = \"user-1\"",
+            "prev = { type: \"note\", props: { textLastEditedBy: \"user-2\" } }",
+            "next = null"
+          ],
+          "when": "authorizeShape({ session, type: 'delete', prev, next })",
+          "then": "result === prev",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "allows-create-with-own-attribution",
+          "scenario": "A note is created with no attribution or with the authenticated user's attribution.",
+          "given": [
+            "session.meta.userId = \"user-1\"",
+            "prev = null",
+            "next = { type: \"note\", props: { textLastEditedBy: \"user-1\" } }"
+          ],
+          "when": "authorizeShape({ session, type: 'create', prev, next })",
+          "then": "result === next",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "rejects-forged-create-attribution",
+          "scenario": "A note creation claims another user's text attribution.",
+          "given": [
+            "session.meta.userId = \"user-1\"",
+            "prev = null",
+            "next = { type: \"note\", props: { textLastEditedBy: \"user-2\" } }"
+          ],
+          "when": "authorizeShape({ session, type: 'create', prev, next })",
+          "then": "result === null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents forged note creation from attributing text to another user."
+        },
+        {
+          "testId": "rejects-changed-foreign-attribution",
+          "scenario": "An update changes a note's attribution to a user other than the authenticated user.",
+          "given": [
+            "session.meta.userId = \"user-1\"",
+            "prev = { type: \"note\", props: { textLastEditedBy: null } }",
+            "next = { type: \"note\", props: { textLastEditedBy: \"user-2\" } }"
+          ],
+          "when": "authorizeShape({ session, type: 'update', prev, next })",
+          "then": "result === null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Only the current session may introduce a new non-null note attribution."
+        },
+        {
+          "testId": "allows-unchanged-foreign-attribution",
+          "scenario": "An update preserves a note attribution belonging to another user while changing other properties.",
+          "given": [
+            "session.meta.userId = \"user-1\"",
+            "prev = { type: \"note\", props: { textLastEditedBy: \"user-2\", text: \"old\" } }",
+            "next = { type: \"note\", props: { textLastEditedBy: \"user-2\", text: \"new\" } }"
+          ],
+          "when": "authorizeShape({ session, type: 'update', prev, next })",
+          "then": "result === next",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Users may edit other note properties without taking over existing attribution."
+        },
+        {
+          "testId": "ignores-attribution-on-non-note-shapes",
+          "scenario": "A non-note shape contains unrelated properties that resemble attribution.",
+          "given": [
+            "session.meta.userId = \"user-1\"",
+            "prev = { type: \"geo\", props: { textLastEditedBy: \"user-2\" } }",
+            "next = { type: \"geo\", props: { textLastEditedBy: \"user-3\" } }"
+          ],
+          "when": "authorizeShape({ session, type: 'update', prev, next })",
+          "then": "result === next",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Attribution enforcement applies only to note shapes."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Import collaboration authorizer factory",
+        "Import record authorizer types",
+        "Import schema record types",
+        "Export SessionMeta interface",
+        "Declare FileRecord union",
+        "Define getNoteAttribution helper",
+        "Define authorizeShape authorizer",
+        "Export authorizeFileRecord authorizer collection"
+      ],
+      "moduleLevelCode": "Import declarations and exported authorization declarations",
+      "exports": [
+        { "name": "SessionMeta", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "authorizeFileRecord", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "createCommentAuthorizers",
+          "module": "@tldraw/sync-collaboration",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "TLRecordAuthorizer", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLRecordAuthorizers", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLComment", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentReaction", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentThread", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLNoteShape", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLRecord", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLShape", "module": "@tldraw/tlschema", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/dotcom/sync-worker/src/authorizeFileRecord.ts__getNoteAttribution#function:getNoteAttribution",
+        "unitKind": "function",
+        "name": "getNoteAttribution",
+        "qualifiedName": "getNoteAttribution",
+        "parentUnitId": null,
+        "startLine": 22,
+        "endLine": 26,
+        "isBehavioral": true,
+        "source": "/**\n * A note's text attribution, or `undefined` when the shape isn't carrying one (non-note shapes).\n * Authorizers see records at the server's schema version, so only the current field name exists.\n */\nfunction getNoteAttribution(shape: TLShape): string | null | undefined {",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/authorizeFileRecord.ts__getNoteAttribution#function:getNoteAttribution",
+          "fileId": "apps/dotcom/sync-worker/src/authorizeFileRecord.ts__getNoteAttribution",
+          "unitKind": "function",
+          "name": "getNoteAttribution",
+          "qualifiedName": "getNoteAttribution",
+          "parentUnitId": null,
+          "startLine": 22,
+          "endLine": 26,
+          "signature": "function getNoteAttribution(shape: TLShape): string | null | undefined",
+          "parameters": [
+            { "name": "shape", "type": "TLShape", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "string | null | undefined",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The argument is a TLShape value."],
+          "postconditions": [
+            "For a note shape, returns its current-schema text attribution value, which may be a string or null.",
+            "For a non-note shape, returns undefined."
+          ],
+          "invariants": [
+            "Only the current server-schema attribution field is considered.",
+            "The function does not mutate the supplied shape."
+          ],
+          "edgeCases": [
+            "A non-note shape returns undefined because it does not carry note attribution.",
+            "A note shape with a string attribution returns that string.",
+            "A note shape whose attribution is explicitly null preserves and returns null."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["TLShape"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns a note shape's text attribution when the shape carries one, preserving a null attribution value. Returns undefined for shapes that are not note shapes or do not carry the attribution field.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getNoteAttribution is called with that shape.",
+              "then": "The result is undefined.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getNoteAttribution is called with that shape.",
+              "then": "The result is the same attribution string.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getNoteAttribution is called with that shape.",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6367b03933fd27be805d5b9380f3d77ee0febe5504da594bc888cb6926c38775"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/authorizeFileRecord.ts__authorizeShape#function:authorizeShape",
+        "unitKind": "function",
+        "name": "authorizeShape",
+        "qualifiedName": "authorizeShape",
+        "parentUnitId": null,
+        "startLine": 29,
+        "endLine": 42,
+        "isBehavioral": true,
+        "source": "}\n\n/**\n * Notes stamp `textLastEditedBy` client-side (the editor on text edit, `null` when emptied or\n * anonymous). Enforce it here on both create and update: the attribution may only be `null` or\n * the session's own user. Duplication and paste re-stamp the copy to the current user (via\n * `NoteShapeUtil.onBeforeDuplicate`), so a legitimate create never carries another user's\n * attribution and we can reject one that does — closing the forged-create loophole the create\n * passthrough previously had to accept. Updates still allow an unchanged attribution from any\n * user, so anyone with access can edit a note's other props.\n */\nconst authorizeShape: TLRecordAuthorizer<TLShape, SessionMeta> = ({\n\tsession,\n\ttype,",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/authorizeFileRecord.ts__authorizeShape#function:authorizeShape",
+          "fileId": "apps/dotcom/sync-worker/src/authorizeFileRecord.ts__authorizeShape",
+          "unitKind": "function",
+          "name": "authorizeShape",
+          "qualifiedName": "authorizeShape",
+          "parentUnitId": null,
+          "startLine": 29,
+          "endLine": 42,
+          "signature": "const authorizeShape: TLRecordAuthorizer<TLShape, SessionMeta>",
+          "parameters": [
+            {
+              "name": "{ session, type, ... }",
+              "type": "verbatim or null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "null",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The authorization input identifies a session and the shape operation type.",
+            "The target record is a TLShape note record with its text attribution available for authorization."
+          ],
+          "postconditions": [
+            "A create is authorized only when textLastEditedBy is null or equals the session user.",
+            "An update is not rejected solely because its unchanged textLastEditedBy belongs to another user.",
+            "Unauthorized attribution is rejected rather than accepted."
+          ],
+          "invariants": [
+            "A newly created note cannot carry another user's textLastEditedBy attribution.",
+            "The session user is the only non-null attribution permitted on create.",
+            "Existing attribution ownership does not prevent editing other note properties on update."
+          ],
+          "edgeCases": [
+            "Create with textLastEditedBy set to null is authorized.",
+            "Create with textLastEditedBy set to the current session user is authorized.",
+            "Create with textLastEditedBy set to another user's identifier is rejected.",
+            "Update retaining an attribution belonging to another user remains allowed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["The authorizer's authorization/validation error for a forged create attribution"],
+            "reverts": [],
+            "onInvalidInput": "Rejects a create whose non-null textLastEditedBy does not equal the session user.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["TLRecordAuthorizer", "TLShape", "SessionMeta"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Authorizes note shape creation and updates by enforcing ownership rules for the client-maintained text attribution. New shapes may only attribute text to no user or the current session user, while updates may preserve an existing attribution from another user.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "authorizeShape is invoked with any session user.",
+              "then": "The operation is authorized.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "authorizeShape is invoked.",
+              "then": "The operation is authorized.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "authorizeShape is invoked.",
+              "then": "The operation is rejected.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c58b6fbe68d6b03fb3e4405d1e3405672540ad6a54abe8071ab1f240fb1fe0e1"
+        }
+      }
+    ]
+  },
+  "out": [],
+  "in": ["apps/dotcom/sync-worker/src/authorizeFileRecord.test.ts"],
+  "externals": ["@tldraw/sync-collaboration", "@tldraw/sync-core", "@tldraw/tlschema"],
+  "impact": { "seeds": 2, "callers": 0, "impactedFiles": [] }
+}

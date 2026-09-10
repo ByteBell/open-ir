@@ -1,0 +1,823 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "apps/web/middleware.ts",
+    "language": "typescript",
+    "sizeBytes": 5990,
+    "tokenCount": 1498,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-27T17:39:20.258Z",
+    "module": {
+      "purpose": "This file implements the Next.js edge middleware boundary for request method enforcement, static-path bypasses, maintenance and signup gating, legacy URL rewrites, embed behavior, CSP headers, cookie cleanup, and telemetry collection.",
+      "summary": "The middleware applies ordered request guards before constructing or rewriting responses. It rejects unsupported POST requests, bypasses static assets, consults edge configuration for maintenance and signup availability, rewrites legacy routing-form URLs, configures CSP and embed headers, handles installed-app redirects, clears logout cookies, and exports a constrained Next.js matcher configuration. Edge configuration failures are intentionally non-fatal, while telemetry wraps the exported middleware.",
+      "businessContext": "This supports authentication, scheduling embeds, routing forms, maintenance operations, and security policy enforcement in the web application. Failure can expose unavailable features, break redirects or embeds, or weaken request and CSP controls.",
+      "classes": [],
+      "functions": [
+        "safeGet (~L9-14): Reads edge configuration while converting failures into undefined",
+        "checkPostMethod (~L17-29): Rejects disallowed POST requests outside approved API routes",
+        "checkStaticFiles (~L31-37): Bypasses Next.js internals and recognized static assets",
+        "middleware (~L38-98): Orchestrates request guards, rewrites, headers, cookies, and responses",
+        "handleRewrite (~L101-107): Redirects legacy routing-form paths through URL rewriting",
+        "addResponseHeaders (~L111-128): Adds embed-specific response headers from URL parameters",
+        "addResponseHeaders (~L132-146): Applies CSP status and nonce response headers",
+        "responseWithHeaders (~L148-152): Composes CSP and embed response header processing"
+      ],
+      "keywords": [
+        "Next.js edge middleware",
+        "Vercel Edge Config",
+        "content security policy",
+        "routing forms rewrite",
+        "embed headers",
+        "signup availability",
+        "maintenance mode",
+        "method enforcement",
+        "NextAuth session cookie",
+        "telemetry collection"
+      ],
+      "ontologyConcepts": [
+        "request interception",
+        "feature flagging",
+        "URL rewriting",
+        "security policy enforcement",
+        "response decoration",
+        "cookie lifecycle",
+        "graceful degradation",
+        "observability"
+      ],
+      "businessEntities": [
+        "signup",
+        "maintenance page",
+        "routing form",
+        "embedded application",
+        "session token",
+        "authentication route"
+      ],
+      "systemCapabilities": [
+        "Enforce allowed HTTP methods",
+        "Gate features using edge configuration",
+        "Rewrite legacy application URLs",
+        "Apply CSP and embed headers",
+        "Redirect installed applications",
+        "Collect middleware telemetry"
+      ],
+      "configDependencies": ["EDGE_CONFIG", "CSP_POLICY", "isInMaintenanceMode", "isSignupDisabled"],
+      "importsInternal": [
+        {
+          "spec": "@calcom/lib/telemetry",
+          "symbols": ["extendEventData", "nextCollectBasicSettings"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "./lib/csp",
+          "symbols": ["csp"],
+          "anchor": { "startLine": 8, "endLine": 8 },
+          "resolvedRelativePath": "apps/web/lib/csp.ts",
+          "resolvedFileId": "apps/web/lib/csp.ts",
+          "resolvedHint": "apps/web/lib/csp.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@vercel/edge-config",
+          "symbols": ["get"],
+          "package": "@vercel/edge-config",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "next-collect/server",
+          "symbols": ["collectEvents"],
+          "package": "next-collect",
+          "subpath": "server",
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "next/server",
+          "symbols": ["NextRequest"],
+          "package": "next",
+          "subpath": "server",
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        },
+        {
+          "spec": "next/server",
+          "symbols": ["NextResponse"],
+          "package": "next",
+          "subpath": "server",
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": ["Reads feature flags from Vercel Edge Config through get."],
+        "env": ["Reads process.env.CSP_POLICY to determine CSP response behavior."],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates req.nextUrl.pathname for maintenance and legacy routing-form rewrites.",
+          "Mutates response headers and cookies while decorating responses."
+        ]
+      },
+      "integrationSurface": [
+        { "kind": "http", "role": "provides", "address": "/auth/login", "payloadRef": null, "rawKind": null },
+        { "kind": "http", "role": "provides", "address": "/login", "payloadRef": null, "rawKind": null },
+        { "kind": "http", "role": "provides", "address": "/apps/installed", "payloadRef": null, "rawKind": null },
+        { "kind": "http", "role": "provides", "address": "/auth/logout", "payloadRef": null, "rawKind": null },
+        { "kind": "http", "role": "provides", "address": "/:path*/embed", "payloadRef": null, "rawKind": null },
+        { "kind": "http", "role": "provides", "address": "/api/auth/signup", "payloadRef": null, "rawKind": null },
+        {
+          "kind": "other",
+          "role": "consumes",
+          "address": "isInMaintenanceMode",
+          "payloadRef": "boolean",
+          "rawKind": "other"
+        },
+        {
+          "kind": "other",
+          "role": "consumes",
+          "address": "isSignupDisabled",
+          "payloadRef": "boolean",
+          "rawKind": "other"
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "POST_METHODS_ALLOWED_API_ROUTES",
+          "shape": "export const POST_METHODS_ALLOWED_API_ROUTES = [\"/api/auth/signup\"];",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "checkPostMethod",
+          "shape": "export function checkPostMethod(req: NextRequest)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "checkStaticFiles",
+          "shape": "export function checkStaticFiles(pathname: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "config",
+          "shape": "export const config = { matcher: [\"/auth/login\", \"/login\", \"/apps/installed\", \"/auth/logout\", \"/:path*/embed\", \"/api/auth/signup\"] };",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "default",
+          "shape": "export default collectEvents({ middleware, ...nextCollectBasicSettings, cookieName: \"__clnds\", extend: extendEventData });",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "get",
+          "shape": "get<T>(key: string): Promise<T | undefined>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "NextRequest", "shape": "NextRequest", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "NextResponse",
+          "shape": "NextResponse<unknown>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "csp",
+          "shape": "csp(req, res ?? null)",
+          "resolvedRelativePath": "apps/web/lib/csp.ts",
+          "resolvedFileId": "apps/web/lib/csp.ts"
+        },
+        {
+          "name": "nextCollectBasicSettings",
+          "shape": "...nextCollectBasicSettings",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "extendEventData",
+          "shape": "extend: extendEventData",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "collectEvents",
+          "shape": "collectEvents({ middleware, ...nextCollectBasicSettings, cookieName: \"__clnds\", extend: extendEventData })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "method_guard",
+          "intent": "Reject unsupported POST requests before further middleware processing.",
+          "structureKind": "branch",
+          "predicate": "!POST_METHODS_ALLOWED_API_ROUTES.some((route) => pathname.startsWith(route)) && req.method === \"POST\"",
+          "branchOutcomes": ["return 405 response", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 17, "endLine": 29 }
+        },
+        {
+          "name": "static_asset_bypass",
+          "intent": "Allow framework internals and recognized static assets to proceed immediately.",
+          "structureKind": "branch",
+          "predicate": "pathname.startsWith(\"/_next\") || hasFileExtension",
+          "branchOutcomes": ["return NextResponse.next()", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 31, "endLine": 37 }
+        },
+        {
+          "name": "maintenance_gate",
+          "intent": "Rewrite non-API requests to maintenance when the edge flag is enabled.",
+          "structureKind": "branch",
+          "predicate": "!url.pathname.startsWith(\"/api\")",
+          "branchOutcomes": ["check maintenance flag", "skip maintenance check"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 46, "endLine": 57 }
+        },
+        {
+          "name": "legacy_routing_rewrite",
+          "intent": "Preserve compatibility for deprecated routing-form URLs.",
+          "structureKind": "branch",
+          "predicate": "routingFormRewriteResponse",
+          "branchOutcomes": ["decorate rewritten response", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 59, "endLine": 62 }
+        },
+        {
+          "name": "signup_gate",
+          "intent": "Return service unavailable when signup is disabled by configuration.",
+          "structureKind": "branch",
+          "predicate": "url.pathname.startsWith(\"/api/auth/signup\")",
+          "branchOutcomes": ["check signup flag", "skip signup check"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 64, "endLine": 70 }
+        },
+        {
+          "name": "installed_app_redirect",
+          "intent": "Redirect installed-app requests using and then delete the return cookie.",
+          "structureKind": "branch",
+          "predicate": "url.pathname.startsWith(\"/apps/installed\")",
+          "branchOutcomes": ["redirect and delete return cookie", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 77, "endLine": 85 }
+        },
+        {
+          "name": "response_decoration",
+          "intent": "Apply CSP and embed headers to the final response.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 148, "endLine": 152 }
+        },
+        {
+          "name": "telemetry_export",
+          "intent": "Wrap the middleware with the shared event collection configuration.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 174, "endLine": 179 }
+        }
+      ],
+      "representationFamily": "binding",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "safeGet",
+          "signature": "const safeGet = async <T = any>(key: string): Promise<T | undefined> => {",
+          "generics": "<T = any>",
+          "decorators": [],
+          "returnType": "Promise<T | undefined>",
+          "exported": false,
+          "anchor": { "startLine": 9, "endLine": 9 }
+        },
+        {
+          "kind": "const",
+          "name": "POST_METHODS_ALLOWED_API_ROUTES",
+          "signature": "export const POST_METHODS_ALLOWED_API_ROUTES = [\"/api/auth/signup\"];",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        },
+        {
+          "kind": "function",
+          "name": "checkPostMethod",
+          "signature": "export function checkPostMethod(req: NextRequest) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 17, "endLine": 17 }
+        },
+        {
+          "kind": "function",
+          "name": "checkStaticFiles",
+          "signature": "export function checkStaticFiles(pathname: string) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 31, "endLine": 31 }
+        },
+        {
+          "kind": "function",
+          "name": "middleware",
+          "signature": "const middleware = async (req: NextRequest): Promise<NextResponse<unknown>> => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<NextResponse<unknown>>",
+          "exported": false,
+          "anchor": { "startLine": 38, "endLine": 38 }
+        },
+        {
+          "kind": "method",
+          "name": "handleRewrite",
+          "signature": "handleRewrite: (url: URL) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 101, "endLine": 101 }
+        },
+        {
+          "kind": "method",
+          "name": "addResponseHeaders",
+          "signature": "addResponseHeaders: ({ url, res }: { url: URL; res: NextResponse }) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 111, "endLine": 111 }
+        },
+        {
+          "kind": "method",
+          "name": "addResponseHeaders",
+          "signature": "addResponseHeaders: ({ res, req }: { res: NextResponse; req: NextRequest }) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 132, "endLine": 132 }
+        },
+        {
+          "kind": "function",
+          "name": "responseWithHeaders",
+          "signature": "function responseWithHeaders({ url, res, req }: { url: URL; res: NextResponse; req: NextRequest }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 148, "endLine": 148 }
+        },
+        {
+          "kind": "const",
+          "name": "config",
+          "signature": "export const config = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 154, "endLine": 154 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "POST request to a route outside the allowed signup route",
+          "handled": true,
+          "behavior": "Returns a 405 response and advertises GET as the allowed method.",
+          "anchor": { "startLine": 19, "endLine": 26 }
+        },
+        {
+          "inputShape": "Path under /_next or ending in a recognized static image extension",
+          "handled": true,
+          "behavior": "Returns NextResponse.next without applying later middleware logic.",
+          "anchor": { "startLine": 32, "endLine": 35 }
+        },
+        {
+          "inputShape": "Edge Config unavailable or get throws",
+          "handled": true,
+          "behavior": "Suppresses the error and returns undefined, allowing processing to continue.",
+          "anchor": { "startLine": 10, "endLine": 14 }
+        },
+        {
+          "inputShape": "Signup API request while signup is disabled",
+          "handled": true,
+          "behavior": "Returns JSON error Signup is disabled with status 503.",
+          "anchor": { "startLine": 64, "endLine": 69 }
+        },
+        {
+          "inputShape": "Installed-app request with a nonempty return-to cookie",
+          "handled": true,
+          "behavior": "Redirects to the cookie URL relative to the request and deletes the cookie.",
+          "anchor": { "startLine": 77, "endLine": 83 }
+        },
+        {
+          "inputShape": "Embed URL with flag.coep=true or ui.color-scheme",
+          "handled": true,
+          "behavior": "Adds corresponding embed policy, color scheme, and embed marker headers.",
+          "anchor": { "startLine": 112, "endLine": 126 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Suppresses failures from the edge configuration lookup.",
+          "fallback": "undefined",
+          "anchor": { "startLine": 10, "endLine": 14 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "postcondition",
+          "description": "Disallowed POST requests receive a 405 response with Allow set to GET.",
+          "anchor": { "startLine": 19, "endLine": 26 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Edge configuration failures do not abort middleware execution and produce undefined.",
+          "anchor": { "startLine": 10, "endLine": 14 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Method and static-file checks occur before feature gates and response decoration.",
+          "anchor": { "startLine": 39, "endLine": 44 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Final non-early responses pass through CSP processing before embed processing.",
+          "anchor": { "startLine": 148, "endLine": 152 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Installed-app redirects delete the return-to cookie before returning.",
+          "anchor": { "startLine": 81, "endLine": 83 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Next.js invokes the default export with a NextRequest matching the exported matcher configuration.",
+          "anchor": { "startLine": 154, "endLine": 172 }
+        },
+        {
+          "kind": "env",
+          "description": "CSP_POLICY indicates whether CSP has been opted into; its absence selects the not-opted-in response marker.",
+          "anchor": { "startLine": 135, "endLine": 142 }
+        },
+        {
+          "kind": "schema",
+          "description": "Edge Config contains boolean values under isInMaintenanceMode and isSignupDisabled.",
+          "anchor": { "startLine": 52, "endLine": 66 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the edge configuration client obtain EDGE_CONFIG through deployment environment configuration?",
+          "affects": "configDependencies and safeGet failure behavior",
+          "anchor": { "startLine": 9, "endLine": 14 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Each request is processed independently; the only asynchronous operation is the edge configuration lookup."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-disallowed-post",
+          "scenario": "A POST request targets an API route not explicitly allowed for POST.",
+          "given": [
+            "req.method === \"POST\"",
+            "!POST_METHODS_ALLOWED_API_ROUTES.some((route) => req.nextUrl.pathname.startsWith(route))"
+          ],
+          "when": "checkPostMethod(req)",
+          "then": "result.status === 405 && result.headers.get(\"Allow\") === \"GET\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the method restriction and advertised allowed method."
+        },
+        {
+          "testId": "allows-signup-post",
+          "scenario": "A POST request targets the signup API route.",
+          "given": ["req.method === \"POST\"", "req.nextUrl.pathname.startsWith(\"/api/auth/signup\")"],
+          "when": "checkPostMethod(req)",
+          "then": "result === null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the sole explicitly permitted POST API route."
+        },
+        {
+          "testId": "skips-static-assets",
+          "scenario": "A request targets a supported static asset or a Next.js internal path.",
+          "given": ["pathname === \"/_next/static/app.js\" || pathname === \"/logo.svg\""],
+          "when": "checkStaticFiles(pathname)",
+          "then": "result === NextResponse.next()",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures static resources bypass normal middleware processing."
+        },
+        {
+          "testId": "rewrites-maintenance-mode",
+          "scenario": "A non-API request arrives while maintenance mode is enabled.",
+          "given": ["url.pathname === \"/dashboard\"", "safeGet(\"isInMaintenanceMode\") === true"],
+          "when": "middleware(req)",
+          "then": "response is a rewrite to \"/maintenance\"",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the app-wide maintenance rewrite while excluding API requests."
+        },
+        {
+          "testId": "rejects-disabled-signup",
+          "scenario": "A signup request arrives while signup is disabled.",
+          "given": ["req.nextUrl.pathname.startsWith(\"/api/auth/signup\")", "safeGet(\"isSignupDisabled\") === true"],
+          "when": "middleware(req)",
+          "then": "response.status === 503 && response.json.error === \"Signup is disabled\"",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the externally observable signup availability contract."
+        },
+        {
+          "testId": "enforces-login-csp",
+          "scenario": "A login request is processed.",
+          "given": ["url.pathname.startsWith(\"/auth/login\") || url.pathname.startsWith(\"/login\")"],
+          "when": "middleware(req)",
+          "then": "response request headers contain \"x-csp-enforce\": \"true\"",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures login routes opt into enforced CSP rather than report-only behavior."
+        },
+        {
+          "testId": "redirects-installed-app",
+          "scenario": "An installed-app request contains a return-to cookie.",
+          "given": [
+            "url.pathname.startsWith(\"/apps/installed\")",
+            "req.cookies.get(\"return-to\")?.value === \"/target\""
+          ],
+          "when": "middleware(req)",
+          "then": "response redirects to \"/target\" and deletes the \"return-to\" cookie",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins both navigation and one-time cookie cleanup."
+        },
+        {
+          "testId": "rewrites-legacy-routing-forms",
+          "scenario": "A request uses the legacy routing forms path.",
+          "given": ["url.pathname === \"/apps/routing_forms/example\""],
+          "when": "routingForms.handleRewrite(url)",
+          "then": "response is a rewrite to \"/apps/routing-forms/example\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves backward compatibility for legacy links."
+        },
+        {
+          "testId": "adds-embed-headers",
+          "scenario": "An embed route includes embed-specific query parameters.",
+          "given": [
+            "url.pathname.endsWith(\"/embed\")",
+            "url.searchParams.get(\"flag.coep\") === \"true\"",
+            "url.searchParams.get(\"ui.color-scheme\") === \"dark\""
+          ],
+          "when": "embeds.addResponseHeaders({ url, res })",
+          "then": "response headers include \"Cross-Origin-Embedder-Policy\": \"require-corp\", \"x-embedColorScheme\": \"dark\", and \"x-isEmbed\": \"true\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the wire headers required by embedded experiences."
+        },
+        {
+          "testId": "deletes-session-on-logout",
+          "scenario": "A logout request is processed.",
+          "given": ["url.pathname.startsWith(\"/auth/logout\")"],
+          "when": "middleware(req)",
+          "then": "response deletes the \"next-auth.session-token\" cookie",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures logout invalidates the session cookie."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import declarations",
+        "safeGet helper",
+        "POST_METHODS_ALLOWED_API_ROUTES constant",
+        "checkPostMethod function",
+        "checkStaticFiles function",
+        "middleware function",
+        "routingForms object",
+        "embeds object",
+        "contentSecurityPolicy object",
+        "responseWithHeaders function",
+        "config export",
+        "telemetry-wrapped default export"
+      ],
+      "moduleLevelCode": "Imports external middleware dependencies and defines exported Next.js matcher configuration and default telemetry-wrapped middleware.",
+      "exports": [
+        { "name": "POST_METHODS_ALLOWED_API_ROUTES", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "checkPostMethod", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "checkStaticFiles", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "config", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "default", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "get", "module": "@vercel/edge-config", "alias": null, "kind": "external" },
+        { "symbol": "collectEvents", "module": "next-collect/server", "alias": null, "kind": "external" },
+        { "symbol": "NextRequest", "module": "next/server", "alias": null, "kind": "external" },
+        { "symbol": "NextResponse", "module": "next/server", "alias": null, "kind": "external" },
+        { "symbol": "extendEventData", "module": "@calcom/lib/telemetry", "alias": null, "kind": "internal" },
+        { "symbol": "nextCollectBasicSettings", "module": "@calcom/lib/telemetry", "alias": null, "kind": "internal" },
+        { "symbol": "csp", "module": "./lib/csp", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "POST_METHODS_ALLOWED_API_ROUTES", "value": "[\"/api/auth/signup\"]", "kind": "array" },
+        { "name": "config", "value": "{", "kind": "object" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/web/middleware.ts__safeGet_1#function:safeGet",
+        "unitKind": "function",
+        "name": "safeGet",
+        "qualifiedName": "safeGet",
+        "parentUnitId": null,
+        "startLine": 10,
+        "endLine": 16,
+        "isBehavioral": true,
+        "source": "const safeGet = async <T = any>(key: string): Promise<T | undefined> => {\n  try {\n    return get<T>(key);\n  } catch (error) {\n    // Don't crash if EDGE_CONFIG env var is missing\n  }\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__POST_METHODS_ALLOWED_API_ROUTES_2#const:POST_METHODS_ALLOWED_API_ROUTES",
+        "unitKind": "const",
+        "name": "POST_METHODS_ALLOWED_API_ROUTES",
+        "qualifiedName": "POST_METHODS_ALLOWED_API_ROUTES",
+        "parentUnitId": null,
+        "startLine": 18,
+        "endLine": 18,
+        "isBehavioral": false,
+        "source": "export const POST_METHODS_ALLOWED_API_ROUTES = [\"/api/auth/signup\"];"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__checkPostMethod_3#function:checkPostMethod",
+        "unitKind": "function",
+        "name": "checkPostMethod",
+        "qualifiedName": "checkPostMethod",
+        "parentUnitId": null,
+        "startLine": 19,
+        "endLine": 31,
+        "isBehavioral": true,
+        "source": "export function checkPostMethod(req: NextRequest) {\n  const pathname = req.nextUrl.pathname;\n  if (!POST_METHODS_ALLOWED_API_ROUTES.some((route) => pathname.startsWith(route)) && req.method === \"POST\") {\n    return new NextResponse(null, {\n      status: 405,\n      statusText: \"Method Not Allowed\",\n      headers: {\n        Allow: \"GET\",\n      },\n    });\n  }\n  return null;\n}"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__checkStaticFiles_4#function:checkStaticFiles",
+        "unitKind": "function",
+        "name": "checkStaticFiles",
+        "qualifiedName": "checkStaticFiles",
+        "parentUnitId": null,
+        "startLine": 33,
+        "endLine": 39,
+        "isBehavioral": true,
+        "source": "export function checkStaticFiles(pathname: string) {\n  const hasFileExtension = /\\.(svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname);\n  // Skip Next.js internal paths (_next) and static assets\n  if (pathname.startsWith(\"/_next\") || hasFileExtension) {\n    return NextResponse.next();\n  }\n}"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__middleware_5#function:middleware",
+        "unitKind": "function",
+        "name": "middleware",
+        "qualifiedName": "middleware",
+        "parentUnitId": null,
+        "startLine": 41,
+        "endLine": 107,
+        "isBehavioral": true,
+        "source": "const middleware = async (req: NextRequest): Promise<NextResponse<unknown>> => {\n  const postCheckResult = checkPostMethod(req);\n  if (postCheckResult) return postCheckResult;\n\n  const isStaticFile = checkStaticFiles(req.nextUrl.pathname);\n  if (isStaticFile) return isStaticFile;\n\n  const url = req.nextUrl;\n  const requestHeaders = new Headers(req.headers);\n\n  if (!url.pathname.startsWith(\"/api\")) {\n    //\n    // NOTE: When tRPC hits an error a 500 is returned, when this is received\n    //       by the application the user is automatically redirected to /auth/login.\n    //\n    //     - For this reason our matchers are sufficient for an app-wide maintenance page.\n    //\n    // Check whether the maintenance page should be shown\n    const isInMaintenanceMode = await safeGet<boolean>(\"isInMaintenanceMode\");\n    // If is in maintenance mode, point the url pathname to the maintenance page\n    if (isInMaintenanceMode) {\n      req.nextUrl.pathname = `/maintenance`;\n      return NextResponse.rewrite(req.nextUrl);\n    }\n  }\n\n  const routingFormRewriteResponse = routingForms.handleRewrite(url);\n  if (routingFormRewriteResponse) {\n    return responseWithHeaders({ url, res: routingFormRewriteResponse, req });\n  }\n\n  if (url.pathname.startsWith(\"/api/auth/signup\")) {\n    const isSignupDisabled = await safeGet<boolean>(\"isSignupDisabled\");\n    // If is in maintenance mode, point the url pathname to the maintenance page\n    if (isSignupDisabled) {\n      // TODO: Consider using responseWithHeaders here\n      return NextResponse.json({ error: \"Signup is disabled\" }, { status: 503 });\n    }\n  }\n\n  if (url.pathname.startsWith(\"/auth/login\") || url.pathname.startsWith(\"/login\")) {\n    // Use this header to actually enforce CSP, otherwise it is running in Report Only mode on all pages.\n    requestHeaders.set(\"x-csp-enforce\", \"true\");\n  }\n\n  if (url.pathname.startsWith(\"/apps/installed\")) {\n    const returnTo = req.cookies.get(\"return-to\");\n\n    if (returnTo?.value) {\n      const response = NextResponse.redirect(new URL(returnTo.value, req.url), { headers: requestHeaders });\n      response.cookies.delete(\"return-to\");\n      return response;\n    }\n  }\n\n  const res = NextResponse.next({\n    request: {\n      headers: requestHeaders,\n    },\n  });\n\n  if (url.pathname.startsWith(\"/auth/logout\")) {\n    res.cookies.delete(\"next-auth.session-token\");\n  }\n\n  return responseWithHeaders({ url, res, req });\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__routingForms_6#object:routingForms",
+        "unitKind": "object",
+        "name": "routingForms",
+        "qualifiedName": "routingForms",
+        "parentUnitId": null,
+        "startLine": 109,
+        "endLine": 117,
+        "isBehavioral": false,
+        "source": "const routingForms = {\n  handleRewrite: (url: URL) => {\n    // Don't 404 old routing_forms links\n    if (url.pathname.startsWith(\"/apps/routing_forms\")) {\n      url.pathname = url.pathname.replace(/^\\/apps\\/routing_forms($|\\/)/, \"/apps/routing-forms/\");\n      return NextResponse.rewrite(url);\n    }\n  },\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__routingForms.handleRewrite_7#method:routingForms.handleRewrite",
+        "unitKind": "method",
+        "name": "handleRewrite",
+        "qualifiedName": "routingForms.handleRewrite",
+        "parentUnitId": "apps/web/middleware.ts__routingForms_6#object:routingForms",
+        "startLine": 110,
+        "endLine": 116,
+        "isBehavioral": true,
+        "source": "  handleRewrite: (url: URL) => {\n    // Don't 404 old routing_forms links\n    if (url.pathname.startsWith(\"/apps/routing_forms\")) {\n      url.pathname = url.pathname.replace(/^\\/apps\\/routing_forms($|\\/)/, \"/apps/routing-forms/\");\n      return NextResponse.rewrite(url);\n    }\n  },"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__embeds_8#object:embeds",
+        "unitKind": "object",
+        "name": "embeds",
+        "qualifiedName": "embeds",
+        "parentUnitId": null,
+        "startLine": 119,
+        "endLine": 137,
+        "isBehavioral": false,
+        "source": "const embeds = {\n  addResponseHeaders: ({ url, res }: { url: URL; res: NextResponse }) => {\n    if (!url.pathname.endsWith(\"/embed\")) {\n      return res;\n    }\n    const isCOEPEnabled = url.searchParams.get(\"flag.coep\") === \"true\";\n    if (isCOEPEnabled) {\n      res.headers.set(\"Cross-Origin-Embedder-Policy\", \"require-corp\");\n    }\n\n    const embedColorScheme = url.searchParams.get(\"ui.color-scheme\");\n    if (embedColorScheme) {\n      res.headers.set(\"x-embedColorScheme\", embedColorScheme);\n    }\n\n    res.headers.set(\"x-isEmbed\", \"true\");\n    return res;\n  },\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__embeds.addResponseHeaders_9#method:embeds.addResponseHeaders",
+        "unitKind": "method",
+        "name": "addResponseHeaders",
+        "qualifiedName": "embeds.addResponseHeaders",
+        "parentUnitId": "apps/web/middleware.ts__embeds_8#object:embeds",
+        "startLine": 120,
+        "endLine": 136,
+        "isBehavioral": true,
+        "source": "  addResponseHeaders: ({ url, res }: { url: URL; res: NextResponse }) => {\n    if (!url.pathname.endsWith(\"/embed\")) {\n      return res;\n    }\n    const isCOEPEnabled = url.searchParams.get(\"flag.coep\") === \"true\";\n    if (isCOEPEnabled) {\n      res.headers.set(\"Cross-Origin-Embedder-Policy\", \"require-corp\");\n    }\n\n    const embedColorScheme = url.searchParams.get(\"ui.color-scheme\");\n    if (embedColorScheme) {\n      res.headers.set(\"x-embedColorScheme\", embedColorScheme);\n    }\n\n    res.headers.set(\"x-isEmbed\", \"true\");\n    return res;\n  },"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__contentSecurityPolicy_10#object:contentSecurityPolicy",
+        "unitKind": "object",
+        "name": "contentSecurityPolicy",
+        "qualifiedName": "contentSecurityPolicy",
+        "parentUnitId": null,
+        "startLine": 139,
+        "endLine": 153,
+        "isBehavioral": false,
+        "source": "const contentSecurityPolicy = {\n  addResponseHeaders: ({ res, req }: { res: NextResponse; req: NextRequest }) => {\n    const { nonce } = csp(req, res ?? null);\n\n    if (!process.env.CSP_POLICY) {\n      res.headers.set(\"x-csp\", \"not-opted-in\");\n    } else if (!res.headers.get(\"x-csp\")) {\n      // If x-csp not set by gSSP, then it's initialPropsOnly\n      res.headers.set(\"x-csp\", \"initialPropsOnly\");\n    } else {\n      res.headers.set(\"x-csp\", nonce ?? \"\");\n    }\n    return res;\n  },\n};"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__contentSecurityPolicy.addResponseHeaders_11#method:contentSecurityPolicy.addResponseHeaders",
+        "unitKind": "method",
+        "name": "addResponseHeaders",
+        "qualifiedName": "contentSecurityPolicy.addResponseHeaders",
+        "parentUnitId": "apps/web/middleware.ts__contentSecurityPolicy_10#object:contentSecurityPolicy",
+        "startLine": 140,
+        "endLine": 152,
+        "isBehavioral": true,
+        "source": "  addResponseHeaders: ({ res, req }: { res: NextResponse; req: NextRequest }) => {\n    const { nonce } = csp(req, res ?? null);\n\n    if (!process.env.CSP_POLICY) {\n      res.headers.set(\"x-csp\", \"not-opted-in\");\n    } else if (!res.headers.get(\"x-csp\")) {\n      // If x-csp not set by gSSP, then it's initialPropsOnly\n      res.headers.set(\"x-csp\", \"initialPropsOnly\");\n    } else {\n      res.headers.set(\"x-csp\", nonce ?? \"\");\n    }\n    return res;\n  },"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__responseWithHeaders_12#function:responseWithHeaders",
+        "unitKind": "function",
+        "name": "responseWithHeaders",
+        "qualifiedName": "responseWithHeaders",
+        "parentUnitId": null,
+        "startLine": 155,
+        "endLine": 159,
+        "isBehavioral": true,
+        "source": "function responseWithHeaders({ url, res, req }: { url: URL; res: NextResponse; req: NextRequest }) {\n  const resWithCSP = contentSecurityPolicy.addResponseHeaders({ res, req });\n  const resWithEmbeds = embeds.addResponseHeaders({ url, res: resWithCSP });\n  return resWithEmbeds;\n}"
+      },
+      {
+        "unitId": "apps/web/middleware.ts__config_13#const:config",
+        "unitKind": "const",
+        "name": "config",
+        "qualifiedName": "config",
+        "parentUnitId": null,
+        "startLine": 161,
+        "endLine": 178,
+        "isBehavioral": false,
+        "source": "export const config = {\n  // Next.js Doesn't support spread operator in config matcher, so, we must list all paths explicitly here.\n  // https://github.com/vercel/next.js/discussions/42458\n  // WARNING: DO NOT ADD AN ENDING SLASH \"/\" TO THE PATHS BELOW\n  // THIS WILL MAKE THEM NOT MATCH AND HENCE NOT HIT MIDDLEWARE\n  matcher: [\n    // Routes to enforce CSP\n    \"/auth/login\",\n    \"/login\",\n    // Routes to set cookies\n    \"/apps/installed\",\n    \"/auth/logout\",\n    // Embed Routes,\n    \"/:path*/embed\",\n    // API routes\n    \"/api/auth/signup\",\n  ],\n};"
+      }
+    ]
+  },
+  "out": ["apps/web/lib/csp.ts"],
+  "in": ["apps/web/middleware.test.ts"],
+  "externals": ["@vercel/edge-config", "next-collect/server", "next/server", "@calcom/lib/telemetry"],
+  "impact": { "seeds": 13, "callers": 7, "impactedFiles": ["apps/web/middleware.test.ts"] }
+}

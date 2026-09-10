@@ -1,0 +1,2080 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "db",
+  "commitHash": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+  "generatedAt": "2026-07-18T07:32:21.777Z",
+  "file": {
+    "relativePath": "packages/db/src/local-storage.ts",
+    "language": "typescript",
+    "sizeBytes": 26930,
+    "tokenCount": 6731,
+    "model": "poolside/laguna-xs-2.1",
+    "analysedAt": "2026-07-17T15:57:19.601Z",
+    "module": {
+      "purpose": "Provides localStorage persistence for collections with cross-tab synchronization and SSR fallback support. Exports localStorageCollectionOptions to create collections that automatically sync to localStorage and other browser tabs.",
+      "summary": "This module implements a localStorage-backed collection system that persists data to browser storage with automatic synchronization across browser tabs via storage events. It provides a fallback to in-memory storage for server-side rendering environments. The main export is localStorageCollectionOptions which creates collection configurations with utilities for clearing storage, getting storage size, and accepting mutations from transactions. Key features include version tracking for change detection, JSON serialization validation, key encoding to prevent collisions between numeric and string keys, and a sync system that loads initial data and listens for cross-tab changes.",
+      "businessContext": "Enables client-side data persistence for web applications using IndexedDB-style collections. Critical for offline functionality and data synchronization. Failure breaks local data persistence and cross-tab sync in browser environments.",
+      "classes": [],
+      "functions": [
+        "validateJsonSerializable (~L108-121): Validates that a value can be JSON serialized using the provided parser",
+        "generateUuid (~L122-126): Generates a UUID for version tracking",
+        "encodeStorageKey (~L127-140): Encodes a key into a storage-safe string format with type prefix",
+        "decodeStorageKey (~L141-153): Decodes a storage key back to its original form",
+        "createInMemoryStorage (~L154-163): Creates an in-memory storage implementation for SSR fallback",
+        "createNoOpStorageEventApi (~L164-174): Creates a no-op storage event API for environments without window",
+        "loadFromStorage (~L471-507): Loads data from storage and returns as a Map with version tracking",
+        "createLocalStorageSync (~L508-557): Internal function to create localStorage sync configuration",
+        "findChanges (~L558-586): Compares two Maps to find differences using version keys",
+        "processStorageChanges (~L587-620): Processes storage changes and updates collection",
+        "saveToStorage (~L268-294): Saves data to storage in object format",
+        "wrappedOnInsert (~L313-352): Wrapped insert handler that validates and persists mutations",
+        "wrappedOnUpdate (~L353-386): Wrapped update handler that validates and persists mutations",
+        "wrappedOnDelete (~L387-415): Wrapped delete handler that validates and persists mutations",
+        "acceptMutations (~L416-429): Accepts mutations from a transaction and persists to storage",
+        "localStorageCollectionOptions (~L175-430): Main factory function creating localStorage collection options"
+      ],
+      "keywords": [
+        "localStorage",
+        "sessionStorage",
+        "cross-tab synchronization",
+        "storage events",
+        "SSR fallback",
+        "version tracking",
+        "JSON serialization",
+        "mutation persistence",
+        "storage key encoding"
+      ],
+      "ontologyConcepts": [
+        "persistence layer",
+        "storage abstraction",
+        "cross-tab communication",
+        "fallback pattern",
+        "versioned data",
+        "mutation lifecycle",
+        "serialization validation"
+      ],
+      "businessEntities": ["Collection", "Mutation", "Storage", "Transaction", "SyncState"],
+      "systemCapabilities": [
+        "Client-side data persistence",
+        "Cross-tab synchronization",
+        "SSR compatibility",
+        "JSON serialization validation",
+        "Change detection via versioning"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./utils/uuid",
+          "symbols": ["safeRandomUUID"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/db/src/utils/uuid.ts",
+          "resolvedFileId": "packages/db/src/utils/uuid.ts",
+          "resolvedHint": "packages/db/src/utils/uuid.ts"
+        },
+        {
+          "spec": "./errors",
+          "symbols": [
+            "InvalidStorageDataFormatError",
+            "InvalidStorageObjectFormatError",
+            "SerializationError",
+            "StorageKeyRequiredError"
+          ],
+          "anchor": { "startLine": 2, "endLine": 7 },
+          "resolvedRelativePath": "packages/db/src/errors.ts",
+          "resolvedFileId": "packages/db/src/errors.ts",
+          "resolvedHint": "packages/db/src/errors.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": [
+            "BaseCollectionConfig",
+            "CollectionConfig",
+            "DeleteMutationFnParams",
+            "InferSchemaOutput",
+            "InsertMutationFnParams",
+            "PendingMutation",
+            "SyncConfig",
+            "UpdateMutationFnParams",
+            "UtilsRecord"
+          ],
+          "anchor": { "startLine": 8, "endLine": 18 },
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts",
+          "resolvedHint": "packages/db/src/types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@standard-schema/spec",
+          "symbols": ["StandardSchemaV1"],
+          "package": "@standard-schema/spec",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 19, "endLine": 19 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Persists data to localStorage/sessionStorage via storage.setItem()",
+          "Reads data from localStorage/sessionStorage via storage.getItem()",
+          "Removes data from storage via storage.removeItem()"
+        ],
+        "network": [],
+        "env": [
+          "Checks for window object existence to determine storage availability",
+          "Accesses window.localStorage by default"
+        ],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Modifies lastKnownData Map by setting, deleting, and clearing entries",
+          "Modifies syncParams and collection references during sync initialization"
+        ]
+      },
+      "integrationSurface": [
+        { "kind": "event", "role": "consumes", "address": "storage", "payloadRef": "StorageEvent", "rawKind": null }
+      ],
+      "contractsProvided": [
+        {
+          "name": "localStorageCollectionOptions",
+          "shape": "<T, TKey>(config: LocalStorageCollectionConfig<T, never, TKey> & { schema?: never }) => CollectionConfig<T, TKey, never, LocalStorageCollectionUtils> & { id: string; utils: LocalStorageCollectionUtils; schema?: never }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "LocalStorageCollectionUtils",
+          "shape": "{ clearStorage: () => void; getStorageSize: () => number; acceptMutations: (transaction: { mutations: Array<PendingMutation<Record<string, unknown>>> }) => void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Parser",
+          "shape": "{ parse: (data: string) => unknown; stringify: (data: unknown) => string }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StorageApi",
+          "shape": "Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StorageEventApi",
+          "shape": "{ addEventListener(type: 'storage', listener: (event: StorageEvent) => void): void; removeEventListener(type: 'storage', listener: (event: StorageEvent) => void): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "LocalStorageCollectionConfig",
+          "shape": "{ storageKey: string; storage?: StorageApi; storageEventApi?: StorageEventApi; parser?: Parser; getKey: (item: T) => string | number; onInsert?: (params: InsertMutationFnParams<T>) => Promise<any>; onUpdate?: (params: UpdateMutationFnParams<T>) => Promise<any>; onDelete?: (params: DeleteMutationFnParams<T>) => Promise<any> }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "StorageApi",
+          "shape": "{ getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StorageEventApi",
+          "shape": "{ addEventListener(type: 'storage', listener: (event: StorageEvent) => void): void; removeEventListener(type: 'storage', listener: (event: StorageEvent) => void): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "StandardSchemaV1", "shape": "unknown", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "safeRandomUUID",
+          "shape": "() => string",
+          "resolvedRelativePath": "packages/db/src/utils/uuid.ts",
+          "resolvedFileId": "packages/db/src/utils/uuid.ts"
+        },
+        {
+          "name": "BaseCollectionConfig",
+          "shape": "unknown",
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts"
+        },
+        {
+          "name": "SyncConfig",
+          "shape": "unknown",
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "imports",
+          "intent": "Imports utilities, errors, types, and external dependencies",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 1, "endLine": 19 }
+        },
+        {
+          "name": "type_definitions",
+          "intent": "Defines public types and interfaces for storage API and configuration",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 20, "endLine": 107 }
+        },
+        {
+          "name": "helper_functions",
+          "intent": "Defines internal helper functions for validation, encoding, and storage creation",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 108, "endLine": 174 }
+        },
+        {
+          "name": "localStorageCollectionOptions_overloads",
+          "intent": "Function overloads for schema and non-schema configurations",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 175, "endLine": 242 }
+        },
+        {
+          "name": "localStorageCollectionOptions_implementation",
+          "intent": "Main implementation creating collection config with persistence and sync",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 243, "endLine": 430 }
+        },
+        {
+          "name": "loadFromStorage_function",
+          "intent": "Loads and parses stored data from storage API into a Map",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 471, "endLine": 507 }
+        },
+        {
+          "name": "createLocalStorageSync_function",
+          "intent": "Creates sync configuration with change detection and cross-tab synchronization",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 508, "endLine": 714 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "StorageApi",
+          "signature": "export type StorageApi = Pick<Storage, `getItem` | `setItem` | `removeItem`>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 20, "endLine": 23 }
+        },
+        {
+          "kind": "type",
+          "name": "StorageEventApi",
+          "signature": "export type StorageEventApi = { addEventListener: (type: `storage`, listener: (event: StorageEvent) => void) => void removeEventListener: (type: `storage`, listener: (event: StorageEvent) => void) => void }",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 24, "endLine": 33 }
+        },
+        {
+          "kind": "interface",
+          "name": "Parser",
+          "signature": "export interface Parser { parse: (data: string) => unknown stringify: (data: unknown) => string }",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 38, "endLine": 40 }
+        },
+        {
+          "kind": "interface",
+          "name": "LocalStorageCollectionConfig",
+          "signature": "export interface LocalStorageCollectionConfig<T extends object = object, TSchema extends StandardSchemaV1 = never, TKey extends string | number = string | number> extends BaseCollectionConfig<T, TKey, TSchema> { storageKey: string storage?: StorageApi storageEventApi?: StorageEventApi parser?: Parser }",
+          "generics": "<T extends object = object, TSchema extends StandardSchemaV1 = never, TKey extends string | number = string | number>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 41, "endLine": 65 }
+        },
+        {
+          "kind": "type",
+          "name": "ClearStorageFn",
+          "signature": "export type ClearStorageFn = () => void",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 66, "endLine": 68 }
+        },
+        {
+          "kind": "type",
+          "name": "GetStorageSizeFn",
+          "signature": "export type GetStorageSizeFn = () => number",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 69, "endLine": 71 }
+        },
+        {
+          "kind": "interface",
+          "name": "LocalStorageCollectionUtils",
+          "signature": "export interface LocalStorageCollectionUtils extends UtilsRecord { clearStorage: ClearStorageFn getStorageSize: GetStorageSizeFn acceptMutations: (transaction: { mutations: Array<PendingMutation<Record<string, unknown>>> }) => void }",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 72, "endLine": 107 }
+        },
+        {
+          "kind": "function",
+          "name": "localStorageCollectionOptions",
+          "signature": "export function localStorageCollectionOptions<T extends StandardSchemaV1, TKey extends string | number = string | number>(config: LocalStorageCollectionConfig<InferSchemaOutput<T>, T, TKey> & { schema: T },): CollectionConfig<InferSchemaOutput<T>, TKey, T, LocalStorageCollectionUtils> & { id: string utils: LocalStorageCollectionUtils schema: T }",
+          "generics": "<T extends StandardSchemaV1, TKey extends string | number = string | number>",
+          "decorators": [],
+          "returnType": "CollectionConfig<InferSchemaOutput<T>, TKey, T, LocalStorageCollectionUtils> & { id: string utils: LocalStorageCollectionUtils schema: T }",
+          "exported": true,
+          "anchor": { "startLine": 175, "endLine": 222 }
+        },
+        {
+          "kind": "function",
+          "name": "localStorageCollectionOptions",
+          "signature": "export function localStorageCollectionOptions<T extends object, TKey extends string | number = string | number>(config: LocalStorageCollectionConfig<T, never, TKey> & { schema?: never },): CollectionConfig<T, TKey, never, LocalStorageCollectionUtils> & { id: string utils: LocalStorageCollectionUtils schema?: never }",
+          "generics": "<T extends object, TKey extends string | number = string | number>",
+          "decorators": [],
+          "returnType": "CollectionConfig<T, TKey, never, LocalStorageCollectionUtils> & { id: string utils: LocalStorageCollectionUtils schema?: never }",
+          "exported": true,
+          "anchor": { "startLine": 223, "endLine": 242 }
+        },
+        {
+          "kind": "function",
+          "name": "localStorageCollectionOptions",
+          "signature": "export function localStorageCollectionOptions(config: LocalStorageCollectionConfig<any, any, string | number>,): Omit<CollectionConfig<any, string | number, any, LocalStorageCollectionUtils>, `id`> & { id: string utils: LocalStorageCollectionUtils schema?: StandardSchemaV1 }",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Omit<CollectionConfig<any, string | number, any, LocalStorageCollectionUtils>, `id`> & { id: string utils: LocalStorageCollectionUtils schema?: StandardSchemaV1 }",
+          "exported": true,
+          "anchor": { "startLine": 243, "endLine": 430 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "StoredItem",
+          "shape": "interface StoredItem<T> { versionKey: string data: T }",
+          "discriminant": null,
+          "anchor": { "startLine": 34, "endLine": 37 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "storageKey is empty string or undefined",
+          "handled": true,
+          "behavior": "Throws StorageKeyRequiredError",
+          "anchor": { "startLine": 245, "endLine": 247 }
+        },
+        {
+          "inputShape": "window.localStorage is not available (SSR)",
+          "handled": true,
+          "behavior": "Falls back to in-memory storage via createInMemoryStorage()",
+          "anchor": { "startLine": 250, "endLine": 254 }
+        },
+        {
+          "inputShape": "window is undefined (SSR)",
+          "handled": true,
+          "behavior": "Uses in-memory storage and no-op storage event API",
+          "anchor": { "startLine": 256, "endLine": 260 }
+        },
+        {
+          "inputShape": "Stored data has invalid format (missing versionKey or data)",
+          "handled": true,
+          "behavior": "Throws InvalidStorageDataFormatError",
+          "anchor": { "startLine": 491, "endLine": 494 }
+        },
+        {
+          "inputShape": "Stored data is not an object format",
+          "handled": true,
+          "behavior": "Throws InvalidStorageObjectFormatError",
+          "anchor": { "startLine": 496, "endLine": 497 }
+        },
+        {
+          "inputShape": "Data cannot be JSON serialized",
+          "handled": true,
+          "behavior": "Throws SerializationError with operation context",
+          "anchor": { "startLine": 108, "endLine": 117 }
+        },
+        {
+          "inputShape": "Storage event from different key or storage area",
+          "handled": true,
+          "behavior": "Ignores the event, only processes changes to configured storageKey",
+          "anchor": { "startLine": 644, "endLine": 648 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "config.storageKey",
+          "right": "''",
+          "inclusive": false,
+          "intent": "Ensure storage key is provided",
+          "anchor": { "startLine": 245, "endLine": 247 }
+        },
+        {
+          "operator": "==",
+          "left": "typeof window",
+          "right": "'undefined'",
+          "inclusive": true,
+          "intent": "Check if running in browser environment",
+          "anchor": { "startLine": 250, "endLine": 250 }
+        },
+        {
+          "operator": "==",
+          "left": "typeof window",
+          "right": "'undefined'",
+          "inclusive": false,
+          "intent": "Check if running in browser environment",
+          "anchor": { "startLine": 256, "endLine": 256 }
+        },
+        {
+          "operator": "==",
+          "left": "event.key",
+          "right": "storageKey",
+          "inclusive": true,
+          "intent": "Only process storage events for this collection's key",
+          "anchor": { "startLine": 644, "endLine": 644 }
+        },
+        {
+          "operator": "==",
+          "left": "event.storageArea",
+          "right": "storage",
+          "inclusive": false,
+          "intent": "Only process events from this storage instance",
+          "anchor": { "startLine": 645, "endLine": 645 }
+        },
+        {
+          "operator": "==",
+          "left": "typeof parsed",
+          "right": "'object'",
+          "inclusive": true,
+          "intent": "Check if parsed data is an object",
+          "anchor": { "startLine": 484, "endLine": 484 }
+        },
+        {
+          "operator": "==",
+          "left": "parsed",
+          "right": "null",
+          "inclusive": false,
+          "intent": "Exclude null check for object type guard",
+          "anchor": { "startLine": 485, "endLine": 485 }
+        },
+        {
+          "operator": "==",
+          "left": "Array.isArray(parsed)",
+          "right": "true",
+          "inclusive": true,
+          "intent": "Ensure data is not an array (must be object format)",
+          "anchor": { "startLine": 486, "endLine": 486 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "StorageKeyRequiredError",
+          "caught": null,
+          "action": "Prevents collection creation without storage key",
+          "fallback": null,
+          "anchor": { "startLine": 245, "endLine": 247 }
+        },
+        {
+          "thrown": "SerializationError",
+          "caught": null,
+          "action": "Wrapped in try-catch to provide operation context in error message",
+          "fallback": null,
+          "anchor": { "startLine": 108, "endLine": 117 }
+        },
+        {
+          "thrown": "InvalidStorageDataFormatError",
+          "caught": null,
+          "action": "Thrown when stored item missing required fields",
+          "fallback": null,
+          "anchor": { "startLine": 491, "endLine": 494 }
+        },
+        {
+          "thrown": "InvalidStorageObjectFormatError",
+          "caught": null,
+          "action": "Thrown when stored data is not in expected object format",
+          "fallback": null,
+          "anchor": { "startLine": 496, "endLine": 497 }
+        },
+        {
+          "thrown": "Error (various)",
+          "caught": null,
+          "action": "Logged to console.error in saveToStorage, re-thrown",
+          "fallback": null,
+          "anchor": { "startLine": 281, "endLine": 287 }
+        },
+        {
+          "thrown": "Error (various)",
+          "caught": null,
+          "action": "Logged to console.warn in loadFromStorage, returns empty Map",
+          "fallback": "Empty Map",
+          "anchor": { "startLine": 503, "endLine": 506 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "config.storageKey must be provided and non-empty",
+          "anchor": { "startLine": 245, "endLine": 247 }
+        },
+        {
+          "kind": "non-null",
+          "description": "Storage API must be available (window.localStorage, sessionStorage, or in-memory fallback)",
+          "anchor": { "startLine": 250, "endLine": 254 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Returned CollectionConfig always includes id, utils, and wrapped mutation handlers",
+          "anchor": { "startLine": 430, "endLine": 470 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Caller must call acceptMutations() in manual transaction's mutationFn after successful API calls",
+          "anchor": { "startLine": 89, "endLine": 105 }
+        },
+        {
+          "kind": "env",
+          "description": "Parser must be JSON-compatible (parse returns object, stringify accepts any value)",
+          "anchor": { "startLine": 38, "endLine": 40 }
+        },
+        {
+          "kind": "platform",
+          "description": "Storage events fire on other tabs but not the originating tab",
+          "anchor": { "startLine": 644, "endLine": 648 }
+        }
+      ],
+      "ambiguities": [],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "fifo",
+        "notes": "Mutation handlers are async but execute sequentially. Cross-tab sync via storage events is async and may arrive out of order. Version keys detect overwrites but don't prevent them."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports (L1-19)",
+        "StorageApi type (L20-23)",
+        "StorageEventApi type (L24-33)",
+        "StoredItem interface (L34-37)",
+        "Parser interface (L38-40)",
+        "LocalStorageCollectionConfig interface (L41-65)",
+        "ClearStorageFn type (L66-68)",
+        "GetStorageSizeFn type (L69-71)",
+        "LocalStorageCollectionUtils interface (L72-107)",
+        "validateJsonSerializable function (L108-121)",
+        "generateUuid function (L122-126)",
+        "encodeStorageKey function (L127-140)",
+        "decodeStorageKey function (L141-153)",
+        "createInMemoryStorage function (L154-163)",
+        "createNoOpStorageEventApi function (L164-174)",
+        "localStorageCollectionOptions overloads (L175-242)",
+        "localStorageCollectionOptions implementation (L243-430)",
+        "saveToStorage function (L268-294)",
+        "wrappedOnInsert function (L313-352)",
+        "wrappedOnUpdate function (L353-386)",
+        "wrappedOnDelete function (L387-415)",
+        "acceptMutations function (L416-429)",
+        "loadFromStorage function (L471-507)",
+        "createLocalStorageSync function (L508-714)",
+        "findChanges function (L558-586)",
+        "processStorageChanges function (L587-620)",
+        "syncConfig object (L621-675)",
+        "confirmOperationsSync function (L676-700)"
+      ],
+      "moduleLevelCode": "No top-level statements or __main__ code. All execution is within function calls.",
+      "exports": [
+        { "name": "StorageApi", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StorageEventApi", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "Parser", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "LocalStorageCollectionConfig", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ClearStorageFn", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "GetStorageSizeFn", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "LocalStorageCollectionUtils", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "localStorageCollectionOptions", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "safeRandomUUID", "module": "./utils/uuid", "alias": null, "kind": "internal" },
+        { "symbol": "InvalidStorageDataFormatError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "InvalidStorageObjectFormatError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "SerializationError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "StorageKeyRequiredError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "BaseCollectionConfig", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "CollectionConfig", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "DeleteMutationFnParams", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "InferSchemaOutput", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "InsertMutationFnParams", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "PendingMutation", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "SyncConfig", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "UpdateMutationFnParams", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "UtilsRecord", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "StandardSchemaV1", "module": "@standard-schema/spec", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/db/src/local-storage.ts__validateJsonSerializable#function:validateJsonSerializable",
+        "unitKind": "function",
+        "name": "validateJsonSerializable",
+        "qualifiedName": "validateJsonSerializable",
+        "parentUnitId": null,
+        "startLine": 108,
+        "endLine": 121,
+        "isBehavioral": true,
+        "source": "   * @param transaction - The transaction containing mutations to accept\n   * @example\n   * const localSettings = createCollection(localStorageCollectionOptions({...}))\n   *\n   * const tx = createTransaction({\n   *   mutationFn: async ({ transaction }) => {\n   *     // Make API call first\n   *     await api.save(...)\n   *     // Then persist local-storage mutations after success\n   *     localSettings.utils.acceptMutations(transaction)\n   *   }\n   * })\n   */\n  acceptMutations: (transaction: {",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__validateJsonSerializable#function:validateJsonSerializable",
+          "fileId": "packages/db/src/local-storage.ts__validateJsonSerializable",
+          "unitKind": "function",
+          "name": "validateJsonSerializable",
+          "qualifiedName": "validateJsonSerializable",
+          "parentUnitId": null,
+          "startLine": 108,
+          "endLine": 121,
+          "signature": "validateJsonSerializable(value: any): void",
+          "parameters": [
+            { "name": "value", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The caller provides a value to validate."],
+          "postconditions": [
+            "If the function returns normally, the value is guaranteed to be JSON-serializable (i.e., JSON.stringify succeeds without throwing)."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Circular references cause a throw (JSON.stringify throws on circular references).",
+            "Values with undefined properties may cause a throw depending on JSON.stringify behavior.",
+            "Non-serializable types like functions, symbols, or BigInt cause a throw."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Throws an error if the value is not JSON-serializable.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "JSON.stringify", "source": null, "kind": "internal" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates that a given value is JSON-serializable, throwing an error if it is not. Used to guard against storing non-serializable data in local storage.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "7cfba30f4282f5af0d1901d694c6be74662b7e1848c3e703a34bc9e3355646d3"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__generateUuid#function:generateUuid",
+        "unitKind": "function",
+        "name": "generateUuid",
+        "qualifiedName": "generateUuid",
+        "parentUnitId": null,
+        "startLine": 122,
+        "endLine": 126,
+        "isBehavioral": true,
+        "source": "    mutations: Array<PendingMutation<Record<string, unknown>>>\n  }) => void\n}\n\n/**",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__generateUuid#function:generateUuid",
+          "fileId": "packages/db/src/local-storage.ts__generateUuid",
+          "unitKind": "function",
+          "name": "generateUuid",
+          "qualifiedName": "generateUuid",
+          "parentUnitId": null,
+          "startLine": 122,
+          "endLine": 126,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["Returns a non-empty string representing a UUID."],
+          "invariants": [],
+          "edgeCases": [
+            "Each invocation must return a distinct UUID to ensure uniqueness across multiple calls.",
+            "Assumes underlying UUID generation capability; behavior is undefined if unavailable, but standard implementations are expected."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Generates a universally unique identifier (UUID) string for unique key generation in local storage contexts.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "generateUuid() is called",
+              "then": "A string value is returned without errors.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "the return values are compared",
+              "then": "the strings are not equal, ensuring uniqueness.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "667830ba78e4f6d850ee106664da684bc140c74aef48cfea872dcd885b27371f"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__encodeStorageKey#function:encodeStorageKey",
+        "unitKind": "function",
+        "name": "encodeStorageKey",
+        "qualifiedName": "encodeStorageKey",
+        "parentUnitId": null,
+        "startLine": 127,
+        "endLine": 140,
+        "isBehavioral": true,
+        "source": " * Validates that a value can be JSON serialized\n * @param parser - The parser to use for serialization\n * @param value - The value to validate for JSON serialization\n * @param operation - The operation type being performed (for error messages)\n * @throws Error if the value cannot be JSON serialized\n */\nfunction validateJsonSerializable(\n  parser: Parser,\n  value: any,\n  operation: string,\n): void {\n  try {\n    parser.stringify(value)\n  } catch (error) {",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__encodeStorageKey#function:encodeStorageKey",
+          "fileId": "packages/db/src/local-storage.ts__encodeStorageKey",
+          "unitKind": "function",
+          "name": "encodeStorageKey",
+          "qualifiedName": "encodeStorageKey",
+          "parentUnitId": null,
+          "startLine": 127,
+          "endLine": 140,
+          "signature": null,
+          "parameters": [],
+          "returnType": "string",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Encodes a storage key for use in local storage operations, producing a string key that can be used as a localStorage key for the database's local storage implementation and reversed by decodeStorageKey.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "10b87abaa595b804cd2e1e0f9d793e4238214d77dae150a346068163caceadb1"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__decodeStorageKey#function:decodeStorageKey",
+        "unitKind": "function",
+        "name": "decodeStorageKey",
+        "qualifiedName": "decodeStorageKey",
+        "parentUnitId": null,
+        "startLine": 141,
+        "endLine": 153,
+        "isBehavioral": true,
+        "source": "    throw new SerializationError(\n      operation,\n      error instanceof Error ? error.message : String(error),\n    )\n  }\n}\n\n/**\n * Generate a UUID for version tracking\n * @returns A unique identifier string for tracking data versions\n */\nfunction generateUuid(): string {\n  return safeRandomUUID()",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__decodeStorageKey#function:decodeStorageKey",
+          "fileId": "packages/db/src/local-storage.ts__decodeStorageKey",
+          "unitKind": "function",
+          "name": "decodeStorageKey",
+          "qualifiedName": "decodeStorageKey",
+          "parentUnitId": null,
+          "startLine": 141,
+          "endLine": 153,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Decodes an encoded storage key string back into its original structured key object, serving as the inverse operation to encodeStorageKey.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a93cd59a5d9d34b2b1582f1b0004a5076e5152bdfd0ada2ab161273fafbc2d3b"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__createInMemoryStorage#function:createInMemoryStorage",
+        "unitKind": "function",
+        "name": "createInMemoryStorage",
+        "qualifiedName": "createInMemoryStorage",
+        "parentUnitId": null,
+        "startLine": 154,
+        "endLine": 163,
+        "isBehavioral": true,
+        "source": "}\n\n/**\n * Encodes a key (string or number) into a storage-safe string format.\n * This prevents collisions between numeric and string keys by prefixing with type information.\n *\n * Examples:\n *   - number 1 → \"n:1\"\n *   - string \"1\" → \"s:1\"\n *   - string \"n:1\" → \"s:n:1\"",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__createInMemoryStorage#function:createInMemoryStorage",
+          "fileId": "packages/db/src/local-storage.ts__createInMemoryStorage",
+          "unitKind": "function",
+          "name": "createInMemoryStorage",
+          "qualifiedName": "createInMemoryStorage",
+          "parentUnitId": null,
+          "startLine": 154,
+          "endLine": 163,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Factory function that creates an in-memory key-value storage object for local data persistence, used by the database package's local storage subsystem.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1448fed9cac03aaa33b8aff345fe9bf13aabf942c06a3505018f615d426f372d"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__createNoOpStorageEventApi#function:createNoOpStorageEventApi",
+        "unitKind": "function",
+        "name": "createNoOpStorageEventApi",
+        "qualifiedName": "createNoOpStorageEventApi",
+        "parentUnitId": null,
+        "startLine": 164,
+        "endLine": 174,
+        "isBehavioral": true,
+        "source": " *\n * @param key - The key to encode (string or number)\n * @returns Type-prefixed string that is safe for storage\n */\nfunction encodeStorageKey(key: string | number): string {\n  if (typeof key === `number`) {\n    return `n:${key}`\n  }\n  return `s:${key}`\n}\n",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__createNoOpStorageEventApi#function:createNoOpStorageEventApi",
+          "fileId": "packages/db/src/local-storage.ts__createNoOpStorageEventApi",
+          "unitKind": "function",
+          "name": "createNoOpStorageEventApi",
+          "qualifiedName": "createNoOpStorageEventApi",
+          "parentUnitId": null,
+          "startLine": 164,
+          "endLine": 174,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "A factory function that returns a no-op (stub) implementation of a storage event API, used when real browser storage events are unavailable or not needed.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "7a694277ff616f6ae0b02f4ac28bc8230d2793a40a97e339b5567c493ca119ee"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__localStorageCollectionOptions#function:localStorageCollectionOptions",
+        "unitKind": "function",
+        "name": "localStorageCollectionOptions",
+        "qualifiedName": "localStorageCollectionOptions",
+        "parentUnitId": null,
+        "startLine": 175,
+        "endLine": 430,
+        "isBehavioral": true,
+        "source": "/**\n * Decodes a storage key back to its original form.\n * This is the inverse of encodeStorageKey.\n *\n * @param encodedKey - The encoded key from storage\n * @returns The original key (string or number)\n */\nfunction decodeStorageKey(encodedKey: string): string | number {\n  if (encodedKey.startsWith(`n:`)) {\n    return Number(encodedKey.slice(2))\n  }\n  if (encodedKey.startsWith(`s:`)) {\n    return encodedKey.slice(2)\n  }\n  // Fallback for legacy data without encoding\n  return encodedKey\n}\n\n/**\n * Creates an in-memory storage implementation that mimics the StorageApi interface\n * Used as a fallback when localStorage is not available (e.g., server-side rendering)\n * @returns An object implementing the StorageApi interface using an in-memory Map\n */\nfunction createInMemoryStorage(): StorageApi {\n  const storage = new Map<string, string>()\n\n  return {\n    getItem(key: string): string | null {\n      return storage.get(key) ?? null\n    },\n    setItem(key: string, value: string): void {\n      storage.set(key, value)\n    },\n    removeItem(key: string): void {\n      storage.delete(key)\n    },\n  }\n}\n\n/**\n * Creates a no-op storage event API for environments without window (e.g., server-side)\n * This provides the required interface but doesn't actually listen to any events\n * since cross-tab synchronization is not possible in server environments\n * @returns An object implementing the StorageEventApi interface with no-op methods\n */\nfunction createNoOpStorageEventApi(): StorageEventApi {\n  return {\n    addEventListener: () => {\n      // No-op: cannot listen to storage events without window\n    },\n    removeEventListener: () => {\n      // No-op: cannot remove listeners without window\n    },\n  }\n}\n\n/**\n * Creates localStorage collection options for use with a standard Collection\n *\n * This function creates a collection that persists data to localStorage/sessionStorage\n * and synchronizes changes across browser tabs using storage events.\n *\n * **Fallback Behavior:**\n *\n * When localStorage is not available (e.g., in server-side rendering environments),\n * this function automatically falls back to an in-memory storage implementation.\n * This prevents errors during module initialization and allows the collection to\n * work in any environment, though data will not persist across page reloads or\n * be shared across tabs when using the in-memory fallback.\n *\n * **Using with Manual Transactions:**\n *\n * For manual transactions, you must call `utils.acceptMutations()` in your transaction's `mutationFn`\n * to persist changes made during `tx.mutate()`. This is necessary because local-storage collections\n * don't participate in the standard mutation handler flow for manual transactions.\n *\n * @template TExplicit - The explicit type of items in the collection (highest priority)\n * @template TSchema - The schema type for validation and type inference (second priority)\n * @template TFallback - The fallback type if no explicit or schema type is provided\n * @param config - Configuration options for the localStorage collection\n * @returns Collection options with utilities including clearStorage, getStorageSize, and acceptMutations\n *\n * @example\n * // Basic localStorage collection\n * const collection = createCollection(\n *   localStorageCollectionOptions({\n *     storageKey: 'todos',\n *     getKey: (item) => item.id,\n *   })\n * )\n *\n * @example\n * // localStorage collection with custom storage\n * const collection = createCollection(\n *   localStorageCollectionOptions({\n *     storageKey: 'todos',\n *     storage: window.sessionStorage, // Use sessionStorage instead\n *     getKey: (item) => item.id,\n *   })\n * )\n *\n * @example\n * // localStorage collection with mutation handlers\n * const collection = createCollection(\n *   localStorageCollectionOptions({\n *     storageKey: 'todos',\n *     getKey: (item) => item.id,\n *     onInsert: async ({ transaction }) => {\n *       console.log('Item inserted:', transaction.mutations[0].modified)\n *     },\n *   })\n * )\n *\n * @example\n * // Using with manual transactions\n * const localSettings = createCollection(\n *   localStorageCollectionOptions({\n *     storageKey: 'user-settings',\n *     getKey: (item) => item.id,\n *   })\n * )\n *\n * const tx = createTransaction({\n *   mutationFn: async ({ transaction }) => {\n *     // Use settings data in API call\n *     const settingsMutations = transaction.mutations.filter(m => m.collection === localSettings)\n *     await api.updateUserProfile({ settings: settingsMutations[0]?.modified })\n *\n *     // Persist local-storage mutations after API success\n *     localSettings.utils.acceptMutations(transaction)\n *   }\n * })\n *\n * tx.mutate(() => {\n *   localSettings.insert({ id: 'theme', value: 'dark' })\n *   apiCollection.insert({ id: 2, data: 'profile data' })\n * })\n *\n * await tx.commit()\n */\n\n// Overload for when schema is provided\nexport function localStorageCollectionOptions<\n  T extends StandardSchemaV1,\n  TKey extends string | number = string | number,\n>(\n  config: LocalStorageCollectionConfig<InferSchemaOutput<T>, T, TKey> & {\n    schema: T\n  },\n): CollectionConfig<\n  InferSchemaOutput<T>,\n  TKey,\n  T,\n  LocalStorageCollectionUtils\n> & {\n  id: string\n  utils: LocalStorageCollectionUtils\n  schema: T\n}\n\n// Overload for when no schema is provided\n// the type T needs to be passed explicitly unless it can be inferred from the getKey function in the config\nexport function localStorageCollectionOptions<\n  T extends object,\n  TKey extends string | number = string | number,\n>(\n  config: LocalStorageCollectionConfig<T, never, TKey> & {\n    schema?: never // prohibit schema\n  },\n): CollectionConfig<T, TKey, never, LocalStorageCollectionUtils> & {\n  id: string\n  utils: LocalStorageCollectionUtils\n  schema?: never // no schema in the result\n}\n\nexport function localStorageCollectionOptions(\n  config: LocalStorageCollectionConfig<any, any, string | number>,\n): Omit<\n  CollectionConfig<any, string | number, any, LocalStorageCollectionUtils>,\n  `id`\n> & {\n  id: string\n  utils: LocalStorageCollectionUtils\n  schema?: StandardSchemaV1\n} {\n  // Validate required parameters\n  if (!config.storageKey) {\n    throw new StorageKeyRequiredError()\n  }\n\n  // Default to window.localStorage if no storage is provided\n  // Fall back to in-memory storage if localStorage is not available (e.g., server-side rendering)\n  const storage =\n    config.storage ||\n    (typeof window !== `undefined` ? window.localStorage : null) ||\n    createInMemoryStorage()\n\n  // Default to window for storage events if not provided\n  // Fall back to no-op storage event API if window is not available (e.g., server-side rendering)\n  const storageEventApi =\n    config.storageEventApi ||\n    (typeof window !== `undefined` ? window : null) ||\n    createNoOpStorageEventApi()\n\n  // Default to JSON parser if no parser is provided\n  const parser = config.parser || JSON\n\n  // Track the last known state to detect changes\n  const lastKnownData = new Map<string | number, StoredItem<any>>()\n\n  // Create the sync configuration\n  const sync = createLocalStorageSync<any>(\n    config.storageKey,\n    storage,\n    storageEventApi,\n    parser,\n    config.getKey,\n    lastKnownData,\n  )\n\n  /**\n   * Save data to storage\n   * @param dataMap - Map of items with version tracking to save to storage\n   */\n  const saveToStorage = (\n    dataMap: Map<string | number, StoredItem<any>>,\n  ): void => {\n    try {\n      // Convert Map to object format for storage\n      const objectData: Record<string, StoredItem<any>> = {}\n      dataMap.forEach((storedItem, key) => {\n        objectData[encodeStorageKey(key)] = storedItem\n      })\n      const serialized = parser.stringify(objectData)\n      storage.setItem(config.storageKey, serialized)\n    } catch (error) {\n      console.error(\n        `[LocalStorageCollection] Error saving data to storage key \"${config.storageKey}\":`,\n        error,\n      )\n      throw error\n    }\n  }\n\n  /**\n   * Removes all collection data from the configured storage\n   */\n  const clearStorage: ClearStorageFn = (): void => {\n    storage.removeItem(config.storageKey)\n  }\n\n  /**\n   * Get the size of the stored data in bytes (approximate)\n   * @returns The approximate size in bytes of the stored collection data\n   */\n  const getStorageSize: GetStorageSizeFn = (): number => {",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__localStorageCollectionOptions#function:localStorageCollectionOptions",
+          "fileId": "packages/db/src/local-storage.ts__localStorageCollectionOptions",
+          "unitKind": "function",
+          "name": "localStorageCollectionOptions",
+          "qualifiedName": "localStorageCollectionOptions",
+          "parentUnitId": null,
+          "startLine": 175,
+          "endLine": 430,
+          "signature": "export function localStorageCollectionOptions<T extends StandardSchemaV1, TKey extends string | number = string | number>(config: LocalStorageCollectionConfig<InferSchemaOutput<T>, T, TKey> & { schema: T }): CollectionConfig<InferSchemaOutput<T>, TKey, T, LocalStorageCollectionUtils> & { id: string; utils: LocalStorageCollectionUtils; schema: T }\nexport function localStorageCollectionOptions<T extends object, TKey extends string | number = string | number>(config: LocalStorageCollectionConfig<T, never, TKey> & { schema?: never }): CollectionConfig<T, TKey, never, LocalStorageCollectionUtils> & { id: string; utils: LocalStorageCollectionUtils; schema?: never }",
+          "parameters": [
+            {
+              "name": "config",
+              "type": "LocalStorageCollectionConfig<any, any, string | number>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "Omit<CollectionConfig<any, string | number, any, LocalStorageCollectionUtils>, `id`> & { id: string; utils: LocalStorageCollectionUtils; schema?: StandardSchemaV1 }",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "config.storageKey must be a truthy value (string or number); otherwise a StorageKeyRequiredError is thrown",
+            "config.getKey must be provided (required by the collection contract)"
+          ],
+          "postconditions": [
+            "Returns a CollectionConfig object with an id derived from the storageKey, a utils object (containing clearStorage, getStorageSize, acceptMutations), and an optional schema property",
+            "The returned config includes onInsert/onUpdate/onDelete handlers that persist changes to the resolved storage backend",
+            "A localStorageSync instance is created that listens to storage events for cross-tab synchronization"
+          ],
+          "invariants": [
+            "The storage backend is resolved once at creation time and used for the lifetime of the collection",
+            "lastKnownData Map is shared between saveToStorage and the sync mechanism to track versioned state"
+          ],
+          "edgeCases": [
+            "config.storageKey is falsy → throws StorageKeyRequiredError",
+            "window is undefined (SSR) and no config.storage → falls back to createInMemoryStorage()",
+            "window is undefined (SSR) and no config.storageEventApi → falls back to createNoOpStorageEventApi()",
+            "config.storage is provided → uses it directly, bypassing window.localStorage and in-memory fallback",
+            "config.parser is not provided → defaults to native JSON",
+            "Save operation fails (e.g. storage quota exceeded) → logs error to console.error and rethrows the original error"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["StorageKeyRequiredError"],
+            "reverts": [],
+            "onInvalidInput": "Throws StorageKeyRequiredError when config.storageKey is falsy",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Creates and populates lastKnownData Map used for change tracking",
+            "Writes serialized collection data to the resolved storage backend via storage.setItem",
+            "Removes collection data from storage on clearStorage()"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "createInMemoryStorage", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "createNoOpStorageEventApi", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "createLocalStorageSync", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "encodeStorageKey", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "console.error", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": [
+            "StandardSchemaV1",
+            "InferSchemaOutput",
+            "LocalStorageCollectionConfig",
+            "CollectionConfig",
+            "LocalStorageCollectionUtils",
+            "ClearStorageFn",
+            "GetStorageSizeFn",
+            "StoredItem",
+            "StorageKeyRequiredError",
+            "StorageApi",
+            "StorageEventApi"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Factory that builds a CollectionConfig backed by localStorage (or sessionStorage) with cross-tab synchronization via storage events. Falls back to in-memory storage and a no-op event API when the browser storage APIs are unavailable (e.g. server-side rendering).",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "StorageKeyRequiredError",
+              "role": "Error thrown when the required storageKey parameter is missing from config"
+            },
+            {
+              "kind": "format-string",
+              "value": "[LocalStorageCollection] Error saving data to storage key \"%s\":",
+              "role": "Error log prefix emitted when serialization or storage.setItem fails during saveToStorage"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "localStorageCollectionOptions is called",
+              "then": "Throws StorageKeyRequiredError",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "localStorageCollectionOptions is called without explicit storage or storageEventApi",
+              "then": "Returns a CollectionConfig whose id is 'test' and whose storage backend is an in-memory implementation (no exception thrown)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "localStorageCollectionOptions is called",
+              "then": "Returns a CollectionConfig with a utils object containing clearStorage, getStorageSize, and acceptMutations functions",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "3407c647e4a630c7b31e0bad1c89891f7fc27da93b550a1dcc61bf22e6113ac7"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__saveToStorage#function:saveToStorage",
+        "unitKind": "function",
+        "name": "saveToStorage",
+        "qualifiedName": "saveToStorage",
+        "parentUnitId": null,
+        "startLine": 268,
+        "endLine": 294,
+        "isBehavioral": true,
+        "source": " * const collection = createCollection(\n *   localStorageCollectionOptions({\n *     storageKey: 'todos',\n *     storage: window.sessionStorage, // Use sessionStorage instead\n *     getKey: (item) => item.id,\n *   })\n * )\n *\n * @example\n * // localStorage collection with mutation handlers\n * const collection = createCollection(\n *   localStorageCollectionOptions({\n *     storageKey: 'todos',\n *     getKey: (item) => item.id,\n *     onInsert: async ({ transaction }) => {\n *       console.log('Item inserted:', transaction.mutations[0].modified)\n *     },\n *   })\n * )\n *\n * @example\n * // Using with manual transactions\n * const localSettings = createCollection(\n *   localStorageCollectionOptions({\n *     storageKey: 'user-settings',\n *     getKey: (item) => item.id,\n *   })",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__saveToStorage#function:saveToStorage",
+          "fileId": "packages/db/src/local-storage.ts__saveToStorage",
+          "unitKind": "function",
+          "name": "saveToStorage",
+          "qualifiedName": "saveToStorage",
+          "parentUnitId": null,
+          "startLine": 268,
+          "endLine": 294,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "A valid browser Storage object is provided (localStorage or sessionStorage)",
+            "storageKey is a non-empty string identifying the storage entry",
+            "Items data is JSON-serializable (validated via validateJsonSerializable)"
+          ],
+          "postconditions": [
+            "The JSON-stringified representation of the data is written to storage[storageKey]",
+            "Subsequent read of storage[storageKey] returns the serialized form of the same data"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Empty items array — serializes and stores an empty JSON array",
+            "Storage quota exceeded — underlying Storage.setItem will throw a QuotaExceededError",
+            "Non-JSON-serializable data passed — validateJsonSerializable will reject/throw before storage write"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error from validateJsonSerializable for non-serializable data",
+              "QuotaExceededError from Storage.setItem when quota is exceeded"
+            ],
+            "reverts": [],
+            "onInvalidInput": "Throws if data is not JSON-serializable",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Mutates the provided browser Storage object by writing (or overwriting) the entry at storageKey"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "validateJsonSerializable", "source": "local-storage.ts", "kind": "internal" }],
+          "symbolReferences": ["Storage (Web API)"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Writes a JSON-stringified value to Storage via setItem(storageKey, JSON.stringify(data)). The stored format is a UTF-16 string (standard DOMString) parseable by JSON.parse.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Serializes a collection's item data as JSON and persists it to a browser Storage object (localStorage or sessionStorage) under the given storage key, after validating JSON serializability.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3e1879ea0f90f58199e20f6dc753c873f106f5a63743b988ad2d7eb8d84acedf"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__wrappedOnInsert#function:wrappedOnInsert",
+        "unitKind": "function",
+        "name": "wrappedOnInsert",
+        "qualifiedName": "wrappedOnInsert",
+        "parentUnitId": null,
+        "startLine": 313,
+        "endLine": 352,
+        "isBehavioral": true,
+        "source": " * await tx.commit()\n */\n\n// Overload for when schema is provided\nexport function localStorageCollectionOptions<\n  T extends StandardSchemaV1,\n  TKey extends string | number = string | number,\n>(\n  config: LocalStorageCollectionConfig<InferSchemaOutput<T>, T, TKey> & {\n    schema: T\n  },\n): CollectionConfig<\n  InferSchemaOutput<T>,\n  TKey,\n  T,\n  LocalStorageCollectionUtils\n> & {\n  id: string\n  utils: LocalStorageCollectionUtils\n  schema: T\n}\n\n// Overload for when no schema is provided\n// the type T needs to be passed explicitly unless it can be inferred from the getKey function in the config\nexport function localStorageCollectionOptions<\n  T extends object,\n  TKey extends string | number = string | number,\n>(\n  config: LocalStorageCollectionConfig<T, never, TKey> & {\n    schema?: never // prohibit schema\n  },\n): CollectionConfig<T, TKey, never, LocalStorageCollectionUtils> & {\n  id: string\n  utils: LocalStorageCollectionUtils\n  schema?: never // no schema in the result\n}\n\nexport function localStorageCollectionOptions(\n  config: LocalStorageCollectionConfig<any, any, string | number>,\n): Omit<",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__wrappedOnInsert#function:wrappedOnInsert",
+          "fileId": "packages/db/src/local-storage.ts__wrappedOnInsert",
+          "unitKind": "function",
+          "name": "wrappedOnInsert",
+          "qualifiedName": "wrappedOnInsert",
+          "parentUnitId": null,
+          "startLine": 313,
+          "endLine": 352,
+          "signature": "function wrappedOnInsert<T, TKey extends string | number>(item: T, collection: CollectionConfig<T, TKey, any, LocalStorageCollectionUtils>): Promise<void>",
+          "parameters": [
+            { "name": "item", "type": "T", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "collection",
+              "type": "CollectionConfig<T, TKey, any, LocalStorageCollectionUtils>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "export",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T", "TKey extends string | number"],
+          "logicOutline": [],
+          "preconditions": [
+            "The item to insert is serializable to JSON.",
+            "The collection configuration is valid and its getKey function is defined.",
+            "The collection is in a state that accepts inserts (e.g., not frozen or read-only)."
+          ],
+          "postconditions": [
+            "The item is persisted to local storage under a key derived from the collection's getKey function.",
+            "Any registered onInsert event listeners for the collection are notified.",
+            "The collection's in-memory cache/state reflects the inserted item."
+          ],
+          "invariants": [
+            "The operation is atomic: either the item is fully persisted or no change is made to storage.",
+            "The key for the item is unique within the collection."
+          ],
+          "edgeCases": [
+            "Attempting to insert an item with a key that already exists: behavior depends on the collection's update policy (overwrite or ignore).",
+            "Inserting an item that fails JSON serialization: the operation should reject with a serialization error.",
+            "Inserting into a collection that has been disposed or cleared: the operation may throw or be a no-op."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error", "TypeError"],
+            "reverts": [],
+            "onInvalidInput": "Rejects with a TypeError if the item is not serializable or the collection configuration is invalid.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Local storage (via the collection's storage API) is updated with the new item.",
+            "The collection's in-memory state/cache is updated."
+          ],
+          "eventsEmitted": ["Triggers the collection's 'onInsert' event listeners."],
+          "complexity": null,
+          "calls": [
+            { "name": "collection.getKey", "source": "CollectionConfig", "kind": "internal" },
+            { "name": "saveToStorage", "source": "local-storage.ts", "kind": "internal" },
+            { "name": "validateJsonSerializable", "source": "local-storage.ts", "kind": "internal" }
+          ],
+          "symbolReferences": ["CollectionConfig", "LocalStorageCollectionUtils", "StandardSchemaV1"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "The item is serialized to JSON and stored in the browser's local storage under a key formatted as `{collection.id}:{getKey(item)}`.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Wraps an item insert operation for a local storage-backed collection, persisting the new item to storage and updating in-memory state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "wrappedOnInsert is called with the item and collection.",
+              "then": "The item is stored in local storage, the collection's in-memory state includes the item, and the onInsert event is fired.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "wrappedOnInsert is called.",
+              "then": "The promise rejects with an error indicating serialization failure, and no changes are made to storage.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "wrappedOnInsert is called.",
+              "then": "The behavior is determined by the collection's policy: either the existing item is overwritten or the operation is a no-op; the onInsert event is still fired.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4fb60a55385e9558789684c50a4eebd1f29f4ce15918ee2f1ea1106d48c97eab"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__wrappedOnUpdate#function:wrappedOnUpdate",
+        "unitKind": "function",
+        "name": "wrappedOnUpdate",
+        "qualifiedName": "wrappedOnUpdate",
+        "parentUnitId": null,
+        "startLine": 353,
+        "endLine": 386,
+        "isBehavioral": true,
+        "source": "  CollectionConfig<any, string | number, any, LocalStorageCollectionUtils>,\n  `id`\n> & {\n  id: string\n  utils: LocalStorageCollectionUtils\n  schema?: StandardSchemaV1\n} {\n  // Validate required parameters\n  if (!config.storageKey) {\n    throw new StorageKeyRequiredError()\n  }\n\n  // Default to window.localStorage if no storage is provided\n  // Fall back to in-memory storage if localStorage is not available (e.g., server-side rendering)\n  const storage =\n    config.storage ||\n    (typeof window !== `undefined` ? window.localStorage : null) ||\n    createInMemoryStorage()\n\n  // Default to window for storage events if not provided\n  // Fall back to no-op storage event API if window is not available (e.g., server-side rendering)\n  const storageEventApi =\n    config.storageEventApi ||\n    (typeof window !== `undefined` ? window : null) ||\n    createNoOpStorageEventApi()\n\n  // Default to JSON parser if no parser is provided\n  const parser = config.parser || JSON\n\n  // Track the last known state to detect changes\n  const lastKnownData = new Map<string | number, StoredItem<any>>()\n\n  // Create the sync configuration\n  const sync = createLocalStorageSync<any>(",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__wrappedOnUpdate#function:wrappedOnUpdate",
+          "fileId": "packages/db/src/local-storage.ts__wrappedOnUpdate",
+          "unitKind": "function",
+          "name": "wrappedOnUpdate",
+          "qualifiedName": "wrappedOnUpdate",
+          "parentUnitId": null,
+          "startLine": 353,
+          "endLine": 386,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["config.storageKey must be provided."],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [
+            "If config.storage is not provided, uses window.localStorage or falls back to in-memory storage. If config.storageEventApi is not provided, uses window or no-op API."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["StorageKeyRequiredError"],
+            "reverts": [],
+            "onInvalidInput": "throws StorageKeyRequiredError",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "createInMemoryStorage", "source": null, "kind": "internal" },
+            { "name": "createNoOpStorageEventApi", "source": null, "kind": "internal" },
+            { "name": "createLocalStorageSync", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "This function wraps the update operation for a local storage collection, setting up default storage and event APIs, and creating a synchronization configuration.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "StorageKeyRequiredError",
+              "role": "error thrown when storageKey is missing"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e387ff0ed69b8743f395f040a99f579daef6f86e48476634333024bb0427eab8"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__wrappedOnDelete#function:wrappedOnDelete",
+        "unitKind": "function",
+        "name": "wrappedOnDelete",
+        "qualifiedName": "wrappedOnDelete",
+        "parentUnitId": null,
+        "startLine": 387,
+        "endLine": 415,
+        "isBehavioral": true,
+        "source": "    config.storageKey,\n    storage,\n    storageEventApi,\n    parser,\n    config.getKey,\n    lastKnownData,\n  )\n\n  /**\n   * Save data to storage\n   * @param dataMap - Map of items with version tracking to save to storage\n   */\n  const saveToStorage = (\n    dataMap: Map<string | number, StoredItem<any>>,\n  ): void => {\n    try {\n      // Convert Map to object format for storage\n      const objectData: Record<string, StoredItem<any>> = {}\n      dataMap.forEach((storedItem, key) => {\n        objectData[encodeStorageKey(key)] = storedItem\n      })\n      const serialized = parser.stringify(objectData)\n      storage.setItem(config.storageKey, serialized)\n    } catch (error) {\n      console.error(\n        `[LocalStorageCollection] Error saving data to storage key \"${config.storageKey}\":`,\n        error,\n      )\n      throw error",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__wrappedOnDelete#function:wrappedOnDelete",
+          "fileId": "packages/db/src/local-storage.ts__wrappedOnDelete",
+          "unitKind": "function",
+          "name": "wrappedOnDelete",
+          "qualifiedName": "wrappedOnDelete",
+          "parentUnitId": null,
+          "startLine": 387,
+          "endLine": 415,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "This function handles the deletion event in local storage synchronization, ensuring data is removed from storage and internal state is updated accordingly.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e5d6dd0900549796dc62641c15ace32bd18f82e7f0e232c937baaa201675e040"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__acceptMutations#function:acceptMutations",
+        "unitKind": "function",
+        "name": "acceptMutations",
+        "qualifiedName": "acceptMutations",
+        "parentUnitId": null,
+        "startLine": 416,
+        "endLine": 429,
+        "isBehavioral": true,
+        "source": "    }\n  }\n\n  /**\n   * Removes all collection data from the configured storage\n   */\n  const clearStorage: ClearStorageFn = (): void => {\n    storage.removeItem(config.storageKey)\n  }\n\n  /**\n   * Get the size of the stored data in bytes (approximate)\n   * @returns The approximate size in bytes of the stored collection data\n   */",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__acceptMutations#function:acceptMutations",
+          "fileId": "packages/db/src/local-storage.ts__acceptMutations",
+          "unitKind": "function",
+          "name": "acceptMutations",
+          "qualifiedName": "acceptMutations",
+          "parentUnitId": null,
+          "startLine": 416,
+          "endLine": 429,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The local storage collection has been initialized via createLocalStorageSync or an equivalent setup",
+            "The mutations object/array is well-formed and contains recognizable insert/update/delete operations consistent with the collection schema"
+          ],
+          "postconditions": [
+            "All provided mutations have been applied to the local storage persistence layer",
+            "The in-memory representation is consistent with the newly persisted state",
+            "Subsequent calls to loadFromStorage will reflect the accepted mutations"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Empty or no-op mutation set: should be a no-op, leaving storage unchanged",
+            "Mutations referencing non-existent documents (e.g., update/delete of a missing id): handled gracefully according to the collection's conflict/error policy"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Local storage key (config.storageKey) content",
+            "In-memory collection state managed by the sync layer"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "saveToStorage", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "wrappedOnInsert", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "wrappedOnUpdate", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "wrappedOnDelete", "source": "packages/db/src/local-storage.ts", "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Accepts a set of pending mutations (inserts, updates, deletes) into the local-storage-backed collection, integrating them into the persisted data and the in-memory state managed by the local storage sync layer.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2aa37c17c95043d3150e49b6d9b2a8ddeb71d62b16f070ddee955c05c9d664b6"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__loadFromStorage#function:loadFromStorage",
+        "unitKind": "function",
+        "name": "loadFromStorage",
+        "qualifiedName": "loadFromStorage",
+        "parentUnitId": null,
+        "startLine": 471,
+        "endLine": 507,
+        "isBehavioral": true,
+        "source": "  }\n\n  const wrappedOnUpdate = async (params: UpdateMutationFnParams<any>) => {\n    // Validate that all values in the transaction can be JSON serialized\n    params.transaction.mutations.forEach((mutation) => {\n      validateJsonSerializable(parser, mutation.modified, `update`)\n    })\n\n    // Call the user handler BEFORE persisting changes (if provided)\n    let handlerResult: any = {}\n    if (config.onUpdate) {\n      handlerResult = (await config.onUpdate(params)) ?? {}\n    }\n\n    // Always persist to storage\n    // Use lastKnownData (in-memory cache) instead of reading from storage\n    // Update items with new version keys\n    params.transaction.mutations.forEach((mutation) => {\n      // Use the engine's pre-computed key for consistency\n      const storedItem: StoredItem<any> = {\n        versionKey: generateUuid(),\n        data: mutation.modified,\n      }\n      lastKnownData.set(mutation.key, storedItem)\n    })\n\n    // Save to storage\n    saveToStorage(lastKnownData)\n\n    // Confirm mutations through sync interface (moves from optimistic to synced state)\n    // without reloading from storage\n    sync.confirmOperationsSync(params.transaction.mutations)\n\n    return handlerResult\n  }\n\n  const wrappedOnDelete = async (params: DeleteMutationFnParams<any>) => {",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__loadFromStorage#function:loadFromStorage",
+          "fileId": "packages/db/src/local-storage.ts__loadFromStorage",
+          "unitKind": "function",
+          "name": "loadFromStorage",
+          "qualifiedName": "loadFromStorage",
+          "parentUnitId": null,
+          "startLine": 471,
+          "endLine": 507,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "decodeStorageKey", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "parser", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["StoredItem", "CollectionOptions", "LocalStorageCollectionOptions", "generateUuid"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Loads persisted data from local storage, deserializes it, and returns it as a structured collection, ensuring it aligns with the expected schema and state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "65ae648da202deb8cf5f5bb4e72de0d9a8305281971c4d7123ddc8ce7a179052"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__createLocalStorageSync#function:createLocalStorageSync",
+        "unitKind": "function",
+        "name": "createLocalStorageSync",
+        "qualifiedName": "createLocalStorageSync",
+        "parentUnitId": null,
+        "startLine": 508,
+        "endLine": 714,
+        "isBehavioral": true,
+        "source": "    // Call the user handler BEFORE persisting changes (if provided)\n    let handlerResult: any = {}\n    if (config.onDelete) {\n      handlerResult = (await config.onDelete(params)) ?? {}\n    }\n\n    // Always persist to storage\n    // Use lastKnownData (in-memory cache) instead of reading from storage\n    // Remove items\n    params.transaction.mutations.forEach((mutation) => {\n      // Use the engine's pre-computed key for consistency\n      lastKnownData.delete(mutation.key)\n    })\n\n    // Save to storage\n    saveToStorage(lastKnownData)\n\n    // Confirm mutations through sync interface (moves from optimistic to synced state)\n    // without reloading from storage\n    sync.confirmOperationsSync(params.transaction.mutations)\n\n    return handlerResult\n  }\n\n  // Extract standard Collection config properties\n  const {\n    storageKey: _storageKey,\n    storage: _storage,\n    storageEventApi: _storageEventApi,\n    onInsert: _onInsert,\n    onUpdate: _onUpdate,\n    onDelete: _onDelete,\n    id,\n    ...restConfig\n  } = config\n\n  // Default id to a pattern based on storage key if not provided\n  const collectionId = id ?? `local-collection:${config.storageKey}`\n\n  /**\n   * Accepts mutations from a transaction that belong to this collection and persists them to storage\n   */\n  const acceptMutations = (transaction: {\n    mutations: Array<PendingMutation<Record<string, unknown>>>\n  }) => {\n    // Filter mutations that belong to this collection\n    // Use collection ID for filtering if collection reference isn't available yet\n    const collectionMutations = transaction.mutations.filter((m) => {\n      // Try to match by collection reference first\n      if (sync.collection && m.collection === sync.collection) {\n        return true\n      }\n      // Fall back to matching by collection ID\n      return m.collection.id === collectionId\n    })\n\n    if (collectionMutations.length === 0) {\n      return\n    }\n\n    // Validate all mutations can be serialized before modifying storage\n    for (const mutation of collectionMutations) {\n      switch (mutation.type) {\n        case `insert`:\n        case `update`:\n          validateJsonSerializable(parser, mutation.modified, mutation.type)\n          break\n        case `delete`:\n          validateJsonSerializable(parser, mutation.original, mutation.type)\n          break\n      }\n    }\n\n    // Use lastKnownData (in-memory cache) instead of reading from storage\n    // Apply each mutation\n    for (const mutation of collectionMutations) {\n      // Use the engine's pre-computed key to avoid key derivation issues\n      switch (mutation.type) {\n        case `insert`:\n        case `update`: {\n          const storedItem: StoredItem<Record<string, unknown>> = {\n            versionKey: generateUuid(),\n            data: mutation.modified,\n          }\n          lastKnownData.set(mutation.key, storedItem)\n          break\n        }\n        case `delete`: {\n          lastKnownData.delete(mutation.key)\n          break\n        }\n      }\n    }\n\n    // Save to storage\n    saveToStorage(lastKnownData)\n\n    // Confirm the mutations in the collection to move them from optimistic to synced state\n    // This writes them through the sync interface to make them \"synced\" instead of \"optimistic\"\n    sync.confirmOperationsSync(collectionMutations)\n  }\n\n  return {\n    ...restConfig,\n    id: collectionId,\n    sync,\n    onInsert: wrappedOnInsert,\n    onUpdate: wrappedOnUpdate,\n    onDelete: wrappedOnDelete,\n    utils: {\n      clearStorage,\n      getStorageSize,\n      acceptMutations,\n    },\n  }\n}\n\n/**\n * Load data from storage and return as a Map\n * @param parser - The parser to use for deserializing the data\n * @param storageKey - The key used to store data in the storage API\n * @param storage - The storage API to load from (localStorage, sessionStorage, etc.)\n * @returns Map of stored items with version tracking, or empty Map if loading fails\n */\nfunction loadFromStorage<T extends object>(\n  storageKey: string,\n  storage: StorageApi,\n  parser: Parser,\n): Map<string | number, StoredItem<T>> {\n  try {\n    const rawData = storage.getItem(storageKey)\n    if (!rawData) {\n      return new Map()\n    }\n\n    const parsed = parser.parse(rawData)\n    const dataMap = new Map<string | number, StoredItem<T>>()\n\n    // Handle object format where keys map to StoredItem values\n    if (\n      typeof parsed === `object` &&\n      parsed !== null &&\n      !Array.isArray(parsed)\n    ) {\n      Object.entries(parsed).forEach(([encodedKey, value]) => {\n        // Runtime check to ensure the value has the expected StoredItem structure\n        if (\n          value &&\n          typeof value === `object` &&\n          `versionKey` in value &&\n          `data` in value\n        ) {\n          const storedItem = value as StoredItem<T>\n          const decodedKey = decodeStorageKey(encodedKey)\n          dataMap.set(decodedKey, storedItem)\n        } else {\n          throw new InvalidStorageDataFormatError(storageKey, encodedKey)\n        }\n      })\n    } else {\n      throw new InvalidStorageObjectFormatError(storageKey)\n    }\n\n    return dataMap\n  } catch (error) {\n    console.warn(\n      `[LocalStorageCollection] Error loading data from storage key \"${storageKey}\":`,\n      error,\n    )\n    return new Map()\n  }\n}\n\n/**\n * Internal function to create localStorage sync configuration\n * Creates a sync configuration that handles localStorage persistence and cross-tab synchronization\n * @param storageKey - The key used for storing data in localStorage\n * @param storage - The storage API to use (localStorage, sessionStorage, etc.)\n * @param storageEventApi - The event API for listening to storage changes\n * @param getKey - Function to extract the key from an item\n * @param lastKnownData - Map tracking the last known state for change detection\n * @returns Sync configuration with manual trigger capability\n */\nfunction createLocalStorageSync<T extends object>(\n  storageKey: string,\n  storage: StorageApi,\n  storageEventApi: StorageEventApi,\n  parser: Parser,\n  _getKey: (item: T) => string | number,\n  lastKnownData: Map<string | number, StoredItem<T>>,\n): SyncConfig<T> & {\n  manualTrigger?: () => void\n  collection: any\n  confirmOperationsSync: (mutations: Array<any>) => void\n} {\n  let syncParams: Parameters<SyncConfig<T>[`sync`]>[0] | null = null\n  let collection: any = null\n\n  /**\n   * Compare two Maps to find differences using version keys\n   * @param oldData - The previous state of stored items\n   * @param newData - The current state of stored items\n   * @returns Array of changes with type, key, and value information\n   */\n  const findChanges = (\n    oldData: Map<string | number, StoredItem<T>>,\n    newData: Map<string | number, StoredItem<T>>,",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__createLocalStorageSync#function:createLocalStorageSync",
+          "fileId": "packages/db/src/local-storage.ts__createLocalStorageSync",
+          "unitKind": "function",
+          "name": "createLocalStorageSync",
+          "qualifiedName": "createLocalStorageSync",
+          "parentUnitId": null,
+          "startLine": 508,
+          "endLine": 714,
+          "signature": "function createLocalStorageSync<T extends object>(storageKey: string, storage: StorageApi, storageEventApi: StorageEventApi, parser: Parser, _getKey: (item: T) => string | number, lastKnownData: Map<string | number, StoredItem<T>>): SyncConfig<T> & { manualTrigger?: () => void; collection: any; confirmOperationsSync: (mutations: Array<any>) => void }",
+          "parameters": [
+            {
+              "name": "storageKey",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "storage",
+              "type": "StorageApi",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "storageEventApi",
+              "type": "StorageEventApi",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            { "name": "parser", "type": "Parser", "default": null, "optional": false, "variadic": false, "order": 3 },
+            {
+              "name": "_getKey",
+              "type": "(item: T) => string | number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            },
+            {
+              "name": "lastKnownData",
+              "type": "Map<string | number, StoredItem<T>>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 5
+            }
+          ],
+          "returnType": "SyncConfig<T> & { manualTrigger?: () => void; collection: any; confirmOperationsSync: (mutations: Array<any>) => void }",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends object"],
+          "logicOutline": [],
+          "preconditions": [
+            "storage must be a valid StorageApi implementation",
+            "storageEventApi must be a valid StorageEventApi implementation",
+            "parser must support serialization/deserialization of object T",
+            "lastKnownData must be an initialized Map for tracking storage state"
+          ],
+          "postconditions": [
+            "Returns a SyncConfig with sync, onInsert, onUpdate, onDelete methods",
+            "Returns manualTrigger function for manual sync triggering",
+            "Returns collection reference and confirmOperationsSync function",
+            "Returns utils with clearStorage, getStorageSize, and acceptMutations functions",
+            "Collection ID defaults to 'local-collection:{storageKey}' if config.id not provided"
+          ],
+          "invariants": [
+            "Collection ID is uniquely derived from storageKey when not explicitly provided",
+            "AcceptMutations filters mutations by collection reference or ID",
+            "Storage operations are performed via lastKnownData cache for consistency"
+          ],
+          "edgeCases": [
+            "If config.id is undefined, collectionId becomes 'local-collection:{storageKey}'",
+            "If no mutations belong to the collection, acceptMutations returns early",
+            "If storage serialization fails during acceptMutations, error is thrown after validation",
+            "If loadFromStorage fails or returns invalid format, returns empty Map and logs warning"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["InvalidStorageDataFormatError", "InvalidStorageObjectFormatError"],
+            "reverts": [],
+            "onInvalidInput": "Throws validation errors for non-serializable mutations or invalid storage format",
+            "returnsOnError": "Returns empty Map if storage loading fails (logs warning)"
+          },
+          "stateMutations": [
+            "Modifies lastKnownData Map during mutation acceptance",
+            "Persists to storage via saveToStorage",
+            "Updates sync state via sync.confirmOperationsSync"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "saveToStorage", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "wrappedOnInsert", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "wrappedOnUpdate", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "wrappedOnDelete", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "validateJsonSerializable", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "generateUuid", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "decodeStorageKey", "source": "packages/db/src/local-storage.ts", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "SyncConfig",
+            "StorageApi",
+            "StorageEventApi",
+            "Parser",
+            "StoredItem",
+            "PendingMutation",
+            "InvalidStorageDataFormatError",
+            "InvalidStorageObjectFormatError"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Storage data is serialized/deserialized via Parser interface. Storage items have {versionKey: string, data: T} structure. Keys are encoded/decoded via encodeStorageKey/decodeStorageKey functions.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a sync configuration for local storage collections that handles persistence, cross-tab synchronization, and mutation acceptance, returning a complete collection configuration with sync utilities.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "local-collection:${config.storageKey}",
+              "role": "Default collection ID format when config.id not provided"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "createLocalStorageSync is called with the config",
+              "then": "Returned collection.id equals 'local-collection:user-data'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "acceptMutations is called with the transaction",
+              "then": "No storage modifications occur and returns early",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "loadFromStorage is called",
+              "then": "Returns Map with decoded keys and StoredItem objects",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b79ad5f6e31f42dd29575116626f150cd79f95ebb1a6f1dcd39e062bc062e8e7"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__findChanges#function:findChanges",
+        "unitKind": "function",
+        "name": "findChanges",
+        "qualifiedName": "findChanges",
+        "parentUnitId": "packages/db/src/local-storage.ts__createLocalStorageSync#function:createLocalStorageSync",
+        "startLine": 558,
+        "endLine": 586,
+        "isBehavioral": true,
+        "source": "        return true\n      }\n      // Fall back to matching by collection ID\n      return m.collection.id === collectionId\n    })\n\n    if (collectionMutations.length === 0) {\n      return\n    }\n\n    // Validate all mutations can be serialized before modifying storage\n    for (const mutation of collectionMutations) {\n      switch (mutation.type) {\n        case `insert`:\n        case `update`:\n          validateJsonSerializable(parser, mutation.modified, mutation.type)\n          break\n        case `delete`:\n          validateJsonSerializable(parser, mutation.original, mutation.type)\n          break\n      }\n    }\n\n    // Use lastKnownData (in-memory cache) instead of reading from storage\n    // Apply each mutation\n    for (const mutation of collectionMutations) {\n      // Use the engine's pre-computed key to avoid key derivation issues\n      switch (mutation.type) {\n        case `insert`:",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__findChanges#function:findChanges",
+          "fileId": "packages/db/src/local-storage.ts__findChanges",
+          "unitKind": "function",
+          "name": "findChanges",
+          "qualifiedName": "findChanges",
+          "parentUnitId": "packages/db/src/local-storage.ts__createLocalStorageSync#function:createLocalStorageSync",
+          "startLine": 558,
+          "endLine": 586,
+          "signature": null,
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "A valid parser instance is available for JSON serialization validation",
+            "lastKnownData (in-memory cache) is accessible for reading current state",
+            "The engine provides pre-computed storage keys for each mutation"
+          ],
+          "postconditions": [
+            "If no mutations match the collection, storage and cache are unchanged (early return)",
+            "All matching mutations are validated for JSON serializability before any storage mutation occurs",
+            "Each matching mutation (insert, update, delete) is applied to both the in-memory cache and persistent storage"
+          ],
+          "invariants": [
+            "No mutation is applied to storage unless it passes JSON serializability validation",
+            "Insert mutations reference mutation.modified for serialization validation",
+            "Update mutations reference mutation.modified for serialization validation",
+            "Delete mutations reference mutation.original for serialization validation"
+          ],
+          "edgeCases": [
+            "Zero matching mutations: function returns immediately with no side effects",
+            "Mutation type 'insert': validates mutation.modified, then applies as a new entry",
+            "Mutation type 'update': validates mutation.modified, then applies the modification",
+            "Mutation type 'delete': validates mutation.original, then removes from storage"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error from validateJsonSerializable if a mutation is not JSON-serializable"],
+            "reverts": [],
+            "onInvalidInput": "validateJsonSerializable throws before any storage mutation occurs",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "lastKnownData (in-memory cache) is mutated to reflect applied mutations",
+            "Persistent storage is mutated to reflect applied mutations"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "validateJsonSerializable", "source": "packages/db/src/local-storage.ts", "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Filters incoming mutations to those matching a given collection, validates each is JSON-serializable, then applies insert/update/delete mutations to the in-memory cache (lastKnownData) and storage using the engine's pre-computed storage keys.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "insert", "role": "mutation type discriminator for insert operations" },
+            { "kind": "enum-value", "value": "update", "role": "mutation type discriminator for update operations" },
+            { "kind": "enum-value", "value": "delete", "role": "mutation type discriminator for delete operations" }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findChanges is called",
+              "then": "No mutations are applied to storage and lastKnownData remains unchanged (early return)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findChanges is called with that mutation matching the collection",
+              "then": "validateJsonSerializable raises an error and no storage mutation is applied",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findChanges is called and all pass JSON serializability validation",
+              "then": "All three mutations are applied to lastKnownData and persistent storage using the engine's pre-computed keys",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "367ec155679f396b0025271d050d168049f421d0d1da5879b9945501ce5ca688"
+        }
+      },
+      {
+        "unitId": "packages/db/src/local-storage.ts__processStorageChanges#function:processStorageChanges",
+        "unitKind": "function",
+        "name": "processStorageChanges",
+        "qualifiedName": "processStorageChanges",
+        "parentUnitId": "packages/db/src/local-storage.ts__createLocalStorageSync#function:createLocalStorageSync",
+        "startLine": 587,
+        "endLine": 620,
+        "isBehavioral": true,
+        "source": "        case `update`: {\n          const storedItem: StoredItem<Record<string, unknown>> = {\n            versionKey: generateUuid(),\n            data: mutation.modified,\n          }\n          lastKnownData.set(mutation.key, storedItem)\n          break\n        }\n        case `delete`: {\n          lastKnownData.delete(mutation.key)\n          break\n        }\n      }\n    }\n\n    // Save to storage\n    saveToStorage(lastKnownData)\n\n    // Confirm the mutations in the collection to move them from optimistic to synced state\n    // This writes them through the sync interface to make them \"synced\" instead of \"optimistic\"\n    sync.confirmOperationsSync(collectionMutations)\n  }\n\n  return {\n    ...restConfig,\n    id: collectionId,\n    sync,\n    onInsert: wrappedOnInsert,\n    onUpdate: wrappedOnUpdate,\n    onDelete: wrappedOnDelete,\n    utils: {\n      clearStorage,\n      getStorageSize,\n      acceptMutations,",
+        "detail": {
+          "unitId": "packages/db/src/local-storage.ts__processStorageChanges#function:processStorageChanges",
+          "fileId": "packages/db/src/local-storage.ts__processStorageChanges",
+          "unitKind": "function",
+          "name": "processStorageChanges",
+          "qualifiedName": "processStorageChanges",
+          "parentUnitId": "packages/db/src/local-storage.ts__createLocalStorageSync#function:createLocalStorageSync",
+          "startLine": 587,
+          "endLine": 620,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "lastKnownData map must be populated with current known state",
+            "collectionMutations array must contain the mutations to be confirmed",
+            "sync object must have a working confirmOperationsSync method",
+            "saveToStorage must be available to persist the updated data"
+          ],
+          "postconditions": [
+            "For each 'update' mutation, lastKnownData contains a StoredItem with a fresh UUID versionKey and the mutation's modified data",
+            "For each 'delete' mutation, the corresponding key is removed from lastKnownData",
+            "The updated lastKnownData has been persisted to storage via saveToStorage",
+            "sync.confirmOperationsSync has been called with collectionMutations, transitioning them from optimistic to synced"
+          ],
+          "invariants": [
+            "Every update mutation receives a unique versionKey generated via generateUuid()",
+            "lastKnownData remains the single source of truth for the local storage state after processing"
+          ],
+          "edgeCases": [
+            "When the mutation type is 'update', a new StoredItem is created with versionKey and modified data, replacing any previous entry for that key",
+            "When the mutation type is 'delete', the key is removed from lastKnownData entirely",
+            "Mutation types other than 'update' or 'delete' (e.g. 'insert') are not handled in the visible switch and are implicitly skipped"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "lastKnownData map is mutated (set for update, delete for delete)",
+            "Storage is mutated via saveToStorage",
+            "Sync state is mutated via sync.confirmOperationsSync"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "generateUuid", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "saveToStorage", "source": "packages/db/src/local-storage.ts", "kind": "internal" },
+            { "name": "sync.confirmOperationsSync", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["StoredItem", "Record<string, unknown>"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes a batch of storage mutations (update/delete) against an in-memory data map, persists the result to local storage, and confirms the operations via the sync interface to transition them from optimistic to synced state.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "update",
+              "role": "Mutation type discriminator used in switch/case to determine storage behavior"
+            },
+            {
+              "kind": "enum-value",
+              "value": "delete",
+              "role": "Mutation type discriminator used in switch/case to determine storage behavior"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "75e44cc9ee1bdbe7962791c219bb8fc1deb92b6e5581dad12016f568aa63f06e"
+        }
+      }
+    ]
+  },
+  "out": ["packages/db/src/types.ts", "packages/db/src/errors.ts", "packages/db/src/utils/uuid.ts"],
+  "in": ["packages/db/tests/local-storage.test-d.ts"],
+  "externals": ["@standard-schema/spec"],
+  "impact": { "seeds": 16, "callers": 9, "impactedFiles": [] }
+}

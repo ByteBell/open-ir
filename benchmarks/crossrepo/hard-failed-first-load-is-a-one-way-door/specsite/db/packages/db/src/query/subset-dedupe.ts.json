@@ -1,0 +1,1376 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "db",
+  "commitHash": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+  "generatedAt": "2026-07-18T07:32:21.777Z",
+  "file": {
+    "relativePath": "packages/db/src/query/subset-dedupe.ts",
+    "language": "typescript",
+    "sizeBytes": 10191,
+    "tokenCount": 2548,
+    "model": "poolside/laguna-xs-2.1",
+    "analysedAt": "2026-07-17T16:27:44.116Z",
+    "module": {
+      "purpose": "Provides a deduplicated wrapper for loadSubset functions that tracks loaded data and avoids redundant calls by applying subset logic to predicates.",
+      "summary": "This file implements a DeduplicatedLoadSubset class that wraps loadSubset functions with automatic deduplication. It tracks what data has been loaded through unlimited and limited calls, and uses subset predicate logic to determine if a request is already satisfied. The class handles both synchronous (returning true) and asynchronous (returning Promise<void>) loadSubset functions, with support for in-flight request deduping, generation-based reset invalidation, and optional callback notification when deduplication occurs.",
+      "businessContext": "Database query optimization layer that prevents redundant data loading operations. Critical for performance in applications with frequent overlapping queries. Failure causes duplicate network/database requests and wasted resources.",
+      "classes": [
+        "DeduplicatedLoadSubset (~L34-230): Tracks loaded predicates and deduplicates loadSubset calls using subset logic"
+      ],
+      "functions": ["cloneOptions (~L238-247): Deep clones LoadSubsetOptions to prevent mutation of stored predicates"],
+      "keywords": [
+        "deduplication",
+        "subset",
+        "predicate",
+        "loadSubset",
+        "in-flight",
+        "generation",
+        "where clause",
+        "orderBy",
+        "cursor"
+      ],
+      "ontologyConcepts": [
+        "deduplication",
+        "subset tracking",
+        "in-flight request management",
+        "generation-based invalidation",
+        "predicate union"
+      ],
+      "businessEntities": ["data queries", "predicates", "database results", "load requests"],
+      "systemCapabilities": [
+        "automatic query deduplication",
+        "subset predicate checking",
+        "in-flight request deduping",
+        "generation-based reset handling",
+        "callback notification"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./predicate-utils.js",
+          "symbols": ["isPredicateSubset", "isWhereSubset", "minusWherePredicates", "unionWherePredicates"],
+          "anchor": { "startLine": 1, "endLine": 4 },
+          "resolvedRelativePath": "packages/db/src/query/predicate-utils.ts",
+          "resolvedFileId": "packages/db/src/query/predicate-utils.ts",
+          "resolvedHint": null
+        },
+        {
+          "spec": "./ir.js",
+          "symbols": ["BasicExpression"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts",
+          "resolvedHint": null
+        },
+        {
+          "spec": "../types.js",
+          "symbols": ["LoadSubsetOptions"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts",
+          "resolvedHint": null
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": ["calls _loadSubset function with potentially narrowed where clause"],
+        "network": ["may trigger database/network requests via _loadSubset"],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "DeduplicatedLoadSubset",
+          "shape": "class with constructor(opts: { loadSubset: (options: LoadSubsetOptions) => true | Promise<void>, onDeduplicate?: (options: LoadSubsetOptions) => void }), loadSubset(options: LoadSubsetOptions): true | Promise<void>, reset(): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "cloneOptions",
+          "shape": "(options: LoadSubsetOptions) => LoadSubsetOptions",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "isPredicateSubset",
+          "shape": "(options: LoadSubsetOptions, loaded: LoadSubsetOptions) => boolean",
+          "resolvedRelativePath": "packages/db/src/query/predicate-utils.ts",
+          "resolvedFileId": "packages/db/src/query/predicate-utils.ts"
+        },
+        {
+          "name": "isWhereSubset",
+          "shape": "(where: BasicExpression<boolean>, unlimitedWhere: BasicExpression<boolean>) => boolean",
+          "resolvedRelativePath": "packages/db/src/query/predicate-utils.ts",
+          "resolvedFileId": "packages/db/src/query/predicate-utils.ts"
+        },
+        {
+          "name": "minusWherePredicates",
+          "shape": "(a: BasicExpression<boolean> | undefined, b: BasicExpression<boolean>) => BasicExpression<boolean> | undefined",
+          "resolvedRelativePath": "packages/db/src/query/predicate-utils.ts",
+          "resolvedFileId": "packages/db/src/query/predicate-utils.ts"
+        },
+        {
+          "name": "unionWherePredicates",
+          "shape": "([BasicExpression<boolean>, BasicExpression<boolean>]) => BasicExpression<boolean>",
+          "resolvedRelativePath": "packages/db/src/query/predicate-utils.ts",
+          "resolvedFileId": "packages/db/src/query/predicate-utils.ts"
+        },
+        {
+          "name": "BasicExpression",
+          "shape": "type representing a boolean expression tree",
+          "resolvedRelativePath": "packages/db/src/query/ir.ts",
+          "resolvedFileId": "packages/db/src/query/ir.ts"
+        },
+        {
+          "name": "LoadSubsetOptions",
+          "shape": "type with where?, orderBy?, limit?, cursor? properties",
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "constructor",
+          "intent": "Initialize loadSubset wrapper with underlying function and optional callback",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 67, "endLine": 73 }
+        },
+        {
+          "name": "loadSubset_hasLoadedAllData_check",
+          "intent": "Return true immediately if all data has already been loaded",
+          "structureKind": "branch",
+          "predicate": "this.hasLoadedAllData",
+          "branchOutcomes": ["return true with onDeduplicate callback"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 87, "endLine": 90 }
+        },
+        {
+          "name": "loadSubset_unlimitedWhere_check",
+          "intent": "Check if options.where is subset of combined unlimited predicate",
+          "structureKind": "branch",
+          "predicate": "this.unlimitedWhere !== undefined && options.where !== undefined && isWhereSubset(options.where, this.unlimitedWhere)",
+          "branchOutcomes": ["return true with onDeduplicate callback"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 94, "endLine": 98 }
+        },
+        {
+          "name": "loadSubset_limitedCalls_check",
+          "intent": "Check if options is subset of any previously loaded limited call",
+          "structureKind": "branch",
+          "predicate": "options.limit !== undefined && alreadyLoaded",
+          "branchOutcomes": ["return true with onDeduplicate callback"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 103, "endLine": 111 }
+        },
+        {
+          "name": "loadSubset_inflightCalls_check",
+          "intent": "Find and return promise from matching in-flight request",
+          "structureKind": "branch",
+          "predicate": "matchingInflight !== undefined",
+          "branchOutcomes": ["return matching inflight promise"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 120, "endLine": 128 }
+        },
+        {
+          "name": "loadSubset_sync_async_branch",
+          "intent": "Handle both sync (true) and async (Promise) return from _loadSubset",
+          "structureKind": "branch",
+          "predicate": "resultPromise === true",
+          "branchOutcomes": [
+            "sync path: update tracking and return true",
+            "async path: track promise and update after resolution"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 148, "endLine": 186 }
+        },
+        {
+          "name": "inflight_promise_finally",
+          "intent": "Remove in-flight entry from tracking array on completion or rejection",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 171, "endLine": 179 }
+        },
+        {
+          "name": "reset",
+          "intent": "Clear all tracking state and increment generation counter",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 196, "endLine": 203 }
+        },
+        {
+          "name": "updateTracking_unlimited_noWhere",
+          "intent": "Mark all data as loaded when unlimited call has no where clause",
+          "structureKind": "branch",
+          "predicate": "options.where === undefined",
+          "branchOutcomes": ["set hasLoadedAllData=true, clear other tracking"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 210, "endLine": 216 }
+        },
+        {
+          "name": "updateTracking_unlimited_withWhere",
+          "intent": "Union new where predicate with existing unlimitedWhere",
+          "structureKind": "branch",
+          "predicate": "this.unlimitedWhere === undefined",
+          "branchOutcomes": ["set unlimitedWhere to options.where", "union with existing unlimitedWhere"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 216, "endLine": 223 }
+        },
+        {
+          "name": "updateTracking_limited",
+          "intent": "Add limited call options to tracking array for future subset checks",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 227, "endLine": 228 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "class",
+          "name": "DeduplicatedLoadSubset",
+          "signature": "export class DeduplicatedLoadSubset {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 34, "endLine": 34 }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "constructor(opts: { loadSubset: (options: LoadSubsetOptions) => true | Promise<void>; onDeduplicate?: (options: LoadSubsetOptions) => void })",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 67, "endLine": 73 }
+        },
+        {
+          "kind": "method",
+          "name": "loadSubset",
+          "signature": "loadSubset = (options: LoadSubsetOptions): true | Promise<void>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "true | Promise<void>",
+          "exported": true,
+          "anchor": { "startLine": 85, "endLine": 85 }
+        },
+        {
+          "kind": "method",
+          "name": "reset",
+          "signature": "reset(): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 196, "endLine": 196 }
+        },
+        {
+          "kind": "function",
+          "name": "cloneOptions",
+          "signature": "export function cloneOptions(options: LoadSubsetOptions): LoadSubsetOptions",
+          "generics": null,
+          "decorators": [],
+          "returnType": "LoadSubsetOptions",
+          "exported": true,
+          "anchor": { "startLine": 238, "endLine": 238 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "hasLoadedAllData is true",
+          "handled": true,
+          "behavior": "Returns true immediately, invokes onDeduplicate callback",
+          "anchor": { "startLine": 87, "endLine": 90 }
+        },
+        {
+          "inputShape": "options.limit is undefined but unlimitedWhere exists and options.where is subset",
+          "handled": true,
+          "behavior": "Returns true immediately, invokes onDeduplicate callback",
+          "anchor": { "startLine": 94, "endLine": 98 }
+        },
+        {
+          "inputShape": "options.limit is defined and options is subset of existing limitedCalls",
+          "handled": true,
+          "behavior": "Returns true immediately, invokes onDeduplicate callback",
+          "anchor": { "startLine": 103, "endLine": 111 }
+        },
+        {
+          "inputShape": "options is subset of existing inflightCalls",
+          "handled": true,
+          "behavior": "Returns matching inflight promise, invokes onDeduplicate when promise resolves",
+          "anchor": { "startLine": 120, "endLine": 128 }
+        },
+        {
+          "inputShape": "loadSubset returns true (sync)",
+          "handled": true,
+          "behavior": "Updates tracking state and returns true immediately",
+          "anchor": { "startLine": 148, "endLine": 150 }
+        },
+        {
+          "inputShape": "loadSubset returns Promise<void> (async)",
+          "handled": true,
+          "behavior": "Tracks in-flight entry, updates tracking after resolution or removes on rejection",
+          "anchor": { "startLine": 151, "endLine": 186 }
+        },
+        {
+          "inputShape": "reset() called while in-flight requests are pending",
+          "handled": true,
+          "behavior": "In-flight requests complete but do not update tracking state due to generation mismatch",
+          "anchor": { "startLine": 196, "endLine": 203 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "resultPromise",
+          "right": "true",
+          "inclusive": true,
+          "intent": "Distinguish between synchronous return (true) and asynchronous return (Promise)",
+          "anchor": { "startLine": 148, "endLine": 148 }
+        },
+        {
+          "operator": "==",
+          "left": "undefined",
+          "right": "matchingInflight",
+          "inclusive": true,
+          "intent": "Check if a matching in-flight request was found",
+          "anchor": { "startLine": 120, "endLine": 120 }
+        },
+        {
+          "operator": "==",
+          "left": "this.unlimitedWhere",
+          "right": "undefined",
+          "inclusive": true,
+          "intent": "Check if unlimitedWhere has been set",
+          "anchor": { "startLine": 94, "endLine": 94 }
+        },
+        {
+          "operator": "==",
+          "left": "capturedGeneration",
+          "right": "this.generation",
+          "inclusive": true,
+          "intent": "Verify request is from current generation after reset",
+          "anchor": { "startLine": 166, "endLine": 166 }
+        },
+        {
+          "operator": "==",
+          "left": "index",
+          "right": "-1",
+          "inclusive": true,
+          "intent": "Check if in-flight entry exists in array before removal",
+          "anchor": { "startLine": 175, "endLine": 175 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "Promise rejection in .catch() call",
+          "action": "Ignore errors from onDeduplicate callback",
+          "fallback": null,
+          "anchor": { "startLine": 126, "endLine": 126 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Generation counter ensures in-flight completion handlers don't update state after reset()",
+          "anchor": { "startLine": 65, "endLine": 65 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Options are cloned before storage to prevent mutation of stored predicates",
+          "anchor": { "startLine": 132, "endLine": 133 }
+        },
+        {
+          "kind": "invariant",
+          "description": "In-flight entry is always removed from array on completion or rejection",
+          "anchor": { "startLine": 175, "endLine": 178 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Caller must understand that reset() invalidates in-flight request state updates",
+          "anchor": { "startLine": 196, "endLine": 203 }
+        },
+        {
+          "kind": "schema",
+          "description": "LoadSubsetOptions must have where, limit, orderBy, and cursor properties defined externally",
+          "anchor": { "startLine": 1, "endLine": 8 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What is the exact structure of BasicExpression and how does isWhereSubset handle complex nested predicates?",
+          "affects": "predicate checking logic",
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolution": null
+        },
+        {
+          "question": "What is the exact structure of LoadSubsetOptions and its orderBy/cursor properties?",
+          "affects": "cloneOptions implementation",
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "fifo",
+        "notes": "Methods are not reentrant due to state mutations; in-flight requests are tracked in FIFO order; reset() invalidates pending in-flight completion handlers via generation counter"
+      },
+      "stateModel": {
+        "states": [
+          "tracking-empty",
+          "tracking-unlimited-where",
+          "tracking-limited-calls",
+          "tracking-all-loaded",
+          "in-flight-active"
+        ],
+        "initialState": "tracking-empty",
+        "finalStates": ["tracking-all-loaded"],
+        "transitions": [
+          {
+            "from": "tracking-empty",
+            "to": "tracking-all-loaded",
+            "trigger": "loadSubset({})",
+            "guard": "options.limit === undefined && options.where === undefined",
+            "effect": "set hasLoadedAllData = true",
+            "anchor": { "startLine": 147, "endLine": 155 }
+          },
+          {
+            "from": "tracking-empty",
+            "to": "tracking-unlimited-where",
+            "trigger": "loadSubset({ where })",
+            "guard": "options.limit === undefined && options.where !== undefined",
+            "effect": "set unlimitedWhere = options.where",
+            "anchor": { "startLine": 147, "endLine": 155 }
+          },
+          {
+            "from": "tracking-empty",
+            "to": "tracking-limited-calls",
+            "trigger": "loadSubset({ limit })",
+            "guard": "options.limit !== undefined",
+            "effect": "push options to limitedCalls",
+            "anchor": { "startLine": 137, "endLine": 141 }
+          },
+          {
+            "from": "tracking-unlimited-where",
+            "to": "tracking-unlimited-where",
+            "trigger": "loadSubset({ where })",
+            "guard": "options.limit === undefined && options.where !== undefined && unlimitedWhere !== undefined",
+            "effect": "set unlimitedWhere = unionWherePredicates([unlimitedWhere, options.where])",
+            "anchor": { "startLine": 149, "endLine": 152 }
+          },
+          {
+            "from": "any",
+            "to": "in-flight-active",
+            "trigger": "loadSubset (async)",
+            "guard": "underlying loadSubset returns Promise",
+            "effect": "push {options, promise} to inflightCalls",
+            "anchor": { "startLine": 108, "endLine": 122 }
+          },
+          {
+            "from": "in-flight-active",
+            "to": "any",
+            "trigger": "promise resolves",
+            "guard": "capturedGeneration === generation",
+            "effect": "remove from inflightCalls, call updateTracking",
+            "anchor": { "startLine": 115, "endLine": 122 }
+          },
+          {
+            "from": "any",
+            "to": "tracking-empty",
+            "trigger": "reset()",
+            "guard": "always",
+            "effect": "clear unlimitedWhere, hasLoadedAllData=false, limitedCalls=[], inflightCalls=[], increment generation",
+            "anchor": { "startLine": 186, "endLine": 195 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "first-call-fetches-data",
+          "scenario": "First loadSubset call should invoke the underlying loadSubset function",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })"
+          ],
+          "when": "await dedupe.loadSubset({ where: someWhereClause })",
+          "then": "expect(mockLoadSubset).toHaveBeenCalledTimes(1) and returns Promise that resolves",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies the basic delegation contract - first call must invoke underlying loader"
+        },
+        {
+          "testId": "subset-call-returns-true-immediately",
+          "scenario": "Second call with subset predicate returns true without invoking loader",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })",
+            "await dedupe.loadSubset({ where: gt(ref('age'), val(10)) })"
+          ],
+          "when": "const result = await dedupe.loadSubset({ where: gt(ref('age'), val(20)) })",
+          "then": "expect(result).toBe(true) and expect(mockLoadSubset).toHaveBeenCalledTimes(1)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies subset deduplication - overlapping predicate should not trigger new request"
+        },
+        {
+          "testId": "unlimited-no-where-loads-all-data",
+          "scenario": "Call with no where clause sets hasLoadedAllData flag",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })"
+          ],
+          "when": "await dedupe.loadSubset({})",
+          "then": "hasLoadedAllData becomes true, subsequent calls return true immediately",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies complete data load tracking - no where clause means all data covered"
+        },
+        {
+          "testId": "reset-clears-all-tracking-state",
+          "scenario": "Reset method clears all tracking state and increments generation",
+          "given": [
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })",
+            "await dedupe.loadSubset({ where: someWhere, limit: 10 })",
+            "dedupe.reset()"
+          ],
+          "when": "dedupe.reset() is called",
+          "then": "unlimitedWhere=undefined, hasLoadedAllData=false, limitedCalls=[], inflightCalls=[], generation incremented",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies state isolation - reset enables fresh tracking after data clear"
+        },
+        {
+          "testId": "in-flight-subset-waits-on-same-promise",
+          "scenario": "Concurrent subset call waits on in-flight request instead of creating duplicate",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockImplementation(() => new Promise(r => setTimeout(r, 100)))",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })"
+          ],
+          "when": "const p1 = dedupe.loadSubset({ where: gt(ref('age'), val(10)) }); const p2 = dedupe.loadSubset({ where: gt(ref('age'), val(20)) })",
+          "then": "p1 === p2 and mockLoadSubset called only once",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies concurrent request deduplication - subset waits on in-flight"
+        },
+        {
+          "testId": "failed-in-flight-request-can-be-retried",
+          "scenario": "Failed in-flight request is removed from tracking allowing retry",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockRejectedValueOnce(new Error('network')).mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })"
+          ],
+          "when": "await dedupe.loadSubset({ where: someWhere }).catch(() => {}); await dedupe.loadSubset({ where: someWhere })",
+          "then": "mockLoadSubset called twice, second call succeeds",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies error handling - failed requests must be retried, not cached forever"
+        },
+        {
+          "testId": "clone-prevents-options-mutation",
+          "scenario": "Stored options should not be affected by caller mutating original object",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })",
+            "const opts = { where: someWhere, orderBy: [{ field: 'x', compareOptions: {} }] }"
+          ],
+          "when": "",
+          "then": "limitedCalls[0] still has original values, not mutated",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies immutability contract - stored predicates must remain unchanged"
+        },
+        {
+          "testId": "onDeduplicate-callback-invoked",
+          "scenario": "onDeduplicate callback is invoked when call is deduplicated",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const onDedupe = jest.fn()",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset, onDeduplicate: onDedupe })",
+            "await dedupe.loadSubset({ where: gt(ref('age'), val(10)) })"
+          ],
+          "when": "await dedupe.loadSubset({ where: gt(ref('age'), val(20)) })",
+          "then": "expect(onDedupe).toHaveBeenCalledWith({ where: gt(ref('age'), val(20)) })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies callback contract - deduplicated calls must notify caller"
+        },
+        {
+          "testId": "unlimited-where-union-computes-combined-predicate",
+          "scenario": "Multiple unlimited calls union their where predicates",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })",
+            "const where1 = gt(ref('age'), val(10))",
+            "const where2 = lt(ref('age'), val(50))"
+          ],
+          "when": "",
+          "then": "unlimitedWhere equals unionWherePredicates([where1, where2])",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies predicate union - unlimited calls must combine coverage"
+        },
+        {
+          "testId": "limited-calls-tracked-separately",
+          "scenario": "Limited calls are stored in array for future subset checks",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })"
+          ],
+          "when": "await dedupe.loadSubset({ where: someWhere, limit: 10 })",
+          "then": "limitedCalls.length === 1 and contains the options",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies limited call tracking - needed for subset relationship checks"
+        },
+        {
+          "testId": "generation-invalidation-after-reset",
+          "scenario": "In-flight completion after reset does not update tracking state",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockImplementation(() => new Promise(r => setTimeout(r, 50)))",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })",
+            "dedupe.loadSubset({ where: someWhere })",
+            "dedupe.reset()"
+          ],
+          "when": "Promise from loadSubset resolves",
+          "then": "tracking state remains cleared, not repopulated",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies generation guard - reset must prevent stale state updates"
+        },
+        {
+          "testId": "clone-deep-clones-orderby-and-cursor",
+          "scenario": "cloneOptions creates deep copies of orderBy clauses and cursor objects",
+          "given": [
+            "const options: LoadSubsetOptions = { orderBy: [{ field: 'x', compareOptions: { asc: true } }], cursor: { id: 1 } }"
+          ],
+          "when": "const cloned = cloneOptions(options)",
+          "then": "cloned.orderBy[0] !== options.orderBy[0] and cloned.cursor !== options.cursor",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies deep clone - prevents mutation of stored nested objects"
+        },
+        {
+          "testId": "minus-where-computes-missing-predicate",
+          "scenario": "When unlimitedWhere exists, loadOptions.where is narrowed to missing data",
+          "given": [
+            "const mockLoadSubset = jest.fn().mockResolvedValue(undefined)",
+            "const dedupe = new DeduplicatedLoadSubset({ loadSubset: mockLoadSubset })",
+            "await dedupe.loadSubset({ where: gt(ref('age'), val(10)) })"
+          ],
+          "when": "await dedupe.loadSubset({ where: gt(ref('age'), val(5)), limit: 20 })",
+          "then": "underlying loadSubset called with loadOptions.where = minusWherePredicates(gt(ref('age'), val(5)), gt(ref('age'), val(10)))",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies predicate subtraction - only missing data should be fetched"
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": ["imports", "DeduplicatedLoadSubset class", "cloneOptions function"],
+      "moduleLevelCode": null,
+      "exports": [
+        { "name": "DeduplicatedLoadSubset", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "cloneOptions", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "isPredicateSubset", "module": "./predicate-utils.js", "alias": null, "kind": "internal" },
+        { "symbol": "isWhereSubset", "module": "./predicate-utils.js", "alias": null, "kind": "internal" },
+        { "symbol": "minusWherePredicates", "module": "./predicate-utils.js", "alias": null, "kind": "internal" },
+        { "symbol": "unionWherePredicates", "module": "./predicate-utils.js", "alias": null, "kind": "internal" },
+        { "symbol": "BasicExpression", "module": "./ir.js", "alias": null, "kind": "internal" },
+        { "symbol": "LoadSubsetOptions", "module": "../types.js", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+        "unitKind": "class",
+        "name": "DeduplicatedLoadSubset",
+        "qualifiedName": "DeduplicatedLoadSubset",
+        "parentUnitId": null,
+        "startLine": 34,
+        "endLine": 230,
+        "isBehavioral": true,
+        "source": "export class DeduplicatedLoadSubset {\n  // The underlying loadSubset function to wrap\n  private readonly _loadSubset: (\n    options: LoadSubsetOptions,\n  ) => true | Promise<void>\n\n  // An optional callback function that is invoked when a loadSubset call is deduplicated.\n  private readonly onDeduplicate:\n    | ((options: LoadSubsetOptions) => void)\n    | undefined\n\n  // Combined where predicate for all unlimited calls (no limit)\n  private unlimitedWhere: BasicExpression<boolean> | undefined = undefined\n\n  // Flag to track if we've loaded all data (unlimited call with no where clause)\n  private hasLoadedAllData = false\n\n  // List of all limited calls (with limit, possibly with orderBy)\n  // We clone options before storing to prevent mutation of stored predicates\n  private limitedCalls: Array<LoadSubsetOptions> = []\n\n  // Track in-flight calls to prevent concurrent duplicate requests\n  // We store both the options and the promise so we can apply subset logic\n  private inflightCalls: Array<{\n    options: LoadSubsetOptions\n    promise: Promise<void>\n  }> = []\n\n  // Generation counter to invalidate in-flight requests after reset()\n  // When reset() is called, this increments, and any in-flight completion handlers\n  // check if their captured generation matches before updating tracking state\n  private generation = 0\n\n  constructor(opts: {\n    loadSubset: (options: LoadSubsetOptions) => true | Promise<void>\n    onDeduplicate?: (options: LoadSubsetOptions) => void\n  }) {\n    this._loadSubset = opts.loadSubset\n    this.onDeduplicate = opts.onDeduplicate\n  }\n\n  /**\n   * Load a subset of data, with automatic deduplication based on previously\n   * loaded predicates and in-flight requests.\n   *\n   * This method is auto-bound, so it can be safely passed as a callback without\n   * losing its `this` context (e.g., `loadSubset: dedupe.loadSubset` in a sync config).\n   *\n   * @param options - The predicate options (where, orderBy, limit)\n   * @returns true if data is already loaded, or a Promise that resolves when data is loaded\n   */\n  loadSubset = (options: LoadSubsetOptions): true | Promise<void> => {\n    // If we've loaded all data, everything is covered\n    if (this.hasLoadedAllData) {\n      this.onDeduplicate?.(options)\n      return true\n    }\n\n    // Check against unlimited combined predicate\n    // If we've loaded all data matching a where clause, we don't need to refetch subsets\n    if (this.unlimitedWhere !== undefined && options.where !== undefined) {\n      if (isWhereSubset(options.where, this.unlimitedWhere)) {\n        this.onDeduplicate?.(options)\n        return true // Data already loaded via unlimited call\n      }\n    }\n\n    // Check against limited calls\n    if (options.limit !== undefined) {\n      const alreadyLoaded = this.limitedCalls.some((loaded) =>\n        isPredicateSubset(options, loaded),\n      )\n\n      if (alreadyLoaded) {\n        this.onDeduplicate?.(options)\n        return true // Already loaded\n      }\n    }\n\n    // Check against in-flight calls using the same subset logic as resolved calls\n    // This prevents duplicate requests when concurrent calls have subset relationships\n    const matchingInflight = this.inflightCalls.find((inflight) =>\n      isPredicateSubset(options, inflight.options),\n    )\n\n    if (matchingInflight !== undefined) {\n      // An in-flight call will load data that covers this request\n      // Return the same promise so this caller waits for the data to load\n      // The in-flight promise already handles tracking updates when it completes\n      const prom = matchingInflight.promise\n      // Call `onDeduplicate` when the inflight request has loaded the data\n      prom.then(() => this.onDeduplicate?.(options)).catch() // ignore errors\n      return prom\n    }\n\n    // Preserve the original request for tracking and in-flight dedupe, but allow\n    // the backend request to be narrowed to only the missing subset.\n    const trackingOptions = cloneOptions(options)\n    const loadOptions = cloneOptions(options)\n    if (this.unlimitedWhere !== undefined && options.limit === undefined) {\n      // Compute difference to get only the missing data\n      // We can only do this for unlimited queries\n      // and we can only remove data that was loaded from unlimited queries\n      // because with limited queries we have no way to express that we already loaded part of the matching data\n      loadOptions.where =\n        minusWherePredicates(loadOptions.where, this.unlimitedWhere) ??\n        loadOptions.where\n    }\n\n    // Call underlying loadSubset to load the missing data\n    const resultPromise = this._loadSubset(loadOptions)\n\n    // Handle both sync (true) and async (Promise<void>) return values\n    if (resultPromise === true) {\n      this.updateTracking(trackingOptions)\n      return true\n    } else {\n      // Async return - track the promise and update tracking after it resolves\n\n      // Capture the current generation - this lets us detect if reset() was called\n      // while this request was in-flight, so we can skip updating tracking state\n      const capturedGeneration = this.generation\n\n      // We need to create a reference to the in-flight entry so we can remove it later\n      const inflightEntry = {\n        options: trackingOptions,\n        promise: resultPromise\n          .then((result) => {\n            // Only update tracking if this request is still from the current generation\n            // If reset() was called, the generation will have incremented and we should\n            // not repopulate the state that was just cleared\n            if (capturedGeneration === this.generation) {\n              this.updateTracking(trackingOptions)\n            }\n            return result\n          })\n          .finally(() => {\n            // Always remove from in-flight array on completion OR rejection\n            // This ensures failed requests can be retried instead of being cached forever\n            const index = this.inflightCalls.indexOf(inflightEntry)\n            if (index !== -1) {\n              this.inflightCalls.splice(index, 1)\n            }\n          }),\n      }\n\n      // Store the in-flight entry so concurrent subset calls can wait for it\n      this.inflightCalls.push(inflightEntry)\n      return inflightEntry.promise\n    }\n  }\n\n  /**\n   * Reset all tracking state.\n   * Clears the history of loaded predicates and in-flight calls.\n   * Use this when you want to start fresh, for example after clearing the underlying data store.\n   *\n   * Note: Any in-flight requests will still complete, but they will not update the tracking\n   * state after the reset. This prevents old requests from repopulating cleared state.\n   */\n  reset(): void {\n    this.unlimitedWhere = undefined\n    this.hasLoadedAllData = false\n    this.limitedCalls = []\n    this.inflightCalls = []\n    // Increment generation to invalidate any in-flight completion handlers\n    // This ensures requests that were started before reset() don't repopulate the state\n    this.generation++\n  }\n\n  private updateTracking(options: LoadSubsetOptions): void {\n    // Update tracking based on whether this was a limited or unlimited call\n    if (options.limit === undefined) {\n      // Unlimited call - update combined where predicate\n      // We ignore orderBy for unlimited calls as mentioned in requirements\n      if (options.where === undefined) {\n        // No where clause = all data loaded\n        this.hasLoadedAllData = true\n        this.unlimitedWhere = undefined\n        this.limitedCalls = []\n        this.inflightCalls = []\n      } else if (this.unlimitedWhere === undefined) {\n        this.unlimitedWhere = options.where\n      } else {\n        this.unlimitedWhere = unionWherePredicates([\n          this.unlimitedWhere,\n          options.where,\n        ])\n      }\n    } else {\n      // Limited call - add to list for future subset checks\n      // Options are already cloned by caller to prevent mutation issues\n      this.limitedCalls.push(options)\n    }\n  }\n}\n",
+        "detail": {
+          "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+          "fileId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset",
+          "unitKind": "class",
+          "name": "DeduplicatedLoadSubset",
+          "qualifiedName": "DeduplicatedLoadSubset",
+          "parentUnitId": null,
+          "startLine": 34,
+          "endLine": 230,
+          "signature": "export class DeduplicatedLoadSubset",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "_loadSubset",
+              "kind": "field",
+              "type": "(options: LoadSubsetOptions) => true | Promise<void>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "onDeduplicate",
+              "kind": "field",
+              "type": "((options: LoadSubsetOptions) => void) | undefined",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "unlimitedWhere",
+              "kind": "field",
+              "type": "BasicExpression<boolean> | undefined",
+              "default": "undefined",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "hasLoadedAllData",
+              "kind": "field",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "limitedCalls",
+              "kind": "field",
+              "type": "Array<LoadSubsetOptions>",
+              "default": "[]",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "inflightCalls",
+              "kind": "field",
+              "type": "Array<{ options: LoadSubsetOptions; promise: Promise<void> }>",
+              "default": "[]",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "generation",
+              "kind": "field",
+              "type": "number",
+              "default": "0",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "loadSubset",
+              "kind": "method",
+              "type": "(options: LoadSubsetOptions) => true | Promise<void>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "reset",
+              "kind": "method",
+              "type": "void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "updateTracking",
+              "kind": "method",
+              "type": "void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [
+            "DeduplicatedLoadSubset.constructor",
+            "DeduplicatedLoadSubset.loadSubset",
+            "DeduplicatedLoadSubset.reset",
+            "DeduplicatedLoadSubset.updateTracking"
+          ],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "DeduplicatedLoadSubset wraps a loadSubset function with automatic deduplication based on previously loaded predicates and in-flight requests, preventing redundant data fetches for overlapping queries.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "509b9a277e16277b1bc64987b0cc2f3d6157d533d90ee1a3adf3e180da536e6b"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.constructor#constructor:DeduplicatedLoadSubset.constructor",
+        "unitKind": "constructor",
+        "name": "constructor",
+        "qualifiedName": "DeduplicatedLoadSubset.constructor",
+        "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+        "startLine": 67,
+        "endLine": 73,
+        "isBehavioral": true,
+        "source": "  constructor(opts: {\n    loadSubset: (options: LoadSubsetOptions) => true | Promise<void>\n    onDeduplicate?: (options: LoadSubsetOptions) => void\n  }) {\n    this._loadSubset = opts.loadSubset\n    this.onDeduplicate = opts.onDeduplicate\n  }",
+        "detail": {
+          "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.constructor#constructor:DeduplicatedLoadSubset.constructor",
+          "fileId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.constructor",
+          "unitKind": "constructor",
+          "name": "constructor",
+          "qualifiedName": "DeduplicatedLoadSubset.constructor",
+          "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+          "startLine": 67,
+          "endLine": 73,
+          "signature": "constructor(opts: { loadSubset: (options: LoadSubsetOptions) => true | Promise<void>; onDeduplicate?: (options: LoadSubsetOptions) => void; })",
+          "parameters": [
+            {
+              "name": "opts",
+              "type": "{ loadSubset: (options: LoadSubsetOptions) => true | Promise<void>; onDeduplicate?: (options: LoadSubsetOptions) => void; }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "opts.loadSubset must be a non-null function",
+            "opts.loadSubset must accept a LoadSubsetOptions parameter and return true or a Promise<void>"
+          ],
+          "postconditions": [
+            "The instance's internal _loadSubset property is set to opts.loadSubset",
+            "The instance's public onDeduplicate property is set to opts.onDeduplicate if provided, else undefined"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If opts.onDeduplicate is omitted or undefined, the instance's onDeduplicate property is set to undefined",
+            "If opts.loadSubset returns a Promise, it is stored and used later asynchronously"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Sets the instance's internal _loadSubset property",
+            "Sets the instance's public onDeduplicate property"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["LoadSubsetOptions"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Constructor for DeduplicatedLoadSubset. It stores the provided loadSubset function and the optional onDeduplicate callback as instance properties.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "164c9c8abb47f0412f52d59dd57e6700ba53c03e6ca70d90ca296c1bba04ab25"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.loadSubset#method:DeduplicatedLoadSubset.loadSubset",
+        "unitKind": "method",
+        "name": "loadSubset",
+        "qualifiedName": "DeduplicatedLoadSubset.loadSubset",
+        "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+        "startLine": 85,
+        "endLine": 186,
+        "isBehavioral": true,
+        "source": "  loadSubset = (options: LoadSubsetOptions): true | Promise<void> => {\n    // If we've loaded all data, everything is covered\n    if (this.hasLoadedAllData) {\n      this.onDeduplicate?.(options)\n      return true\n    }\n\n    // Check against unlimited combined predicate\n    // If we've loaded all data matching a where clause, we don't need to refetch subsets\n    if (this.unlimitedWhere !== undefined && options.where !== undefined) {\n      if (isWhereSubset(options.where, this.unlimitedWhere)) {\n        this.onDeduplicate?.(options)\n        return true // Data already loaded via unlimited call\n      }\n    }\n\n    // Check against limited calls\n    if (options.limit !== undefined) {\n      const alreadyLoaded = this.limitedCalls.some((loaded) =>\n        isPredicateSubset(options, loaded),\n      )\n\n      if (alreadyLoaded) {\n        this.onDeduplicate?.(options)\n        return true // Already loaded\n      }\n    }\n\n    // Check against in-flight calls using the same subset logic as resolved calls\n    // This prevents duplicate requests when concurrent calls have subset relationships\n    const matchingInflight = this.inflightCalls.find((inflight) =>\n      isPredicateSubset(options, inflight.options),\n    )\n\n    if (matchingInflight !== undefined) {\n      // An in-flight call will load data that covers this request\n      // Return the same promise so this caller waits for the data to load\n      // The in-flight promise already handles tracking updates when it completes\n      const prom = matchingInflight.promise\n      // Call `onDeduplicate` when the inflight request has loaded the data\n      prom.then(() => this.onDeduplicate?.(options)).catch() // ignore errors\n      return prom\n    }\n\n    // Preserve the original request for tracking and in-flight dedupe, but allow\n    // the backend request to be narrowed to only the missing subset.\n    const trackingOptions = cloneOptions(options)\n    const loadOptions = cloneOptions(options)\n    if (this.unlimitedWhere !== undefined && options.limit === undefined) {\n      // Compute difference to get only the missing data\n      // We can only do this for unlimited queries\n      // and we can only remove data that was loaded from unlimited queries\n      // because with limited queries we have no way to express that we already loaded part of the matching data\n      loadOptions.where =\n        minusWherePredicates(loadOptions.where, this.unlimitedWhere) ??\n        loadOptions.where\n    }\n\n    // Call underlying loadSubset to load the missing data\n    const resultPromise = this._loadSubset(loadOptions)\n\n    // Handle both sync (true) and async (Promise<void>) return values\n    if (resultPromise === true) {\n      this.updateTracking(trackingOptions)\n      return true\n    } else {\n      // Async return - track the promise and update tracking after it resolves\n\n      // Capture the current generation - this lets us detect if reset() was called\n      // while this request was in-flight, so we can skip updating tracking state\n      const capturedGeneration = this.generation\n\n      // We need to create a reference to the in-flight entry so we can remove it later\n      const inflightEntry = {\n        options: trackingOptions,\n        promise: resultPromise\n          .then((result) => {\n            // Only update tracking if this request is still from the current generation\n            // If reset() was called, the generation will have incremented and we should\n            // not repopulate the state that was just cleared\n            if (capturedGeneration === this.generation) {\n              this.updateTracking(trackingOptions)\n            }\n            return result\n          })\n          .finally(() => {\n            // Always remove from in-flight array on completion OR rejection\n            // This ensures failed requests can be retried instead of being cached forever\n            const index = this.inflightCalls.indexOf(inflightEntry)\n            if (index !== -1) {\n              this.inflightCalls.splice(index, 1)\n            }\n          }),\n      }\n\n      // Store the in-flight entry so concurrent subset calls can wait for it\n      this.inflightCalls.push(inflightEntry)\n      return inflightEntry.promise\n    }\n  }\n\n  /**",
+        "detail": {
+          "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.loadSubset#method:DeduplicatedLoadSubset.loadSubset",
+          "fileId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.loadSubset",
+          "unitKind": "method",
+          "name": "loadSubset",
+          "qualifiedName": "DeduplicatedLoadSubset.loadSubset",
+          "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+          "startLine": 85,
+          "endLine": 186,
+          "signature": "loadSubset = (options: LoadSubsetOptions): true | Promise<void> =>",
+          "parameters": [
+            {
+              "name": "options",
+              "type": "LoadSubsetOptions",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "true | Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "options is a LoadSubsetOptions object with optional where, limit, and other predicate fields",
+            "The instance has been properly constructed (unlimitedWhere, limitedCalls, inflightCalls, generation are initialized)"
+          ],
+          "postconditions": [
+            "Returns true synchronously if the requested subset is already fully covered by previously loaded data or an in-flight call",
+            "Returns a Promise<void> that resolves when the underlying _loadSubset completes and tracking is updated",
+            "On successful async resolution, tracking state is updated (unless reset() was called during the in-flight period)",
+            "The inflightCalls array is cleaned up after the promise settles (resolves or rejects)"
+          ],
+          "invariants": [
+            "If hasLoadedAllData is true, loadSubset always returns true synchronously",
+            "An in-flight entry is always removed from inflightCalls upon promise settlement (resolve or reject)",
+            "Generation check prevents stale tracking updates after reset() is called"
+          ],
+          "edgeCases": [
+            "hasLoadedAllData is true: returns true immediately, calls onDeduplicate",
+            "options.where is a subset of unlimitedWhere: returns true, calls onDeduplicate",
+            "options.limit is defined and a matching limitedCall exists: returns true, calls onDeduplicate",
+            "An in-flight call covers the request: returns the same promise (deduplication), onDeduplicate is called after that promise resolves",
+            "No existing coverage found: narrows loadOptions.where via minusWherePredicates against unlimitedWhere (when unlimitedWhere is defined and no limit), then delegates to _loadSubset",
+            "_loadSubset returns true synchronously: updateTracking is called synchronously, returns true",
+            "_loadSubset returns a promise: generation is captured, tracking is updated on resolution only if generation hasn't changed, inflight entry is removed in finally block",
+            "reset() is called while an in-flight request is pending: generation increments, so the resolved handler skips updateTracking"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "Promise rejection propagates to caller; inflight entry is still removed via finally block"
+          },
+          "stateMutations": [
+            "this.inflightCalls: entries pushed when async path is taken, spliced on promise settlement",
+            "Tracking state updated via this.updateTracking(trackingOptions) on sync or async success"
+          ],
+          "eventsEmitted": [
+            "this.onDeduplicate?.(options) called when a request is deduplicated (data already loaded or covered by in-flight)"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "isWhereSubset", "source": "external utility", "kind": "internal" },
+            { "name": "isPredicateSubset", "source": "external utility", "kind": "internal" },
+            { "name": "minusWherePredicates", "source": "external utility", "kind": "internal" },
+            { "name": "cloneOptions", "source": "packages/db/src/query/subset-dedupe.ts", "kind": "internal" },
+            { "name": "_loadSubset", "source": "DeduplicatedLoadSubset (abstract/overridden)", "kind": "internal" },
+            { "name": "updateTracking", "source": "DeduplicatedLoadSubset", "kind": "internal" }
+          ],
+          "symbolReferences": ["LoadSubsetOptions"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Deduplicates subset load requests against already-loaded data, in-flight calls, and unlimited queries, returning true synchronously when the data is already covered or delegating to the underlying _loadSubset and returning its promise when a new fetch is needed.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "loadSubset is called with any options",
+              "then": "Returns true synchronously and onDeduplicate is invoked with the options",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "loadSubset is called with options.where = { status: 'active', type: 'foo' }",
+              "then": "Returns true synchronously because options.where is a subset of unlimitedWhere",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "loadSubset is called and _loadSubset returns a Promise<void>",
+              "then": "Returns a promise; an entry is added to inflightCalls; on resolution (if generation unchanged) updateTracking is called and the entry is removed from inflightCalls",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b23abc034b69906b4d1ebb8d9f80754f8c4eb536371dd3e78965491c57cac33c"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.reset#method:DeduplicatedLoadSubset.reset",
+        "unitKind": "method",
+        "name": "reset",
+        "qualifiedName": "DeduplicatedLoadSubset.reset",
+        "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+        "startLine": 196,
+        "endLine": 203,
+        "isBehavioral": true,
+        "source": "    this.hasLoadedAllData = false\n    this.limitedCalls = []\n    this.inflightCalls = []\n    // Increment generation to invalidate any in-flight completion handlers\n    // This ensures requests that were started before reset() don't repopulate the state\n    this.generation++\n  }\n",
+        "detail": {
+          "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.reset#method:DeduplicatedLoadSubset.reset",
+          "fileId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.reset",
+          "unitKind": "method",
+          "name": "reset",
+          "qualifiedName": "DeduplicatedLoadSubset.reset",
+          "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+          "startLine": 196,
+          "endLine": 203,
+          "signature": "reset(): void",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "hasLoadedAllData is false",
+            "limitedCalls is empty",
+            "inflightCalls is empty",
+            "generation is incremented"
+          ],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "hasLoadedAllData (boolean property)",
+            "limitedCalls (array property)",
+            "inflightCalls (array property)",
+            "generation (number property)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Resets the deduplication state by clearing loaded data flags, call lists, and incrementing generation to invalidate in-flight completion handlers.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "reset() is called",
+              "then": "hasLoadedAllData=false, limitedCalls=[], inflightCalls=[], generation=6",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "1d2d8aa632753c738dd12b38fbbc30c291e975e6e5b4475649c650da33f60438"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.updateTracking#method:DeduplicatedLoadSubset.updateTracking",
+        "unitKind": "method",
+        "name": "updateTracking",
+        "qualifiedName": "DeduplicatedLoadSubset.updateTracking",
+        "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+        "startLine": 205,
+        "endLine": 229,
+        "isBehavioral": true,
+        "source": "    // Update tracking based on whether this was a limited or unlimited call\n    if (options.limit === undefined) {\n      // Unlimited call - update combined where predicate\n      // We ignore orderBy for unlimited calls as mentioned in requirements\n      if (options.where === undefined) {\n        // No where clause = all data loaded\n        this.hasLoadedAllData = true\n        this.unlimitedWhere = undefined\n        this.limitedCalls = []\n        this.inflightCalls = []\n      } else if (this.unlimitedWhere === undefined) {\n        this.unlimitedWhere = options.where\n      } else {\n        this.unlimitedWhere = unionWherePredicates([\n          this.unlimitedWhere,\n          options.where,\n        ])\n      }\n    } else {\n      // Limited call - add to list for future subset checks\n      // Options are already cloned by caller to prevent mutation issues\n      this.limitedCalls.push(options)\n    }\n  }\n}",
+        "detail": {
+          "unitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.updateTracking#method:DeduplicatedLoadSubset.updateTracking",
+          "fileId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset.updateTracking",
+          "unitKind": "method",
+          "name": "updateTracking",
+          "qualifiedName": "DeduplicatedLoadSubset.updateTracking",
+          "parentUnitId": "packages/db/src/query/subset-dedupe.ts__DeduplicatedLoadSubset#class:DeduplicatedLoadSubset",
+          "startLine": 205,
+          "endLine": 229,
+          "signature": "updateTracking(options: { limit?: number; where?: any }): void",
+          "parameters": [
+            {
+              "name": "options",
+              "type": "{ limit?: number; where?: any }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The options parameter must be an object with optional 'limit' and 'where' properties."],
+          "postconditions": [
+            "For an unlimited call without a where clause, hasLoadedAllData becomes true and limitedCalls/inflightCalls are reset.",
+            "For an unlimited call with a where clause, unlimitedWhere is updated to the union of the existing unlimitedWhere and the provided where.",
+            "For a limited call, the options are appended to the limitedCalls array."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Unlimited call (limit undefined) with no where clause: resets the entire tracking state, marking all data as loaded.",
+            "Unlimited call with where clause when unlimitedWhere was previously undefined: sets unlimitedWhere to the provided where.",
+            "Unlimited call with where clause when unlimitedWhere already exists: unions the existing and new where predicates.",
+            "Limited call (limit defined): adds the entire options object to the limitedCalls list without affecting unlimitedWhere."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["this.hasLoadedAllData", "this.unlimitedWhere", "this.limitedCalls", "this.inflightCalls"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "unionWherePredicates", "source": null, "kind": "internal" }],
+          "symbolReferences": ["unionWherePredicates"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates the internal tracking state of the DeduplicatedLoadSubset instance based on whether the provided load options are limited or unlimited, to maintain the overall data coverage map.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateTracking is called with { limit: undefined, where: undefined }.",
+              "then": "The instance's hasLoadedAllData becomes true, unlimitedWhere becomes undefined, and limitedCalls becomes an empty array.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateTracking is called with { limit: undefined, where: { field: 'B' } }.",
+              "then": "The instance's unlimitedWhere is updated to the union of { field: 'A' } and { field: 'B' } (via unionWherePredicates).",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateTracking is called with { limit: 10, where: { field: 'X' } }.",
+              "then": "The provided options object is appended to the instance's limitedCalls array.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "784cd0150794d9039d678e36703d33cdbb801d3240be0a03be1efd89330859fb"
+        }
+      },
+      {
+        "unitId": "packages/db/src/query/subset-dedupe.ts__cloneOptions#function:cloneOptions",
+        "unitKind": "function",
+        "name": "cloneOptions",
+        "qualifiedName": "cloneOptions",
+        "parentUnitId": null,
+        "startLine": 238,
+        "endLine": 247,
+        "isBehavioral": true,
+        "source": "  return {\n    ...options,\n    orderBy: options.orderBy?.map((clause) => ({\n      ...clause,\n      compareOptions: { ...clause.compareOptions },\n    })),\n    cursor: options.cursor ? { ...options.cursor } : undefined,\n  }\n}\n",
+        "detail": {
+          "unitId": "packages/db/src/query/subset-dedupe.ts__cloneOptions#function:cloneOptions",
+          "fileId": "packages/db/src/query/subset-dedupe.ts__cloneOptions",
+          "unitKind": "function",
+          "name": "cloneOptions",
+          "qualifiedName": "cloneOptions",
+          "parentUnitId": null,
+          "startLine": 238,
+          "endLine": 247,
+          "signature": "(options: any) => any",
+          "parameters": [
+            { "name": "options", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "any",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "The returned object contains all original properties.",
+            "The returned object's orderBy array is a new array with new clause objects and new compareOptions objects for each clause.",
+            "The returned object's cursor is a new shallow copy if the original cursor exists, otherwise undefined."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If options is null/undefined, the spread operator will throw a TypeError.",
+            "If options.orderBy is undefined/null, the returned object will have orderBy as undefined/null.",
+            "If options.cursor is undefined/null/falsy, the returned object will have cursor as undefined."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "TypeError if options is null/undefined due to spread operator",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns a shallow clone of the input options object, with deep cloning of the orderBy array and cursor property to prevent shared mutable state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "cloneOptions is called with the options",
+              "then": "A new object is returned where orderBy and cursor are separate objects, not references to the original",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "cloneOptions is called with the options",
+              "then": "The returned object has the same properties as the input, with orderBy and cursor as undefined",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a3219dd588151448825335cdb767e170e7cab2657ac66b793ccf9ead54197730"
+        }
+      }
+    ]
+  },
+  "out": ["packages/db/src/types.ts", "packages/db/src/query/ir.ts", "packages/db/src/query/predicate-utils.ts"],
+  "in": ["packages/db/src/query/index.ts", "packages/db/tests/query/subset-dedupe.test.ts"],
+  "externals": [],
+  "impact": { "seeds": 6, "callers": 1, "impactedFiles": [] }
+}

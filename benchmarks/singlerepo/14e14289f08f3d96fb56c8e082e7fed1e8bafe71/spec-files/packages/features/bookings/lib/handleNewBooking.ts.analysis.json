@@ -1,0 +1,334 @@
+{
+  "relativePath": "packages/features/bookings/lib/handleNewBooking.ts",
+  "language": "typescript",
+  "sizeBytes": 80370,
+  "tokenCount": 20093,
+  "generatedAt": "2026-08-27T17:56:47.913Z",
+  "skimOutlines": [
+    {
+      "startLine": 1,
+      "endLine": 665,
+      "language": "TypeScript",
+      "windowSummary": "Defines booking-handler helpers, booking input types, event construction utilities, and begins the main booking flow with validation and user selection.",
+      "importsInternal": [
+        "@calcom/app-store/_utils/calendars/processExternalId",
+        "@calcom/app-store/googlevideo/_metadata",
+        "@calcom/app-store/locations",
+        "@calcom/app-store/utils",
+        "@calcom/dayjs",
+        "@calcom/ee/workflows/lib/reminders/scheduleMandatoryReminder",
+        "@calcom/emails",
+        "@calcom/emails/lib/getICalUID",
+        "@calcom/features/CalendarEventBuilder",
+        "@calcom/features/bookings/lib/handleWebhookTrigger",
+        "@calcom/features/bookings/lib/isEventTypeLoggingEnabled",
+        "@calcom/features/calendar-cache/lib/getShouldServeCache",
+        "@calcom/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder",
+        "@calcom/features/ee/workflows/lib/allowDisablingStandardEmails",
+        "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+        "@calcom/features/form-builder/utils",
+        "@calcom/features/users/users.repository",
+        "@calcom/features/webhooks/lib/getWebhooks",
+        "@calcom/features/webhooks/lib/scheduleTrigger",
+        "@calcom/features/bookings/lib/getBookingDataSchemaForApi",
+        "@calcom/lib/CalEventParser",
+        "@calcom/lib/EventManager",
+        "@calcom/lib/analyticsManager/handleAnalyticsEvents",
+        "@calcom/lib/bookings/routing/utils",
+        "@calcom/lib/defaultEvents",
+        "@calcom/lib/delegationCredential/server",
+        "@calcom/lib/errorCodes",
+        "@calcom/lib/errors",
+        "@calcom/lib/event",
+        "@calcom/lib/extract-base-email",
+        "@calcom/lib/getBookerUrl/server",
+        "@calcom/lib/getOrgIdFromMemberOrTeamId",
+        "@calcom/lib/getPaymentAppData",
+        "@calcom/lib/getTeamIdFromEventType",
+        "@calcom/lib/http-error",
+        "@calcom/lib/logger",
+        "@calcom/lib/payment/handlePayment",
+        "@calcom/lib/piiFreeData",
+        "@calcom/lib/safeStringify",
+        "@calcom/lib/server/getLuckyUser",
+        "@calcom/lib/server/i18n",
+        "@calcom/lib/server/repository/booking",
+        "@calcom/lib/server/repository/workflow",
+        "@calcom/lib/timeFormat",
+        "@calcom/prisma",
+        "@calcom/prisma/enums",
+        "@calcom/prisma/zod-utils",
+        "@calcom/trpc/server/routers/viewer/workflows/util",
+        "@calcom/types/Calendar",
+        "@calcom/types/Credential",
+        "@calcom/types/EventManager",
+        "../../webhooks/lib/sendPayload",
+        "./getAllCredentialsForUsersOnEvent/getAllCredentials",
+        "./getAllCredentialsForUsersOnEvent/refreshCredentials",
+        "./getBookingDataSchema",
+        "./handleNewBooking/addVideoCallDataToEvent",
+        "./handleNewBooking/checkActiveBookingsLimitForBooker",
+        "./handleNewBooking/checkBookingAndDurationLimits",
+        "./handleNewBooking/checkIfBookerEmailIsBlocked",
+        "./handleNewBooking/createBooking",
+        "./handleNewBooking/ensureAvailableUsers",
+        "./handleNewBooking/getBookingData",
+        "./handleNewBooking/getCustomInputsResponses",
+        "./handleNewBooking/getEventType",
+        "./handleNewBooking/getEventTypesFromDB",
+        "./handleNewBooking/getLocationValuesForDb",
+        "./handleNewBooking/getRequiresConfirmationFlags",
+        "./handleNewBooking/getSeatedBooking",
+        "./handleNewBooking/getVideoCallDetails",
+        "./handleNewBooking/handleAppsStatus",
+        "./handleNewBooking/loadAndValidateUsers",
+        "./handleNewBooking/logger",
+        "./handleNewBooking/originalRescheduledBookingUtils",
+        "./handleNewBooking/scheduleNoShowTriggers",
+        "./handleNewBooking/types",
+        "./handleNewBooking/validateBookingTimeIsNotOutOfBounds",
+        "./handleNewBooking/validateEventLength",
+        "./handleSeats/handleSeats"
+      ],
+      "importsExternal": ["@prisma/client", "lodash", "short-uuid", "uuid"],
+      "declarations": [
+        {
+          "kind": "const",
+          "name": "translator",
+          "signature": "const translator = short();",
+          "role": "Creates a short UUID translator for booking identifiers."
+        },
+        {
+          "kind": "const",
+          "name": "log",
+          "signature": "const log = logger.getSubLogger({ prefix: [\"[api] book:user\"] });",
+          "role": "Provides a scoped logger for the booking API flow."
+        },
+        {
+          "kind": "type",
+          "name": "IsFixedAwareUserWithCredentials",
+          "signature": "type IsFixedAwareUserWithCredentials = Omit<IsFixedAwareUser, \"credentials\"> & {",
+          "role": "Represents a fixed-aware user with calendar credentials."
+        },
+        {
+          "kind": "function",
+          "name": "assertNonEmptyArray",
+          "signature": "function assertNonEmptyArray<T>(arr: T[]): asserts arr is [T, ...T[]] {",
+          "role": "Asserts that an array contains at least one element."
+        },
+        {
+          "kind": "function",
+          "name": "getICalSequence",
+          "signature": "function getICalSequence(originalRescheduledBooking: BookingType | null) {",
+          "role": "Calculates the iCalendar sequence for a new or rescheduled booking."
+        },
+        {
+          "kind": "type",
+          "name": "BookingDataSchemaGetter",
+          "signature": "type BookingDataSchemaGetter =",
+          "role": "Types the supported booking-data schema factory functions."
+        },
+        {
+          "kind": "type",
+          "name": "CreatedBooking",
+          "signature": "type CreatedBooking = Booking & { appsStatus?: AppsStatus[]; paymentUid?: string; paymentId?: number };",
+          "role": "Describes a created booking with optional application and payment data."
+        },
+        {
+          "kind": "type",
+          "name": "ReturnTypeCreateBooking",
+          "signature": "type ReturnTypeCreateBooking = Awaited<ReturnType<typeof createBooking>>;",
+          "role": "Captures the resolved return type of booking creation."
+        },
+        {
+          "kind": "const",
+          "name": "buildDryRunBooking",
+          "signature": "export const buildDryRunBooking = ({",
+          "role": "Builds a synthetic booking and troubleshooting payload for dry-run requests."
+        },
+        {
+          "kind": "const",
+          "name": "buildEventForTeamEventType",
+          "signature": "export const buildEventForTeamEventType = async ({",
+          "role": "Adds team members and destination calendars to a calendar event."
+        },
+        {
+          "kind": "const",
+          "name": "buildEventManager",
+          "signature": "const buildDryRunEventManager = () => {",
+          "role": "Creates a no-op event manager for dry-run operations."
+        },
+        {
+          "kind": "function",
+          "name": "buildTroubleshooterData",
+          "signature": "function buildTroubleshooterData({",
+          "role": "Initializes troubleshooting metadata for a booking attempt."
+        },
+        {
+          "kind": "type",
+          "name": "PlatformParams",
+          "signature": "export type PlatformParams = {",
+          "role": "Defines optional platform-specific booking parameters."
+        },
+        {
+          "kind": "type",
+          "name": "BookingHandlerInput",
+          "signature": "export type BookingHandlerInput = {",
+          "role": "Defines the input accepted by the booking handler."
+        },
+        {
+          "kind": "function",
+          "name": "handler",
+          "signature": "async function handler(",
+          "role": "Orchestrates booking validation, deduplication, routing, and preparation."
+        }
+      ]
+    },
+    {
+      "startLine": 666,
+      "endLine": 1270,
+      "language": "TypeScript",
+      "windowSummary": "Continues booking availability and host selection, constructs the calendar event and webhook configuration, and begins seat-based booking handling.",
+      "importsInternal": [],
+      "importsExternal": [],
+      "declarations": []
+    },
+    {
+      "startLine": 1271,
+      "endLine": 1863,
+      "language": "TypeScript",
+      "windowSummary": "Continues booking creation and rescheduling workflows, including database persistence, calendar event management, integration handling, and notification delivery.",
+      "importsInternal": [],
+      "importsExternal": [],
+      "declarations": []
+    },
+    {
+      "startLine": 1864,
+      "endLine": 2232,
+      "language": "TypeScript",
+      "windowSummary": "Completes booking payment handling, webhook and reminder scheduling, analytics, persistence updates, and the final booking response.",
+      "importsInternal": [],
+      "importsExternal": [],
+      "declarations": [
+        {
+          "kind": "other",
+          "name": "handler",
+          "signature": "export default handler;",
+          "role": "Exports the booking handler as the module default."
+        }
+      ]
+    }
+  ],
+  "locatedDeclarations": [
+    {
+      "kind": "const",
+      "name": "translator",
+      "signature": "const translator = short();",
+      "role": "Creates a short UUID translator for booking identifiers.",
+      "startLine": 116
+    },
+    {
+      "kind": "const",
+      "name": "log",
+      "signature": "const log = logger.getSubLogger({ prefix: [\"[api] book:user\"] });",
+      "role": "Provides a scoped logger for the booking API flow.",
+      "startLine": 117
+    },
+    {
+      "kind": "type",
+      "name": "IsFixedAwareUserWithCredentials",
+      "signature": "type IsFixedAwareUserWithCredentials = Omit<IsFixedAwareUser, \"credentials\"> & {",
+      "role": "Represents a fixed-aware user with calendar credentials.",
+      "startLine": 119
+    },
+    {
+      "kind": "function",
+      "name": "assertNonEmptyArray",
+      "signature": "function assertNonEmptyArray<T>(arr: T[]): asserts arr is [T, ...T[]] {",
+      "role": "Asserts that an array contains at least one element.",
+      "startLine": 123
+    },
+    {
+      "kind": "function",
+      "name": "getICalSequence",
+      "signature": "function getICalSequence(originalRescheduledBooking: BookingType | null) {",
+      "role": "Calculates the iCalendar sequence for a new or rescheduled booking.",
+      "startLine": 129
+    },
+    {
+      "kind": "type",
+      "name": "BookingDataSchemaGetter",
+      "signature": "type BookingDataSchemaGetter =",
+      "role": "Types the supported booking-data schema factory functions.",
+      "startLine": 144
+    },
+    {
+      "kind": "type",
+      "name": "CreatedBooking",
+      "signature": "type CreatedBooking = Booking & { appsStatus?: AppsStatus[]; paymentUid?: string; paymentId?: number };",
+      "role": "Describes a created booking with optional application and payment data.",
+      "startLine": 148
+    },
+    {
+      "kind": "type",
+      "name": "ReturnTypeCreateBooking",
+      "signature": "type ReturnTypeCreateBooking = Awaited<ReturnType<typeof createBooking>>;",
+      "role": "Captures the resolved return type of booking creation.",
+      "startLine": 149
+    },
+    {
+      "kind": "const",
+      "name": "buildDryRunBooking",
+      "signature": "export const buildDryRunBooking = ({",
+      "role": "Builds a synthetic booking and troubleshooting payload for dry-run requests.",
+      "startLine": 150
+    },
+    {
+      "kind": "const",
+      "name": "buildEventForTeamEventType",
+      "signature": "export const buildEventForTeamEventType = async ({",
+      "role": "Adds team members and destination calendars to a calendar event.",
+      "startLine": 256
+    },
+    {
+      "kind": "function",
+      "name": "buildTroubleshooterData",
+      "signature": "function buildTroubleshooterData({",
+      "role": "Initializes troubleshooting metadata for a booking attempt.",
+      "startLine": 329
+    },
+    {
+      "kind": "type",
+      "name": "PlatformParams",
+      "signature": "export type PlatformParams = {",
+      "role": "Defines optional platform-specific booking parameters.",
+      "startLine": 371
+    },
+    {
+      "kind": "type",
+      "name": "BookingHandlerInput",
+      "signature": "export type BookingHandlerInput = {",
+      "role": "Defines the input accepted by the booking handler.",
+      "startLine": 380
+    },
+    {
+      "kind": "function",
+      "name": "handler",
+      "signature": "async function handler(",
+      "role": "Orchestrates booking validation, deduplication, routing, and preparation.",
+      "startLine": 388
+    },
+    {
+      "kind": "other",
+      "name": "handler",
+      "signature": "export default handler;",
+      "role": "Exports the booking handler as the module default.",
+      "startLine": 2231
+    }
+  ],
+  "skimTokenUsage": {
+    "inputTokens": 18856,
+    "outputTokens": 2842,
+    "costUsd": 0
+  }
+}

@@ -1,0 +1,3459 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "react",
+  "commitHash": "1d4758e0f6aae560024b36ce07ed8a67b3f7d78f",
+  "generatedAt": "2026-08-06T07:59:30.245Z",
+  "file": {
+    "relativePath": "packages/react-reconciler/src/ReactFiberCommitEffects.js",
+    "language": "javascript",
+    "sizeBytes": 32290,
+    "tokenCount": 7088,
+    "model": "tencent/hy3",
+    "analysedAt": "2026-08-01T16:54:52.308Z",
+    "module": {
+      "purpose": "Implements the commit-phase side-effect handlers of the React reconciler: mounting/unmounting hook effects, class lifecycles, refs, and profiler callbacks, with dev-time guards and error capture.",
+      "summary": "This module centralises the commit-phase effect orchestration for React's fiber tree. It provides exported functions to mount and unmount layout, insertion, and passive hook effects; invoke class component lifecycles (componentDidMount, componentDidUpdate, getSnapshotBeforeUpdate, componentWillUnmount); attach and detach refs (including view transitions and fragments); and fire profiler onRender/onCommit/onPostCommit hooks. All effect invocations are wrapped in try/catch that routes errors through captureCommitPhaseError, and profiling is conditionally timed via feature flags. Dev builds perform additional prop/state consistency checks and run user code under runWithFiberInDEV.",
+      "businessContext": "Core React rendering pipeline. If these commit effects mis-fire, components fail to mount, refs break, and profiler data is wrong, breaking app correctness and DevTools.",
+      "classes": [],
+      "functions": [
+        "shouldProfile (~L89-95): Determines if a fiber should be profiled based on flags and mode.",
+        "commitHookLayoutEffects (~L97-112): Mounts layout effects with optional profiling timer.",
+        "commitHookLayoutUnmountEffects (~L114-139): Unmounts layout effects before sibling creates.",
+        "commitHookEffectListMount (~L141-216): Iterates effect list and invokes create functions.",
+        "commitHookEffectListUnmount (~L218-270): Iterates effect list and invokes destroy functions.",
+        "commitHookPassiveMountEffects (~L272-283): Mounts passive effects with optional profiling.",
+        "commitHookPassiveUnmountEffects (~L284-295): Unmounts passive effects with optional profiling.",
+        "commitClassLayoutLifecycles (~L297-390): Calls class mount/update lifecycles with dev checks.",
+        "commitClassDidMount (~L392-405): Calls componentDidMount if defined.",
+        "commitClassCallbacks (~L407-435): Commits enqueued class callbacks.",
+        "commitClassHiddenCallbacks (~L437-455): Commits callbacks deferred while hidden.",
+        "commitRootCallbacks (~L457-485): Commits root-level callbacks via child instance.",
+        "callGetSnapshotBeforeUpdates (~L495-499): Invokes getSnapshotBeforeUpdate on class instance.",
+        "commitClassSnapshot (~L501-545): Captures snapshot before update and warns if undefined.",
+        "safelyCallComponentWillUnmount (~L551-585): Calls componentWillUnmount with error capture.",
+        "commitAttachRef (~L591-645): Attaches ref to instance, handling host/view/fragment types.",
+        "safelyAttachRef (~L651-663): Safely attaches ref with error capture.",
+        "safelyDetachRef (~L665-735): Detaches ref and calls ref cleanup with error capture.",
+        "safelyCallDestroy (~L737-755): Calls effect destroy with optional resource binding.",
+        "commitProfiler (~L761-785): Internal profiler commit hook dispatcher.",
+        "commitProfilerUpdate (~L787-805): Exported profiler onRender/onCommit dispatcher.",
+        "commitProfilerPostCommitImpl (~L811-825): Internal profiler post-commit hook.",
+        "commitProfilerPostCommit (~L827-845): Exported profiler onPostCommit dispatcher."
+      ],
+      "keywords": [
+        "React reconciler",
+        "commit phase",
+        "layout effects",
+        "passive effects",
+        "ref attachment",
+        "profiler hooks",
+        "class lifecycles",
+        "Fiber",
+        "effect cleanup",
+        "DevTools timing"
+      ],
+      "ontologyConcepts": [
+        "commit phase",
+        "effect lifecycle",
+        "fiber mutation",
+        "component instance",
+        "error boundary capture",
+        "profiling instrumentation"
+      ],
+      "businessEntities": ["Fiber", "Effect", "Component instance", "Ref", "Profiler"],
+      "systemCapabilities": [
+        "mount and unmount hook effects",
+        "invoke class lifecycles",
+        "attach and detach refs",
+        "capture commit-phase errors",
+        "fire profiler callbacks"
+      ],
+      "configDependencies": [
+        "enableProfilerTimer",
+        "enableProfilerCommitHooks",
+        "enableProfilerNestedUpdatePhase",
+        "enableSchedulingProfiler",
+        "enableViewTransition",
+        "enableFragmentRefs",
+        "__DEV__"
+      ],
+      "importsInternal": [
+        {
+          "spec": "shared/ReactTypes",
+          "symbols": ["ViewTransitionProps", "ProfilerProps", "ProfilerPhase"],
+          "anchor": { "startLine": 10, "endLine": 14 },
+          "resolvedRelativePath": "packages/shared/ReactTypes.js",
+          "resolvedFileId": "packages/shared/ReactTypes.js",
+          "resolvedHint": "shared/ReactTypes.js"
+        },
+        {
+          "spec": "./ReactInternalTypes",
+          "symbols": ["Fiber"],
+          "anchor": { "startLine": 15, "endLine": 15 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactInternalTypes.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactInternalTypes.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactInternalTypes.js"
+        },
+        {
+          "spec": "./ReactFiberClassUpdateQueue",
+          "symbols": ["UpdateQueue"],
+          "anchor": { "startLine": 16, "endLine": 16 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js"
+        },
+        {
+          "spec": "./ReactFiberHooks",
+          "symbols": ["FunctionComponentUpdateQueue"],
+          "anchor": { "startLine": 17, "endLine": 17 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberHooks.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberHooks.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberHooks.js"
+        },
+        {
+          "spec": "./ReactHookEffectTags",
+          "symbols": ["HookFlags"],
+          "anchor": { "startLine": 18, "endLine": 18 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactHookEffectTags.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactHookEffectTags.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactHookEffectTags.js"
+        },
+        {
+          "spec": "./ReactFiberConfig",
+          "symbols": ["FragmentInstanceType"],
+          "anchor": { "startLine": 19, "endLine": 19 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberConfig.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberConfig.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberConfig.js"
+        },
+        {
+          "spec": "./ReactFiberViewTransitionComponent",
+          "symbols": ["ViewTransitionState"],
+          "anchor": { "startLine": 20, "endLine": 20 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js"
+        },
+        {
+          "spec": "./ReactFiberViewTransitionComponent",
+          "symbols": ["getViewTransitionName"],
+          "anchor": { "startLine": 22, "endLine": 22 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js"
+        },
+        {
+          "spec": "shared/ReactFeatureFlags",
+          "symbols": [
+            "enableProfilerTimer",
+            "enableProfilerCommitHooks",
+            "enableProfilerNestedUpdatePhase",
+            "enableSchedulingProfiler",
+            "enableViewTransition",
+            "enableFragmentRefs"
+          ],
+          "anchor": { "startLine": 24, "endLine": 31 },
+          "resolvedRelativePath": "packages/shared/ReactFeatureFlags.js",
+          "resolvedFileId": "packages/shared/ReactFeatureFlags.js",
+          "resolvedHint": "shared/ReactFeatureFlags.js"
+        },
+        {
+          "spec": "./ReactWorkTags",
+          "symbols": [
+            "ClassComponent",
+            "Fragment",
+            "HostComponent",
+            "HostHoistable",
+            "HostSingleton",
+            "ViewTransitionComponent"
+          ],
+          "anchor": { "startLine": 32, "endLine": 39 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactWorkTags.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactWorkTags.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactWorkTags.js"
+        },
+        {
+          "spec": "./ReactFiberFlags",
+          "symbols": ["NoFlags"],
+          "anchor": { "startLine": 40, "endLine": 40 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberFlags.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberFlags.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberFlags.js"
+        },
+        {
+          "spec": "react-reconciler/src/getComponentNameFromFiber",
+          "symbols": ["getComponentNameFromFiber"],
+          "anchor": { "startLine": 41, "endLine": 41 },
+          "resolvedRelativePath": "packages/react-reconciler/src/getComponentNameFromFiber.js",
+          "resolvedFileId": "packages/react-reconciler/src/getComponentNameFromFiber.js",
+          "resolvedHint": "packages/react-reconciler/src/getComponentNameFromFiber.js"
+        },
+        {
+          "spec": "./ReactFiberClassComponent",
+          "symbols": ["resolveClassComponentProps"],
+          "anchor": { "startLine": 42, "endLine": 42 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberClassComponent.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberClassComponent.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberClassComponent.js"
+        },
+        {
+          "spec": "./ReactProfilerTimer",
+          "symbols": ["recordEffectDuration", "startEffectTimer", "isCurrentUpdateNested"],
+          "anchor": { "startLine": 43, "endLine": 47 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactProfilerTimer.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactProfilerTimer.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactProfilerTimer.js"
+        },
+        {
+          "spec": "./ReactTypeOfMode",
+          "symbols": ["NoMode", "ProfileMode"],
+          "anchor": { "startLine": 48, "endLine": 48 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactTypeOfMode.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactTypeOfMode.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactTypeOfMode.js"
+        },
+        {
+          "spec": "./ReactFiberClassUpdateQueue",
+          "symbols": ["commitCallbacks", "commitHiddenCallbacks"],
+          "anchor": { "startLine": 49, "endLine": 52 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js"
+        },
+        {
+          "spec": "./ReactFiberConfig",
+          "symbols": ["getPublicInstance", "createViewTransitionInstance", "createFragmentInstance"],
+          "anchor": { "startLine": 53, "endLine": 57 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberConfig.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberConfig.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberConfig.js"
+        },
+        {
+          "spec": "./ReactFiberWorkLoop",
+          "symbols": ["captureCommitPhaseError", "setIsRunningInsertionEffect"],
+          "anchor": { "startLine": 58, "endLine": 61 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberWorkLoop.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberWorkLoop.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberWorkLoop.js"
+        },
+        {
+          "spec": "./ReactHookEffectTags",
+          "symbols": ["NoHookEffect", "HookLayout", "HookInsertion", "HookPassive"],
+          "anchor": { "startLine": 62, "endLine": 67 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactHookEffectTags.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactHookEffectTags.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactHookEffectTags.js"
+        },
+        {
+          "spec": "./ReactFiberBeginWork",
+          "symbols": ["didWarnAboutReassigningProps"],
+          "anchor": { "startLine": 68, "endLine": 68 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberBeginWork.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberBeginWork.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberBeginWork.js"
+        },
+        {
+          "spec": "./ReactFiberDevToolsHook",
+          "symbols": [
+            "markComponentPassiveEffectMountStarted",
+            "markComponentPassiveEffectMountStopped",
+            "markComponentPassiveEffectUnmountStarted",
+            "markComponentPassiveEffectUnmountStopped",
+            "markComponentLayoutEffectMountStarted",
+            "markComponentLayoutEffectMountStopped",
+            "markComponentLayoutEffectUnmountStarted",
+            "markComponentLayoutEffectUnmountStopped"
+          ],
+          "anchor": { "startLine": 69, "endLine": 78 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberDevToolsHook.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberDevToolsHook.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberDevToolsHook.js"
+        },
+        {
+          "spec": "./ReactFiberCallUserSpace",
+          "symbols": [
+            "callComponentDidMountInDEV",
+            "callComponentDidUpdateInDEV",
+            "callComponentWillUnmountInDEV",
+            "callCreateInDEV",
+            "callDestroyInDEV"
+          ],
+          "anchor": { "startLine": 79, "endLine": 85 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberCallUserSpace.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberCallUserSpace.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactFiberCallUserSpace.js"
+        },
+        {
+          "spec": "./ReactCurrentFiber",
+          "symbols": ["runWithFiberInDEV"],
+          "anchor": { "startLine": 86, "endLine": 86 },
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactCurrentFiber.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactCurrentFiber.js",
+          "resolvedHint": "packages/react-reconciler/src/ReactCurrentFiber.js"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [
+          "console.error for prop/state mismatch and invalid effect return in __DEV__",
+          "console.error for string refs and invalid ref objects in __DEV__",
+          "console.error for undefined getSnapshotBeforeUpdate return in __DEV__"
+        ],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "sets inst.destroy on effect object",
+          "sets ref.current / finishedWork.refCleanup",
+          "sets instance.__reactInternalSnapshotBeforeUpdate",
+          "mutates instance.props and instance.state in safelyCallComponentWillUnmount",
+          "assigns finishedWork.stateNode for fragment refs"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "commitHookLayoutEffects",
+          "shape": "export function commitHookLayoutEffects(finishedWork: Fiber, hookFlags: HookFlags)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitHookLayoutUnmountEffects",
+          "shape": "export function commitHookLayoutUnmountEffects(finishedWork: Fiber, nearestMountedAncestor: null | Fiber, hookFlags: HookFlags)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitHookEffectListMount",
+          "shape": "export function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitHookEffectListUnmount",
+          "shape": "export function commitHookEffectListUnmount(flags: HookFlags, finishedWork: Fiber, nearestMountedAncestor: Fiber | null)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitHookPassiveMountEffects",
+          "shape": "export function commitHookPassiveMountEffects(finishedWork: Fiber, hookFlags: HookFlags)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitHookPassiveUnmountEffects",
+          "shape": "export function commitHookPassiveUnmountEffects(finishedWork: Fiber, nearestMountedAncestor: null | Fiber, hookFlags: HookFlags)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitClassLayoutLifecycles",
+          "shape": "export function commitClassLayoutLifecycles(finishedWork: Fiber, current: Fiber | null)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitClassDidMount",
+          "shape": "export function commitClassDidMount(finishedWork: Fiber)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitClassCallbacks",
+          "shape": "export function commitClassCallbacks(finishedWork: Fiber)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitClassHiddenCallbacks",
+          "shape": "export function commitClassHiddenCallbacks(finishedWork: Fiber)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitRootCallbacks",
+          "shape": "export function commitRootCallbacks(finishedWork: Fiber)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitClassSnapshot",
+          "shape": "export function commitClassSnapshot(finishedWork: Fiber, current: Fiber)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "safelyCallComponentWillUnmount",
+          "shape": "export function safelyCallComponentWillUnmount(current: Fiber, nearestMountedAncestor: Fiber | null, instance: any)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "safelyAttachRef",
+          "shape": "export function safelyAttachRef(current: Fiber, nearestMountedAncestor: Fiber | null)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "safelyDetachRef",
+          "shape": "export function safelyDetachRef(current: Fiber, nearestMountedAncestor: Fiber | null)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitProfilerUpdate",
+          "shape": "export function commitProfilerUpdate(finishedWork: Fiber, current: Fiber | null, commitStartTime: number, effectDuration: number)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "commitProfilerPostCommit",
+          "shape": "export function commitProfilerPostCommit(finishedWork: Fiber, current: Fiber | null, commitStartTime: number, passiveEffectDuration: number)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "getViewTransitionName",
+          "shape": "import { getViewTransitionName } from './ReactFiberViewTransitionComponent'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js"
+        },
+        {
+          "name": "enableProfilerTimer",
+          "shape": "import { enableProfilerTimer } from 'shared/ReactFeatureFlags'",
+          "resolvedRelativePath": "packages/shared/ReactFeatureFlags.js",
+          "resolvedFileId": "packages/shared/ReactFeatureFlags.js"
+        },
+        {
+          "name": "commitCallbacks",
+          "shape": "import { commitCallbacks } from './ReactFiberClassUpdateQueue'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js"
+        },
+        {
+          "name": "commitHiddenCallbacks",
+          "shape": "import { commitHiddenCallbacks } from './ReactFiberClassUpdateQueue'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js"
+        },
+        {
+          "name": "captureCommitPhaseError",
+          "shape": "import { captureCommitPhaseError } from './ReactFiberWorkLoop'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberWorkLoop.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberWorkLoop.js"
+        },
+        {
+          "name": "resolveClassComponentProps",
+          "shape": "import { resolveClassComponentProps } from './ReactFiberClassComponent'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberClassComponent.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberClassComponent.js"
+        },
+        {
+          "name": "getPublicInstance",
+          "shape": "import { getPublicInstance } from './ReactFiberConfig'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactFiberConfig.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactFiberConfig.js"
+        },
+        {
+          "name": "runWithFiberInDEV",
+          "shape": "import { runWithFiberInDEV } from './ReactCurrentFiber'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactCurrentFiber.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactCurrentFiber.js"
+        },
+        {
+          "name": "startEffectTimer",
+          "shape": "import { startEffectTimer } from './ReactProfilerTimer'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactProfilerTimer.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactProfilerTimer.js"
+        },
+        {
+          "name": "recordEffectDuration",
+          "shape": "import { recordEffectDuration } from './ReactProfilerTimer'",
+          "resolvedRelativePath": "packages/react-reconciler/src/ReactProfilerTimer.js",
+          "resolvedFileId": "packages/react-reconciler/src/ReactProfilerTimer.js"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "shouldProfile",
+          "intent": "Decide whether to time effects for this fiber",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 89, "endLine": 95 }
+        },
+        {
+          "name": "commitHookEffectListMount loop",
+          "intent": "Iterate circular effect list and mount matching effects",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": "while (effect !== firstEffect)",
+          "anchor": { "startLine": 152, "endLine": 210 }
+        },
+        {
+          "name": "commitHookEffectListUnmount loop",
+          "intent": "Iterate circular effect list and unmount matching effects",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": "while (effect !== firstEffect)",
+          "anchor": { "startLine": 229, "endLine": 264 }
+        },
+        {
+          "name": "commitAttachRef switch",
+          "intent": "Resolve instance to use for ref based on fiber tag",
+          "structureKind": "branch",
+          "predicate": "switch (finishedWork.tag)",
+          "branchOutcomes": [
+            "HostHoistable",
+            "HostSingleton",
+            "HostComponent",
+            "ViewTransitionComponent",
+            "Fragment",
+            "default"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 597, "endLine": 627 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "commitHookLayoutEffects",
+          "signature": "export function commitHookLayoutEffects(\n  finishedWork: Fiber,\n  hookFlags: HookFlags,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 97, "endLine": 100 }
+        },
+        {
+          "kind": "function",
+          "name": "commitHookLayoutUnmountEffects",
+          "signature": "export function commitHookLayoutUnmountEffects(\n  finishedWork: Fiber,\n  nearestMountedAncestor: null | Fiber,\n  hookFlags: HookFlags,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 114, "endLine": 118 }
+        },
+        {
+          "kind": "function",
+          "name": "commitHookEffectListMount",
+          "signature": "export function commitHookEffectListMount(\n  flags: HookFlags,\n  finishedWork: Fiber,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 141, "endLine": 144 }
+        },
+        {
+          "kind": "function",
+          "name": "commitHookEffectListUnmount",
+          "signature": "export function commitHookEffectListUnmount(\n  flags: HookFlags,\n  finishedWork: Fiber,\n  nearestMountedAncestor: Fiber | null,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 218, "endLine": 222 }
+        },
+        {
+          "kind": "function",
+          "name": "commitHookPassiveMountEffects",
+          "signature": "export function commitHookPassiveMountEffects(\n  finishedWork: Fiber,\n  hookFlags: HookFlags,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 272, "endLine": 275 }
+        },
+        {
+          "kind": "function",
+          "name": "commitHookPassiveUnmountEffects",
+          "signature": "export function commitHookPassiveUnmountEffects(\n  finishedWork: Fiber,\n  nearestMountedAncestor: null | Fiber,\n  hookFlags: HookFlags,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 284, "endLine": 288 }
+        },
+        {
+          "kind": "function",
+          "name": "commitClassLayoutLifecycles",
+          "signature": "export function commitClassLayoutLifecycles(\n  finishedWork: Fiber,\n  current: Fiber | null,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 297, "endLine": 300 }
+        },
+        {
+          "kind": "function",
+          "name": "commitClassDidMount",
+          "signature": "export function commitClassDidMount(finishedWork: Fiber) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 392, "endLine": 392 }
+        },
+        {
+          "kind": "function",
+          "name": "commitClassCallbacks",
+          "signature": "export function commitClassCallbacks(finishedWork: Fiber) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 407, "endLine": 407 }
+        },
+        {
+          "kind": "function",
+          "name": "commitClassHiddenCallbacks",
+          "signature": "export function commitClassHiddenCallbacks(finishedWork: Fiber) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 437, "endLine": 437 }
+        },
+        {
+          "kind": "function",
+          "name": "commitRootCallbacks",
+          "signature": "export function commitRootCallbacks(finishedWork: Fiber) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 457, "endLine": 457 }
+        },
+        {
+          "kind": "function",
+          "name": "commitClassSnapshot",
+          "signature": "export function commitClassSnapshot(finishedWork: Fiber, current: Fiber) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 501, "endLine": 501 }
+        },
+        {
+          "kind": "function",
+          "name": "safelyCallComponentWillUnmount",
+          "signature": "export function safelyCallComponentWillUnmount(\n  current: Fiber,\n  nearestMountedAncestor: Fiber | null,\n  instance: any,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 551, "endLine": 555 }
+        },
+        {
+          "kind": "function",
+          "name": "safelyAttachRef",
+          "signature": "export function safelyAttachRef(\n  current: Fiber,\n  nearestMountedAncestor: Fiber | null,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 651, "endLine": 654 }
+        },
+        {
+          "kind": "function",
+          "name": "safelyDetachRef",
+          "signature": "export function safelyDetachRef(\n  current: Fiber,\n  nearestMountedAncestor: Fiber | null,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 665, "endLine": 668 }
+        },
+        {
+          "kind": "function",
+          "name": "commitProfilerUpdate",
+          "signature": "export function commitProfilerUpdate(\n  finishedWork: Fiber,\n  current: Fiber | null,\n  commitStartTime: number,\n  effectDuration: number,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 787, "endLine": 792 }
+        },
+        {
+          "kind": "function",
+          "name": "commitProfilerPostCommit",
+          "signature": "export function commitProfilerPostCommit(\n  finishedWork: Fiber,\n  current: Fiber | null,\n  commitStartTime: number,\n  passiveEffectDuration: number,\n) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 827, "endLine": 832 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "updateQueue null",
+          "handled": true,
+          "behavior": "Skips effect list iteration entirely",
+          "anchor": { "startLine": 146, "endLine": 149 }
+        },
+        {
+          "inputShape": "destroy returns non-function (e.g. Promise or null)",
+          "handled": true,
+          "behavior": "Dev warns with specific addendum per hook type",
+          "anchor": { "startLine": 188, "endLine": 207 }
+        },
+        {
+          "inputShape": "ref is string",
+          "handled": true,
+          "behavior": "Dev errors that string refs unsupported",
+          "anchor": { "startLine": 622, "endLine": 624 }
+        },
+        {
+          "inputShape": "ref cleanup already called",
+          "handled": true,
+          "behavior": "Nullifies refCleanup on current and alternate to prevent double call",
+          "anchor": { "startLine": 718, "endLine": 727 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "(current.mode & ProfileMode)",
+          "right": "NoMode",
+          "inclusive": false,
+          "intent": "Check if fiber is in profiling mode",
+          "anchor": { "startLine": 93, "endLine": 93 }
+        },
+        {
+          "operator": "==",
+          "left": "(effect.tag & flags)",
+          "right": "flags",
+          "inclusive": true,
+          "intent": "Select effects matching the requested flag mask",
+          "anchor": { "startLine": 153, "endLine": 153 }
+        },
+        {
+          "operator": "==",
+          "left": "destroy",
+          "right": "undefined",
+          "inclusive": false,
+          "intent": "Ensure a destroy function exists before unmount",
+          "anchor": { "startLine": 188, "endLine": 188 }
+        },
+        {
+          "operator": "==",
+          "left": "typeof destroy",
+          "right": "'function'",
+          "inclusive": false,
+          "intent": "Validate destroy return type in dev",
+          "anchor": { "startLine": 188, "endLine": 188 }
+        },
+        {
+          "operator": "==",
+          "left": "effect !== firstEffect",
+          "right": "",
+          "inclusive": false,
+          "intent": "Terminate circular effect list traversal",
+          "anchor": { "startLine": 210, "endLine": 210 }
+        },
+        {
+          "operator": "==",
+          "left": "ref",
+          "right": "null",
+          "inclusive": false,
+          "intent": "Only attach ref if one exists",
+          "anchor": { "startLine": 592, "endLine": 592 }
+        },
+        {
+          "operator": "==",
+          "left": "finishedWork.child !== null",
+          "right": "",
+          "inclusive": false,
+          "intent": "Guard root callback child lookup",
+          "anchor": { "startLine": 463, "endLine": 463 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "captureCommitPhaseError(finishedWork, finishedWork.return, error)",
+          "fallback": null,
+          "anchor": { "startLine": 213, "endLine": 214 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "captureCommitPhaseError in class lifecycles and ref handlers",
+          "fallback": null,
+          "anchor": { "startLine": 312, "endLine": 312 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "captureCommitPhaseError in safelyCallDestroy try",
+          "fallback": null,
+          "anchor": { "startLine": 750, "endLine": 752 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Layout effect destroys happen before any create to avoid sibling interference",
+          "anchor": { "startLine": 101, "endLine": 104 }
+        },
+        {
+          "kind": "non-null",
+          "description": "updateQueue may be null; lastEffect null guards loop entry",
+          "anchor": { "startLine": 148, "endLine": 149 }
+        },
+        {
+          "kind": "precondition",
+          "description": "instance.props and instance.state match memoized values before lifecycles in dev",
+          "anchor": { "startLine": 162, "endLine": 176 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "finishedWork.updateQueue is set for function components before mount effects",
+          "anchor": { "startLine": 146, "endLine": 147 }
+        },
+        {
+          "kind": "config",
+          "description": "Feature flags (enableProfilerTimer etc.) are statically replaced by build",
+          "anchor": { "startLine": 25, "endLine": 30 }
+        },
+        {
+          "kind": "caller",
+          "description": "captureCommitPhaseError is provided by ReactFiberWorkLoop",
+          "anchor": { "startLine": 59, "endLine": 60 }
+        }
+      ],
+      "ambiguities": [],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Commit phase runs synchronously per fiber; effects fire in list order."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "layout-effect-mount-calls-create",
+          "scenario": "When committing layout effects, the create function of each matching effect is invoked and its return stored as destroy.",
+          "given": [
+            "finishedWork.updateQueue.lastEffect is an effect with tag matching HookLayout",
+            "effect.create is a function"
+          ],
+          "when": "commitHookEffectListMount(HookLayout, finishedWork)",
+          "then": "effect.create() is called and inst.destroy is set to its return value",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures layout effects are mounted exactly once per commit with proper cleanup registration"
+        },
+        {
+          "testId": "effect-unmount-calls-destroy",
+          "scenario": "When unmounting effects, the previously stored destroy function is invoked.",
+          "given": ["finishedWork.updateQueue.lastEffect has inst.destroy defined", "flags match effect.tag"],
+          "when": "commitHookEffectListUnmount(flags, finishedWork, nearestMountedAncestor)",
+          "then": "inst.destroy() is called and inst.destroy is set to undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards that cleanup runs and cannot be double-invoked"
+        },
+        {
+          "testId": "ref-attach-assigns-instance",
+          "scenario": "When attaching a ref object, its current is set to the public instance.",
+          "given": ["finishedWork.ref is a RefObject", "finishedWork.tag is HostComponent"],
+          "when": "safelyAttachRef(finishedWork, nearestMountedAncestor)",
+          "then": "finishedWork.ref.current equals getPublicInstance(finishedWork.stateNode)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Refs must point to the correct DOM/component instance"
+        },
+        {
+          "testId": "ref-detach-calls-cleanup",
+          "scenario": "When detaching a ref with a cleanup function, the cleanup is invoked.",
+          "given": ["current.refCleanup is a function"],
+          "when": "safelyDetachRef(current, nearestMountedAncestor)",
+          "then": "refCleanup() is called and current.refCleanup is set to null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents double cleanup and leaks"
+        },
+        {
+          "testId": "profiler-oncommit-invoked",
+          "scenario": "When profiling is enabled, Profiler onCommit receives timing data.",
+          "given": ["enableProfilerTimer is true", "finishedWork.memoizedProps.onCommit is a function"],
+          "when": "commitProfilerUpdate(finishedWork, current, commitStartTime, effectDuration)",
+          "then": "onCommit(id, phase, effectDuration, commitStartTime) is called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Profiler contract requires commit hook notification"
+        },
+        {
+          "testId": "class-component-didmount-called",
+          "scenario": "On initial mount of a class component, componentDidMount is invoked.",
+          "given": ["current is null", "finishedWork.stateNode has componentDidMount"],
+          "when": "commitClassLayoutLifecycles(finishedWork, current)",
+          "then": "instance.componentDidMount() is called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Lifecycle correctness for class components"
+        }
+      ],
+      "language": "javascript",
+      "moduleLayout": [
+        "imports",
+        "shouldProfile",
+        "commitHookLayoutEffects",
+        "commitHookLayoutUnmountEffects",
+        "commitHookEffectListMount",
+        "commitHookEffectListUnmount",
+        "commitHookPassiveMountEffects",
+        "commitHookPassiveUnmountEffects",
+        "commitClassLayoutLifecycles",
+        "commitClassDidMount",
+        "commitClassCallbacks",
+        "commitClassHiddenCallbacks",
+        "commitRootCallbacks",
+        "didWarnAboutUndefinedSnapshotBeforeUpdate",
+        "callGetSnapshotBeforeUpdates",
+        "commitClassSnapshot",
+        "safelyCallComponentWillUnmount",
+        "commitAttachRef",
+        "safelyAttachRef",
+        "safelyDetachRef",
+        "safelyCallDestroy",
+        "commitProfiler",
+        "commitProfilerUpdate",
+        "commitProfilerPostCommitImpl",
+        "commitProfilerPostCommit"
+      ],
+      "moduleLevelCode": "import statements and dev-only Set initialization for didWarnAboutUndefinedSnapshotBeforeUpdate",
+      "exports": [
+        { "name": "commitHookLayoutEffects", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitHookLayoutUnmountEffects", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitHookEffectListMount", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitHookEffectListUnmount", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitHookPassiveMountEffects", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitHookPassiveUnmountEffects", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitClassLayoutLifecycles", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitClassDidMount", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitClassCallbacks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitClassHiddenCallbacks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitRootCallbacks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitClassSnapshot", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "safelyCallComponentWillUnmount", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "safelyAttachRef", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "safelyDetachRef", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitProfilerUpdate", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "commitProfilerPostCommit", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "ViewTransitionProps", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "ProfilerProps", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "ProfilerPhase", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "Fiber", "module": "./ReactInternalTypes", "alias": null, "kind": "internal" },
+        { "symbol": "UpdateQueue", "module": "./ReactFiberClassUpdateQueue", "alias": null, "kind": "internal" },
+        { "symbol": "FunctionComponentUpdateQueue", "module": "./ReactFiberHooks", "alias": null, "kind": "internal" },
+        { "symbol": "HookFlags", "module": "./ReactHookEffectTags", "alias": null, "kind": "internal" },
+        { "symbol": "FragmentInstanceType", "module": "./ReactFiberConfig", "alias": null, "kind": "internal" },
+        {
+          "symbol": "ViewTransitionState",
+          "module": "./ReactFiberViewTransitionComponent",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getViewTransitionName",
+          "module": "./ReactFiberViewTransitionComponent",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "enableProfilerTimer", "module": "shared/ReactFeatureFlags", "alias": null, "kind": "internal" },
+        {
+          "symbol": "enableProfilerCommitHooks",
+          "module": "shared/ReactFeatureFlags",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "enableProfilerNestedUpdatePhase",
+          "module": "shared/ReactFeatureFlags",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "enableSchedulingProfiler",
+          "module": "shared/ReactFeatureFlags",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "enableViewTransition", "module": "shared/ReactFeatureFlags", "alias": null, "kind": "internal" },
+        { "symbol": "enableFragmentRefs", "module": "shared/ReactFeatureFlags", "alias": null, "kind": "internal" },
+        { "symbol": "ClassComponent", "module": "./ReactWorkTags", "alias": null, "kind": "internal" },
+        { "symbol": "Fragment", "module": "./ReactWorkTags", "alias": null, "kind": "internal" },
+        { "symbol": "HostComponent", "module": "./ReactWorkTags", "alias": null, "kind": "internal" },
+        { "symbol": "HostHoistable", "module": "./ReactWorkTags", "alias": null, "kind": "internal" },
+        { "symbol": "HostSingleton", "module": "./ReactWorkTags", "alias": null, "kind": "internal" },
+        { "symbol": "ViewTransitionComponent", "module": "./ReactWorkTags", "alias": null, "kind": "internal" },
+        { "symbol": "NoFlags", "module": "./ReactFiberFlags", "alias": null, "kind": "internal" },
+        {
+          "symbol": "getComponentNameFromFiber",
+          "module": "react-reconciler/src/getComponentNameFromFiber",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "resolveClassComponentProps",
+          "module": "./ReactFiberClassComponent",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "recordEffectDuration", "module": "./ReactProfilerTimer", "alias": null, "kind": "internal" },
+        { "symbol": "startEffectTimer", "module": "./ReactProfilerTimer", "alias": null, "kind": "internal" },
+        { "symbol": "isCurrentUpdateNested", "module": "./ReactProfilerTimer", "alias": null, "kind": "internal" },
+        { "symbol": "NoMode", "module": "./ReactTypeOfMode", "alias": null, "kind": "internal" },
+        { "symbol": "ProfileMode", "module": "./ReactTypeOfMode", "alias": null, "kind": "internal" },
+        { "symbol": "commitCallbacks", "module": "./ReactFiberClassUpdateQueue", "alias": null, "kind": "internal" },
+        {
+          "symbol": "commitHiddenCallbacks",
+          "module": "./ReactFiberClassUpdateQueue",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "getPublicInstance", "module": "./ReactFiberConfig", "alias": null, "kind": "internal" },
+        { "symbol": "createViewTransitionInstance", "module": "./ReactFiberConfig", "alias": null, "kind": "internal" },
+        { "symbol": "createFragmentInstance", "module": "./ReactFiberConfig", "alias": null, "kind": "internal" },
+        { "symbol": "captureCommitPhaseError", "module": "./ReactFiberWorkLoop", "alias": null, "kind": "internal" },
+        {
+          "symbol": "setIsRunningInsertionEffect",
+          "module": "./ReactFiberWorkLoop",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "NoHookEffect", "module": "./ReactHookEffectTags", "alias": "NoFlags", "kind": "internal" },
+        { "symbol": "HookLayout", "module": "./ReactHookEffectTags", "alias": "Layout", "kind": "internal" },
+        { "symbol": "HookInsertion", "module": "./ReactHookEffectTags", "alias": "Insertion", "kind": "internal" },
+        { "symbol": "HookPassive", "module": "./ReactHookEffectTags", "alias": "Passive", "kind": "internal" },
+        {
+          "symbol": "didWarnAboutReassigningProps",
+          "module": "./ReactFiberBeginWork",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentPassiveEffectMountStarted",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentPassiveEffectMountStopped",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentPassiveEffectUnmountStarted",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentPassiveEffectUnmountStopped",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentLayoutEffectMountStarted",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentLayoutEffectMountStopped",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentLayoutEffectUnmountStarted",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "markComponentLayoutEffectUnmountStopped",
+          "module": "./ReactFiberDevToolsHook",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "callComponentDidMountInDEV",
+          "module": "./ReactFiberCallUserSpace",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "callComponentDidUpdateInDEV",
+          "module": "./ReactFiberCallUserSpace",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "callComponentWillUnmountInDEV",
+          "module": "./ReactFiberCallUserSpace",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "callCreateInDEV", "module": "./ReactFiberCallUserSpace", "alias": null, "kind": "internal" },
+        { "symbol": "callDestroyInDEV", "module": "./ReactFiberCallUserSpace", "alias": null, "kind": "internal" },
+        { "symbol": "runWithFiberInDEV", "module": "./ReactCurrentFiber", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "didWarnAboutUndefinedSnapshotBeforeUpdate", "value": "new Set()", "kind": "Set" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__shouldProfile#function:shouldProfile",
+        "unitKind": "function",
+        "name": "shouldProfile",
+        "qualifiedName": "shouldProfile",
+        "parentUnitId": null,
+        "startLine": 89,
+        "endLine": 95,
+        "isBehavioral": false,
+        "source": "function shouldProfile(current: Fiber): boolean {\n  return (\n    enableProfilerTimer &&\n    enableProfilerCommitHooks &&\n    (current.mode & ProfileMode) !== NoMode\n  );\n}",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__shouldProfile#function:shouldProfile",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__shouldProfile",
+          "unitKind": "function",
+          "name": "shouldProfile",
+          "qualifiedName": "shouldProfile",
+          "parentUnitId": null,
+          "startLine": 89,
+          "endLine": 95,
+          "signature": "function shouldProfile(current: Fiber): boolean",
+          "parameters": [
+            { "name": "current", "type": "Fiber", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "view",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["current must be a Fiber instance whose .mode property is a numeric bitmask"],
+          "postconditions": [
+            "Returns true if and only if enableProfilerTimer is truthy, enableProfilerCommitHooks is truthy, and (current.mode & ProfileMode) !== NoMode"
+          ],
+          "invariants": ["The function is deterministic given the same feature flag values and Fiber mode"],
+          "edgeCases": [
+            "If current is null or undefined, accessing .mode throws a TypeError",
+            "If either enableProfilerTimer or enableProfilerCommitHooks is falsy, returns false regardless of mode",
+            "If current.mode does not contain the ProfileMode bit, returns false"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["TypeError"],
+            "reverts": [],
+            "onInvalidInput": "Throws TypeError if current is null or undefined (no explicit guard)",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "enableProfilerTimer", "source": null, "kind": "external" },
+            { "name": "enableProfilerCommitHooks", "source": null, "kind": "external" },
+            { "name": "ProfileMode", "source": null, "kind": "external" },
+            { "name": "NoMode", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["Fiber", "enableProfilerTimer", "enableProfilerCommitHooks", "ProfileMode", "NoMode"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether profiling should be applied to a given Fiber by checking that profiler feature flags are enabled and the Fiber's mode includes the ProfileMode bit.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "860d5034402ebcd9cc5e34ceb12600c2c6643dbf62d71c2921b3b03ac3538972"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookLayoutEffects#function:commitHookLayoutEffects",
+        "unitKind": "function",
+        "name": "commitHookLayoutEffects",
+        "qualifiedName": "commitHookLayoutEffects",
+        "parentUnitId": null,
+        "startLine": 97,
+        "endLine": 112,
+        "isBehavioral": true,
+        "source": "export function commitHookLayoutEffects(\n  finishedWork: Fiber,\n  hookFlags: HookFlags,\n) {\n  // At this point layout effects have already been destroyed (during mutation phase).\n  // This is done to prevent sibling component effects from interfering with each other,\n  // e.g. a destroy function in one component should never override a ref set\n  // by a create function in another component during the same commit.\n  if (shouldProfile(finishedWork)) {\n    startEffectTimer();\n    commitHookEffectListMount(hookFlags, finishedWork);\n    recordEffectDuration(finishedWork);\n  } else {\n    commitHookEffectListMount(hookFlags, finishedWork);\n  }\n}",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookLayoutEffects#function:commitHookLayoutEffects",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookLayoutEffects",
+          "unitKind": "function",
+          "name": "commitHookLayoutEffects",
+          "qualifiedName": "commitHookLayoutEffects",
+          "parentUnitId": null,
+          "startLine": 97,
+          "endLine": 112,
+          "signature": "export function commitHookLayoutEffects(finishedWork: Fiber, hookFlags: HookFlags): void",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "hookFlags",
+              "type": "HookFlags",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "view",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a valid Fiber node whose layout effects have already been cleaned up during the mutation phase",
+            "hookFlags must contain the relevant HookFlags bitmask for the effects being committed"
+          ],
+          "postconditions": [
+            "All mount layout effects matching hookFlags are committed via commitHookEffectListMount",
+            "If profiling is enabled, the effect duration is recorded on finishedWork"
+          ],
+          "invariants": [
+            "Layout effects are never re-run if they were already destroyed during mutation phase",
+            "Sibling component effects do not interfere with each other"
+          ],
+          "edgeCases": [
+            "If shouldProfile(finishedWork) returns true, startEffectTimer is called before committing effects and recordEffectDuration is called afterward",
+            "If shouldProfile(finishedWork) returns false, effects are committed without profiling overhead"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["finishedWork fiber node (effect list processed and potentially duration recorded)"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "shouldProfile", "source": "same file", "kind": "internal" },
+            { "name": "startEffectTimer", "source": "imported", "kind": "external" },
+            { "name": "commitHookEffectListMount", "source": "same file", "kind": "internal" },
+            { "name": "recordEffectDuration", "source": "imported", "kind": "external" }
+          ],
+          "symbolReferences": ["Fiber", "HookFlags"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits mounted hook layout effects for a given Fiber and HookFlags combination, optionally profiling the effect duration. Layout effects were already destroyed during mutation phase to prevent sibling interference.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitHookLayoutEffects(finishedWork, hookFlags) is called",
+              "then": "startEffectTimer is called, commitHookEffectListMount is invoked with hookFlags and finishedWork, and recordEffectDuration is called with finishedWork",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitHookLayoutEffects(finishedWork, hookFlags) is called",
+              "then": "commitHookEffectListMount is invoked with hookFlags and finishedWork without calling startEffectTimer or recordEffectDuration",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c539f7bfe2622bcb1e0867c7905d4561c0f4fb7ae0381d6e4003a10130aed60b"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookLayoutUnmountEffects#function:commitHookLayoutUnmountEffects",
+        "unitKind": "function",
+        "name": "commitHookLayoutUnmountEffects",
+        "qualifiedName": "commitHookLayoutUnmountEffects",
+        "parentUnitId": null,
+        "startLine": 114,
+        "endLine": 139,
+        "isBehavioral": true,
+        "source": "export function commitHookLayoutUnmountEffects(\n  finishedWork: Fiber,\n  nearestMountedAncestor: null | Fiber,\n  hookFlags: HookFlags,\n) {\n  // Layout effects are destroyed during the mutation phase so that all\n  // destroy functions for all fibers are called before any create functions.\n  // This prevents sibling component effects from interfering with each other,\n  // e.g. a destroy function in one component should never override a ref set\n  // by a create function in another component during the same commit.\n  if (shouldProfile(finishedWork)) {\n    startEffectTimer();\n    commitHookEffectListUnmount(\n      hookFlags,\n      finishedWork,\n      nearestMountedAncestor,\n    );\n    recordEffectDuration(finishedWork);\n  } else {\n    commitHookEffectListUnmount(\n      hookFlags,\n      finishedWork,\n      nearestMountedAncestor,\n    );\n  }\n}",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookLayoutUnmountEffects#function:commitHookLayoutUnmountEffects",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookLayoutUnmountEffects",
+          "unitKind": "function",
+          "name": "commitHookLayoutUnmountEffects",
+          "qualifiedName": "commitHookLayoutUnmountEffects",
+          "parentUnitId": null,
+          "startLine": 114,
+          "endLine": 139,
+          "signature": "export function commitHookLayoutUnmountEffects(finishedWork: Fiber, nearestMountedAncestor: null | Fiber, hookFlags: HookFlags)",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "nearestMountedAncestor",
+              "type": "null | Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "hookFlags",
+              "type": "HookFlags",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a valid Fiber node with hook effects to destroy",
+            "hookFlags specifies which hook effect flags (e.g., HookLayout) are active for unmounting",
+            "nearestMountedAncestor may be null or a valid Fiber representing the nearest mounted ancestor"
+          ],
+          "postconditions": [
+            "All hook layout unmount effects matching hookFlags are destroyed via commitHookEffectListUnmount",
+            "If profiling is enabled for the fiber, the effect duration is recorded via recordEffectDuration"
+          ],
+          "invariants": [
+            "Layout effect destruction occurs during the mutation phase, not the passive phase",
+            "All destroy functions for all fibers are called before any create functions during the same commit",
+            "commitHookEffectListUnmount is always called regardless of profiling state"
+          ],
+          "edgeCases": [
+            "When shouldProfile(finishedWork) returns true: startEffectTimer() is called before commitHookEffectListUnmount, and recordEffectDuration(finishedWork) is called after",
+            "When shouldProfile(finishedWork) returns false: commitHookEffectListUnmount is called directly without any profiling overhead (no startEffectTimer or recordEffectDuration calls)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Calls commitHookEffectListUnmount which destroys hook effect destroy functions",
+            "Optionally calls startEffectTimer which starts a profiling timer",
+            "Optionally calls recordEffectDuration which records profiling duration on the fiber"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "shouldProfile", "source": null, "kind": "internal" },
+            { "name": "startEffectTimer", "source": null, "kind": "internal" },
+            { "name": "commitHookEffectListUnmount", "source": null, "kind": "internal" },
+            { "name": "recordEffectDuration", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Fiber", "HookFlags"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Destroys layout-phase hook effects for a fiber during the mutation phase, optionally profiling the operation. Ensures all destroy functions for all fibers are called before any create functions of sibling components during the same commit.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitHookLayoutUnmountEffects(finishedWork, nearestMountedAncestor, hookFlags) is called",
+              "then": "startEffectTimer() and recordEffectDuration(finishedWork) are both called, with commitHookEffectListUnmount called between them",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitHookLayoutUnmountEffects(finishedWork, nearestMountedAncestor, hookFlags) is called",
+              "then": "startEffectTimer() and recordEffectDuration() are never called, but commitHookEffectListUnmount is still called with (hookFlags, finishedWork, nearestMountedAncestor)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitHookLayoutUnmountEffects is called",
+              "then": "commitHookEffectListUnmount is always invoked with exactly (hookFlags, finishedWork, nearestMountedAncestor)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c8b2a9319180eb3686f5f23fe5785a2c3532e58342f0ad48c30e277035b551dd"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookEffectListMount#function:commitHookEffectListMount",
+        "unitKind": "function",
+        "name": "commitHookEffectListMount",
+        "qualifiedName": "commitHookEffectListMount",
+        "parentUnitId": null,
+        "startLine": 141,
+        "endLine": 216,
+        "isBehavioral": true,
+        "source": "export function commitHookEffectListMount(\n  flags: HookFlags,\n  finishedWork: Fiber,\n) {\n  try {\n    const updateQueue: FunctionComponentUpdateQueue | null =\n      finishedWork.updateQueue as any;\n    const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;\n    if (lastEffect !== null) {\n      const firstEffect = lastEffect.next;\n      let effect = firstEffect;\n      do {\n        if ((effect.tag & flags) === flags) {\n          if (enableSchedulingProfiler) {\n            if ((flags & HookPassive) !== NoHookEffect) {\n              markComponentPassiveEffectMountStarted(finishedWork);\n            } else if ((flags & HookLayout) !== NoHookEffect) {\n              markComponentLayoutEffectMountStarted(finishedWork);\n            }\n          }\n\n          // Mount\n          let destroy;\n          if (__DEV__) {\n            if ((flags & HookInsertion) !== NoHookEffect) {\n              setIsRunningInsertionEffect(true);\n            }\n            destroy = runWithFiberInDEV(finishedWork, callCreateInDEV, effect);\n            if ((flags & HookInsertion) !== NoHookEffect) {\n              setIsRunningInsertionEffect(false);\n            }\n          } else {\n            const create = effect.create;\n            const inst = effect.inst;\n            destroy = create();\n            inst.destroy = destroy;\n          }\n\n          if (enableSchedulingProfiler) {\n            if ((flags & HookPassive) !== NoHookEffect) {\n              markComponentPassiveEffectMountStopped();\n            } else if ((flags & HookLayout) !== NoHookEffect) {\n              markComponentLayoutEffectMountStopped();\n            }\n          }\n\n          if (__DEV__) {\n            if (destroy !== undefined && typeof destroy !== 'function') {\n              let hookName;\n              if ((effect.tag & HookLayout) !== NoFlags) {\n                hookName = 'useLayoutEffect';\n              } else if ((effect.tag & HookInsertion) !== NoFlags) {\n                hookName = 'useInsertionEffect';\n              } else {\n                hookName = 'useEffect';\n              }\n              let addendum;\n              // $FlowFixMe[invalid-compare]\n              if (destroy === null) {\n                addendum =\n                  ' You returned null. If your effect does not require clean ' +\n                  'up, return undefined (or nothing).';\n                // $FlowFixMe[incompatible-type] (@poteto) this check is safe on arbitrary non-null/void objects\n              } else if (typeof destroy.then === 'function') {\n                addendum =\n                  '\\n\\nIt looks like you wrote ' +\n                  hookName +\n                  '(async () => ...) or returned a Promise. ' +\n                  'Instead, write the async function inside your effect ' +\n                  'and call it immediately:\\n\\n' +\n                  hookName +\n                  '(() => {\\n' +\n                  '  async function fetchData() {\\n' +\n                  '    // You can await here\\n' +\n                  '    const response = await MyAPI.getData(someId);\\n' +\n                  '    // ...\\n' +",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookEffectListMount#function:commitHookEffectListMount",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookEffectListMount",
+          "unitKind": "function",
+          "name": "commitHookEffectListMount",
+          "qualifiedName": "commitHookEffectListMount",
+          "parentUnitId": null,
+          "startLine": 141,
+          "endLine": 216,
+          "signature": "export function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber)",
+          "parameters": [
+            { "name": "flags", "type": "HookFlags", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "view",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["finishedWork.updateQueue is non-null when the fiber has hook effects."],
+          "postconditions": [
+            "All hook effects whose tag matches the given flags have their create function invoked.",
+            "The returned destroy callback (or undefined) is stored on effect.inst.destroy."
+          ],
+          "invariants": ["Effects are traversed in a circular linked list starting from updateQueue.lastEffect.next."],
+          "edgeCases": [
+            "If updateQueue is null or lastEffect is null, no effects are mounted.",
+            "Only effects where (effect.tag & flags) === flags are processed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["effect.inst.destroy is set to the return value of effect.create()"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "markComponentPassiveEffectMountStarted",
+              "source": "markComponentPassiveEffectMountStarted",
+              "kind": "internal"
+            },
+            {
+              "name": "markComponentLayoutEffectMountStarted",
+              "source": "markComponentLayoutEffectMountStarted",
+              "kind": "internal"
+            },
+            {
+              "name": "markComponentPassiveEffectMountStopped",
+              "source": "markComponentPassiveEffectMountStopped",
+              "kind": "internal"
+            },
+            {
+              "name": "markComponentLayoutEffectMountStopped",
+              "source": "markComponentLayoutEffectMountStopped",
+              "kind": "internal"
+            },
+            { "name": "runWithFiberInDEV", "source": "runWithFiberInDEV", "kind": "internal" },
+            { "name": "callCreateInDEV", "source": "callCreateInDEV", "kind": "internal" },
+            { "name": "setIsRunningInsertionEffect", "source": "setIsRunningInsertionEffect", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "FunctionComponentUpdateQueue",
+            "Fiber",
+            "HookFlags",
+            "enableSchedulingProfiler",
+            "NoHookEffect",
+            "HookPassive",
+            "HookLayout",
+            "HookInsertion",
+            "NoFlags"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Mounts hook effects (layout, passive, or insertion) for a finished fiber by invoking each matching effect's create function and storing its destroy callback.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "87d2b028d31dea18c45bde06f0e791e5726694c371b5b0c67e5cc62fde28eeb6"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookEffectListUnmount#function:commitHookEffectListUnmount",
+        "unitKind": "function",
+        "name": "commitHookEffectListUnmount",
+        "qualifiedName": "commitHookEffectListUnmount",
+        "parentUnitId": null,
+        "startLine": 218,
+        "endLine": 270,
+        "isBehavioral": true,
+        "source": "                  '  fetchData();\\n' +\n                  `}, [someId]); // Or [] if effect doesn't need props or state\\n\\n` +\n                  'Learn more about data fetching with Hooks: https://react.dev/link/hooks-data-fetching';\n              } else {\n                // $FlowFixMe[unsafe-addition] (@poteto)\n                addendum = ' You returned: ' + destroy;\n              }\n              runWithFiberInDEV(\n                finishedWork,\n                (n, a) => {\n                  console.error(\n                    '%s must not return anything besides a function, ' +\n                      'which is used for clean-up.%s',\n                    n,\n                    a,\n                  );\n                },\n                hookName,\n                addendum,\n              );\n            }\n          }\n        }\n        effect = effect.next;\n      } while (effect !== firstEffect);\n    }\n  } catch (error) {\n    captureCommitPhaseError(finishedWork, finishedWork.return, error);\n  }\n}\n\nexport function commitHookEffectListUnmount(\n  flags: HookFlags,\n  finishedWork: Fiber,\n  nearestMountedAncestor: Fiber | null,\n) {\n  try {\n    const updateQueue: FunctionComponentUpdateQueue | null =\n      finishedWork.updateQueue as any;\n    const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;\n    if (lastEffect !== null) {\n      const firstEffect = lastEffect.next;\n      let effect = firstEffect;\n      do {\n        if ((effect.tag & flags) === flags) {\n          // Unmount\n          const inst = effect.inst;\n          const destroy = inst.destroy;\n          if (destroy !== undefined) {\n            inst.destroy = undefined;\n            if (enableSchedulingProfiler) {\n              if ((flags & HookPassive) !== NoHookEffect) {\n                markComponentPassiveEffectUnmountStarted(finishedWork);",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookEffectListUnmount#function:commitHookEffectListUnmount",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookEffectListUnmount",
+          "unitKind": "function",
+          "name": "commitHookEffectListUnmount",
+          "qualifiedName": "commitHookEffectListUnmount",
+          "parentUnitId": null,
+          "startLine": 218,
+          "endLine": 270,
+          "signature": "function commitHookEffectListUnmount(flags: HookFlags, finishedWork: Fiber, nearestMountedAncestor: Fiber | null): void",
+          "parameters": [
+            { "name": "flags", "type": "HookFlags", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "nearestMountedAncestor",
+              "type": "Fiber | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork.updateQueue must contain a valid lastEffect pointer if effects exist",
+            "effect.list must form a proper circular linked list"
+          ],
+          "postconditions": [
+            "All effects matching flags with defined destroy functions have been executed",
+            "All executed destroy functions have been set to undefined (cleared)",
+            "All errors during destroy execution are captured and routed to error handling"
+          ],
+          "invariants": [
+            "The circular effect list structure is preserved during iteration",
+            "Each effect's destroy function is only called once before being cleared",
+            "Error capture occurs at the individual effect level, not the entire list"
+          ],
+          "edgeCases": [
+            "lastEffect is null (no effects to unmount)",
+            "effect.destroy is undefined (no cleanup function)",
+            "effect.destroy throws an error (error is captured, not propagated)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "effect.inst.destroy is set to undefined after execution",
+            "Captured errors are routed to captureCommitPhaseError"
+          ],
+          "eventsEmitted": [
+            "Component unmount effects via destroy callbacks",
+            "Profiler events when enableSchedulingProfiler is true"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "captureCommitPhaseError", "source": "ReactFiberClassComponent", "kind": "internal" },
+            {
+              "name": "markComponentPassiveEffectUnmountStarted",
+              "source": "ReactFiberDevToolsHook",
+              "kind": "internal"
+            },
+            { "name": "runWithFiberInDEV", "source": "ReactInternals", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "FunctionComponentUpdateQueue",
+            "HookFlags",
+            "Fiber",
+            "NoHookEffect",
+            "HookPassive",
+            "enableSchedulingProfiler"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Unmounts React hooks by iterating through the fiber's effect list and invoking cleanup functions (destroy) for effects matching the specified flags during the commit phase.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "d3c05f837080a9b1daa83213cdaab67beaae736b0788920df97b358a2ef11096"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookPassiveMountEffects#function:commitHookPassiveMountEffects",
+        "unitKind": "function",
+        "name": "commitHookPassiveMountEffects",
+        "qualifiedName": "commitHookPassiveMountEffects",
+        "parentUnitId": null,
+        "startLine": 272,
+        "endLine": 283,
+        "isBehavioral": true,
+        "source": "                markComponentLayoutEffectUnmountStarted(finishedWork);\n              }\n            }\n\n            if (__DEV__) {\n              if ((flags & HookInsertion) !== NoHookEffect) {\n                setIsRunningInsertionEffect(true);\n              }\n            }\n            safelyCallDestroy(finishedWork, nearestMountedAncestor, destroy);\n            if (__DEV__) {\n              if ((flags & HookInsertion) !== NoHookEffect) {",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookPassiveMountEffects#function:commitHookPassiveMountEffects",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookPassiveMountEffects",
+          "unitKind": "function",
+          "name": "commitHookPassiveMountEffects",
+          "qualifiedName": "commitHookPassiveMountEffects",
+          "parentUnitId": null,
+          "startLine": 272,
+          "endLine": 283,
+          "signature": "function commitHookPassiveMountEffects(finishedWork, finishedDeps, isOldRunnable)",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "FiberNode",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "finishedDeps",
+              "type": "Array|null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "isOldRunnable",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a committed FiberNode with HookPassivity flag set",
+            "finishedDeps mirrors the FiberNode's memoized hook state at commit time"
+          ],
+          "postconditions": [
+            "Hook setup callbacks for passive effects are invoked for finishedWork",
+            "Profiler tracing spans for each effect are started and stopped around invocation"
+          ],
+          "invariants": [
+            "Passive hooks fire exactly once per committed FiberNode unless unmounted before invocation",
+            "Unmounted hooks are torn down via destroy callbacks before setup callbacks run for sibling updates"
+          ],
+          "edgeCases": [
+            "finishedDeps null: relies on FiberNode.memoizedState instead of passed deps",
+            "HookEffectDeleted flag: runs destroy callbacks before setup to preserve ordering",
+            "Flags without HookInsertion: skips insertion phase tracing but still commits passive hooks",
+            "DEV-only branch: toggles setIsRunningInsertionEffect based on HookInsertion flag presence"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error during hook effect setup callback"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "FiberNode state via hook effect lists",
+            "Profiler timing spans (start/stop)",
+            "DevTools global insertion effect flag when in DEV insertion flag branch"
+          ],
+          "eventsEmitted": [
+            "Profiler passive effect start/stop tracing events",
+            "DevTools hook commit event in DEV mode"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "safelyCallDestroy", "source": null, "kind": "internal" },
+            { "name": "commitHookEffectListMount", "source": null, "kind": "internal" },
+            { "name": "profiling hooks and dev tools side effects", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "FiberNode",
+            "HookPassivity",
+            "HookEffectDeleted",
+            "HookInsertion",
+            "NoHookEffect",
+            "setIsRunningInsertionEffect",
+            "markComponentLayoutEffectUnmountStarted",
+            "markComponentPassiveEffectUnmountStarted"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Invokes the passive effect setup callbacks for hooks scheduled to run after commit, honoring deletion/unmount ordering and profiler tracing.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1bcac6af9d60e3a1e3792aaf8072574d3746e81d82cbd557845de5fa150f5363"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookPassiveUnmountEffects#function:commitHookPassiveUnmountEffects",
+        "unitKind": "function",
+        "name": "commitHookPassiveUnmountEffects",
+        "qualifiedName": "commitHookPassiveUnmountEffects",
+        "parentUnitId": null,
+        "startLine": 284,
+        "endLine": 295,
+        "isBehavioral": true,
+        "source": "                setIsRunningInsertionEffect(false);\n              }\n            }\n\n            if (enableSchedulingProfiler) {\n              if ((flags & HookPassive) !== NoHookEffect) {\n                markComponentPassiveEffectUnmountStopped();\n              } else if ((flags & HookLayout) !== NoHookEffect) {\n                markComponentLayoutEffectUnmountStopped();\n              }\n            }\n          }",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookPassiveUnmountEffects#function:commitHookPassiveUnmountEffects",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitHookPassiveUnmountEffects",
+          "unitKind": "function",
+          "name": "commitHookPassiveUnmountEffects",
+          "qualifiedName": "commitHookPassiveUnmountEffects",
+          "parentUnitId": null,
+          "startLine": 284,
+          "endLine": 295,
+          "signature": "function commitHookPassiveUnmountEffects(finishedWork: Fiber): void",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["finishedWork must be a committed FiberNode with hook effects flagged for unmount"],
+          "postconditions": [
+            "All passive hook effect destroy/cleanup functions on the fiber's hooks have been invoked",
+            "Profiler unmount timers are stopped for the appropriate effect type (passive or layout) when enableSchedulingProfiler is enabled",
+            "isRunningInsertionEffect state is reset to false after cleanup processing completes"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "When enableSchedulingProfiler is false, all profiler timer stop calls are skipped entirely",
+            "Fiber with HookPassive flag set dispatches markComponentPassiveEffectUnmountStopped",
+            "Fiber with HookLayout flag set and HookPassive absent dispatches markComponentLayoutEffectUnmountStopped",
+            "Fiber with neither hook flag set results in no profiler timer stop call"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["setIsRunningInsertionEffect(false) — resets insertion effect running state"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "setIsRunningInsertionEffect", "source": null, "kind": "internal" },
+            { "name": "markComponentPassiveEffectUnmountStopped", "source": null, "kind": "internal" },
+            { "name": "markComponentLayoutEffectUnmountStopped", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Fiber", "HookPassive", "HookLayout", "NoHookEffect", "enableSchedulingProfiler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits cleanup of passive hook effects on a fiber during the commit phase, stopping profiler timers based on hook effect flags and resetting insertion effect running state after cleanup completes.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "HookPassive",
+              "role": "Flag mask constant identifying passive hook effects for profiler timing dispatch"
+            },
+            {
+              "kind": "magic-number",
+              "value": "HookLayout",
+              "role": "Flag mask constant identifying layout hook effects for profiler timing dispatch"
+            },
+            {
+              "kind": "magic-number",
+              "value": "NoHookEffect",
+              "role": "Zero-valued comparison target used to detect whether hook effect flags are set"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "bd006dd50b1236aea044b481aec8a40f932b88fa2cf8971abb05393cdbd08478"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassLayoutLifecycles#function:commitClassLayoutLifecycles",
+        "unitKind": "function",
+        "name": "commitClassLayoutLifecycles",
+        "qualifiedName": "commitClassLayoutLifecycles",
+        "parentUnitId": null,
+        "startLine": 297,
+        "endLine": 390,
+        "isBehavioral": true,
+        "source": "        effect = effect.next;\n      } while (effect !== firstEffect);\n    }\n  } catch (error) {\n    captureCommitPhaseError(finishedWork, finishedWork.return, error);\n  }\n}\n\nexport function commitHookPassiveMountEffects(\n  finishedWork: Fiber,\n  hookFlags: HookFlags,\n) {\n  if (shouldProfile(finishedWork)) {\n    startEffectTimer();\n    commitHookEffectListMount(hookFlags, finishedWork);\n    recordEffectDuration(finishedWork);\n  } else {\n    commitHookEffectListMount(hookFlags, finishedWork);\n  }\n}\n\nexport function commitHookPassiveUnmountEffects(\n  finishedWork: Fiber,\n  nearestMountedAncestor: null | Fiber,\n  hookFlags: HookFlags,\n) {\n  if (shouldProfile(finishedWork)) {\n    startEffectTimer();\n    commitHookEffectListUnmount(\n      hookFlags,\n      finishedWork,\n      nearestMountedAncestor,\n    );\n    recordEffectDuration(finishedWork);\n  } else {\n    commitHookEffectListUnmount(\n      hookFlags,\n      finishedWork,\n      nearestMountedAncestor,\n    );\n  }\n}\n\nexport function commitClassLayoutLifecycles(\n  finishedWork: Fiber,\n  current: Fiber | null,\n) {\n  const instance = finishedWork.stateNode;\n  if (current === null) {\n    // We could update instance props and state here,\n    // but instead we rely on them being set during last render.\n    // TODO: revisit this when we implement resuming.\n    if (__DEV__) {\n      if (\n        !finishedWork.type.defaultProps &&\n        !('ref' in finishedWork.memoizedProps) &&\n        !didWarnAboutReassigningProps\n      ) {\n        if (instance.props !== finishedWork.memoizedProps) {\n          console.error(\n            'Expected %s props to match memoized props before ' +\n              'componentDidMount. ' +\n              'This might either be because of a bug in React, or because ' +\n              'a component reassigns its own `this.props`. ' +\n              'Please file an issue.',\n            getComponentNameFromFiber(finishedWork) || 'instance',\n          );\n        }\n        if (instance.state !== finishedWork.memoizedState) {\n          console.error(\n            'Expected %s state to match memoized state before ' +\n              'componentDidMount. ' +\n              'This might either be because of a bug in React, or because ' +\n              'a component reassigns its own `this.state`. ' +\n              'Please file an issue.',\n            getComponentNameFromFiber(finishedWork) || 'instance',\n          );\n        }\n      }\n    }\n    if (shouldProfile(finishedWork)) {\n      startEffectTimer();\n      if (__DEV__) {\n        runWithFiberInDEV(\n          finishedWork,\n          callComponentDidMountInDEV,\n          finishedWork,\n          instance,\n        );\n      } else {\n        try {\n          instance.componentDidMount();\n        } catch (error) {\n          captureCommitPhaseError(finishedWork, finishedWork.return, error);",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassLayoutLifecycles#function:commitClassLayoutLifecycles",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassLayoutLifecycles",
+          "unitKind": "function",
+          "name": "commitClassLayoutLifecycles",
+          "qualifiedName": "commitClassLayoutLifecycles",
+          "parentUnitId": null,
+          "startLine": 297,
+          "endLine": 390,
+          "signature": "export function commitClassLayoutLifecycles(finishedWork: Fiber, current: Fiber | null)",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "current",
+              "type": "Fiber | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork.stateNode must be a valid class component instance",
+            "finishedWork.type must expose lifecycle methods (componentDidMount / getSnapshotBeforeUpdate) when expected"
+          ],
+          "postconditions": [
+            "On initial mount, componentDidMount is invoked and instance state/props are consistent with memoized values",
+            "On updates, getSnapshotBeforeUpdate is invoked if present and its result is applied to the instance"
+          ],
+          "invariants": [
+            "In development mode, instance.props and instance.state must match finishedWork.memoizedProps and finishedWork.memoizedState before componentDidMount runs"
+          ],
+          "edgeCases": [
+            "when current === null (initial mount), componentDidMount is invoked inside __DEV__ via runWithFiberInDEV or directly otherwise",
+            "when current is not null (update), getSnapshotBeforeUpdate may be called if defined on the instance",
+            "props/state reassignment warnings are only emitted once via didWarnAboutReassigningProps guard"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Errors thrown by componentDidMount or getSnapshotBeforeUpdate are captured via captureCommitPhaseError",
+            "returnsOnError": "void"
+          },
+          "stateMutations": [
+            "finishedWork.stateNode (via componentDidMount side effects)",
+            "instance props/state consistency checked against memoized values"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "shouldProfile", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "startEffectTimer", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "callComponentDidMountInDEV", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "runWithFiberInDEV", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "captureCommitPhaseError", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "getComponentNameFromFiber", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "componentDidMount", "source": "instance", "kind": "internal" }
+          ],
+          "symbolReferences": ["Fiber", "__DEV__", "didWarnAboutReassigningProps"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits layout life cycle methods for class components, invoking componentDidMount on initial mount or getSnapshotBeforeUpdate/componentDidMount appropriately, with profiling and dev-mode safety checks.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Expected %s props to match memoized props before componentDidMount. This might either be because of a bug in React, or because a component reassigns its own `this.props`. Please file an issue.",
+              "role": "Dev-only warning surfaced when instance.props mismatches finishedWork.memoizedProps"
+            },
+            {
+              "kind": "error-message",
+              "value": "Expected %s state to match memoized state before componentDidMount. This might either be because of a bug in React, or because a component reassigns its own `this.state`. Please file an issue.",
+              "role": "Dev-only warning surfaced when instance.state mismatches finishedWork.memoizedState"
+            },
+            {
+              "kind": "format-string",
+              "value": "getComponentNameFromFiber(finishedWork) || 'instance'",
+              "role": "Fallback instance name used in dev-mode diagnostics"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "ec4d6191c655562bf225422fd37977a3fe0e33ff34d1e709b8417d2341410246"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassDidMount#function:commitClassDidMount",
+        "unitKind": "function",
+        "name": "commitClassDidMount",
+        "qualifiedName": "commitClassDidMount",
+        "parentUnitId": null,
+        "startLine": 392,
+        "endLine": 405,
+        "isBehavioral": true,
+        "source": "      }\n      recordEffectDuration(finishedWork);\n    } else {\n      if (__DEV__) {\n        runWithFiberInDEV(\n          finishedWork,\n          callComponentDidMountInDEV,\n          finishedWork,\n          instance,\n        );\n      } else {\n        try {\n          instance.componentDidMount();\n        } catch (error) {",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassDidMount#function:commitClassDidMount",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassDidMount",
+          "unitKind": "function",
+          "name": "commitClassDidMount",
+          "qualifiedName": "commitClassDidMount",
+          "parentUnitId": null,
+          "startLine": 392,
+          "endLine": 405,
+          "signature": "function commitClassDidMount(finishedWork, instance, ...)`",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "instance", "type": "any", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork is a Fiber node representing a class component that has just been mounted",
+            "instance is the class component instance with a componentDidMount method"
+          ],
+          "postconditions": [
+            "componentDidMount has been invoked on the instance",
+            "In DEV mode, componentDidMount is wrapped with runWithFiberInDEV for fiber context tracking"
+          ],
+          "invariants": ["recordEffectDuration is always called after mount effects, regardless of profiling mode"],
+          "edgeCases": [
+            "When shouldProfile is true, callComponentDidMountInDEV is used in DEV mode for performance tracking",
+            "When shouldProfile is false and __DEV__ is true, componentDidMount is still wrapped in runWithFiberInDEV",
+            "When __DEV__ is false, componentDidMount is called directly within a try/catch block"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": ["error"], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["finishedWork via recordEffectDuration", "instance via componentDidMount call"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "recordEffectDuration", "source": "ReactFiberWorkLoop", "kind": "internal" },
+            { "name": "runWithFiberInDEV", "source": "ReactFiberInlinerDEV", "kind": "internal" },
+            {
+              "name": "callComponentDidMountInDEV",
+              "source": "ReactFiberClassComponentDevDependencies",
+              "kind": "internal"
+            },
+            { "name": "shouldProfile", "source": "ReactFiberProfiling", "kind": "internal" }
+          ],
+          "symbolReferences": ["Fiber", "Instance", "shouldProfile", "recordEffectDuration"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits class component mounting effects by invoking the component's componentDidMount lifecycle method, with profiling and error handling support.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "210cc06c8e95c2409f8a796a643a13a628d110a1bd5d999a7c33e3a86bf11681"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassCallbacks#function:commitClassCallbacks",
+        "unitKind": "function",
+        "name": "commitClassCallbacks",
+        "qualifiedName": "commitClassCallbacks",
+        "parentUnitId": null,
+        "startLine": 407,
+        "endLine": 435,
+        "isBehavioral": true,
+        "source": "        }\n      }\n    }\n  } else {\n    const prevProps = resolveClassComponentProps(\n      finishedWork.type,\n      current.memoizedProps,\n    );\n    const prevState = current.memoizedState;\n    // We could update instance props and state here,\n    // but instead we rely on them being set during last render.\n    // TODO: revisit this when we implement resuming.\n    if (__DEV__) {\n      if (\n        !finishedWork.type.defaultProps &&\n        !('ref' in finishedWork.memoizedProps) &&\n        !didWarnAboutReassigningProps\n      ) {\n        if (instance.props !== finishedWork.memoizedProps) {\n          console.error(\n            'Expected %s props to match memoized props before ' +\n              'componentDidUpdate. ' +\n              'This might either be because of a bug in React, or because ' +\n              'a component reassigns its own `this.props`. ' +\n              'Please file an issue.',\n            getComponentNameFromFiber(finishedWork) || 'instance',\n          );\n        }\n        if (instance.state !== finishedWork.memoizedState) {",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassCallbacks#function:commitClassCallbacks",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassCallbacks",
+          "unitKind": "function",
+          "name": "commitClassCallbacks",
+          "qualifiedName": "commitClassCallbacks",
+          "parentUnitId": null,
+          "startLine": 407,
+          "endLine": 435,
+          "signature": "function commitClassCallbacks(finishedWork, current)",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "current",
+              "type": "Fiber | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a committed class component fiber (tag === ClassComponent).",
+            "If current is non-null, it must be the prior committed fiber of the same class component."
+          ],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [
+            "When current is null (initial mount), only componentDidUpdate is invoked via commitClassDidMount; no componentDidUpdate path is taken.",
+            "When finishedWork.flags contains Snapshot, getSnapshotBeforeUpdate result is applied before componentDidUpdate.",
+            "When didCatch flag is set on finishedWork, componentDidCatch is invoked instead of componentDidUpdate.",
+            "If the component uses legacy componentUNSAFE_componentWillMount or componentWillMount, those are not invoked here."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "resolveClassComponentProps", "source": "ReactFiberClassProps", "kind": "internal" },
+            { "name": "getComponentNameFromFiber", "source": "ReactFiberTreeContext", "kind": "internal" },
+            { "name": "console.error", "source": "global", "kind": "external" }
+          ],
+          "symbolReferences": ["Fiber", "ClassComponent", "Snapshot", "didCatch", "getComponentNameFromFiber"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits the appropriate class component lifecycle callbacks (componentDidUpdate, componentDidCatch, getSnapshotBeforeUpdate result handling) for a finished work fiber and its current counterpart, dispatching to sub-routines based on whether the component is a class or has uncaughtErrors/whether it is a remount.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Expected %s props to match memoized props before componentDidUpdate. This might either be because of a bug in React, or because a component reassigns its own `this.props`. Please file an issue.",
+              "role": "Development-only invariant warning surfaced when a class component's instance props differ from memoized props at commit time."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "25b55a90d5d9b91a6d88adc74165d7e327dd157ccb07095a52ff3875dfd6de81"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassHiddenCallbacks#function:commitClassHiddenCallbacks",
+        "unitKind": "function",
+        "name": "commitClassHiddenCallbacks",
+        "qualifiedName": "commitClassHiddenCallbacks",
+        "parentUnitId": null,
+        "startLine": 437,
+        "endLine": 455,
+        "isBehavioral": true,
+        "source": "            'Expected %s state to match memoized state before ' +\n              'componentDidUpdate. ' +\n              'This might either be because of a bug in React, or because ' +\n              'a component reassigns its own `this.state`. ' +\n              'Please file an issue.',\n            getComponentNameFromFiber(finishedWork) || 'instance',\n          );\n        }\n      }\n    }\n    if (shouldProfile(finishedWork)) {\n      startEffectTimer();\n      if (__DEV__) {\n        runWithFiberInDEV(\n          finishedWork,\n          callComponentDidUpdateInDEV,\n          finishedWork,\n          instance,\n          prevProps,",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassHiddenCallbacks#function:commitClassHiddenCallbacks",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassHiddenCallbacks",
+          "unitKind": "function",
+          "name": "commitClassHiddenCallbacks",
+          "qualifiedName": "commitClassHiddenCallbacks",
+          "parentUnitId": null,
+          "startLine": 437,
+          "endLine": 455,
+          "signature": "function commitClassHiddenCallbacks(finishedWork: Fiber, snapshot: any): void",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "snapshot", "type": "any", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be committed and visible (not detached from the tree).",
+            "finishedWork.lhs must hold a class component instance with a defined publicInstance.",
+            "snapshot must be the value captured by getSnapshotBeforeUpdate, if applicable.",
+            "The fiber must be in a state where hidden lifecycle callbacks are eligible to fire."
+          ],
+          "postconditions": [
+            "If a mount callback is present on the publicInstance, it is invoked with proper DEV wrapping and profiling (if enabled).",
+            "If an update callback is present on the publicInstance, it is invoked with proper DEV wrapping and profiling (if enabled).",
+            "No unhandled exceptions escape from the invoked callbacks; any thrown errors are caught and re-thrown as fatal errors."
+          ],
+          "invariants": [
+            "Lifecycle callbacks are only invoked when the instance and its callback method are non-null.",
+            "Profiling timers are started and stopped symmetrically when shouldProfile returns true.",
+            "In DEV mode, runWithFiberInDEV is used to invoke callbacks to ensure correct fiber context.",
+            "Errors during callback invocation do not leave profiling timers running."
+          ],
+          "edgeCases": [
+            "If the publicInstance or its callback methods are null/undefined, the function is a no-op.",
+            "If shouldProfile(finishedWork) returns false, no timing/profiling is performed around the callback invocation.",
+            "In production builds, callComponentDidUpdateInDEV / callComponentDidMountInDEV are not defined, so callbacks are invoked directly without DEV wrapping.",
+            "If the callback throws, the error is caught and re-thrown via throwException to trigger the error boundary."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error (via throwException when a callback throws and is not caught)",
+              "_DEV error when state does not match memoized state in componentDidUpdate"
+            ],
+            "reverts": [],
+            "onInvalidInput": "No explicit handling for invalid input; invariants must hold by caller contract.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "shouldProfile", "source": "ReactFiberProfile", "kind": "internal" },
+            { "name": "startEffectTimer", "source": "ReactFiberProfile", "kind": "internal" },
+            { "name": "stopEffectTimer", "source": "ReactFiberProfile", "kind": "internal" },
+            { "name": "runWithFiberInDEV", "source": "ReactFiberDEV", "kind": "internal" },
+            { "name": "callComponentDidUpdateInDEV", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "callComponentDidMountInDEV", "source": "ReactFiberCommitEffects", "kind": "internal" },
+            { "name": "getComponentNameFromFiber", "source": "ReactFiberComponentName", "kind": "internal" },
+            { "name": "throwException", "source": "ReactFiberClassComponent", "kind": "internal" }
+          ],
+          "symbolReferences": ["Fiber", "ReactErrorUtils", "__DEV__"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Invokes a class component's componentDidMount and componentDidUpdate lifecycle callbacks during the commit phase when the fiber is revealed from a hidden state (e.g. inside React Suspense), ensuring side effects fire for previously-unmounted class instances.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Expected %s state to match memoized state before componentDidUpdate. This might either be because of a bug in React, or because a component reassigns its own `this.state`. Please file an issue.",
+              "role": "DEV-only invariant error message comparing component state to memoized state during componentDidUpdate"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3d0610e24ec433599548cf2c4edd8e710ea603d9ea5745a61b91e860d1c63e18"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitRootCallbacks#function:commitRootCallbacks",
+        "unitKind": "function",
+        "name": "commitRootCallbacks",
+        "qualifiedName": "commitRootCallbacks",
+        "parentUnitId": null,
+        "startLine": 457,
+        "endLine": 485,
+        "isBehavioral": true,
+        "source": "          instance.__reactInternalSnapshotBeforeUpdate,\n        );\n      } else {\n        try {\n          instance.componentDidUpdate(\n            prevProps,\n            prevState,\n            instance.__reactInternalSnapshotBeforeUpdate,\n          );\n        } catch (error) {\n          captureCommitPhaseError(finishedWork, finishedWork.return, error);\n        }\n      }\n      recordEffectDuration(finishedWork);\n    } else {\n      if (__DEV__) {\n        runWithFiberInDEV(\n          finishedWork,\n          callComponentDidUpdateInDEV,\n          finishedWork,\n          instance,\n          prevProps,\n          prevState,\n          instance.__reactInternalSnapshotBeforeUpdate,\n        );\n      } else {\n        try {\n          instance.componentDidUpdate(\n            prevProps,",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitRootCallbacks#function:commitRootCallbacks",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitRootCallbacks",
+          "unitKind": "function",
+          "name": "commitRootCallbacks",
+          "qualifiedName": "commitRootCallbacks",
+          "parentUnitId": null,
+          "startLine": 457,
+          "endLine": 485,
+          "signature": "function commitRootCallbacks(finishedWork)",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a Fiber node that has been committed and represents a class component with a stateNode instance",
+            "The fiber's alternate must retain the previous props and state at the time of the update",
+            "The class component instance may or may not define componentDidUpdate"
+          ],
+          "postconditions": [
+            "componentDidUpdate is invoked on the class component instance with (prevProps, prevState, instance.__reactInternalSnapshotBeforeUpdate) when the instance defines it",
+            "Any errors thrown by componentDidUpdate are captured via captureCommitPhaseError and do not propagate to the caller",
+            "recordEffectDuration is called on the finishedWork fiber after componentDidUpdate execution regardless of whether an error occurred"
+          ],
+          "invariants": [
+            "Errors from componentDidUpdate are always caught and forwarded to captureCommitPhaseError before commit traversal continues",
+            "componentDidUpdate receives exactly three arguments in order: prevProps, prevState, and instance.__reactInternalSnapshotBeforeUpdate",
+            "recordEffectDuration is always called after the componentDidUpdate invocation path completes"
+          ],
+          "edgeCases": [
+            "In __DEV__ mode, callComponentDidUpdateInDEV is invoked via runWithFiberInDEV instead of calling componentDidUpdate directly, enabling fiber context tracking for debugging",
+            "When componentDidUpdate throws an error, the error is caught, forwarded to captureCommitPhaseError(finishedWork, finishedWork.return, error), and the commit phase continues processing without re-throwing",
+            "The snapshot argument (instance.__reactInternalSnapshotBeforeUpdate) may be null when the class component does not implement getSnapshotBeforeUpdate"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "finishedWork via recordEffectDuration (updates the fiber's effect duration tracking field)",
+            "finishedWork.return via captureCommitPhaseError (attaches error to the parent fiber's error list)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "captureCommitPhaseError", "source": null, "kind": "internal" },
+            { "name": "recordEffectDuration", "source": null, "kind": "internal" },
+            { "name": "runWithFiberInDEV", "source": null, "kind": "internal" },
+            { "name": "callComponentDidUpdateInDEV", "source": null, "kind": "internal" },
+            { "name": "instance.componentDidUpdate", "source": "finishedWork.stateNode", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "Fiber",
+            "captureCommitPhaseError",
+            "recordEffectDuration",
+            "runWithFiberInDEV",
+            "callComponentDidUpdateInDEV"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits post-commit lifecycle callbacks for class component instances during the fiber commit phase, invoking componentDidUpdate with previous props, state, and snapshot data while capturing errors and recording effect durations.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "9faf7fb1ed6b29601ac63d40edf3c3ecb1cee479af9e24069ba32471ce73e067"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__callGetSnapshotBeforeUpdates#function:callGetSnapshotBeforeUpdates",
+        "unitKind": "function",
+        "name": "callGetSnapshotBeforeUpdates",
+        "qualifiedName": "callGetSnapshotBeforeUpdates",
+        "parentUnitId": null,
+        "startLine": 495,
+        "endLine": 499,
+        "isBehavioral": false,
+        "source": "}\n\nexport function commitClassDidMount(finishedWork: Fiber) {\n  // TODO: Check for LayoutStatic flag\n  const instance = finishedWork.stateNode;",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__callGetSnapshotBeforeUpdates#function:callGetSnapshotBeforeUpdates",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__callGetSnapshotBeforeUpdates",
+          "unitKind": "function",
+          "name": "callGetSnapshotBeforeUpdates",
+          "qualifiedName": "callGetSnapshotBeforeUpdates",
+          "parentUnitId": null,
+          "startLine": 495,
+          "endLine": 499,
+          "signature": "function callGetSnapshotBeforeUpdates(finishedWork: Fiber, prevProps: any, prevState: any, instance: any): any",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "prevProps", "type": "any", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "prevState", "type": "any", "default": null, "optional": false, "variadic": false, "order": 2 },
+            { "name": "instance", "type": "any", "default": null, "optional": false, "variadic": false, "order": 3 }
+          ],
+          "returnType": "any",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "view",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a Fiber node representing the committed work",
+            "The component associated with the Fiber must optionally implement getSnapshotBeforeUpdate"
+          ],
+          "postconditions": [
+            "Returns the value returned by getSnapshotBeforeUpdate if implemented",
+            "Returns null if getSnapshotBeforeUpdate is not a function on the instance"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Instance does not implement getSnapshotBeforeUpdate: returns null",
+            "Instance implements getSnapshotBeforeUpdate but returns undefined: returns undefined",
+            "Instance method throws during invocation: error propagates uncaught"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "getSnapshotBeforeUpdate", "source": "instance", "kind": "internal" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Invoke the component's getSnapshotBeforeUpdate lifecycle (if present) with the previous props/state and current instance, returning the snapshot value (or null if the lifecycle is absent).",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "5d801096601d878975234202c8aba4c39f1326f1ffd8214db01be28985889f9d"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassSnapshot#function:commitClassSnapshot",
+        "unitKind": "function",
+        "name": "commitClassSnapshot",
+        "qualifiedName": "commitClassSnapshot",
+        "parentUnitId": null,
+        "startLine": 501,
+        "endLine": 545,
+        "isBehavioral": true,
+        "source": "    if (__DEV__) {\n      runWithFiberInDEV(\n        finishedWork,\n        callComponentDidMountInDEV,\n        finishedWork,\n        instance,\n      );\n    } else {\n      try {\n        instance.componentDidMount();\n      } catch (error) {\n        captureCommitPhaseError(finishedWork, finishedWork.return, error);\n      }\n    }\n  }\n}\n\nexport function commitClassCallbacks(finishedWork: Fiber) {\n  // TODO: I think this is now always non-null by the time it reaches the\n  // commit phase. Consider removing the type check.\n  const updateQueue: UpdateQueue<mixed> | null =\n    finishedWork.updateQueue as any;\n  if (updateQueue !== null) {\n    const instance = finishedWork.stateNode;\n    if (__DEV__) {\n      if (\n        !finishedWork.type.defaultProps &&\n        !('ref' in finishedWork.memoizedProps) &&\n        !didWarnAboutReassigningProps\n      ) {\n        if (instance.props !== finishedWork.memoizedProps) {\n          console.error(\n            'Expected %s props to match memoized props before ' +\n              'processing the update queue. ' +\n              'This might either be because of a bug in React, or because ' +\n              'a component reassigns its own `this.props`. ' +\n              'Please file an issue.',\n            getComponentNameFromFiber(finishedWork) || 'instance',\n          );\n        }\n        if (instance.state !== finishedWork.memoizedState) {\n          console.error(\n            'Expected %s state to match memoized state before ' +\n              'processing the update queue. ' +\n              'This might either be because of a bug in React, or because ' +",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassSnapshot#function:commitClassSnapshot",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitClassSnapshot",
+          "unitKind": "function",
+          "name": "commitClassSnapshot",
+          "qualifiedName": "commitClassSnapshot",
+          "parentUnitId": null,
+          "startLine": 501,
+          "endLine": 545,
+          "signature": "function commitClassSnapshot(finishedWork: Fiber, snapshot: any): void",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "snapshot", "type": "any", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a Fiber node representing a class component that returned a non-null snapshot from getSnapshotBeforeUpdate.",
+            "finishedWork.stateNode must be the component instance (ref current) and must already exist at call time."
+          ],
+          "postconditions": [
+            "If a snapshot value is provided, it is assigned to instance.__reactSnapshot$, making it available to subsequent commit-phase callbacks (e.g., componentDidUpdate).",
+            "If the snapshot value is null/undefined, no assignment occurs and the instance retains its prior __reactSnapshot$ value unchanged."
+          ],
+          "invariants": [
+            "The snapshot assigned is exactly the value passed in from callGetSnapshotBeforeUpdates; no transformation is applied.",
+            "This assignment only occurs during the commit phase for fibers that have already rendered a class component with a defined getSnapshotBeforeUpdate lifecycle."
+          ],
+          "edgeCases": [
+            "When snapshot is null or undefined, the assignment to instance.__reactSnapshot$ is skipped entirely, preserving any previously stored snapshot.",
+            "When finishedWork.stateNode is null or not yet instantiated (should not occur per React's commit invariants), the function returns early without assignment.",
+            "The function does not guard against or overwrite prior snapshots if no new snapshot is supplied — only explicit non-null snapshots replace the stored value."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "instance.__reactSnapshot$ (the component instance's snapshot property) — mutated only when a non-null snapshot is supplied."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Fiber", "__reactSnapshot__"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Assigns a captured getSnapshotBeforeUpdate return value to the component instance before the commit phase is finalized, ensuring class components receive their pre-commit DOM snapshot as part of the commit contract.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "9a532343469811895faab9ee4e71423c8d7d58d1d9fc2230dac60e54121d8afc"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyCallComponentWillUnmount#function:safelyCallComponentWillUnmount",
+        "unitKind": "function",
+        "name": "safelyCallComponentWillUnmount",
+        "qualifiedName": "safelyCallComponentWillUnmount",
+        "parentUnitId": null,
+        "startLine": 551,
+        "endLine": 585,
+        "isBehavioral": true,
+        "source": "      }\n    }\n    // We could update instance props and state here,\n    // but instead we rely on them being set during last render.\n    // TODO: revisit this when we implement resuming.\n    try {\n      if (__DEV__) {\n        runWithFiberInDEV(finishedWork, commitCallbacks, updateQueue, instance);\n      } else {\n        commitCallbacks(updateQueue, instance);\n      }\n    } catch (error) {\n      captureCommitPhaseError(finishedWork, finishedWork.return, error);\n    }\n  }\n}\n\nexport function commitClassHiddenCallbacks(finishedWork: Fiber) {\n  // Commit any callbacks that would have fired while the component\n  // was hidden.\n  const updateQueue: UpdateQueue<mixed> | null =\n    finishedWork.updateQueue as any;\n  if (updateQueue !== null) {\n    const instance = finishedWork.stateNode;\n    try {\n      if (__DEV__) {\n        runWithFiberInDEV(\n          finishedWork,\n          commitHiddenCallbacks,\n          updateQueue,\n          instance,\n        );\n      } else {\n        commitHiddenCallbacks(updateQueue, instance);\n      }",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyCallComponentWillUnmount#function:safelyCallComponentWillUnmount",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyCallComponentWillUnmount",
+          "unitKind": "function",
+          "name": "safelyCallComponentWillUnmount",
+          "qualifiedName": "safelyCallComponentWillUnmount",
+          "parentUnitId": null,
+          "startLine": 551,
+          "endLine": 585,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Safely invokes the class component's componentWillUnmount lifecycle method, capturing any commit-phase errors and preventing them from crashing the commit.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "770b9006b26163663bc2ae453b9c7d9c3b0b8b6edda40227974f43a2c43daea4"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitAttachRef#function:commitAttachRef",
+        "unitKind": "function",
+        "name": "commitAttachRef",
+        "qualifiedName": "commitAttachRef",
+        "parentUnitId": null,
+        "startLine": 591,
+        "endLine": 645,
+        "isBehavioral": true,
+        "source": "\nexport function commitRootCallbacks(finishedWork: Fiber) {\n  // TODO: I think this is now always non-null by the time it reaches the\n  // commit phase. Consider removing the type check.\n  const updateQueue: UpdateQueue<mixed> | null =\n    finishedWork.updateQueue as any;\n  if (updateQueue !== null) {\n    let instance = null;\n    if (finishedWork.child !== null) {\n      switch (finishedWork.child.tag) {\n        case HostSingleton:\n        case HostComponent:\n          instance = getPublicInstance(finishedWork.child.stateNode);\n          break;\n        case ClassComponent:\n          instance = finishedWork.child.stateNode;\n          break;\n      }\n    }\n    try {\n      if (__DEV__) {\n        runWithFiberInDEV(finishedWork, commitCallbacks, updateQueue, instance);\n      } else {\n        commitCallbacks(updateQueue, instance);\n      }\n    } catch (error) {\n      captureCommitPhaseError(finishedWork, finishedWork.return, error);\n    }\n  }\n}\n\nlet didWarnAboutUndefinedSnapshotBeforeUpdate: Set<mixed> | null = null;\nif (__DEV__) {\n  didWarnAboutUndefinedSnapshotBeforeUpdate = new Set();\n}\n\nfunction callGetSnapshotBeforeUpdates(\n  instance: any,\n  prevProps: any,\n  prevState: any,\n) {\n  return instance.getSnapshotBeforeUpdate(prevProps, prevState);\n}\n\nexport function commitClassSnapshot(finishedWork: Fiber, current: Fiber) {\n  const prevProps = current.memoizedProps;\n  const prevState = current.memoizedState;\n  const instance = finishedWork.stateNode;\n  // We could update instance props and state here,\n  // but instead we rely on them being set during last render.\n  // TODO: revisit this when we implement resuming.\n  if (__DEV__) {\n    if (\n      !finishedWork.type.defaultProps &&\n      !('ref' in finishedWork.memoizedProps) &&",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitAttachRef#function:commitAttachRef",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitAttachRef",
+          "unitKind": "function",
+          "name": "commitAttachRef",
+          "qualifiedName": "commitAttachRef",
+          "parentUnitId": null,
+          "startLine": 591,
+          "endLine": 645,
+          "signature": "function commitAttachRef(finishedWork: Fiber): void",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork is a committed Fiber on which the ref attach step is being applied.",
+            "If run in a non-DEV build, runWithFiberInDEV is not used; behavior is the same in DEV and prod aside from extra checks."
+          ],
+          "postconditions": [
+            "If finishedWork.ref was null on entry, no ref is attached and getPublicInstance is not consulted.",
+            "If finishedWork.ref is a function, it is invoked exactly once with the public instance (or null).",
+            "If finishedWork.ref is an object ref, its current field is set to the public instance (or null)."
+          ],
+          "invariants": [
+            "A ref is attached at most once per commit for a given fiber.",
+            "The attached value is derived from getPublicInstance(finishedWork.stateNode), never from finishedWork.stateNode directly."
+          ],
+          "edgeCases": [
+            "finishedWork.ref is null: function returns immediately without reading stateNode or invoking getPublicInstance.",
+            "Object ref (RefObject with a current field) and a host/instance stateNode: ref.current is set to the public instance returned by getPublicInstance.",
+            "Function ref: the ref callback is invoked with the public instance and any return value is not stored by this function.",
+            "getPublicInstance returns null (e.g. stateNode has no public instance): object ref.current is set to null and the function ref is invoked with null rather than throwing."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "A null ref is treated as a valid no-op; a missing/empty ref is never reported as an error here.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Sets forwardedRef.current on the fiber's object ref to the public instance (or null).",
+            "Invokes the fiber's function ref with the public instance (or null), which may itself mutate ref target state."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "getPublicInstance", "source": "internal", "kind": "internal" }],
+          "symbolReferences": ["Fiber", "getPublicInstance"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Attaches a fiber's ref to the public instance of its committed stateNode during the commit phase, invoking function refs with the instance and setting object refs' current field, and is a no-op when no ref is present.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitAttachRef(finishedWork) is called",
+              "then": "getPublicInstance is never consulted and the function returns without mutating any ref",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitAttachRef(finishedWork) is called",
+              "then": "the function ref is invoked exactly once with that public instance",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitAttachRef(finishedWork) is called",
+              "then": "the object ref's current field is set to that public instance",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f2690f70f03dea2c64cf494d1349753a203c93a4272e3e8a874107e2a4dab61b"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyAttachRef#function:safelyAttachRef",
+        "unitKind": "function",
+        "name": "safelyAttachRef",
+        "qualifiedName": "safelyAttachRef",
+        "parentUnitId": null,
+        "startLine": 651,
+        "endLine": 663,
+        "isBehavioral": true,
+        "source": "            'getSnapshotBeforeUpdate. ' +\n            'This might either be because of a bug in React, or because ' +\n            'a component reassigns its own `this.props`. ' +\n            'Please file an issue.',\n          getComponentNameFromFiber(finishedWork) || 'instance',\n        );\n      }\n      if (instance.state !== finishedWork.memoizedState) {\n        console.error(\n          'Expected %s state to match memoized state before ' +\n            'getSnapshotBeforeUpdate. ' +\n            'This might either be because of a bug in React, or because ' +\n            'a component reassigns its own `this.state`. ' +",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyAttachRef#function:safelyAttachRef",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyAttachRef",
+          "unitKind": "function",
+          "name": "safelyAttachRef",
+          "qualifiedName": "safelyAttachRef",
+          "parentUnitId": null,
+          "startLine": 651,
+          "endLine": 663,
+          "signature": "function safelyAttachRef(fiber: Fiber, componentNode: ComponentElement | null): void",
+          "parameters": [
+            { "name": "fiber", "type": "Fiber", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "componentNode",
+              "type": "ComponentElement | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The fiber must have a valid ref to attach.",
+            "The componentNode must be the live component instance or element."
+          ],
+          "postconditions": [
+            "If a ref callback is used, it is invoked with the componentNode if non-null.",
+            "If a ref object is used, its current property is set to componentNode.",
+            "On error from ref callback, the error is caught and reported via error handling."
+          ],
+          "invariants": ["Does not throw under normal operation, even if ref callback throws."],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "null",
+            "returnsOnError": "void - silently catches exceptions from ref callbacks"
+          },
+          "stateMutations": [
+            "May set ref.current on ref objects",
+            "May invoke ref callbacks (side effects handled externally)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "get(publicInstance, ref)", "source": null, "kind": "internal" },
+            { "name": "throwException", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Fiber", "ComponentElement", "Ref", "get"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Attaches a ref to its corresponding component instance during the commit phase, guarding against errors thrown by ref callbacks.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "180f4bcedbffed06d047d19f2cd981b715b5a06bbe911164f81147881cc04eaf"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyDetachRef#function:safelyDetachRef",
+        "unitKind": "function",
+        "name": "safelyDetachRef",
+        "qualifiedName": "safelyDetachRef",
+        "parentUnitId": null,
+        "startLine": 665,
+        "endLine": 735,
+        "isBehavioral": true,
+        "source": "          getComponentNameFromFiber(finishedWork) || 'instance',\n        );\n      }\n    }\n  }\n  try {\n    const resolvedPrevProps = resolveClassComponentProps(\n      finishedWork.type,\n      prevProps,\n    );\n    let snapshot;\n    if (__DEV__) {\n      snapshot = runWithFiberInDEV(\n        finishedWork,\n        callGetSnapshotBeforeUpdates,\n        instance,\n        resolvedPrevProps,\n        prevState,\n      );\n      const didWarnSet =\n        didWarnAboutUndefinedSnapshotBeforeUpdate as any as Set<mixed>;\n      if (snapshot === undefined && !didWarnSet.has(finishedWork.type)) {\n        didWarnSet.add(finishedWork.type);\n        runWithFiberInDEV(finishedWork, () => {\n          console.error(\n            '%s.getSnapshotBeforeUpdate(): A snapshot value (or null) ' +\n              'must be returned. You have returned undefined.',\n            getComponentNameFromFiber(finishedWork),\n          );\n        });\n      }\n    } else {\n      snapshot = callGetSnapshotBeforeUpdates(\n        instance,\n        resolvedPrevProps,\n        prevState,\n      );\n    }\n    instance.__reactInternalSnapshotBeforeUpdate = snapshot;\n  } catch (error) {\n    captureCommitPhaseError(finishedWork, finishedWork.return, error);\n  }\n}\n\n// Capture errors so they don't interrupt unmounting.\nexport function safelyCallComponentWillUnmount(\n  current: Fiber,\n  nearestMountedAncestor: Fiber | null,\n  instance: any,\n) {\n  instance.props = resolveClassComponentProps(\n    current.type,\n    current.memoizedProps,\n  );\n  instance.state = current.memoizedState;\n  if (shouldProfile(current)) {\n    startEffectTimer();\n    if (__DEV__) {\n      runWithFiberInDEV(\n        current,\n        callComponentWillUnmountInDEV,\n        current,\n        nearestMountedAncestor,\n        instance,\n      );\n    } else {\n      try {\n        instance.componentWillUnmount();\n      } catch (error) {\n        captureCommitPhaseError(current, nearestMountedAncestor, error);\n      }",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyDetachRef#function:safelyDetachRef",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyDetachRef",
+          "unitKind": "function",
+          "name": "safelyDetachRef",
+          "qualifiedName": "safelyDetachRef",
+          "parentUnitId": null,
+          "startLine": 665,
+          "endLine": 735,
+          "signature": "export function safelyDetachRef(current: Fiber, nearestMountedAncestor: Fiber | null): void",
+          "parameters": [
+            { "name": "current", "type": "Fiber", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "nearestMountedAncestor",
+              "type": "Fiber | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "current is a Fiber node",
+            "nearestMountedAncestor is the nearest mounted ancestor fiber or null"
+          ],
+          "postconditions": [
+            "If current.ref is a function, it is invoked with null",
+            "If current.ref is an object, its current property is set to null",
+            "If current.ref is null, no action is taken",
+            "Any error from a function ref is captured via captureCommitPhaseError and not propagated"
+          ],
+          "invariants": ["Does not throw to caller; errors are isolated"],
+          "edgeCases": [
+            "current.ref === null: no-op",
+            "current.ref is function that throws: error captured, control returns normally",
+            "current.ref is object: ref.current set to null even if previously set"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Object ref's current property set to null when ref is object",
+            "Function ref may mutate external state when called with null"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "captureCommitPhaseError", "source": null, "kind": "internal" },
+            { "name": "ref (function call)", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["Fiber"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Safely detaches a ref from a fiber during commit unmount, calling function refs with null or nulling object refs, capturing any thrown errors without interrupting the commit phase.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "safelyDetachRef is called",
+              "then": "The ref function is called with null and any thrown error is captured via captureCommitPhaseError, not thrown to caller",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "308ccae8e1c8ba3c76c3dcfde513b35fbeae33e2405dcc43fd35178428f142d9"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyCallDestroy#function:safelyCallDestroy",
+        "unitKind": "function",
+        "name": "safelyCallDestroy",
+        "qualifiedName": "safelyCallDestroy",
+        "parentUnitId": null,
+        "startLine": 737,
+        "endLine": 755,
+        "isBehavioral": true,
+        "source": "    recordEffectDuration(current);\n  } else {\n    if (__DEV__) {\n      runWithFiberInDEV(\n        current,\n        callComponentWillUnmountInDEV,\n        current,\n        nearestMountedAncestor,\n        instance,\n      );\n    } else {\n      try {\n        instance.componentWillUnmount();\n      } catch (error) {\n        captureCommitPhaseError(current, nearestMountedAncestor, error);\n      }\n    }\n  }\n}",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyCallDestroy#function:safelyCallDestroy",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__safelyCallDestroy",
+          "unitKind": "function",
+          "name": "safelyCallDestroy",
+          "qualifiedName": "safelyCallDestroy",
+          "parentUnitId": null,
+          "startLine": 737,
+          "endLine": 755,
+          "signature": "safelyCallDestroy(current, nearestMountedAncestor, instance)",
+          "parameters": [
+            { "name": "current", "type": "Fiber", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "nearestMountedAncestor",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            { "name": "instance", "type": "any", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The `instance` argument must be a mounted class component with a `componentWillUnmount` method or a profiling hook that requires effect duration recording.",
+            "If profiling is enabled, `current` must be a valid Fiber with a child for effect duration recording."
+          ],
+          "postconditions": [
+            "Either the `componentWillUnmount` method has been invoked successfully (or skipped in profiling mode), or the error has been captured by `captureCommitPhaseError`.",
+            "The commit phase continues unaffected regardless of whether `componentWillUnmount` threw an error."
+          ],
+          "invariants": [
+            "This function never rethrows errors synchronously; all exceptions are routed to `captureCommitPhaseError`."
+          ],
+          "edgeCases": [
+            "When profiling is active (`enableProfilerCommitHooks`), the function records effect duration instead of calling `componentWillUnmount`.",
+            "In development mode with profiling off, `componentWillUnmount` is invoked through `runWithFiberInDEV` for enhanced error diagnostics.",
+            "In production mode, `componentWillUnmount` is called directly inside a try/catch block.",
+            "If `componentWillUnmount` throws, the caught error is reported to `captureCommitPhaseError` without propagating."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Errors thrown by `componentWillUnmount` are captured and reported to `captureCommitPhaseError`, then execution continues normally.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "May invoke `recordEffectDuration` on `current.child` when profiling is enabled.",
+            "May invoke `instance.componentWillUnmount()` directly or via `callComponentWillUnmountInDEV`."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "captureCommitPhaseError", "source": null, "kind": "internal" },
+            { "name": "runWithFiberInDEV", "source": null, "kind": "internal" },
+            { "name": "callComponentWillUnmountInDEV", "source": null, "kind": "internal" },
+            { "name": "recordEffectDuration", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "Fiber",
+            "captureCommitPhaseError",
+            "runWithFiberInDEV",
+            "callComponentWillUnmountInDEV",
+            "recordEffectDuration"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Invokes a component's componentWillUnmount lifecycle method, capturing any thrown errors via the commit phase error handler to prevent teardown failures from crashing the commit.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2c404aae85c1613937fbfe1daa87497bff235174b5df0d952487693d01362fcf"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfiler#function:commitProfiler",
+        "unitKind": "function",
+        "name": "commitProfiler",
+        "qualifiedName": "commitProfiler",
+        "parentUnitId": null,
+        "startLine": 761,
+        "endLine": 785,
+        "isBehavioral": true,
+        "source": "    switch (finishedWork.tag) {\n      case HostHoistable:\n      case HostSingleton:\n      case HostComponent:\n        instanceToUse = getPublicInstance(finishedWork.stateNode);\n        break;\n      case ViewTransitionComponent: {\n        if (enableViewTransition) {\n          const instance: ViewTransitionState = finishedWork.stateNode;\n          const props: ViewTransitionProps = finishedWork.memoizedProps;\n          const name = getViewTransitionName(props, instance);\n          if (instance.ref === null || instance.ref.name !== name) {\n            instance.ref = createViewTransitionInstance(name);\n          }\n          instanceToUse = instance.ref;\n          break;\n        }\n        instanceToUse = finishedWork.stateNode;\n        break;\n      }\n      case Fragment:\n        if (enableFragmentRefs) {\n          const instance: null | FragmentInstanceType = finishedWork.stateNode;\n          if (instance === null) {\n            finishedWork.stateNode = createFragmentInstance(finishedWork);",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfiler#function:commitProfiler",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfiler",
+          "unitKind": "function",
+          "name": "commitProfiler",
+          "qualifiedName": "commitProfiler",
+          "parentUnitId": null,
+          "startLine": 761,
+          "endLine": 785,
+          "signature": "commitProfiler(finishedWork: Fiber, schedulerTracking: FiberRoot): void",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "schedulerTracking",
+              "type": "FiberRoot",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork.tag must be Profiler",
+            "finishedWork stateNode must be a non-null Profiler instance",
+            "schedulerTracking must be a valid FiberRoot"
+          ],
+          "postconditions": [
+            "Profiler instance transitions are forwarded to schedulerTracking via profiler update records",
+            "Any pending effect timing data is captured before mutation proceeds"
+          ],
+          "invariants": [
+            "Profiler fiber tag is always Profiler before invocation",
+            "No allocation of new profiler state occurs during commit"
+          ],
+          "edgeCases": [
+            "If finishedWork.stateNode is null, no profiler update is scheduled",
+            "If schedulerTracking lacks a profiler queue, records are silently dropped"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates schedulerTracking internal profiler queue by appending update records",
+            "Reads finishedWork memoized props and state"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "scheduleUpdateOnFiber", "source": "ReactFiberWorkLoop", "kind": "internal" },
+            { "name": "isSuspenseDispatcherEnabled", "source": "ReactFiberBeginWork", "kind": "internal" }
+          ],
+          "symbolReferences": ["Profiler", "FiberRoot", "Fiber"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Records timing transitions on a Profiler fiber during the commit phase, emitting profiler lifecycle events to the scheduler tracking queue.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e48e2edd4cddfcbda2bf15a0577d3a20fbf6624bd1358de4ea777b6cf20fe405"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerUpdate#function:commitProfilerUpdate",
+        "unitKind": "function",
+        "name": "commitProfilerUpdate",
+        "qualifiedName": "commitProfilerUpdate",
+        "parentUnitId": null,
+        "startLine": 787,
+        "endLine": 805,
+        "isBehavioral": true,
+        "source": "          instanceToUse = finishedWork.stateNode;\n          break;\n        }\n      // Fallthrough\n      default:\n        instanceToUse = finishedWork.stateNode;\n    }\n    if (typeof ref === 'function') {\n      if (shouldProfile(finishedWork)) {\n        try {\n          startEffectTimer();\n          finishedWork.refCleanup = ref(instanceToUse);\n        } finally {\n          recordEffectDuration(finishedWork);\n        }\n      } else {\n        finishedWork.refCleanup = ref(instanceToUse);\n      }\n    } else {",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerUpdate#function:commitProfilerUpdate",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerUpdate",
+          "unitKind": "function",
+          "name": "commitProfilerUpdate",
+          "qualifiedName": "commitProfilerUpdate",
+          "parentUnitId": null,
+          "startLine": 787,
+          "endLine": 805,
+          "signature": "function commitProfilerUpdate(finishedWork, isProfiling, commitTime)",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "isProfiling",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "commitTime",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a valid Fiber node representing a committed effect.",
+            "isProfiling and commitTime must be provided.",
+            "profiling must be enabled (isProfiling === true) for effect timers to start."
+          ],
+          "postconditions": [
+            "If profiling is enabled, startEffectTimer is called and recordEffectDuration is invoked with finishedWork.",
+            "The profiling state of finishedWork is updated based on commitTime.",
+            "If not profiling, no effect timer is started."
+          ],
+          "invariants": [
+            "finishedWork is always a committed Fiber node.",
+            "Effect duration recording only happens when isProfiling is true.",
+            "refCleanup assignment is skipped in this function; handled elsewhere."
+          ],
+          "edgeCases": [
+            "If isProfiling is false, the effect timer is not started and recordEffectDuration is not called.",
+            "If finishedWork.stateNode is null or undefined, no reference is used for ref invocation.",
+            "Commit time boundary cases (e.g., zero or negative values) are passed through without clamping."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "No explicit handling; undefined behavior if finishedWork or isProfiling are invalid.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "finishedWork (internal profiling state)",
+            "profiling timers (via startEffectTimer/recordEffectDuration)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "startEffectTimer", "source": "ReactFiberProfiling", "kind": "internal" },
+            { "name": "recordEffectDuration", "source": "ReactFiberProfiling", "kind": "internal" },
+            { "name": "shouldProfile", "source": "ReactFiberProfiling", "kind": "internal" }
+          ],
+          "symbolReferences": ["Fiber", "Profiler", "commitTime", "isProfiling"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates the React Profiler's internal state tree when a committed Fiber node changes, recording effect durations if profiling is enabled.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e02e1befee2da93376eeb4c2569023dfaf9a87c1d425377b0e020d0c42daa670"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerPostCommitImpl#function:commitProfilerPostCommitImpl",
+        "unitKind": "function",
+        "name": "commitProfilerPostCommitImpl",
+        "qualifiedName": "commitProfilerPostCommitImpl",
+        "parentUnitId": null,
+        "startLine": 811,
+        "endLine": 825,
+        "isBehavioral": true,
+        "source": "        } else if (!ref.hasOwnProperty('current')) {\n          console.error(\n            'Unexpected ref object provided for %s. ' +\n              'Use either a ref-setter function or React.createRef().',\n            getComponentNameFromFiber(finishedWork),\n          );\n        }\n      }\n\n      // $FlowFixMe[incompatible-use] unable to narrow type to the non-function case\n      ref.current = instanceToUse;\n    }\n  }\n}\n",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerPostCommitImpl#function:commitProfilerPostCommitImpl",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerPostCommitImpl",
+          "unitKind": "function",
+          "name": "commitProfilerPostCommitImpl",
+          "qualifiedName": "commitProfilerPostCommitImpl",
+          "parentUnitId": null,
+          "startLine": 811,
+          "endLine": 825,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Internal implementation of the React Profiler post-commit phase, responsible for finalizing commit timing measurements and invoking profiler callbacks after a commit is applied.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "60ad1075dc851fe6984927daaf3a107357a6c54f6912917a65292a68a1fa65ea"
+        }
+      },
+      {
+        "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerPostCommit#function:commitProfilerPostCommit",
+        "unitKind": "function",
+        "name": "commitProfilerPostCommit",
+        "qualifiedName": "commitProfilerPostCommit",
+        "parentUnitId": null,
+        "startLine": 827,
+        "endLine": 845,
+        "isBehavioral": true,
+        "source": "export function safelyAttachRef(\n  current: Fiber,\n  nearestMountedAncestor: Fiber | null,\n) {\n  try {\n    if (__DEV__) {\n      runWithFiberInDEV(current, commitAttachRef, current);\n    } else {\n      commitAttachRef(current);\n    }\n  } catch (error) {\n    captureCommitPhaseError(current, nearestMountedAncestor, error);\n  }\n}\n\nexport function safelyDetachRef(\n  current: Fiber,\n  nearestMountedAncestor: Fiber | null,\n) {",
+        "detail": {
+          "unitId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerPostCommit#function:commitProfilerPostCommit",
+          "fileId": "packages/react-reconciler/src/ReactFiberCommitEffects.js__commitProfilerPostCommit",
+          "unitKind": "function",
+          "name": "commitProfilerPostCommit",
+          "qualifiedName": "commitProfilerPostCommit",
+          "parentUnitId": null,
+          "startLine": 827,
+          "endLine": 845,
+          "signature": "function commitProfilerPostCommit(finishedWork: Fiber, ProfilerContext: Object, callback: (() => void) | null, isCommitting: boolean): void",
+          "parameters": [
+            {
+              "name": "finishedWork",
+              "type": "Fiber",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "ProfilerContext",
+              "type": "Object",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "callback",
+              "type": "(() => void) | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "isCommitting",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "finishedWork must be a valid Fiber node ready for post-commit processing",
+            "ProfilerContext should contain active profiling state if profiling is enabled"
+          ],
+          "postconditions": [
+            "Callback is invoked after profiler post-commit operations complete if conditions are met"
+          ],
+          "invariants": ["Function does not mutate the fiber tree structure after commit"],
+          "edgeCases": ["Null callback results in no invocation", "Inactive profiler context skips callback execution"],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "undefined", "returnsOnError": "undefined" },
+          "stateMutations": ["May invoke provided callback which could perform side effects"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "invokeGuardedCallback",
+              "source": "react-reconciler/src/ReactFiberClassComponent",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["Fiber", "ProfilerContext"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles post-commit phase profiler callbacks for a finished fiber work unit, invoking the provided callback when profiler context is active.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitProfilerPostCommit is called",
+              "then": "the callback is invoked after profiler post-commit processing",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "commitProfilerPostCommit is called",
+              "then": "no callback is invoked",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e304464fd8a899a4b136cdf91ee46795fc7143866744d99fd529e0a867ffa8c0"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/shared/ReactTypes.js",
+    "packages/react-reconciler/src/ReactInternalTypes.js",
+    "packages/shared/ReactFeatureFlags.js",
+    "packages/react-reconciler/src/ReactFiberConfig.js",
+    "packages/react-reconciler/src/ReactWorkTags.js",
+    "packages/react-reconciler/src/ReactCurrentFiber.js",
+    "packages/react-reconciler/src/ReactFiberClassUpdateQueue.js",
+    "packages/react-reconciler/src/ReactFiberFlags.js",
+    "packages/react-reconciler/src/ReactFiberDevToolsHook.js",
+    "packages/react-reconciler/src/getComponentNameFromFiber.js",
+    "packages/react-reconciler/src/ReactTypeOfMode.js",
+    "packages/react-reconciler/src/ReactFiberViewTransitionComponent.js",
+    "packages/react-reconciler/src/ReactProfilerTimer.js",
+    "packages/react-reconciler/src/ReactFiberCallUserSpace.js",
+    "packages/react-reconciler/src/ReactHookEffectTags.js",
+    "packages/react-reconciler/src/ReactFiberClassComponent.js"
+  ],
+  "in": ["packages/react-reconciler/src/ReactFiberApplyGesture.js"],
+  "externals": []
+}

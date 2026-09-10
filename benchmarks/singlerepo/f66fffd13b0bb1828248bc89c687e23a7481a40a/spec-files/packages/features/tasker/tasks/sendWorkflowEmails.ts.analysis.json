@@ -1,0 +1,793 @@
+{
+  "relativePath": "packages/features/tasker/tasks/sendWorkflowEmails.ts",
+  "language": "typescript",
+  "sha256": "70e8ef52bd2c6f6dc39da0e5cc41c36c66ece35ed231b4b9fd2ba82aebbb4c30",
+  "sizeBytes": 2926,
+  "tokenCount": 732,
+  "lineCount": 89,
+  "analysedAt": "2026-09-04T07:32:40.639Z",
+  "analysis": {
+    "module": {
+      "purpose": "Validates queued workflow-email payloads and either sends custom email content or builds booking event context for workflow reminder delivery.",
+      "summary": "This task module supports two workflow-email execution paths. It validates either a complete custom email payload or a lazy payload referencing a booking and workflow reminder. Lazy payloads are resolved through booking repositories, transformed into calendar event data, enriched with video-call metadata, and processed by the email workflow service. Eager payloads are delivered concurrently to every recipient through the custom workflow email service.",
+      "businessContext": "Supports automated booking workflow notifications, including reminders and custom emails. Failures can prevent customers, hosts, or attendees from receiving important scheduling and meeting information.",
+      "classes": [
+        "ZSendWorkflowEmailsSchemaEager (~L12-28): Validates complete custom workflow email payloads and optional attachments.",
+        "ZSendWorkflowEmailsSchemaLazy (~L30-33): Validates identifiers for deferred booking workflow email generation.",
+        "ZSendWorkflowEmailsSchema (~L35-38): Accepts either eager email content or lazy workflow identifiers."
+      ],
+      "functions": [
+        "sendWorkflowEmails (~L40-88): Validates queued payloads and dispatches custom or booking-based workflow emails."
+      ],
+      "keywords": [
+        "workflow email",
+        "booking event",
+        "workflow reminder",
+        "email attachments",
+        "videoCallUrl",
+        "CalendarEventBuilder",
+        "EmailWorkflowService",
+        "BookingRepository",
+        "BookingSeatRepository",
+        "Zod payload validation"
+      ],
+      "ontologyConcepts": [
+        "workflow orchestration",
+        "notification delivery",
+        "payload validation",
+        "booking enrichment",
+        "event transformation",
+        "deferred processing",
+        "concurrent dispatch"
+      ],
+      "businessEntities": ["Booking", "WorkflowReminder", "CalendarEvent", "Email", "BookingSeat", "Attachment"],
+      "systemCapabilities": [
+        "Validate workflow email task payloads",
+        "Generate email context from bookings",
+        "Enrich events with meeting metadata",
+        "Process workflow reminder emails",
+        "Send custom emails to multiple recipients"
+      ],
+      "configDependencies": [],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "zod",
+          "symbols": ["z"],
+          "package": "zod",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          }
+        },
+        {
+          "spec": "@calcom/emails/workflow-email-service",
+          "symbols": ["sendCustomWorkflowEmail"],
+          "package": "@calcom/emails",
+          "subpath": "workflow-email-service",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "spec": "@calcom/features/CalendarEventBuilder",
+          "symbols": ["CalendarEventBuilder"],
+          "package": "@calcom/features",
+          "subpath": "CalendarEventBuilder",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 4,
+            "endLine": 4
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/repositories/BookingRepository",
+          "symbols": ["BookingRepository"],
+          "package": "@calcom/features",
+          "subpath": "bookings/repositories/BookingRepository",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 5,
+            "endLine": 5
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "symbols": ["BookingSeatRepository"],
+          "package": "@calcom/features",
+          "subpath": "bookings/repositories/BookingSeatRepository",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 6,
+            "endLine": 6
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/EmailWorkflowService",
+          "symbols": ["EmailWorkflowService"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/service/EmailWorkflowService",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 7,
+            "endLine": 7
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+          "symbols": ["WorkflowReminderRepository"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/repositories/WorkflowReminderRepository",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          }
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["bookingMetadataSchema"],
+          "package": "@calcom/prisma",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads booking data through BookingRepository using prisma.",
+          "Reads workflow reminder and booking seat data through repository-backed EmailWorkflowService."
+        ],
+        "network": [
+          "Sends custom workflow emails through sendCustomWorkflowEmail.",
+          "Dispatches workflow email processing through EmailWorkflowService.handleSendEmailWorkflowTask."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "ZSendWorkflowEmailsSchemaEager",
+          "shape": "z.object({ to: z.array(z.string()), subject: z.string(), html: z.string(), replyTo: z.string().optional(), sender: z.string().nullable().optional(), attachments: z.array(z.object({ content: z.string(), filename: z.string() }).passthrough()).optional() })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ZSendWorkflowEmailsSchema",
+          "shape": "z.union([ZSendWorkflowEmailsSchemaEager, ZSendWorkflowEmailsSchemaLazy])",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "sendWorkflowEmails",
+          "shape": "async function sendWorkflowEmails(payload: string): Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "sendCustomWorkflowEmail",
+          "shape": "sendCustomWorkflowEmail({ ...mailData, to })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingRepository",
+          "shape": "new BookingRepository(prisma)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingRepository.getBookingForCalEventBuilderFromUid",
+          "shape": "bookingRepository.getBookingForCalEventBuilderFromUid(mailData.bookingUid)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CalendarEventBuilder.fromBooking",
+          "shape": "CalendarEventBuilder.fromBooking(booking, {})",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "bookingMetadataSchema",
+          "shape": "bookingMetadataSchema.parse(booking.metadata || {})",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "WorkflowReminderRepository",
+          "shape": "new WorkflowReminderRepository(prisma)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingSeatRepository",
+          "shape": "new BookingSeatRepository(prisma)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EmailWorkflowService.handleSendEmailWorkflowTask",
+          "shape": "emailWorkflowService.handleSendEmailWorkflowTask({ evt: evtWithMetadata, workflowReminderId: mailData.workflowReminderId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma",
+          "shape": "new BookingRepository(prisma)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "Payload parsing",
+          "intent": "Parse JSON payload and validate it against eager or lazy schemas.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 40,
+            "endLine": 41
+          }
+        },
+        {
+          "name": "Lazy workflow email path",
+          "intent": "Build calendar event data and process a workflow reminder email.",
+          "structureKind": "branch",
+          "predicate": "\"bookingUid\" in mailData && \"workflowReminderId\" in mailData",
+          "branchOutcomes": [
+            "true: retrieve booking, build event, and handle workflow email task",
+            "false: send eager custom workflow emails"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 44,
+            "endLine": 78
+          }
+        },
+        {
+          "name": "Booking retrieval",
+          "intent": "Retrieve the booking required to construct the calendar event.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 45,
+            "endLine": 46
+          }
+        },
+        {
+          "name": "Booking existence check",
+          "intent": "Reject lazy workflow processing when no booking is found.",
+          "structureKind": "branch",
+          "predicate": "!booking",
+          "branchOutcomes": ["true: throw Error(\"Booking not found\")", "false: continue event construction"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 50
+          }
+        },
+        {
+          "name": "Calendar event construction",
+          "intent": "Build a calendar event from the retrieved booking.",
+          "structureKind": "branch",
+          "predicate": "!calendarEvent",
+          "branchOutcomes": [
+            "true: throw Error(\"Calendar event could not be built\")",
+            "false: continue workflow processing"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 52,
+            "endLine": 56
+          }
+        },
+        {
+          "name": "Booking metadata enrichment",
+          "intent": "Add videoCallUrl to event metadata when booking metadata provides it.",
+          "structureKind": "branch",
+          "predicate": "bookingMetadata?.videoCallUrl",
+          "branchOutcomes": ["truthy: metadata contains videoCallUrl", "falsy: metadata is undefined"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 58,
+            "endLine": 66
+          }
+        },
+        {
+          "name": "Eager custom email sending",
+          "intent": "Send one custom workflow email for every recipient concurrently.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 80,
+            "endLine": 87
+          }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "const",
+          "name": "ZSendWorkflowEmailsSchemaEager",
+          "signature": "export const ZSendWorkflowEmailsSchemaEager = z.object({\n  to: z.array(z.string()),\n  subject: z.string(),\n  html: z.string(),\n  replyTo: z.string().optional(),\n  sender: z.string().nullable().optional(),\n  attachments: z\n    .array(\n      z\n        .object({\n          content: z.string(),\n          filename: z.string(),\n        })\n        .passthrough()\n    )\n    .optional(),\n});",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 12,
+            "endLine": 28
+          }
+        },
+        {
+          "kind": "const",
+          "name": "ZSendWorkflowEmailsSchema",
+          "signature": "export const ZSendWorkflowEmailsSchema = z.union([\n  ZSendWorkflowEmailsSchemaEager,\n  ZSendWorkflowEmailsSchemaLazy,\n]);",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 35,
+            "endLine": 38
+          }
+        },
+        {
+          "kind": "function",
+          "name": "sendWorkflowEmails",
+          "signature": "export async function sendWorkflowEmails(payload: string): Promise<void> {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": true,
+          "anchor": {
+            "startLine": 40,
+            "endLine": 40
+          }
+        },
+        {
+          "kind": "const",
+          "name": "ZSendWorkflowEmailsSchemaLazy",
+          "signature": "const ZSendWorkflowEmailsSchemaLazy = z.object({\n  bookingUid: z.string(),\n  workflowReminderId: z.number(),\n});",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 30,
+            "endLine": 33
+          }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "Invalid JSON string",
+          "handled": false,
+          "behavior": "JSON.parse throws and the function rejects without sending email.",
+          "anchor": {
+            "startLine": 40,
+            "endLine": 41
+          }
+        },
+        {
+          "inputShape": "JSON value failing either eager or lazy schema validation",
+          "handled": false,
+          "behavior": "Schema parsing throws and the function rejects.",
+          "anchor": {
+            "startLine": 35,
+            "endLine": 41
+          }
+        },
+        {
+          "inputShape": "Lazy payload whose bookingUid does not identify a booking",
+          "handled": true,
+          "behavior": "Throws Error(\"Booking not found\").",
+          "anchor": {
+            "startLine": 44,
+            "endLine": 50
+          }
+        },
+        {
+          "inputShape": "Lazy payload for which CalendarEventBuilder produces no calendar event",
+          "handled": true,
+          "behavior": "Throws Error(\"Calendar event could not be built\").",
+          "anchor": {
+            "startLine": 52,
+            "endLine": 56
+          }
+        },
+        {
+          "inputShape": "Booking metadata without a truthy videoCallUrl",
+          "handled": true,
+          "behavior": "Creates the event metadata property with value undefined.",
+          "anchor": {
+            "startLine": 58,
+            "endLine": 66
+          }
+        },
+        {
+          "inputShape": "Eager payload with an empty to array",
+          "handled": true,
+          "behavior": "Promise.all resolves without calling sendCustomWorkflowEmail.",
+          "anchor": {
+            "startLine": 80,
+            "endLine": 87
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "SyntaxError from JSON.parse or ZodError from schema parsing",
+          "caught": null,
+          "action": "Propagates the error and rejects the async function.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 41,
+            "endLine": 41
+          }
+        },
+        {
+          "thrown": "Error(\"Booking not found\")",
+          "caught": null,
+          "action": "Propagates the error and rejects the async function.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 50
+          }
+        },
+        {
+          "thrown": "Error(\"Calendar event could not be built\")",
+          "caught": null,
+          "action": "Propagates the error and rejects the async function.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 54,
+            "endLine": 56
+          }
+        },
+        {
+          "thrown": "ZodError from bookingMetadataSchema.parse",
+          "caught": null,
+          "action": "Propagates the error and rejects the async function.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 58,
+            "endLine": 59
+          }
+        },
+        {
+          "thrown": "Rejection from handleSendEmailWorkflowTask",
+          "caught": null,
+          "action": "Propagates the rejection and rejects the async function.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 72,
+            "endLine": 75
+          }
+        },
+        {
+          "thrown": "Rejection from sendCustomWorkflowEmail",
+          "caught": null,
+          "action": "Promise.all rejects and the async function rejects.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 80,
+            "endLine": 87
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies payload as a JSON-encoded string.",
+          "anchor": {
+            "startLine": 40,
+            "endLine": 41
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Eager payloads provide to, subject, and html, with optional replyTo, sender, and attachments.",
+          "anchor": {
+            "startLine": 12,
+            "endLine": 28
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Lazy payloads provide bookingUid as a string and workflowReminderId as a number.",
+          "anchor": {
+            "startLine": 30,
+            "endLine": 33
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "booking.metadata is compatible with bookingMetadataSchema when parsed.",
+          "anchor": {
+            "startLine": 58,
+            "endLine": 59
+          }
+        }
+      ],
+      "ambiguities": [],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "accepts-eager-email-payload",
+          "scenario": "An eager payload contains recipients, subject, and HTML content.",
+          "given": [
+            "const payload = JSON.stringify({ to: [\"a@example.com\"], subject: \"Subject\", html: \"<p>Hello</p>\" })"
+          ],
+          "when": "sendWorkflowEmails(payload)",
+          "then": "The function resolves and sends one custom workflow email to \"a@example.com\".",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the direct email-send payload contract."
+        },
+        {
+          "testId": "sends-to-each-recipient",
+          "scenario": "An eager payload contains multiple recipient addresses.",
+          "given": [
+            "const payload = JSON.stringify({ to: [\"a@example.com\", \"b@example.com\"], subject: \"Subject\", html: \"<p>Hello</p>\" })"
+          ],
+          "when": "sendWorkflowEmails(payload)",
+          "then": "sendCustomWorkflowEmail is called once for each recipient with that recipient as to.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the one-email-per-recipient behavior."
+        },
+        {
+          "testId": "accepts-lazy-workflow-payload",
+          "scenario": "A lazy payload contains a booking UID and workflow reminder ID.",
+          "given": ["const payload = JSON.stringify({ bookingUid: \"booking-uid\", workflowReminderId: 42 })"],
+          "when": "sendWorkflowEmails(payload)",
+          "then": "The workflow email task is handled with the built calendar event and workflowReminderId 42.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the deferred calendar-event workflow path."
+        },
+        {
+          "testId": "rejects-invalid-payload",
+          "scenario": "The serialized payload does not match either supported schema.",
+          "given": ["const payload = JSON.stringify({ subject: \"Subject\" })"],
+          "when": "sendWorkflowEmails(payload)",
+          "then": "The call rejects with a schema validation error.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures unsupported task payloads cannot reach email dispatch."
+        },
+        {
+          "testId": "rejects-missing-booking",
+          "scenario": "A lazy payload references a booking UID that cannot be found.",
+          "given": ["bookingRepository.getBookingForCalEventBuilderFromUid(\"booking-uid\") returns null"],
+          "when": "sendWorkflowEmails(JSON.stringify({ bookingUid: \"booking-uid\", workflowReminderId: 42 }))",
+          "then": "The call rejects with Error(\"Booking not found\").",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the missing-booking failure contract."
+        },
+        {
+          "testId": "rejects-unbuildable-calendar-event",
+          "scenario": "The booking exists but no calendar event can be built.",
+          "given": ["CalendarEventBuilder.fromBooking(booking, {}) returns an object whose build() returns null"],
+          "when": "sendWorkflowEmails(JSON.stringify({ bookingUid: \"booking-uid\", workflowReminderId: 42 }))",
+          "then": "The call rejects with Error(\"Calendar event could not be built\").",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the workflow path against dispatching without an event."
+        },
+        {
+          "testId": "preserves-video-call-url",
+          "scenario": "The booking metadata contains a videoCallUrl.",
+          "given": ["booking.metadata = { videoCallUrl: \"https://video.example.com/room\" }"],
+          "when": "sendWorkflowEmails(JSON.stringify({ bookingUid: \"booking-uid\", workflowReminderId: 42 }))",
+          "then": "handleSendEmailWorkflowTask receives an event whose metadata contains videoCallUrl \"https://video.example.com/room\".",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins propagation of the video-call metadata into the workflow event."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "ZSendWorkflowEmailsSchemaEager",
+        "ZSendWorkflowEmailsSchemaLazy",
+        "ZSendWorkflowEmailsSchema",
+        "sendWorkflowEmails"
+      ],
+      "moduleLevelCode": "import { z } from \"zod\";\n\nimport { sendCustomWorkflowEmail } from \"@calcom/emails/workflow-email-service\";\nimport { CalendarEventBuilder } from \"@calcom/features/CalendarEventBuilder\";\nimport { BookingRepository } from \"@calcom/features/bookings/repositories/BookingRepository\";\nimport { BookingSeatRepository } from \"@calcom/features/bookings/repositories/BookingSeatRepository\";\nimport { EmailWorkflowService } from \"@calcom/features/ee/workflows/lib/service/EmailWorkflowService\";\nimport { WorkflowReminderRepository } from \"@calcom/features/ee/workflows/repositories/WorkflowReminderRepository\";\nimport { bookingMetadataSchema } from \"@calcom/prisma/zod-utils\";\nimport { prisma } from \"@calcom/prisma\";",
+      "exports": [
+        {
+          "name": "ZSendWorkflowEmailsSchemaEager",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "ZSendWorkflowEmailsSchema",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "sendWorkflowEmails",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "z",
+          "module": "zod",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "sendCustomWorkflowEmail",
+          "module": "@calcom/emails/workflow-email-service",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CalendarEventBuilder",
+          "module": "@calcom/features/CalendarEventBuilder",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingRepository",
+          "module": "@calcom/features/bookings/repositories/BookingRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingSeatRepository",
+          "module": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EmailWorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/EmailWorkflowService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowReminderRepository",
+          "module": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "bookingMetadataSchema",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "external"
+        }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/tasker/tasks/sendWorkflowEmails.ts__ZSendWorkflowEmailsSchemaEager_1#const:ZSendWorkflowEmailsSchemaEager",
+        "unitKind": "const",
+        "name": "ZSendWorkflowEmailsSchemaEager",
+        "qualifiedName": "ZSendWorkflowEmailsSchemaEager",
+        "parentUnitId": null,
+        "startLine": 12,
+        "endLine": 28,
+        "isBehavioral": false,
+        "source": "export const ZSendWorkflowEmailsSchemaEager = z.object({\n  to: z.array(z.string()),\n  subject: z.string(),\n  html: z.string(),\n  replyTo: z.string().optional(),\n  sender: z.string().nullable().optional(),\n  attachments: z\n    .array(\n      z\n        .object({\n          content: z.string(),\n          filename: z.string(),\n        })\n        .passthrough()\n    )\n    .optional(),\n});"
+      },
+      {
+        "unitId": "packages/features/tasker/tasks/sendWorkflowEmails.ts__ZSendWorkflowEmailsSchemaLazy_2#const:ZSendWorkflowEmailsSchemaLazy",
+        "unitKind": "const",
+        "name": "ZSendWorkflowEmailsSchemaLazy",
+        "qualifiedName": "ZSendWorkflowEmailsSchemaLazy",
+        "parentUnitId": null,
+        "startLine": 30,
+        "endLine": 33,
+        "isBehavioral": false,
+        "source": "const ZSendWorkflowEmailsSchemaLazy = z.object({\n  bookingUid: z.string(),\n  workflowReminderId: z.number(),\n});"
+      },
+      {
+        "unitId": "packages/features/tasker/tasks/sendWorkflowEmails.ts__ZSendWorkflowEmailsSchema_3#const:ZSendWorkflowEmailsSchema",
+        "unitKind": "const",
+        "name": "ZSendWorkflowEmailsSchema",
+        "qualifiedName": "ZSendWorkflowEmailsSchema",
+        "parentUnitId": null,
+        "startLine": 35,
+        "endLine": 38,
+        "isBehavioral": false,
+        "source": "export const ZSendWorkflowEmailsSchema = z.union([\n  ZSendWorkflowEmailsSchemaEager,\n  ZSendWorkflowEmailsSchemaLazy,\n]);"
+      },
+      {
+        "unitId": "packages/features/tasker/tasks/sendWorkflowEmails.ts__sendWorkflowEmails_4#function:sendWorkflowEmails",
+        "unitKind": "function",
+        "name": "sendWorkflowEmails",
+        "qualifiedName": "sendWorkflowEmails",
+        "parentUnitId": null,
+        "startLine": 40,
+        "endLine": 88,
+        "isBehavioral": true,
+        "source": "export async function sendWorkflowEmails(payload: string): Promise<void> {\n  const mailData = ZSendWorkflowEmailsSchema.parse(JSON.parse(payload));\n\n  // Generate workflow body to send\n  if (\"bookingUid\" in mailData && \"workflowReminderId\" in mailData) {\n    const bookingRepository = new BookingRepository(prisma);\n    const booking = await bookingRepository.getBookingForCalEventBuilderFromUid(mailData.bookingUid);\n\n    if (!booking) {\n      throw new Error(\"Booking not found\");\n    }\n\n    const calendarEvent = (await CalendarEventBuilder.fromBooking(booking, {})).build();\n\n    if (!calendarEvent) {\n      throw new Error(\"Calendar event could not be built\");\n    }\n\n    // Check if videoCallUrl exists in booking metadata and add it to evt.metadata\n    const bookingMetadata = bookingMetadataSchema.parse(booking.metadata || {});\n    const metadata = bookingMetadata?.videoCallUrl\n    ? {\n      videoCallUrl: bookingMetadata.videoCallUrl,\n    }\n    : undefined;\n\n    const evtWithMetadata = { ...calendarEvent, metadata };\n\n    const workflowReminderRepository = new WorkflowReminderRepository(prisma);\n    const bookingSeatRepository = new BookingSeatRepository(prisma);\n    const emailWorkflowService = new EmailWorkflowService(workflowReminderRepository, bookingSeatRepository);\n\n    await emailWorkflowService.handleSendEmailWorkflowTask({\n      evt: evtWithMetadata,\n      workflowReminderId: mailData.workflowReminderId,\n    });\n\n    return;\n  }\n\n  await Promise.all(\n    mailData.to.map((to) =>\n      sendCustomWorkflowEmail({\n        ...mailData,\n        to,\n      })\n    )\n  );\n}"
+      }
+    ],
+    "extractedUnitCount": 4,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 11892,
+    "outputTokens": 9984,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

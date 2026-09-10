@@ -1,0 +1,1170 @@
+{
+  "relativePath": "apps/web/test/utils/bookingScenario/bookingScenario.ts",
+  "language": "typescript",
+  "sizeBytes": 71626,
+  "tokenCount": 17907,
+  "generatedAt": "2026-08-27T17:57:09.663Z",
+  "skimOutlines": [
+    {
+      "startLine": 1,
+      "endLine": 810,
+      "language": "TypeScript",
+      "windowSummary": "Defines booking scenario input types and helper functions for populating mocked Prisma data for event types, bookings, users, teams, webhooks, workflows, payments, and reminders.",
+      "importsInternal": [
+        "../../../../../tests/libs/__mocks__/app-store",
+        "../../../../../tests/libs/__mocks__/libServerI18n",
+        "../../../../../tests/libs/__mocks__/prisma",
+        "@calcom/app-store/appStoreMetaData",
+        "@calcom/features/ee/payments/api/webhook",
+        "@calcom/lib/dayjs",
+        "@calcom/lib/http-error",
+        "@calcom/lib/intervalLimits/intervalLimitSchema",
+        "@calcom/lib/logger",
+        "@calcom/lib/raqb/findTeamMembersMatchingAttributeLogic",
+        "@calcom/lib/crypto",
+        "@calcom/lib/safeStringify",
+        "@calcom/lib/server/repository/profile",
+        "@calcom/prisma/client",
+        "@calcom/prisma/enums",
+        "@calcom/prisma/zod-utils",
+        "@calcom/types/App",
+        "@calcom/types/Calendar",
+        "@calcom/types/Credential",
+        "./MockPaymentService",
+        "./getMockRequestDataForBooking"
+      ],
+      "importsExternal": ["@prisma/client", "stripe", "uuid", "vitest", "vitest-fetch-mock", "zod"],
+      "declarations": [
+        {
+          "kind": "type",
+          "name": "Fields",
+          "signature": "type Fields = z.infer<typeof eventTypeBookingFields>;",
+          "role": "Infers booking form field types from the event type booking schema."
+        },
+        {
+          "kind": "const",
+          "name": "log",
+          "signature": "const log = logger.getSubLogger({ prefix: [\"[bookingScenario]\"] });",
+          "role": "Provides a prefixed logger for booking scenario test helpers."
+        },
+        {
+          "kind": "type",
+          "name": "InputWebhook",
+          "signature": "type InputWebhook = {",
+          "role": "Describes webhook data accepted by the scenario setup helpers."
+        },
+        {
+          "kind": "type",
+          "name": "InputWorkflow",
+          "signature": "type InputWorkflow = {",
+          "role": "Describes workflow configuration accepted by the scenario setup helpers."
+        },
+        {
+          "kind": "type",
+          "name": "InputPayment",
+          "signature": "type InputPayment = {",
+          "role": "Describes payment records used in booking scenarios."
+        },
+        {
+          "kind": "type",
+          "name": "InputWorkflowReminder",
+          "signature": "type InputWorkflowReminder = {",
+          "role": "Describes workflow reminder records used in scenarios."
+        },
+        {
+          "kind": "type",
+          "name": "InputHost",
+          "signature": "type InputHost = {",
+          "role": "Describes an event type host and optional scheduling configuration."
+        },
+        {
+          "kind": "type",
+          "name": "InputSelectedSlot",
+          "signature": "type InputSelectedSlot = {",
+          "role": "Describes a temporarily selected booking slot."
+        },
+        {
+          "kind": "type",
+          "name": "ScenarioData",
+          "signature": "export type ScenarioData = {",
+          "role": "Aggregates the mock entities that make up a booking test scenario."
+        },
+        {
+          "kind": "type",
+          "name": "InputCredential",
+          "signature": "type InputCredential = typeof TestData.credentials.google & {",
+          "role": "Extends the test credential shape with an optional identifier."
+        },
+        {
+          "kind": "type",
+          "name": "InputSelectedCalendar",
+          "signature": "type InputSelectedCalendar = (typeof TestData.selectedCalendars)[keyof typeof TestData.selectedCalendars] & {",
+          "role": "Describes selected calendar data with an optional event type association."
+        },
+        {
+          "kind": "type",
+          "name": "InputUser",
+          "signature": "type InputUser = Omit<typeof TestData.users.example, \"defaultScheduleId\"> & {",
+          "role": "Describes user data and related schedules, teams, credentials, and profile settings."
+        },
+        {
+          "kind": "type",
+          "name": "InputEventType",
+          "signature": "export type InputEventType = {",
+          "role": "Describes event type configuration accepted by scenario setup."
+        },
+        {
+          "kind": "type",
+          "name": "AttendeeBookingSeatInput",
+          "signature": "type AttendeeBookingSeatInput = Pick<Prisma.BookingSeatCreateInput, \"referenceUid\" | \"data\">;",
+          "role": "Selects booking seat fields allowed for attendee setup."
+        },
+        {
+          "kind": "type",
+          "name": "WhiteListedBookingProps",
+          "signature": "type WhiteListedBookingProps = {",
+          "role": "Defines explicitly supported booking properties for test input."
+        },
+        {
+          "kind": "type",
+          "name": "InputBooking",
+          "signature": "type InputBooking = Partial<Omit<Booking, keyof WhiteListedBookingProps>> & WhiteListedBookingProps;",
+          "role": "Combines Prisma booking fields with the scenario-specific booking properties."
+        },
+        {
+          "kind": "const",
+          "name": "Timezones",
+          "signature": "export const Timezones = {",
+          "role": "Provides common timezone mappings used by booking scenario tests."
+        },
+        {
+          "kind": "function",
+          "name": "addHostsToDb",
+          "signature": "async function addHostsToDb(eventTypes: InputEventType[]) {",
+          "role": "Creates configured event type host records in the mocked database."
+        },
+        {
+          "kind": "function",
+          "name": "addEventTypesToDb",
+          "signature": "export async function addEventTypesToDb(",
+          "role": "Persists event types and their related schedules, teams, and restriction schedules."
+        },
+        {
+          "kind": "function",
+          "name": "addEventTypes",
+          "signature": "export async function addEventTypes(eventTypes: InputEventType[], usersStore: InputUser[]) {",
+          "role": "Normalizes event type inputs and creates them with associated users and configuration."
+        },
+        {
+          "kind": "function",
+          "name": "addBookingReferencesToDB",
+          "signature": "function addBookingReferencesToDB(bookingReferences: Prisma.BookingReferenceCreateManyInput[]) {",
+          "role": "Creates booking reference records in the mocked database."
+        },
+        {
+          "kind": "function",
+          "name": "addBookingsToDb",
+          "signature": "async function addBookingsToDb(",
+          "role": "Normalizes booking dates and persists booking records."
+        },
+        {
+          "kind": "function",
+          "name": "addBookings",
+          "signature": "export async function addBookings(bookings: InputBooking[]) {",
+          "role": "Builds booking relations and inserts booking scenario data."
+        },
+        {
+          "kind": "function",
+          "name": "addWebhooksToDb",
+          "signature": "async function addWebhooksToDb(webhooks: any[]) {",
+          "role": "Persists webhook records in the mocked database."
+        },
+        {
+          "kind": "function",
+          "name": "addPaymentToDb",
+          "signature": "async function addPaymentToDb(payment: InputPayment[]) {",
+          "role": "Persists payment records in the mocked database."
+        },
+        {
+          "kind": "function",
+          "name": "addWebhooks",
+          "signature": "async function addWebhooks(webhooks: InputWebhook[]) {",
+          "role": "Logs and inserts webhook scenario data."
+        },
+        {
+          "kind": "function",
+          "name": "addWorkflowsToDb",
+          "signature": "async function addWorkflowsToDb(workflows: InputWorkflow[]) {",
+          "role": "Creates workflows, workflow steps, and their event type or team associations."
+        },
+        {
+          "kind": "function",
+          "name": "addWorkflows",
+          "signature": "async function addWorkflows(workflows: InputWorkflow[]) {",
+          "role": "Logs and delegates workflow scenario data creation."
+        },
+        {
+          "kind": "function",
+          "name": "addWorkflowReminders",
+          "signature": "export async function addWorkflowReminders(workflowReminders: InputWorkflowReminder[]) {",
+          "role": "Creates workflow reminder records for booking scenarios."
+        },
+        {
+          "kind": "function",
+          "name": "addUsersToDb",
+          "signature": "export async function addUsersToDb(users: InputUser[]) {",
+          "role": "Creates users and related out-of-office records, then returns hydrated users."
+        },
+        {
+          "kind": "function",
+          "name": "addTeamsToDb",
+          "signature": "export async function addTeamsToDb(teams: NonNullable<InputUser[\"teams\"]>[number][\"team\"][]) {",
+          "role": "Upserts team records used by scenario users and event types."
+        }
+      ]
+    },
+    {
+      "startLine": 811,
+      "endLine": 1626,
+      "language": "TypeScript",
+      "windowSummary": "Defines booking-scenario setup helpers, organization and credential utilities, date and calendar credential factories, reusable test fixtures, and scenario data construction.",
+      "importsInternal": [],
+      "importsExternal": [],
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "addUsers",
+          "signature": "export async function addUsers(users: InputUser[]) {",
+          "role": "Creates users and their related schedules, credentials, teams, calendars, destinations, and profiles in the test database."
+        },
+        {
+          "kind": "function",
+          "name": "addAppsToDb",
+          "signature": "async function addAppsToDb(apps: any[]) {",
+          "role": "Creates app records and logs the resulting database entries."
+        },
+        {
+          "kind": "function",
+          "name": "addSelectedSlotsToDb",
+          "signature": "async function addSelectedSlotsToDb(selectedSlots: InputSelectedSlot[]) {",
+          "role": "Creates selected-slot records and logs them."
+        },
+        {
+          "kind": "function",
+          "name": "createBookingScenario",
+          "signature": "export async function createBookingScenario(data: ScenarioData) {",
+          "role": "Populates the database with users, apps, event types, bookings, webhooks, workflows, payments, and selected slots for a scenario."
+        },
+        {
+          "kind": "type",
+          "name": "TeamCreateReturnType",
+          "signature": "type TeamCreateReturnType = Awaited<ReturnType<typeof prismock.team.create>>;",
+          "role": "Represents the resolved return type of creating a team."
+        },
+        {
+          "kind": "function",
+          "name": "assertNonNullableSlug",
+          "signature": "function assertNonNullableSlug<T extends { slug: string | null }>(",
+          "role": "Narrows a team's nullable slug to a non-null string or throws an error."
+        },
+        {
+          "kind": "function",
+          "name": "createOrganization",
+          "signature": "export async function createOrganization(orgData: {",
+          "role": "Creates an organization team, optionally creates a child team, and returns the organization with its children."
+        },
+        {
+          "kind": "function",
+          "name": "createCredentials",
+          "signature": "export async function createCredentials(",
+          "role": "Creates credential records in the test database."
+        },
+        {
+          "kind": "const",
+          "name": "getDate",
+          "signature": "export const getDate = (",
+          "role": "Computes date components and a date string using configurable day, month, and year increments."
+        },
+        {
+          "kind": "const",
+          "name": "isWeekStart",
+          "signature": "const isWeekStart = (date: Date, weekStart: WeekDays) => {",
+          "role": "Checks whether a date falls on the configured week-start weekday."
+        },
+        {
+          "kind": "const",
+          "name": "getNextMonthNotStartingOnWeekStart",
+          "signature": "export const getNextMonthNotStartingOnWeekStart = (weekStart: WeekDays, from?: Date) => {",
+          "role": "Finds the first day in the next month that is not the configured week start."
+        },
+        {
+          "kind": "function",
+          "name": "getMockedCredential",
+          "signature": "export function getMockedCredential({",
+          "role": "Builds a mocked integration credential from app metadata and supplied key data."
+        },
+        {
+          "kind": "function",
+          "name": "getGoogleCalendarCredential",
+          "signature": "export function getGoogleCalendarCredential() {",
+          "role": "Returns a mocked Google Calendar credential."
+        },
+        {
+          "kind": "function",
+          "name": "getGoogleMeetCredential",
+          "signature": "export function getGoogleMeetCredential() {",
+          "role": "Returns a mocked Google Meet credential."
+        },
+        {
+          "kind": "function",
+          "name": "getAppleCalendarCredential",
+          "signature": "export function getAppleCalendarCredential() {",
+          "role": "Returns a mocked Apple Calendar credential."
+        },
+        {
+          "kind": "function",
+          "name": "getZoomAppCredential",
+          "signature": "export function getZoomAppCredential() {",
+          "role": "Returns a mocked Zoom credential."
+        },
+        {
+          "kind": "function",
+          "name": "getStripeAppCredential",
+          "signature": "export function getStripeAppCredential() {",
+          "role": "Returns a mocked Stripe credential."
+        },
+        {
+          "kind": "const",
+          "name": "TestData",
+          "signature": "export const TestData = {",
+          "role": "Provides reusable test schedules, users, credentials, and app configuration fixtures."
+        },
+        {
+          "kind": "class",
+          "name": "MockError",
+          "signature": "export class MockError extends Error {",
+          "role": "Defines a named error type for mocked test behavior."
+        },
+        {
+          "kind": "function",
+          "name": "getOrganizer",
+          "signature": "export function getOrganizer({",
+          "role": "Constructs a test organizer user with optional scheduling, team, organization, and account metadata."
+        },
+        {
+          "kind": "function",
+          "name": "getScenarioData",
+          "signature": "export function getScenarioData(",
+          "role": "Normalizes organizer and user inputs into validated scenario data with event types and related fixtures."
+        },
+        {
+          "kind": "function",
+          "name": "enableEmailFeature",
+          "signature": "export function enableEmailFeature() {",
+          "role": "Creates the email feature flag in the mocked database."
+        }
+      ]
+    },
+    {
+      "startLine": 1627,
+      "endLine": 2373,
+      "language": "TypeScript",
+      "windowSummary": "Defines booking scenario mocks, calendar/video/payment/CRM helpers, booking data factories, app status utilities, and field defaults.",
+      "importsInternal": [],
+      "importsExternal": [],
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "mockNoTranslations",
+          "signature": "export function mockNoTranslations() {",
+          "role": "Mocks translation lookup with an identity function."
+        },
+        {
+          "kind": "enum",
+          "name": "BookingLocations",
+          "signature": "export const enum BookingLocations {",
+          "role": "Defines integration location identifiers used by booking mocks."
+        },
+        {
+          "kind": "type",
+          "name": "CalendarServiceMethodMockCallBase",
+          "signature": "export type CalendarServiceMethodMockCallBase = {",
+          "role": "Defines shared constructor arguments recorded by calendar service mocks."
+        },
+        {
+          "kind": "type",
+          "name": "CreateEventMethodMockCall",
+          "signature": "type CreateEventMethodMockCall = CalendarServiceMethodMockCallBase & {",
+          "role": "Describes recorded calendar create-event calls."
+        },
+        {
+          "kind": "type",
+          "name": "UpdateEventMethodMockCall",
+          "signature": "type UpdateEventMethodMockCall = CalendarServiceMethodMockCallBase & {",
+          "role": "Describes recorded calendar update-event calls."
+        },
+        {
+          "kind": "type",
+          "name": "DeleteEventMethodMockCall",
+          "signature": "type DeleteEventMethodMockCall = CalendarServiceMethodMockCallBase & {",
+          "role": "Describes recorded calendar delete-event calls."
+        },
+        {
+          "kind": "type",
+          "name": "GetAvailabilityMethodMockCall",
+          "signature": "type GetAvailabilityMethodMockCall = CalendarServiceMethodMockCallBase & {",
+          "role": "Describes recorded calendar availability calls."
+        },
+        {
+          "kind": "type",
+          "name": "CalendarServiceMethodMock",
+          "signature": "export type CalendarServiceMethodMock = {",
+          "role": "Groups recorded calls produced by the calendar service mock."
+        },
+        {
+          "kind": "function",
+          "name": "mockCalendar",
+          "signature": "export function mockCalendar(",
+          "role": "Configures a mocked calendar integration and records calendar operations."
+        },
+        {
+          "kind": "function",
+          "name": "mockCalendarToHaveNoBusySlots",
+          "signature": "export function mockCalendarToHaveNoBusySlots(",
+          "role": "Configures a calendar mock that returns no busy slots."
+        },
+        {
+          "kind": "function",
+          "name": "mockCalendarToCrashOnCreateEvent",
+          "signature": "export function mockCalendarToCrashOnCreateEvent(metadataLookupKey: keyof typeof appStoreMetadata) {",
+          "role": "Configures calendar event creation to fail."
+        },
+        {
+          "kind": "function",
+          "name": "mockCalendarToCrashOnUpdateEvent",
+          "signature": "export function mockCalendarToCrashOnUpdateEvent(metadataLookupKey: keyof typeof appStoreMetadata) {",
+          "role": "Configures calendar event updates to fail."
+        },
+        {
+          "kind": "function",
+          "name": "mockVideoApp",
+          "signature": "export function mockVideoApp({",
+          "role": "Configures a mocked video application and records meeting operations."
+        },
+        {
+          "kind": "function",
+          "name": "mockSuccessfulVideoMeetingCreation",
+          "signature": "export function mockSuccessfulVideoMeetingCreation({",
+          "role": "Configures successful video meeting creation behavior."
+        },
+        {
+          "kind": "function",
+          "name": "mockVideoAppToCrashOnCreateMeeting",
+          "signature": "export function mockVideoAppToCrashOnCreateMeeting({",
+          "role": "Configures video meeting creation to fail."
+        },
+        {
+          "kind": "function",
+          "name": "mockPaymentApp",
+          "signature": "export function mockPaymentApp({",
+          "role": "Configures a mocked payment application."
+        },
+        {
+          "kind": "function",
+          "name": "mockErrorOnVideoMeetingCreation",
+          "signature": "export function mockErrorOnVideoMeetingCreation({",
+          "role": "Configures a video adapter that throws during meeting creation."
+        },
+        {
+          "kind": "function",
+          "name": "mockCrmApp",
+          "signature": "export function mockCrmApp(",
+          "role": "Configures a mocked CRM service and tracks contact and event operations."
+        },
+        {
+          "kind": "function",
+          "name": "getBooker",
+          "signature": "export function getBooker({",
+          "role": "Builds a mock booker object."
+        },
+        {
+          "kind": "function",
+          "name": "getMockedStripePaymentEvent",
+          "signature": "export function getMockedStripePaymentEvent({ paymentIntentId }: { paymentIntentId: string }) {",
+          "role": "Builds a mock Stripe payment event."
+        },
+        {
+          "kind": "function",
+          "name": "mockPaymentSuccessWebhookFromStripe",
+          "signature": "export async function mockPaymentSuccessWebhookFromStripe({ externalId }: { externalId: string }) {",
+          "role": "Invokes the Stripe payment success handler and captures its response."
+        },
+        {
+          "kind": "function",
+          "name": "getExpectedCalEventForBookingRequest",
+          "signature": "export function getExpectedCalEventForBookingRequest({",
+          "role": "Builds expected calendar event fields for a booking request."
+        },
+        {
+          "kind": "function",
+          "name": "getMockBookingReference",
+          "signature": "export function getMockBookingReference(",
+          "role": "Builds a booking reference with normalized credential handling."
+        },
+        {
+          "kind": "function",
+          "name": "getMockBookingAttendee",
+          "signature": "export function getMockBookingAttendee(",
+          "role": "Builds a mock booking attendee with default values."
+        },
+        {
+          "kind": "const",
+          "name": "getMockAppStatus",
+          "signature": "const getMockAppStatus = ({",
+          "role": "Builds application success and failure status data."
+        },
+        {
+          "kind": "const",
+          "name": "getMockFailingAppStatus",
+          "signature": "export const getMockFailingAppStatus = ({ slug }: { slug: string }) => {",
+          "role": "Builds a failing status for an application."
+        },
+        {
+          "kind": "const",
+          "name": "getMockPassingAppStatus",
+          "signature": "export const getMockPassingAppStatus = ({ slug, overrideName }: { slug: string; overrideName?: string }) => {",
+          "role": "Builds a passing status for an application."
+        },
+        {
+          "kind": "const",
+          "name": "replaceDates",
+          "signature": "export const replaceDates = (dates: string[], replacement: Record<string, string>) => {",
+          "role": "Replaces date prefixes while preserving time portions."
+        },
+        {
+          "kind": "const",
+          "name": "getDefaultBookingFields",
+          "signature": "export const getDefaultBookingFields = ({",
+          "role": "Builds the default booking form field definitions."
+        },
+        {
+          "kind": "const",
+          "name": "createDelegationCredential",
+          "signature": "export const createDelegationCredential = async (orgId: number, type: \"google\" | \"office365\" = \"google\") => {",
+          "role": "Creates a delegation credential for an organization."
+        }
+      ]
+    },
+    {
+      "startLine": 2374,
+      "endLine": 2491,
+      "language": "TypeScript",
+      "windowSummary": "Completes delegation credential setup for Office 365 and exports a helper to build delegation credentials.",
+      "importsInternal": [],
+      "importsExternal": [],
+      "declarations": [
+        {
+          "kind": "const",
+          "name": "buildDelegationCredential",
+          "signature": "export const buildDelegationCredential = ({ serviceAccountKey }: { serviceAccountKey: any }) => {",
+          "role": "Builds a delegation credential object containing a placeholder access token and the provided service account key."
+        }
+      ]
+    }
+  ],
+  "locatedDeclarations": [
+    {
+      "kind": "type",
+      "name": "Fields",
+      "signature": "type Fields = z.infer<typeof eventTypeBookingFields>;",
+      "role": "Infers booking form field types from the event type booking schema.",
+      "startLine": 61
+    },
+    {
+      "kind": "const",
+      "name": "log",
+      "signature": "const log = logger.getSubLogger({ prefix: [\"[bookingScenario]\"] });",
+      "role": "Provides a prefixed logger for booking scenario test helpers.",
+      "startLine": 64
+    },
+    {
+      "kind": "type",
+      "name": "InputWebhook",
+      "signature": "type InputWebhook = {",
+      "role": "Describes webhook data accepted by the scenario setup helpers.",
+      "startLine": 66
+    },
+    {
+      "kind": "type",
+      "name": "InputWorkflow",
+      "signature": "type InputWorkflow = {",
+      "role": "Describes workflow configuration accepted by the scenario setup helpers.",
+      "startLine": 79
+    },
+    {
+      "kind": "type",
+      "name": "InputPayment",
+      "signature": "type InputPayment = {",
+      "role": "Describes payment records used in booking scenarios.",
+      "startLine": 95
+    },
+    {
+      "kind": "type",
+      "name": "InputWorkflowReminder",
+      "signature": "type InputWorkflowReminder = {",
+      "role": "Describes workflow reminder records used in scenarios.",
+      "startLine": 110
+    },
+    {
+      "kind": "type",
+      "name": "InputHost",
+      "signature": "type InputHost = {",
+      "role": "Describes an event type host and optional scheduling configuration.",
+      "startLine": 120
+    },
+    {
+      "kind": "type",
+      "name": "InputSelectedSlot",
+      "signature": "type InputSelectedSlot = {",
+      "role": "Describes a temporarily selected booking slot.",
+      "startLine": 126
+    },
+    {
+      "kind": "type",
+      "name": "ScenarioData",
+      "signature": "export type ScenarioData = {",
+      "role": "Aggregates the mock entities that make up a booking test scenario.",
+      "startLine": 139
+    },
+    {
+      "kind": "type",
+      "name": "InputCredential",
+      "signature": "type InputCredential = typeof TestData.credentials.google & {",
+      "role": "Extends the test credential shape with an optional identifier.",
+      "startLine": 159
+    },
+    {
+      "kind": "type",
+      "name": "InputSelectedCalendar",
+      "signature": "type InputSelectedCalendar = (typeof TestData.selectedCalendars)[keyof typeof TestData.selectedCalendars] & {",
+      "role": "Describes selected calendar data with an optional event type association.",
+      "startLine": 163
+    },
+    {
+      "kind": "type",
+      "name": "InputUser",
+      "signature": "type InputUser = Omit<typeof TestData.users.example, \"defaultScheduleId\"> & {",
+      "role": "Describes user data and related schedules, teams, credentials, and profile settings.",
+      "startLine": 167
+    },
+    {
+      "kind": "type",
+      "name": "InputEventType",
+      "signature": "export type InputEventType = {",
+      "role": "Describes event type configuration accepted by scenario setup.",
+      "startLine": 207
+    },
+    {
+      "kind": "type",
+      "name": "AttendeeBookingSeatInput",
+      "signature": "type AttendeeBookingSeatInput = Pick<Prisma.BookingSeatCreateInput, \"referenceUid\" | \"data\">;",
+      "role": "Selects booking seat fields allowed for attendee setup.",
+      "startLine": 258
+    },
+    {
+      "kind": "type",
+      "name": "WhiteListedBookingProps",
+      "signature": "type WhiteListedBookingProps = {",
+      "role": "Defines explicitly supported booking properties for test input.",
+      "startLine": 260
+    },
+    {
+      "kind": "type",
+      "name": "InputBooking",
+      "signature": "type InputBooking = Partial<Omit<Booking, keyof WhiteListedBookingProps>> & WhiteListedBookingProps;",
+      "role": "Combines Prisma booking fields with the scenario-specific booking properties.",
+      "startLine": 283
+    },
+    {
+      "kind": "const",
+      "name": "Timezones",
+      "signature": "export const Timezones = {",
+      "role": "Provides common timezone mappings used by booking scenario tests.",
+      "startLine": 285
+    },
+    {
+      "kind": "function",
+      "name": "addHostsToDb",
+      "signature": "async function addHostsToDb(eventTypes: InputEventType[]) {",
+      "role": "Creates configured event type host records in the mocked database.",
+      "startLine": 291
+    },
+    {
+      "kind": "function",
+      "name": "addEventTypesToDb",
+      "signature": "export async function addEventTypesToDb(",
+      "role": "Persists event types and their related schedules, teams, and restriction schedules.",
+      "startLine": 323
+    },
+    {
+      "kind": "function",
+      "name": "addEventTypes",
+      "signature": "export async function addEventTypes(eventTypes: InputEventType[], usersStore: InputUser[]) {",
+      "role": "Normalizes event type inputs and creates them with associated users and configuration.",
+      "startLine": 431
+    },
+    {
+      "kind": "function",
+      "name": "addBookingReferencesToDB",
+      "signature": "function addBookingReferencesToDB(bookingReferences: Prisma.BookingReferenceCreateManyInput[]) {",
+      "role": "Creates booking reference records in the mocked database.",
+      "startLine": 519
+    },
+    {
+      "kind": "function",
+      "name": "addBookingsToDb",
+      "signature": "async function addBookingsToDb(",
+      "role": "Normalizes booking dates and persists booking records.",
+      "startLine": 525
+    },
+    {
+      "kind": "function",
+      "name": "addBookings",
+      "signature": "export async function addBookings(bookings: InputBooking[]) {",
+      "role": "Builds booking relations and inserts booking scenario data.",
+      "startLine": 562
+    },
+    {
+      "kind": "function",
+      "name": "addWebhooksToDb",
+      "signature": "async function addWebhooksToDb(webhooks: any[]) {",
+      "role": "Persists webhook records in the mocked database.",
+      "startLine": 636
+    },
+    {
+      "kind": "function",
+      "name": "addPaymentToDb",
+      "signature": "async function addPaymentToDb(payment: InputPayment[]) {",
+      "role": "Persists payment records in the mocked database.",
+      "startLine": 642
+    },
+    {
+      "kind": "function",
+      "name": "addWebhooks",
+      "signature": "async function addWebhooks(webhooks: InputWebhook[]) {",
+      "role": "Logs and inserts webhook scenario data.",
+      "startLine": 648
+    },
+    {
+      "kind": "function",
+      "name": "addWorkflowsToDb",
+      "signature": "async function addWorkflowsToDb(workflows: InputWorkflow[]) {",
+      "role": "Creates workflows, workflow steps, and their event type or team associations.",
+      "startLine": 654
+    },
+    {
+      "kind": "function",
+      "name": "addWorkflows",
+      "signature": "async function addWorkflows(workflows: InputWorkflow[]) {",
+      "role": "Logs and delegates workflow scenario data creation.",
+      "startLine": 730
+    },
+    {
+      "kind": "function",
+      "name": "addWorkflowReminders",
+      "signature": "export async function addWorkflowReminders(workflowReminders: InputWorkflowReminder[]) {",
+      "role": "Creates workflow reminder records for booking scenarios.",
+      "startLine": 736
+    },
+    {
+      "kind": "function",
+      "name": "addUsersToDb",
+      "signature": "export async function addUsersToDb(users: InputUser[]) {",
+      "role": "Creates users and related out-of-office records, then returns hydrated users.",
+      "startLine": 744
+    },
+    {
+      "kind": "function",
+      "name": "addTeamsToDb",
+      "signature": "export async function addTeamsToDb(teams: NonNullable<InputUser[\"teams\"]>[number][\"team\"][]) {",
+      "role": "Upserts team records used by scenario users and event types.",
+      "startLine": 795
+    },
+    {
+      "kind": "function",
+      "name": "addUsers",
+      "signature": "export async function addUsers(users: InputUser[]) {",
+      "role": "Creates users and their related schedules, credentials, teams, calendars, destinations, and profiles in the test database.",
+      "startLine": 832
+    },
+    {
+      "kind": "function",
+      "name": "addAppsToDb",
+      "signature": "async function addAppsToDb(apps: any[]) {",
+      "role": "Creates app records and logs the resulting database entries.",
+      "startLine": 914
+    },
+    {
+      "kind": "function",
+      "name": "addSelectedSlotsToDb",
+      "signature": "async function addSelectedSlotsToDb(selectedSlots: InputSelectedSlot[]) {",
+      "role": "Creates selected-slot records and logs them.",
+      "startLine": 923
+    },
+    {
+      "kind": "function",
+      "name": "createBookingScenario",
+      "signature": "export async function createBookingScenario(data: ScenarioData) {",
+      "role": "Populates the database with users, apps, event types, bookings, webhooks, workflows, payments, and selected slots for a scenario.",
+      "startLine": 932
+    },
+    {
+      "kind": "type",
+      "name": "TeamCreateReturnType",
+      "signature": "type TeamCreateReturnType = Awaited<ReturnType<typeof prismock.team.create>>;",
+      "role": "Represents the resolved return type of creating a team.",
+      "startLine": 965
+    },
+    {
+      "kind": "function",
+      "name": "assertNonNullableSlug",
+      "signature": "function assertNonNullableSlug<T extends { slug: string | null }>(",
+      "role": "Narrows a team's nullable slug to a non-null string or throws an error.",
+      "startLine": 967
+    },
+    {
+      "kind": "function",
+      "name": "createOrganization",
+      "signature": "export async function createOrganization(orgData: {",
+      "role": "Creates an organization team, optionally creates a child team, and returns the organization with its children.",
+      "startLine": 975
+    },
+    {
+      "kind": "function",
+      "name": "createCredentials",
+      "signature": "export async function createCredentials(",
+      "role": "Creates credential records in the test database.",
+      "startLine": 1016
+    },
+    {
+      "kind": "const",
+      "name": "getDate",
+      "signature": "export const getDate = (",
+      "role": "Computes date components and a date string using configurable day, month, and year increments.",
+      "startLine": 1047
+    },
+    {
+      "kind": "const",
+      "name": "isWeekStart",
+      "signature": "const isWeekStart = (date: Date, weekStart: WeekDays) => {",
+      "role": "Checks whether a date falls on the configured week-start weekday.",
+      "startLine": 1096
+    },
+    {
+      "kind": "const",
+      "name": "getNextMonthNotStartingOnWeekStart",
+      "signature": "export const getNextMonthNotStartingOnWeekStart = (weekStart: WeekDays, from?: Date) => {",
+      "role": "Finds the first day in the next month that is not the configured week start.",
+      "startLine": 1100
+    },
+    {
+      "kind": "function",
+      "name": "getMockedCredential",
+      "signature": "export function getMockedCredential({",
+      "role": "Builds a mocked integration credential from app metadata and supplied key data.",
+      "startLine": 1118
+    },
+    {
+      "kind": "function",
+      "name": "getGoogleCalendarCredential",
+      "signature": "export function getGoogleCalendarCredential() {",
+      "role": "Returns a mocked Google Calendar credential.",
+      "startLine": 1146
+    },
+    {
+      "kind": "function",
+      "name": "getGoogleMeetCredential",
+      "signature": "export function getGoogleMeetCredential() {",
+      "role": "Returns a mocked Google Meet credential.",
+      "startLine": 1156
+    },
+    {
+      "kind": "function",
+      "name": "getAppleCalendarCredential",
+      "signature": "export function getAppleCalendarCredential() {",
+      "role": "Returns a mocked Apple Calendar credential.",
+      "startLine": 1165
+    },
+    {
+      "kind": "function",
+      "name": "getZoomAppCredential",
+      "signature": "export function getZoomAppCredential() {",
+      "role": "Returns a mocked Zoom credential.",
+      "startLine": 1175
+    },
+    {
+      "kind": "function",
+      "name": "getStripeAppCredential",
+      "signature": "export function getStripeAppCredential() {",
+      "role": "Returns a mocked Stripe credential.",
+      "startLine": 1184
+    },
+    {
+      "kind": "const",
+      "name": "TestData",
+      "signature": "export const TestData = {",
+      "role": "Provides reusable test schedules, users, credentials, and app configuration fixtures.",
+      "startLine": 1193
+    },
+    {
+      "kind": "class",
+      "name": "MockError",
+      "signature": "export class MockError extends Error {",
+      "role": "Defines a named error type for mocked test behavior.",
+      "startLine": 1467
+    },
+    {
+      "kind": "function",
+      "name": "getOrganizer",
+      "signature": "export function getOrganizer({",
+      "role": "Constructs a test organizer user with optional scheduling, team, organization, and account metadata.",
+      "startLine": 1474
+    },
+    {
+      "kind": "function",
+      "name": "getScenarioData",
+      "signature": "export function getScenarioData(",
+      "role": "Normalizes organizer and user inputs into validated scenario data with event types and related fixtures.",
+      "startLine": 1532
+    },
+    {
+      "kind": "function",
+      "name": "enableEmailFeature",
+      "signature": "export function enableEmailFeature() {",
+      "role": "Creates the email feature flag in the mocked database.",
+      "startLine": 1620
+    },
+    {
+      "kind": "function",
+      "name": "mockNoTranslations",
+      "signature": "export function mockNoTranslations() {",
+      "role": "Mocks translation lookup with an identity function.",
+      "startLine": 1630
+    },
+    {
+      "kind": "enum",
+      "name": "BookingLocations",
+      "signature": "export const enum BookingLocations {",
+      "role": "Defines integration location identifiers used by booking mocks.",
+      "startLine": 1640
+    },
+    {
+      "kind": "type",
+      "name": "CalendarServiceMethodMockCallBase",
+      "signature": "export type CalendarServiceMethodMockCallBase = {",
+      "role": "Defines shared constructor arguments recorded by calendar service mocks.",
+      "startLine": 1646
+    },
+    {
+      "kind": "type",
+      "name": "CreateEventMethodMockCall",
+      "signature": "type CreateEventMethodMockCall = CalendarServiceMethodMockCallBase & {",
+      "role": "Describes recorded calendar create-event calls.",
+      "startLine": 1652
+    },
+    {
+      "kind": "type",
+      "name": "UpdateEventMethodMockCall",
+      "signature": "type UpdateEventMethodMockCall = CalendarServiceMethodMockCallBase & {",
+      "role": "Describes recorded calendar update-event calls.",
+      "startLine": 1660
+    },
+    {
+      "kind": "type",
+      "name": "DeleteEventMethodMockCall",
+      "signature": "type DeleteEventMethodMockCall = CalendarServiceMethodMockCallBase & {",
+      "role": "Describes recorded calendar delete-event calls.",
+      "startLine": 1668
+    },
+    {
+      "kind": "type",
+      "name": "GetAvailabilityMethodMockCall",
+      "signature": "type GetAvailabilityMethodMockCall = CalendarServiceMethodMockCallBase & {",
+      "role": "Describes recorded calendar availability calls.",
+      "startLine": 1676
+    },
+    {
+      "kind": "type",
+      "name": "CalendarServiceMethodMock",
+      "signature": "export type CalendarServiceMethodMock = {",
+      "role": "Groups recorded calls produced by the calendar service mock.",
+      "startLine": 1685
+    },
+    {
+      "kind": "function",
+      "name": "mockCalendar",
+      "signature": "export function mockCalendar(",
+      "role": "Configures a mocked calendar integration and records calendar operations.",
+      "startLine": 1696
+    },
+    {
+      "kind": "function",
+      "name": "mockCalendarToHaveNoBusySlots",
+      "signature": "export function mockCalendarToHaveNoBusySlots(",
+      "role": "Configures a calendar mock that returns no busy slots.",
+      "startLine": 1879
+    },
+    {
+      "kind": "function",
+      "name": "mockCalendarToCrashOnCreateEvent",
+      "signature": "export function mockCalendarToCrashOnCreateEvent(metadataLookupKey: keyof typeof appStoreMetadata) {",
+      "role": "Configures calendar event creation to fail.",
+      "startLine": 1894
+    },
+    {
+      "kind": "function",
+      "name": "mockCalendarToCrashOnUpdateEvent",
+      "signature": "export function mockCalendarToCrashOnUpdateEvent(metadataLookupKey: keyof typeof appStoreMetadata) {",
+      "role": "Configures calendar event updates to fail.",
+      "startLine": 1898
+    },
+    {
+      "kind": "function",
+      "name": "mockVideoApp",
+      "signature": "export function mockVideoApp({",
+      "role": "Configures a mocked video application and records meeting operations.",
+      "startLine": 1902
+    },
+    {
+      "kind": "function",
+      "name": "mockSuccessfulVideoMeetingCreation",
+      "signature": "export function mockSuccessfulVideoMeetingCreation({",
+      "role": "Configures successful video meeting creation behavior.",
+      "startLine": 2000
+    },
+    {
+      "kind": "function",
+      "name": "mockVideoAppToCrashOnCreateMeeting",
+      "signature": "export function mockVideoAppToCrashOnCreateMeeting({",
+      "role": "Configures video meeting creation to fail.",
+      "startLine": 2020
+    },
+    {
+      "kind": "function",
+      "name": "mockPaymentApp",
+      "signature": "export function mockPaymentApp({",
+      "role": "Configures a mocked payment application.",
+      "startLine": 2034
+    },
+    {
+      "kind": "function",
+      "name": "mockErrorOnVideoMeetingCreation",
+      "signature": "export function mockErrorOnVideoMeetingCreation({",
+      "role": "Configures a video adapter that throws during meeting creation.",
+      "startLine": 2061
+    },
+    {
+      "kind": "function",
+      "name": "mockCrmApp",
+      "signature": "export function mockCrmApp(",
+      "role": "Configures a mocked CRM service and tracks contact and event operations.",
+      "startLine": 2088
+    },
+    {
+      "kind": "function",
+      "name": "getBooker",
+      "signature": "export function getBooker({",
+      "role": "Builds a mock booker object.",
+      "startLine": 2156
+    },
+    {
+      "kind": "function",
+      "name": "getMockedStripePaymentEvent",
+      "signature": "export function getMockedStripePaymentEvent({ paymentIntentId }: { paymentIntentId: string }) {",
+      "role": "Builds a mock Stripe payment event.",
+      "startLine": 2172
+    },
+    {
+      "kind": "function",
+      "name": "mockPaymentSuccessWebhookFromStripe",
+      "signature": "export async function mockPaymentSuccessWebhookFromStripe({ externalId }: { externalId: string }) {",
+      "role": "Invokes the Stripe payment success handler and captures its response.",
+      "startLine": 2183
+    },
+    {
+      "kind": "function",
+      "name": "getExpectedCalEventForBookingRequest",
+      "signature": "export function getExpectedCalEventForBookingRequest({",
+      "role": "Builds expected calendar event fields for a booking request.",
+      "startLine": 2194
+    },
+    {
+      "kind": "function",
+      "name": "getMockBookingReference",
+      "signature": "export function getMockBookingReference(",
+      "role": "Builds a booking reference with normalized credential handling.",
+      "startLine": 2211
+    },
+    {
+      "kind": "function",
+      "name": "getMockBookingAttendee",
+      "signature": "export function getMockBookingAttendee(",
+      "role": "Builds a mock booking attendee with default values.",
+      "startLine": 2226
+    },
+    {
+      "kind": "const",
+      "name": "getMockAppStatus",
+      "signature": "const getMockAppStatus = ({",
+      "role": "Builds application success and failure status data.",
+      "startLine": 2246
+    },
+    {
+      "kind": "const",
+      "name": "getMockFailingAppStatus",
+      "signature": "export const getMockFailingAppStatus = ({ slug }: { slug: string }) => {",
+      "role": "Builds a failing status for an application.",
+      "startLine": 2272
+    },
+    {
+      "kind": "const",
+      "name": "getMockPassingAppStatus",
+      "signature": "export const getMockPassingAppStatus = ({ slug, overrideName }: { slug: string; overrideName?: string }) => {",
+      "role": "Builds a passing status for an application.",
+      "startLine": 2276
+    },
+    {
+      "kind": "const",
+      "name": "replaceDates",
+      "signature": "export const replaceDates = (dates: string[], replacement: Record<string, string>) => {",
+      "role": "Replaces date prefixes while preserving time portions.",
+      "startLine": 2280
+    },
+    {
+      "kind": "const",
+      "name": "getDefaultBookingFields",
+      "signature": "export const getDefaultBookingFields = ({",
+      "role": "Builds the default booking form field definitions.",
+      "startLine": 2286
+    },
+    {
+      "kind": "const",
+      "name": "createDelegationCredential",
+      "signature": "export const createDelegationCredential = async (orgId: number, type: \"google\" | \"office365\" = \"google\") => {",
+      "role": "Creates a delegation credential for an organization.",
+      "startLine": 2372
+    },
+    {
+      "kind": "const",
+      "name": "buildDelegationCredential",
+      "signature": "export const buildDelegationCredential = ({ serviceAccountKey }: { serviceAccountKey: any }) => {",
+      "role": "Builds a delegation credential object containing a placeholder access token and the provided service account key.",
+      "startLine": 2480
+    }
+  ],
+  "skimTokenUsage": {
+    "inputTokens": 17949,
+    "outputTokens": 6716,
+    "costUsd": 0
+  }
+}

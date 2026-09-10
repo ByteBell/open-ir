@@ -1,0 +1,1575 @@
+{
+  "relativePath": "packages/lib/server/getLuckyUser.ts",
+  "language": "typescript",
+  "sha256": "eb81c24379baa817aa644edbd9bc54ad228c213c68b8a4511fb924cc73178b71",
+  "sizeBytes": 39367,
+  "tokenCount": 9842,
+  "lineCount": 1220,
+  "analysedAt": "2026-08-27T17:38:40.105Z",
+  "analysis": {
+    "module": {
+      "purpose": "Selects and orders round-robin users for an event by combining availability, booking history, priorities, weights, calendar occupancy, routing-form attributes, virtual queues, and out-of-office intervals.",
+      "summary": "This module implements Cal.com round-robin assignment. It fetches calendar, booking, host, routing-form, attribute, and out-of-office data, derives reset intervals, calibrates hosts added during an interval, applies attribute weights and priorities, and selects the least recently booked eligible user. It also exposes an ordering operation that repeatedly removes selected users to produce a complete deterministic ordering.",
+      "businessContext": "Supports fair and configurable meeting assignment among event hosts and teams. Failures can misroute bookings, violate weighted distribution, or prevent scheduling.",
+      "classes": [
+        "RoutingFormResponse (~L28-34): Represents persisted routing-form response and selected route data",
+        "AttributeWithWeights (~L36-52): Represents weighted routing attribute options and assigned members",
+        "GetLuckyUserParams (~L60-84): Defines event, host, routing, and availability inputs",
+        "FetchedData (~L409-425): Contains pre-fetched booking, calibration, queue, and out-of-office data",
+        "AvailableUserBase (~L594-597): Defines required identity, priority, and weight fields"
+      ],
+      "functions": [
+        "getIntervalEndDate (~L98-115): Calculates the configured round-robin interval end",
+        "getIntervalStartDate (~L117-135): Calculates the configured round-robin interval start",
+        "leastRecentlyBookedUser (~L140-191): Selects the available user with the oldest relevant booking",
+        "getHostsWithCalibration (~L193-264): Calculates host calibration from bookings and out-of-office periods",
+        "getUsersWithHighestPriority (~L266-280): Filters users to the highest effective priority",
+        "filterUsersBasedOnWeights (~L283-371): Filters users by weighted booking shortfall and weight",
+        "getCalendarBusyTimesOfInterval (~L373-393): Fetches busy calendar times for all hosts",
+        "getBookingsOfInterval (~L395-430): Retrieves round-robin bookings for users and interval",
+        "getLuckyUser (~L431-466): Fetches data and selects one lucky user",
+        "getLuckyUser_requiresDataToBePreFetched (~L476-538): Selects a user from already fetched round-robin data",
+        "isFullDayEvent (~L540-547): Detects calendar ranges spanning whole-day increments",
+        "fetchAllDataNeededForCalculations (~L549-724): Fetches and prepares all selection inputs",
+        "getOrderedListOfLuckyUsers (~L599-679): Produces a full ordered list of eligible users",
+        "prepareQueuesAndAttributesData (~L681-733): Parses routing data and prepares queue and weight inputs",
+        "getQueueAndAttributeWeightData (~L735-797): Extracts route-specific queue and attribute data",
+        "getAverageAttributeWeights (~L799-865): Computes average host weights for selected attributes",
+        "getAttributesForVirtualQueues (~L867-908): Extracts selected routing-form options for virtual queues"
+      ],
+      "keywords": [
+        "round-robin scheduling",
+        "booking shortfall",
+        "attribute weights",
+        "virtual queues",
+        "calendar busy times",
+        "out-of-office",
+        "routing forms",
+        "host calibration",
+        "RR reset interval",
+        "booking repository"
+      ],
+      "ontologyConcepts": [
+        "fair allocation",
+        "weighted selection",
+        "priority filtering",
+        "temporal interval",
+        "calendar availability",
+        "capacity calibration",
+        "routing decision"
+      ],
+      "businessEntities": [
+        "User",
+        "Booking",
+        "Host",
+        "EventType",
+        "RoutingForm",
+        "Attribute",
+        "Calendar",
+        "OutOfOfficeEntry"
+      ],
+      "systemCapabilities": [
+        "select round-robin meeting host",
+        "apply host priorities and weights",
+        "calculate booking distribution shortfalls",
+        "incorporate calendar and out-of-office availability",
+        "derive virtual queue routing data",
+        "return ordered host assignments"
+      ],
+      "configDependencies": [
+        "eventType.isRRWeightsEnabled",
+        "eventType.team.rrResetInterval",
+        "eventType.team.rrTimestampBasis",
+        "eventType.includeNoShowInRRCalculation",
+        "eventType.team.parentId"
+      ],
+      "importsInternal": [
+        {
+          "spec": "../date-ranges",
+          "symbols": ["mergeOverlappingRanges"],
+          "anchor": {
+            "startLine": 20,
+            "endLine": 20
+          },
+          "resolvedRelativePath": "packages/lib/date-ranges.ts",
+          "resolvedFileId": "packages/lib/date-ranges.ts",
+          "resolvedHint": "packages/lib/date-ranges.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@prisma/client",
+          "symbols": ["Prisma", "User"],
+          "package": "@prisma/client",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          }
+        },
+        {
+          "spec": "@calcom/app-store/routing-forms/types/types",
+          "symbols": ["FormResponse", "Fields"],
+          "package": "@calcom/app-store",
+          "subpath": "routing-forms/types/types",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "spec": "@calcom/app-store/routing-forms/zod",
+          "symbols": ["zodRoutes"],
+          "package": "@calcom/app-store",
+          "subpath": "routing-forms/zod",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 4,
+            "endLine": 4
+          }
+        },
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs"],
+          "package": "@calcom/dayjs",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 5,
+            "endLine": 5
+          }
+        },
+        {
+          "spec": "@calcom/lib/CalendarManager",
+          "symbols": ["getBusyCalendarTimes"],
+          "package": "@calcom/lib",
+          "subpath": "CalendarManager",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 6,
+            "endLine": 6
+          }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 7,
+            "endLine": 7
+          }
+        },
+        {
+          "spec": "@calcom/lib/raqb/raqbUtils",
+          "symbols": ["acrossQueryValueCompatiblity"],
+          "package": "@calcom/lib",
+          "subpath": "raqb/raqbUtils",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          }
+        },
+        {
+          "spec": "@calcom/lib/raqb/zod",
+          "symbols": ["raqbQueryValueSchema"],
+          "package": "@calcom/lib",
+          "subpath": "raqb/zod",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          }
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "package": "@calcom/lib",
+          "subpath": "safeStringify",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          }
+        },
+        {
+          "spec": "@calcom/lib/server/repository/booking",
+          "symbols": ["BookingRepository"],
+          "package": "@calcom/lib",
+          "subpath": "server/repository/booking",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 12,
+            "endLine": 12
+          }
+        },
+        {
+          "spec": "@calcom/prisma/client",
+          "symbols": ["Booking", "SelectedCalendar"],
+          "package": "@calcom/prisma",
+          "subpath": "client",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 13,
+            "endLine": 14
+          }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["AttributeType", "BookingStatus", "RRTimestampBasis", "RRResetInterval"],
+          "package": "@calcom/prisma",
+          "subpath": "enums",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 15,
+            "endLine": 16
+          }
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["EventBusyDate"],
+          "package": "@calcom/types",
+          "subpath": "Calendar",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          }
+        },
+        {
+          "spec": "@calcom/types/Credential",
+          "symbols": ["CredentialForCalendarService"],
+          "package": "@calcom/types",
+          "subpath": "Credential",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 18,
+            "endLine": 18
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes diagnostic information through the module logger."],
+        "network": ["Requests busy calendar times through getBusyCalendarTimes."],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Sorts the availableUsers array in leastRecentlyBookedUser.",
+          "Rebinds availableUsers during weighted selection and removes users while ordering."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "RoutingFormResponse",
+          "shape": "export type RoutingFormResponse = { response: Prisma.JsonValue; chosenRouteId: string | null; form: { fields: Prisma.JsonValue; routes: Prisma.JsonValue; }; };",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getIntervalEndDate",
+          "shape": "export const getIntervalEndDate = ({ interval, rrTimestampBasis, meetingStartTime, }: { interval: RRResetInterval; rrTimestampBasis: RRTimestampBasis; meetingStartTime?: Date; }) =>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getIntervalStartDate",
+          "shape": "export const getIntervalStartDate = ({ interval, rrTimestampBasis, meetingStartTime, }: { interval: RRResetInterval; rrTimestampBasis: RRTimestampBasis; meetingStartTime?: Date; }) =>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getLuckyUser",
+          "shape": "export async function getLuckyUser<T extends PartialUser & { priority?: number | null; weight?: number | null; }>(getLuckyUserParams: GetLuckyUserParams<T>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getLuckyUser_requiresDataToBePreFetched",
+          "shape": "export function getLuckyUser_requiresDataToBePreFetched<T extends PartialUser & { priority?: number | null; weight?: number | null; }>({ availableUsers, ...getLuckyUserParams }: GetLuckyUserParams<T> & FetchedData)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getOrderedListOfLuckyUsers",
+          "shape": "export async function getOrderedListOfLuckyUsers<AvailableUser extends AvailableUserBase>(getLuckyUserParams: GetLuckyUserParams<AvailableUser>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prepareQueuesAndAttributesData",
+          "shape": "export async function prepareQueuesAndAttributesData<T extends PartialUser>(eventType, routingFormResponse, allRRHosts)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "getBusyCalendarTimes",
+          "shape": "getBusyCalendarTimes(user.credentials, startDate: string, endDate: string, user.userLevelSelectedCalendars, true, true)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BookingRepository.getAllBookingsForRoundRobin",
+          "shape": "bookingRepo.getAllBookingsForRoundRobin({ eventTypeId, users, startDate, endDate, virtualQueuesData, includeNoShowInRRCalculation, rrTimestampBasis })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "zodRoutes.parse",
+          "shape": "zodRoutes.parse(routingForm.routes)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "raqbQueryValueSchema.parse",
+          "shape": "raqbQueryValueSchema.parse(chosenRoute.attributesQueryValue)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.host.findMany",
+          "shape": "prisma.host.findMany({ where: { userId: { in: allRRHosts.map((host) => host.user.id) }, eventTypeId: eventType.id, isFixed: false, createdAt: { gte: getIntervalStartDate({ interval, rrTimestampBasis, meetingStartTime }) } } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.user.findMany",
+          "shape": "prisma.user.findMany({ where: { id: { in: availableUsers.map((user) => user.id) } }, select: { id: true, bookings: { select: { createdAt: true }, where: { eventTypeId: eventType.id, status: BookingStatus.ACCEPTED, attendees: { some: { noShow: false } }, OR: [{ noShowHost: false }, { noShowHost: null }] }, orderBy: { createdAt: \"desc\" }, take: 1 } } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.outOfOfficeEntry.findMany",
+          "shape": "prisma.outOfOfficeEntry.findMany({ where: { userId: { in: allRRHosts.map((host) => host.user.id) }, end: { lte: getIntervalEndDate({ interval, rrTimestampBasis, meetingStartTime }), gte: getIntervalStartDate({ interval, rrTimestampBasis, meetingStartTime }) } }, select: { start: true, end: true, userId: true } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "interval calculation",
+          "intent": "Derives daily or monthly round-robin boundaries from timestamp basis.",
+          "structureKind": "branch",
+          "predicate": "rrTimestampBasis === RRTimestampBasis.START_TIME",
+          "branchOutcomes": ["start-time basis", "created-at basis"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 98,
+            "endLine": 135
+          }
+        },
+        {
+          "name": "weighted filtering",
+          "intent": "Computes booking shortfalls and retains highest shortfall and weight users.",
+          "structureKind": "branch",
+          "predicate": "attributeWeights && attributeWeights.length > 0",
+          "branchOutcomes": ["attribute weights", "host weights"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 283,
+            "endLine": 371
+          }
+        },
+        {
+          "name": "priority selection",
+          "intent": "Restricts candidates to the highest effective priority.",
+          "structureKind": "branch",
+          "predicate": "user.priority === highestPriority || (user.priority == null && highestPriority === 2)",
+          "branchOutcomes": ["highest-priority candidates", "internal error"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 266,
+            "endLine": 280
+          }
+        },
+        {
+          "name": "data fetching",
+          "intent": "Fetches calendars, bookings, hosts, organizers, and out-of-office entries concurrently.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 549,
+            "endLine": 724
+          }
+        },
+        {
+          "name": "ordered selection loop",
+          "intent": "Repeatedly selects and removes users until no candidates remain.",
+          "structureKind": "loop",
+          "predicate": "remainingAvailableUsers.length > 0",
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": "remainingAvailableUsers.length > 0",
+          "anchor": {
+            "startLine": 626,
+            "endLine": 665
+          }
+        },
+        {
+          "name": "routing attribute preparation",
+          "intent": "Parses the selected route and derives weights and virtual queue values.",
+          "structureKind": "branch",
+          "predicate": "routingFormResponse && organizationId",
+          "branchOutcomes": ["route data available", "no organization or response"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 681,
+            "endLine": 733
+          }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "getIntervalEndDate",
+          "signature": "export const getIntervalEndDate = ({\n  interval,\n  rrTimestampBasis,\n  meetingStartTime,\n}: {\n  interval: RRResetInterval;\n  rrTimestampBasis: RRTimestampBasis;\n  meetingStartTime?: Date;\n}) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 98,
+            "endLine": 106
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getIntervalStartDate",
+          "signature": "export const getIntervalStartDate = ({\n  interval,\n  rrTimestampBasis,\n  meetingStartTime,\n}: {\n  interval: RRResetInterval;\n  rrTimestampBasis: RRTimestampBasis;\n  meetingStartTime?: Date;\n}) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 117,
+            "endLine": 125
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getLuckyUser",
+          "signature": "export async function getLuckyUser<\n  T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }\n>(getLuckyUserParams: GetLuckyUserParams<T>)",
+          "generics": "T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 431,
+            "endLine": 437
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getLuckyUser_requiresDataToBePreFetched",
+          "signature": "export function getLuckyUser_requiresDataToBePreFetched<\n  T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }\n>({ availableUsers, ...getLuckyUserParams }: GetLuckyUserParams<T> & FetchedData)",
+          "generics": "T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 476,
+            "endLine": 482
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getOrderedListOfLuckyUsers",
+          "signature": "export async function getOrderedListOfLuckyUsers<AvailableUser extends AvailableUserBase>(\n  getLuckyUserParams: GetLuckyUserParams<AvailableUser>\n)",
+          "generics": "AvailableUser extends AvailableUserBase",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 599,
+            "endLine": 601
+          }
+        },
+        {
+          "kind": "function",
+          "name": "prepareQueuesAndAttributesData",
+          "signature": "export async function prepareQueuesAndAttributesData<T extends PartialUser>(\n  eventType,\n  routingFormResponse,\n  allRRHosts,\n}: Omit<GetLuckyUserParams<T>, \"availableUsers\">)",
+          "generics": "T extends PartialUser",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 681,
+            "endLine": 685
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "RoutingFormResponse",
+          "shape": "{\n  response: Prisma.JsonValue;\n  chosenRouteId: string | null;\n  form: {\n    fields: Prisma.JsonValue;\n    routes: Prisma.JsonValue;\n  };\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 28,
+            "endLine": 34
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "GetLuckyUserParams",
+          "shape": "{\n  availableUsers: [T, ...T[]]; // ensure contains at least 1\n  eventType: {\n    id: number;\n    isRRWeightsEnabled: boolean;\n    team: {\n      parentId?: number | null;\n      rrResetInterval: RRResetInterval | null;\n      rrTimestampBasis: RRTimestampBasis;\n    } | null;\n    includeNoShowInRRCalculation: boolean;\n  };\n  // all routedTeamMemberIds or all hosts of event types\n  allRRHosts: {\n    user: {\n      id: number;\n      email: string;\n      credentials: CredentialForCalendarService[];\n      userLevelSelectedCalendars: SelectedCalendar[];\n    };\n    createdAt: Date;\n    weight?: number | null;\n  }[];\n  routingFormResponse: RoutingFormResponse | null;\n  meetingStartTime?: Date;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 60,
+            "endLine": 84
+          }
+        },
+        {
+          "kind": "type",
+          "name": "VirtualQueuesDataType",
+          "shape": "{\n  chosenRouteId: string;\n  fieldOptionData: {\n    fieldId: string;\n    selectedOptionIds: string | number | string[];\n  };\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 54,
+            "endLine": 58
+          }
+        },
+        {
+          "kind": "type",
+          "name": "OOODataType",
+          "shape": "{ userId: number; oooEntries: { start: Date; end: Date }[] }[]",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 282,
+            "endLine": 282
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "single available user",
+          "handled": true,
+          "behavior": "Returns that user immediately without priority or round-robin filtering.",
+          "anchor": {
+            "startLine": 493,
+            "endLine": 495
+          }
+        },
+        {
+          "inputShape": "missing meetingStartTime with START_TIME basis",
+          "handled": true,
+          "behavior": "Throws an error requiring meeting start time.",
+          "anchor": {
+            "startLine": 107,
+            "endLine": 110
+          }
+        },
+        {
+          "inputShape": "empty weighted-filter result",
+          "handled": true,
+          "behavior": "Throws an internal error instead of returning no user.",
+          "anchor": {
+            "startLine": 365,
+            "endLine": 367
+          }
+        },
+        {
+          "inputShape": "null or absent user priority",
+          "handled": true,
+          "behavior": "Treats null priority as effective priority 2.",
+          "anchor": {
+            "startLine": 271,
+            "endLine": 272
+          }
+        },
+        {
+          "inputShape": "duplicate selected user during ordering",
+          "handled": true,
+          "behavior": "Throws an error indicating the ordering loop cannot progress safely.",
+          "anchor": {
+            "startLine": 649,
+            "endLine": 655
+          }
+        },
+        {
+          "inputShape": "busy calendar entry without time zone",
+          "handled": true,
+          "behavior": "Excludes the entry from full-day busy-time detection.",
+          "anchor": {
+            "startLine": 684,
+            "endLine": 685
+          }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "organizerIdAndAtCreatedPair[user.id]",
+          "right": "booking.createdAt",
+          "inclusive": false,
+          "intent": "Ignores attendee bookings created before the organizer booking.",
+          "anchor": {
+            "startLine": 163,
+            "endLine": 163
+          }
+        },
+        {
+          "operator": "<",
+          "left": "booking.createdAt",
+          "right": "newHost.createdAt",
+          "inclusive": false,
+          "intent": "Counts bookings before a host was added.",
+          "anchor": {
+            "startLine": 207,
+            "endLine": 207
+          }
+        },
+        {
+          "operator": "<",
+          "left": "host.createdAt",
+          "right": "newHost.createdAt",
+          "inclusive": false,
+          "intent": "Counts hosts added before a new host.",
+          "anchor": {
+            "startLine": 210,
+            "endLine": 210
+          }
+        },
+        {
+          "operator": ">=",
+          "left": "booking.createdAt",
+          "right": "oooEntry.start",
+          "inclusive": true,
+          "intent": "Includes bookings beginning at the out-of-office start.",
+          "anchor": {
+            "startLine": 233,
+            "endLine": 233
+          }
+        },
+        {
+          "operator": "<=",
+          "left": "booking.createdAt",
+          "right": "oooEntry.end",
+          "inclusive": true,
+          "intent": "Includes bookings ending at the out-of-office end.",
+          "anchor": {
+            "startLine": 234,
+            "endLine": 234
+          }
+        },
+        {
+          "operator": "!=",
+          "left": "booking.userId",
+          "right": "userId",
+          "inclusive": false,
+          "intent": "Excludes the current user from out-of-office calibration.",
+          "anchor": {
+            "startLine": 235,
+            "endLine": 235
+          }
+        },
+        {
+          "operator": "==",
+          "left": "user.priority",
+          "right": "highestPriority",
+          "inclusive": true,
+          "intent": "Keeps users whose priority equals the maximum.",
+          "anchor": {
+            "startLine": 272,
+            "endLine": 272
+          }
+        },
+        {
+          "operator": "==",
+          "left": "user.bookingShortfall",
+          "right": "maxShortfall",
+          "inclusive": true,
+          "intent": "Keeps users with the greatest calculated shortfall.",
+          "anchor": {
+            "startLine": 341,
+            "endLine": 341
+          }
+        },
+        {
+          "operator": "==",
+          "left": "weight",
+          "right": "maxWeight",
+          "inclusive": true,
+          "intent": "Keeps users with the greatest effective weight.",
+          "anchor": {
+            "startLine": 348,
+            "endLine": 348
+          }
+        },
+        {
+          "operator": "==",
+          "left": "difference % MILLISECONDS_IN_A_DAY",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Identifies durations divisible by a full day.",
+          "anchor": {
+            "startLine": 545,
+            "endLine": 545
+          }
+        },
+        {
+          "operator": "<",
+          "left": "start",
+          "right": "earliestStartTime",
+          "inclusive": false,
+          "intent": "Clamps full-day events that begin before the current month.",
+          "anchor": {
+            "startLine": 689,
+            "endLine": 689
+          }
+        },
+        {
+          "operator": "<",
+          "left": "end.getTime()",
+          "right": "new Date().getTime()",
+          "inclusive": false,
+          "intent": "Accepts only full-day entries ending before the current time.",
+          "anchor": {
+            "startLine": 691,
+            "endLine": 691
+          }
+        },
+        {
+          "operator": ">",
+          "left": "remainingAvailableUsers.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Continues ordering while candidates remain.",
+          "anchor": {
+            "startLine": 626,
+            "endLine": 626
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new Error(\"Meeting start time is required\")",
+          "caught": null,
+          "action": "Stops interval calculation.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 109,
+            "endLine": 109
+          }
+        },
+        {
+          "thrown": "new Error(\"Unable to find users by availableUser ids.\")",
+          "caught": null,
+          "action": "Stops least-recently-booked selection.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 180,
+            "endLine": 180
+          }
+        },
+        {
+          "thrown": "new Error(\"Internal Error: Highest Priority filter should never return length=0.\")",
+          "caught": null,
+          "action": "Rejects an impossible empty priority result.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 274,
+            "endLine": 274
+          }
+        },
+        {
+          "thrown": "new Error(\"Internal Error: Weight filter should never return length=0.\")",
+          "caught": null,
+          "action": "Rejects an impossible empty weighted result.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 366,
+            "endLine": 366
+          }
+        },
+        {
+          "thrown": "Error building ordered list of lucky users. The lucky user ${luckyUser.email} is already in the set.",
+          "caught": null,
+          "action": "Stops ordering when selection repeats.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 653,
+            "endLine": 655
+          }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "availableUsers must contain at least one user.",
+          "anchor": {
+            "startLine": 61,
+            "endLine": 61
+          }
+        },
+        {
+          "kind": "non-null",
+          "description": "A start-time timestamp basis requires meetingStartTime.",
+          "anchor": {
+            "startLine": 107,
+            "endLine": 110
+          }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Priority and weight filters must return at least one user.",
+          "anchor": {
+            "startLine": 273,
+            "endLine": 275
+          }
+        },
+        {
+          "kind": "ordering",
+          "description": "Bookings are expected to be ordered descending by creation time.",
+          "anchor": {
+            "startLine": 159,
+            "endLine": 161
+          }
+        },
+        {
+          "kind": "invariant",
+          "description": "The ordered-user set must never contain the same selected user twice.",
+          "anchor": {
+            "startLine": 649,
+            "endLine": 655
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide at least one available user and valid host identity data.",
+          "anchor": {
+            "startLine": 61,
+            "endLine": 61
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Routing-form routes and attribute query values conform to their zod schemas.",
+          "anchor": {
+            "startLine": 701,
+            "endLine": 701
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Busy calendar results include timeZone when requested with includeTimeZone enabled.",
+          "anchor": {
+            "startLine": 684,
+            "endLine": 684
+          }
+        },
+        {
+          "kind": "init-order",
+          "description": "Prisma, logger, calendar integrations, and routing helpers are initialized before calls.",
+          "anchor": {
+            "startLine": 1,
+            "endLine": 20
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the database repository guarantee booking ordering required by attendee recency selection?",
+          "affects": "leastRecentlyBookedUser ordering invariant",
+          "anchor": {
+            "startLine": 159,
+            "endLine": 161
+          },
+          "resolution": null
+        },
+        {
+          "question": "What are the expected fallback semantics when calendar or Prisma queries reject?",
+          "affects": "error_handling and availability behaviour",
+          "anchor": {
+            "startLine": 379,
+            "endLine": 430
+          },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "The public selection APIs are asynchronous because they fetch calendars and database data concurrently with Promise.all; local selection and ordering are synchronous after data preparation."
+      },
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "requires-meeting-start-time-for-start-basis",
+          "scenario": "A start-time reset basis is used without a meeting start time.",
+          "given": ["rrTimestampBasis === RRTimestampBasis.START_TIME", "meetingStartTime === undefined"],
+          "when": "getIntervalStartDate({ interval, rrTimestampBasis, meetingStartTime })",
+          "then": "throws new Error(\"Meeting start time is required\")",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "returns-single-available-user",
+          "scenario": "Exactly one user is available for round-robin selection.",
+          "given": ["availableUsers.length === 1"],
+          "when": "getLuckyUser_requiresDataToBePreFetched({ availableUsers, ...getLuckyUserParams })",
+          "then": "returns { luckyUser: availableUsers[0], usersAndTheirBookingShortfalls: [] }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "orders-all-available-users",
+          "scenario": "Multiple available users are provided to the ordered-list selector.",
+          "given": ["availableUsers.length > 1"],
+          "when": "getOrderedListOfLuckyUsers(getLuckyUserParams)",
+          "then": "returns users containing every available user exactly once",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "The loop must remove each selected user and reject duplicate selections."
+        },
+        {
+          "testId": "prioritizes-highest-priority-users",
+          "scenario": "Available users have differing priority values.",
+          "given": ["availableUsers contains users with priorities 1 and 2"],
+          "when": "getLuckyUser_requiresDataToBePreFetched({ availableUsers, ...getLuckyUserParams })",
+          "then": "returns a user whose priority equals the highest available priority",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "uses-start-time-day-boundaries",
+          "scenario": "Round-robin interval calculations use meeting start time as their timestamp basis.",
+          "given": [
+            "rrTimestampBasis === RRTimestampBasis.START_TIME",
+            "interval === RRResetInterval.DAY",
+            "meetingStartTime is a valid Date"
+          ],
+          "when": "getIntervalStartDate({ interval, rrTimestampBasis, meetingStartTime }) and getIntervalEndDate({ interval, rrTimestampBasis, meetingStartTime })",
+          "then": "returns UTC start-of-day and UTC end-of-day boundaries for meetingStartTime",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "logger and compatibility aliases",
+        "private and exported data types",
+        "UTC interval helper functions",
+        "interval boundary functions",
+        "array and selection helpers",
+        "calendar and booking retrieval helpers",
+        "single-user selection orchestration",
+        "pre-fetched selection orchestration",
+        "data-fetching orchestration",
+        "ordered-user selection",
+        "routing queue and attribute preparation",
+        "attribute weight calculation",
+        "virtual queue option extraction"
+      ],
+      "moduleLevelCode": "import type { Prisma, User } from \"@prisma/client\";\n\nimport type { FormResponse, Fields } from \"@calcom/app-store/routing-forms/types/types\";\nimport { zodRoutes } from \"@calcom/app-store/routing-forms/zod\";\nimport dayjs from \"@calcom/dayjs\";\nimport { getBusyCalendarTimes } from \"@calcom/lib/CalendarManager\";\nimport logger from \"@calcom/lib/logger\";\nimport { acrossQueryValueCompatiblity } from \"@calcom/lib/raqb/raqbUtils\";\nimport { raqbQueryValueSchema } from \"@calcom/lib/raqb/zod\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport { BookingRepository } from \"@calcom/lib/server/repository/booking\";\nimport prisma from \"@calcom/prisma\";\nimport type { Booking } from \"@calcom/prisma/client\";\nimport type { SelectedCalendar } from \"@calcom/prisma/client\";\nimport type { AttributeType } from \"@calcom/prisma/enums\";\nimport { BookingStatus, RRTimestampBasis, RRResetInterval } from \"@calcom/prisma/enums\";\nimport type { EventBusyDate } from \"@calcom/types/Calendar\";\nimport type { CredentialForCalendarService } from \"@calcom/types/Credential\";\n\nimport { mergeOverlappingRanges } from \"../date-ranges\";\n\nconst log = logger.getSubLogger({ prefix: [\"getLuckyUser\"] });\nconst { getAttributesQueryValue } = acrossQueryValueCompatiblity;",
+      "exports": [
+        {
+          "name": "RoutingFormResponse",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getIntervalEndDate",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getIntervalStartDate",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getLuckyUser",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getLuckyUser_requiresDataToBePreFetched",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getOrderedListOfLuckyUsers",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "prepareQueuesAndAttributesData",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "Prisma",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "User",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "FormResponse",
+          "module": "@calcom/app-store/routing-forms/types/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Fields",
+          "module": "@calcom/app-store/routing-forms/types/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "zodRoutes",
+          "module": "@calcom/app-store/routing-forms/zod",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "dayjs",
+          "module": "@calcom/dayjs",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBusyCalendarTimes",
+          "module": "@calcom/lib/CalendarManager",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "acrossQueryValueCompatiblity",
+          "module": "@calcom/lib/raqb/raqbUtils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "raqbQueryValueSchema",
+          "module": "@calcom/lib/raqb/zod",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "safeStringify",
+          "module": "@calcom/lib/safeStringify",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingRepository",
+          "module": "@calcom/lib/server/repository/booking",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Booking",
+          "module": "@calcom/prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "SelectedCalendar",
+          "module": "@calcom/prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "AttributeType",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingStatus",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "RRTimestampBasis",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "RRResetInterval",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventBusyDate",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CredentialForCalendarService",
+          "module": "@calcom/types/Credential",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "mergeOverlappingRanges",
+          "module": "../date-ranges",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        {
+          "name": "log",
+          "value": "logger.getSubLogger({ prefix: [\"getLuckyUser\"] })",
+          "kind": "logger"
+        },
+        {
+          "name": "getAttributesQueryValue",
+          "value": "acrossQueryValueCompatiblity",
+          "kind": "destructured helper"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__PartialBooking_1#type_alias:PartialBooking",
+        "unitKind": "type_alias",
+        "name": "PartialBooking",
+        "qualifiedName": "PartialBooking",
+        "parentUnitId": null,
+        "startLine": 24,
+        "endLine": 26,
+        "isBehavioral": false,
+        "source": "type PartialBooking = Pick<Booking, \"id\" | \"createdAt\" | \"userId\" | \"status\"> & {\n  attendees: { email: string | null }[];\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__PartialUser_2#type_alias:PartialUser",
+        "unitKind": "type_alias",
+        "name": "PartialUser",
+        "qualifiedName": "PartialUser",
+        "parentUnitId": null,
+        "startLine": 28,
+        "endLine": 28,
+        "isBehavioral": false,
+        "source": "type PartialUser = Pick<User, \"id\" | \"email\">;"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__RoutingFormResponse_3#type_alias:RoutingFormResponse",
+        "unitKind": "type_alias",
+        "name": "RoutingFormResponse",
+        "qualifiedName": "RoutingFormResponse",
+        "parentUnitId": null,
+        "startLine": 29,
+        "endLine": 36,
+        "isBehavioral": false,
+        "source": "export type RoutingFormResponse = {\n  response: Prisma.JsonValue;\n  chosenRouteId: string | null;\n  form: {\n    fields: Prisma.JsonValue;\n    routes: Prisma.JsonValue;\n  };\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__AttributeWithWeights_4#type_alias:AttributeWithWeights",
+        "unitKind": "type_alias",
+        "name": "AttributeWithWeights",
+        "qualifiedName": "AttributeWithWeights",
+        "parentUnitId": null,
+        "startLine": 38,
+        "endLine": 54,
+        "isBehavioral": false,
+        "source": "type AttributeWithWeights = {\n  name: string;\n  slug: string;\n  type: AttributeType;\n  id: string;\n  options: {\n    id: string;\n    value: string;\n    slug: string;\n    assignedUsers: {\n      weight: number | null;\n      member: {\n        userId: number;\n      };\n    }[];\n  }[];\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__VirtualQueuesDataType_5#type_alias:VirtualQueuesDataType",
+        "unitKind": "type_alias",
+        "name": "VirtualQueuesDataType",
+        "qualifiedName": "VirtualQueuesDataType",
+        "parentUnitId": null,
+        "startLine": 56,
+        "endLine": 62,
+        "isBehavioral": false,
+        "source": "type VirtualQueuesDataType = {\n  chosenRouteId: string;\n  fieldOptionData: {\n    fieldId: string;\n    selectedOptionIds: string | number | string[];\n  };\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__GetLuckyUserParams_6#interface:GetLuckyUserParams",
+        "unitKind": "interface",
+        "name": "GetLuckyUserParams",
+        "qualifiedName": "GetLuckyUserParams",
+        "parentUnitId": null,
+        "startLine": 64,
+        "endLine": 89,
+        "isBehavioral": false,
+        "source": "interface GetLuckyUserParams<T extends PartialUser> {\n  availableUsers: [T, ...T[]]; // ensure contains at least 1\n  eventType: {\n    id: number;\n    isRRWeightsEnabled: boolean;\n    team: {\n      parentId?: number | null;\n      rrResetInterval: RRResetInterval | null;\n      rrTimestampBasis: RRTimestampBasis;\n    } | null;\n    includeNoShowInRRCalculation: boolean;\n  };\n  // all routedTeamMemberIds or all hosts of event types\n  allRRHosts: {\n    user: {\n      id: number;\n      email: string;\n      credentials: CredentialForCalendarService[];\n      userLevelSelectedCalendars: SelectedCalendar[];\n    };\n    createdAt: Date;\n    weight?: number | null;\n  }[];\n  routingFormResponse: RoutingFormResponse | null;\n  meetingStartTime?: Date;\n}"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__startOfMonth_7#function:startOfMonth",
+        "unitKind": "function",
+        "name": "startOfMonth",
+        "qualifiedName": "startOfMonth",
+        "parentUnitId": null,
+        "startLine": 92,
+        "endLine": 93,
+        "isBehavioral": true,
+        "source": "const startOfMonth = (date: Date = new Date()) =>\n  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__startOfDay_8#function:startOfDay",
+        "unitKind": "function",
+        "name": "startOfDay",
+        "qualifiedName": "startOfDay",
+        "parentUnitId": null,
+        "startLine": 95,
+        "endLine": 96,
+        "isBehavioral": true,
+        "source": "const startOfDay = (date: Date = new Date()) =>\n  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__endOfDay_9#function:endOfDay",
+        "unitKind": "function",
+        "name": "endOfDay",
+        "qualifiedName": "endOfDay",
+        "parentUnitId": null,
+        "startLine": 98,
+        "endLine": 99,
+        "isBehavioral": true,
+        "source": "const endOfDay = (date: Date) =>\n  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__endOfMonth_10#function:endOfMonth",
+        "unitKind": "function",
+        "name": "endOfMonth",
+        "qualifiedName": "endOfMonth",
+        "parentUnitId": null,
+        "startLine": 101,
+        "endLine": 102,
+        "isBehavioral": true,
+        "source": "const endOfMonth = (date: Date) =>\n  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999));"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getIntervalEndDate_11#function:getIntervalEndDate",
+        "unitKind": "function",
+        "name": "getIntervalEndDate",
+        "qualifiedName": "getIntervalEndDate",
+        "parentUnitId": null,
+        "startLine": 104,
+        "endLine": 124,
+        "isBehavioral": true,
+        "source": "export const getIntervalEndDate = ({\n  interval,\n  rrTimestampBasis,\n  meetingStartTime,\n}: {\n  interval: RRResetInterval;\n  rrTimestampBasis: RRTimestampBasis;\n  meetingStartTime?: Date;\n}) => {\n  if (rrTimestampBasis === RRTimestampBasis.START_TIME) {\n    if (!meetingStartTime) {\n      throw new Error(\"Meeting start time is required\");\n    }\n    if (interval === RRResetInterval.DAY) {\n      return endOfDay(meetingStartTime);\n    }\n    return endOfMonth(meetingStartTime);\n  }\n\n  return new Date();\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getIntervalStartDate_12#function:getIntervalStartDate",
+        "unitKind": "function",
+        "name": "getIntervalStartDate",
+        "qualifiedName": "getIntervalStartDate",
+        "parentUnitId": null,
+        "startLine": 126,
+        "endLine": 149,
+        "isBehavioral": true,
+        "source": "export const getIntervalStartDate = ({\n  interval,\n  rrTimestampBasis,\n  meetingStartTime,\n}: {\n  interval: RRResetInterval;\n  rrTimestampBasis: RRTimestampBasis;\n  meetingStartTime?: Date;\n}) => {\n  if (rrTimestampBasis === RRTimestampBasis.START_TIME) {\n    if (!meetingStartTime) {\n      throw new Error(\"Meeting start time is required\");\n    }\n    if (interval === RRResetInterval.DAY) {\n      return startOfDay(meetingStartTime);\n    }\n    return startOfMonth(meetingStartTime);\n  }\n\n  if (interval === RRResetInterval.DAY) {\n    return startOfDay();\n  }\n  return startOfMonth();\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__isNonEmptyArray_13#function:isNonEmptyArray",
+        "unitKind": "function",
+        "name": "isNonEmptyArray",
+        "qualifiedName": "isNonEmptyArray",
+        "parentUnitId": null,
+        "startLine": 152,
+        "endLine": 152,
+        "isBehavioral": false,
+        "source": "const isNonEmptyArray = <T>(arr: T[]): arr is [T, ...T[]] => arr.length > 0;"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__leastRecentlyBookedUser_14#function:leastRecentlyBookedUser",
+        "unitKind": "function",
+        "name": "leastRecentlyBookedUser",
+        "qualifiedName": "leastRecentlyBookedUser",
+        "parentUnitId": null,
+        "startLine": 154,
+        "endLine": 210,
+        "isBehavioral": true,
+        "source": "function leastRecentlyBookedUser<T extends PartialUser>({\n  availableUsers,\n  bookingsOfAvailableUsers,\n  organizersWithLastCreated,\n}: GetLuckyUserParams<T> & {\n  bookingsOfAvailableUsers: PartialBooking[];\n  organizersWithLastCreated: { id: number; bookings: { createdAt: Date }[] }[];\n}) {\n  const organizerIdAndAtCreatedPair = organizersWithLastCreated.reduce(\n    (keyValuePair: { [userId: number]: Date }, user) => {\n      keyValuePair[user.id] = user.bookings[0]?.createdAt || new Date(0);\n      return keyValuePair;\n    },\n    {}\n  );\n\n  const attendeeUserIdAndAtCreatedPair = bookingsOfAvailableUsers.reduce(\n    (aggregate: { [userId: number]: Date }, booking) => {\n      availableUsers.forEach((user) => {\n        if (aggregate[user.id]) return; // Bookings are ordered DESC, so if the reducer aggregate\n        // contains the user id, it's already got the most recent booking marked.\n        if (!booking.attendees.map((attendee) => attendee.email).includes(user.email)) return;\n        if (organizerIdAndAtCreatedPair[user.id] > booking.createdAt) return; // only consider bookings if they were created after organizer bookings\n        aggregate[user.id] = booking.createdAt;\n      });\n      return aggregate;\n    },\n    {}\n  );\n\n  const userIdAndAtCreatedPair = {\n    ...organizerIdAndAtCreatedPair,\n    ...attendeeUserIdAndAtCreatedPair,\n  };\n\n  log.info(\n    \"userIdAndAtCreatedPair\",\n    safeStringify({\n      organizerIdAndAtCreatedPair,\n      attendeeUserIdAndAtCreatedPair,\n      userIdAndAtCreatedPair,\n    })\n  );\n\n  if (!userIdAndAtCreatedPair) {\n    throw new Error(\"Unable to find users by availableUser ids.\"); // should never happen.\n  }\n\n  const leastRecentlyBookedUser = availableUsers.sort((a, b) => {\n    if (userIdAndAtCreatedPair[a.id] > userIdAndAtCreatedPair[b.id]) return 1;\n    else if (userIdAndAtCreatedPair[a.id] < userIdAndAtCreatedPair[b.id]) return -1;\n    // if two (or more) dates are identical, we randomize the order\n    else return 0;\n  })[0];\n\n  return leastRecentlyBookedUser;\n}"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getHostsWithCalibration_15#function:getHostsWithCalibration",
+        "unitKind": "function",
+        "name": "getHostsWithCalibration",
+        "qualifiedName": "getHostsWithCalibration",
+        "parentUnitId": null,
+        "startLine": 212,
+        "endLine": 295,
+        "isBehavioral": true,
+        "source": "function getHostsWithCalibration({\n  hosts,\n  allRRHostsBookingsOfInterval,\n  allRRHostsCreatedInInterval,\n  oooData,\n}: {\n  hosts: { userId: number; email: string; createdAt: Date }[];\n  allRRHostsBookingsOfInterval: PartialBooking[];\n  allRRHostsCreatedInInterval: { userId: number; createdAt: Date }[];\n  oooData: OOODataType;\n}) {\n  // Helper function to calculate calibration for a new host\n  function calculateNewHostCalibration(newHost: { userId: number; createdAt: Date }) {\n    const existingBookingsBeforeAdded = existingBookings.filter(\n      (booking) => booking.userId !== newHost.userId && booking.createdAt < newHost.createdAt\n    );\n    const hostsAddedBefore = hosts.filter(\n      (host) => host.userId !== newHost.userId && host.createdAt < newHost.createdAt\n    );\n\n    const calibration =\n      existingBookingsBeforeAdded.length && hostsAddedBefore.length\n        ? existingBookingsBeforeAdded.length / hostsAddedBefore.length\n        : 0;\n    log.debug(\n      \"calculateNewHostCalibration\",\n      safeStringify({\n        newHost,\n        existingBookingsBeforeAdded: existingBookingsBeforeAdded.length,\n        hostsAddedBefore: hostsAddedBefore.length,\n        calibration,\n      })\n    );\n    return calibration;\n  }\n\n  const existingBookings = allRRHostsBookingsOfInterval;\n\n  const oooCalibration = new Map<number, number>();\n\n  oooData.forEach(({ userId, oooEntries }) => {\n    let calibration = 0;\n\n    oooEntries.forEach((oooEntry) => {\n      const bookingsInTimeframe = existingBookings.filter(\n        (booking) =>\n          booking.createdAt >= oooEntry.start &&\n          booking.createdAt <= oooEntry.end &&\n          booking.userId !== userId // attendee email check is missing here in case of fixed hosts\n      );\n\n      // - 1 because the we need to exclude the current user\n      calibration += bookingsInTimeframe.length / (hosts.length - 1);\n    });\n\n    oooCalibration.set(userId, calibration);\n  });\n\n  let newHostsWithCalibration: Map<\n    number,\n    {\n      calibration: number;\n      userId: number;\n      createdAt: Date;\n    }\n  > = new Map();\n\n  if (allRRHostsCreatedInInterval.length && existingBookings.length) {\n    // Calculate calibration for each new host and store in a Map\n    newHostsWithCalibration = new Map(\n      allRRHostsCreatedInInterval.map((newHost) => [\n        newHost.userId,\n        { ...newHost, calibration: calculateNewHostCalibration(newHost) },\n      ])\n    );\n    // Map hosts with their respective calibration values\n  }\n\n  return hosts.map((host) => ({\n    ...host,\n    calibration:\n      (newHostsWithCalibration.get(host.userId)?.calibration ?? 0) + (oooCalibration.get(host.userId) ?? 0),\n  }));\n}"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getHostsWithCalibration.calculateNewHostCalibration_16#function:getHostsWithCalibration.calculateNewHostCalibration",
+        "unitKind": "function",
+        "name": "calculateNewHostCalibration",
+        "qualifiedName": "getHostsWithCalibration.calculateNewHostCalibration",
+        "parentUnitId": "packages/lib/server/getLuckyUser.ts__getHostsWithCalibration_15#function:getHostsWithCalibration",
+        "startLine": 224,
+        "endLine": 246,
+        "isBehavioral": true,
+        "source": "  function calculateNewHostCalibration(newHost: { userId: number; createdAt: Date }) {\n    const existingBookingsBeforeAdded = existingBookings.filter(\n      (booking) => booking.userId !== newHost.userId && booking.createdAt < newHost.createdAt\n    );\n    const hostsAddedBefore = hosts.filter(\n      (host) => host.userId !== newHost.userId && host.createdAt < newHost.createdAt\n    );\n\n    const calibration =\n      existingBookingsBeforeAdded.length && hostsAddedBefore.length\n        ? existingBookingsBeforeAdded.length / hostsAddedBefore.length\n        : 0;\n    log.debug(\n      \"calculateNewHostCalibration\",\n      safeStringify({\n        newHost,\n        existingBookingsBeforeAdded: existingBookingsBeforeAdded.length,\n        hostsAddedBefore: hostsAddedBefore.length,\n        calibration,\n      })\n    );\n    return calibration;\n  }"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getUsersWithHighestPriority_17#function:getUsersWithHighestPriority",
+        "unitKind": "function",
+        "name": "getUsersWithHighestPriority",
+        "qualifiedName": "getUsersWithHighestPriority",
+        "parentUnitId": null,
+        "startLine": 297,
+        "endLine": 317,
+        "isBehavioral": true,
+        "source": "function getUsersWithHighestPriority<T extends PartialUser & { priority?: number | null }>({\n  availableUsers,\n}: {\n  availableUsers: T[];\n}) {\n  const highestPriority = Math.max(...availableUsers.map((user) => user.priority ?? 2));\n  const usersWithHighestPriority = availableUsers.filter(\n    (user) => user.priority === highestPriority || (user.priority == null && highestPriority === 2)\n  );\n  if (!isNonEmptyArray(usersWithHighestPriority)) {\n    throw new Error(\"Internal Error: Highest Priority filter should never return length=0.\");\n  }\n\n  log.info(\n    \"getUsersWithHighestPriority\",\n    safeStringify({\n      highestPriorityUsers: usersWithHighestPriority.map((user) => user.id),\n    })\n  );\n  return usersWithHighestPriority;\n}"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__OOODataType_18#type_alias:OOODataType",
+        "unitKind": "type_alias",
+        "name": "OOODataType",
+        "qualifiedName": "OOODataType",
+        "parentUnitId": null,
+        "startLine": 319,
+        "endLine": 319,
+        "isBehavioral": false,
+        "source": "type OOODataType = { userId: number; oooEntries: { start: Date; end: Date }[] }[];"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__filterUsersBasedOnWeights_19#function:filterUsersBasedOnWeights",
+        "unitKind": "function",
+        "name": "filterUsersBasedOnWeights",
+        "qualifiedName": "filterUsersBasedOnWeights",
+        "parentUnitId": null,
+        "startLine": 321,
+        "endLine": 324,
+        "isBehavioral": true,
+        "source": "function filterUsersBasedOnWeights<\n  T extends PartialUser & {\n    weight?: number | null;\n  }"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getCalendarBusyTimesOfInterval_20#function:getCalendarBusyTimesOfInterval",
+        "unitKind": "function",
+        "name": "getCalendarBusyTimesOfInterval",
+        "qualifiedName": "getCalendarBusyTimesOfInterval",
+        "parentUnitId": null,
+        "startLine": 448,
+        "endLine": 454,
+        "isBehavioral": true,
+        "source": "async function getCalendarBusyTimesOfInterval(\n  usersWithCredentials: {\n    id: number;\n    email: string;\n    credentials: CredentialForCalendarService[];\n    userLevelSelectedCalendars: SelectedCalendar[];\n  }[],"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getBookingsOfInterval_21#function:getBookingsOfInterval",
+        "unitKind": "function",
+        "name": "getBookingsOfInterval",
+        "qualifiedName": "getBookingsOfInterval",
+        "parentUnitId": null,
+        "startLine": 476,
+        "endLine": 503,
+        "isBehavioral": true,
+        "source": "async function getBookingsOfInterval({\n  eventTypeId,\n  users,\n  virtualQueuesData,\n  interval,\n  includeNoShowInRRCalculation,\n  rrTimestampBasis,\n  meetingStartTime,\n}: {\n  eventTypeId: number;\n  users: { id: number; email: string }[];\n  virtualQueuesData: VirtualQueuesDataType | null;\n  interval: RRResetInterval;\n  includeNoShowInRRCalculation: boolean;\n  rrTimestampBasis: RRTimestampBasis;\n  meetingStartTime?: Date;\n}) {\n  const bookingRepo = new BookingRepository(prisma);\n  return await bookingRepo.getAllBookingsForRoundRobin({\n    eventTypeId: eventTypeId,\n    users,\n    startDate: getIntervalStartDate({ interval, rrTimestampBasis, meetingStartTime }),\n    endDate: getIntervalEndDate({ interval, rrTimestampBasis, meetingStartTime }),\n    virtualQueuesData,\n    includeNoShowInRRCalculation,\n    rrTimestampBasis,\n  });\n}"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getLuckyUser_22#function:getLuckyUser",
+        "unitKind": "function",
+        "name": "getLuckyUser",
+        "qualifiedName": "getLuckyUser",
+        "parentUnitId": null,
+        "startLine": 505,
+        "endLine": 509,
+        "isBehavioral": true,
+        "source": "export async function getLuckyUser<\n  T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__FetchedData_23#type_alias:FetchedData",
+        "unitKind": "type_alias",
+        "name": "FetchedData",
+        "qualifiedName": "FetchedData",
+        "parentUnitId": null,
+        "startLine": 537,
+        "endLine": 551,
+        "isBehavioral": false,
+        "source": "type FetchedData = {\n  bookingsOfNotAvailableUsersOfInterval: PartialBooking[];\n  bookingsOfAvailableUsersOfInterval: PartialBooking[];\n  allRRHostsBookingsOfInterval: PartialBooking[];\n  allRRHostsCreatedInInterval: { userId: number; createdAt: Date }[];\n  organizersWithLastCreated: { id: number; bookings: { createdAt: Date }[] }[];\n  attributeWeights?:\n    | {\n        userId: number;\n        weight: number;\n      }[]\n    | null;\n  virtualQueuesData?: VirtualQueuesDataType | null;\n  oooData: OOODataType;\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getLuckyUser_requiresDataToBePreFetched_24#function:getLuckyUser_requiresDataToBePreFetched",
+        "unitKind": "function",
+        "name": "getLuckyUser_requiresDataToBePreFetched",
+        "qualifiedName": "getLuckyUser_requiresDataToBePreFetched",
+        "parentUnitId": null,
+        "startLine": 553,
+        "endLine": 557,
+        "isBehavioral": true,
+        "source": "export function getLuckyUser_requiresDataToBePreFetched<\n  T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__isFullDayEvent_25#function:isFullDayEvent",
+        "unitKind": "function",
+        "name": "isFullDayEvent",
+        "qualifiedName": "isFullDayEvent",
+        "parentUnitId": null,
+        "startLine": 617,
+        "endLine": 622,
+        "isBehavioral": true,
+        "source": "function isFullDayEvent(date1: Date, date2: Date) {\n  const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;\n  const difference = Math.abs(date1.getTime() - date2.getTime());\n\n  if (difference % MILLISECONDS_IN_A_DAY === 0) return true;\n}"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__fetchAllDataNeededForCalculations_26#function:fetchAllDataNeededForCalculations",
+        "unitKind": "function",
+        "name": "fetchAllDataNeededForCalculations",
+        "qualifiedName": "fetchAllDataNeededForCalculations",
+        "parentUnitId": null,
+        "startLine": 624,
+        "endLine": 628,
+        "isBehavioral": true,
+        "source": "async function fetchAllDataNeededForCalculations<\n  T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__AvailableUserBase_27#type_alias:AvailableUserBase",
+        "unitKind": "type_alias",
+        "name": "AvailableUserBase",
+        "qualifiedName": "AvailableUserBase",
+        "parentUnitId": null,
+        "startLine": 860,
+        "endLine": 863,
+        "isBehavioral": false,
+        "source": "type AvailableUserBase = PartialUser & {\n  priority: number | null;\n  weight: number | null;\n};"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getOrderedListOfLuckyUsers_28#function:getOrderedListOfLuckyUsers",
+        "unitKind": "function",
+        "name": "getOrderedListOfLuckyUsers",
+        "qualifiedName": "getOrderedListOfLuckyUsers",
+        "parentUnitId": null,
+        "startLine": 865,
+        "endLine": 866,
+        "isBehavioral": true,
+        "source": "export async function getOrderedListOfLuckyUsers<AvailableUser extends AvailableUserBase>(\n  getLuckyUserParams: GetLuckyUserParams<AvailableUser>"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__prepareQueuesAndAttributesData_29#function:prepareQueuesAndAttributesData",
+        "unitKind": "function",
+        "name": "prepareQueuesAndAttributesData",
+        "qualifiedName": "prepareQueuesAndAttributesData",
+        "parentUnitId": null,
+        "startLine": 971,
+        "endLine": 1037,
+        "isBehavioral": true,
+        "source": "export async function prepareQueuesAndAttributesData<T extends PartialUser>({\n  eventType,\n  routingFormResponse,\n  allRRHosts,\n}: Omit<GetLuckyUserParams<T>, \"availableUsers\">) {\n  let attributeWeights;\n  let virtualQueuesData;\n  const organizationId = eventType.team?.parentId;\n  log.debug(\"prepareQueuesAndAttributesData\", safeStringify({ routingFormResponse, organizationId }));\n  if (routingFormResponse && organizationId) {\n    const routingForm = routingFormResponse?.form;\n    const routes = zodRoutes.parse(routingForm.routes);\n    const chosenRoute = routes?.find((route) => route.id === routingFormResponse.chosenRouteId);\n\n    if (chosenRoute && \"attributeIdForWeights\" in chosenRoute) {\n      const attributeIdForWeights = chosenRoute.attributeIdForWeights;\n\n      const attributeWithEnabledWeights = await prisma.attribute.findUnique({\n        where: {\n          id: attributeIdForWeights,\n          teamId: organizationId,\n          isWeightsEnabled: true,\n        },\n        select: {\n          id: true,\n          name: true,\n          slug: true,\n          type: true,\n          options: {\n            select: {\n              id: true,\n              value: true,\n              slug: true,\n              assignedUsers: {\n                select: {\n                  member: {\n                    select: {\n                      userId: true,\n                    },\n                  },\n                  weight: true,\n                },\n              },\n            },\n          },\n        },\n      });\n\n      if (attributeWithEnabledWeights) {\n        // Virtual queues are defined by the attribute that is used for weights\n        const queueAndAtributeWeightData = await getQueueAndAttributeWeightData(\n          allRRHosts,\n          routingFormResponse,\n          attributeWithEnabledWeights\n        );\n        if (\n          queueAndAtributeWeightData?.averageWeightsHosts &&\n          queueAndAtributeWeightData?.virtualQueuesData\n        ) {\n          attributeWeights = queueAndAtributeWeightData?.averageWeightsHosts;\n          virtualQueuesData = queueAndAtributeWeightData?.virtualQueuesData;\n        }\n      }\n    }\n  }\n  return { attributeWeights, virtualQueuesData };\n}"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getQueueAndAttributeWeightData_30#function:getQueueAndAttributeWeightData",
+        "unitKind": "function",
+        "name": "getQueueAndAttributeWeightData",
+        "qualifiedName": "getQueueAndAttributeWeightData",
+        "parentUnitId": null,
+        "startLine": 1039,
+        "endLine": 1039,
+        "isBehavioral": true,
+        "source": "async function getQueueAndAttributeWeightData<T extends PartialUser & { priority?: number | null }>("
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getAverageAttributeWeights_31#function:getAverageAttributeWeights",
+        "unitKind": "function",
+        "name": "getAverageAttributeWeights",
+        "qualifiedName": "getAverageAttributeWeights",
+        "parentUnitId": null,
+        "startLine": 1099,
+        "endLine": 1103,
+        "isBehavioral": true,
+        "source": "function getAverageAttributeWeights<\n  T extends PartialUser & {\n    priority?: number | null;\n    weight?: number | null;\n  }"
+      },
+      {
+        "unitId": "packages/lib/server/getLuckyUser.ts__getAttributesForVirtualQueues_32#function:getAttributesForVirtualQueues",
+        "unitKind": "function",
+        "name": "getAttributesForVirtualQueues",
+        "qualifiedName": "getAttributesForVirtualQueues",
+        "parentUnitId": null,
+        "startLine": 1174,
+        "endLine": 1190,
+        "isBehavioral": true,
+        "source": "function getAttributesForVirtualQueues(\n  response: Record<string, Pick<FormResponse[keyof FormResponse], \"value\">>,\n  attributesQueryValueChild: Record<\n    string,\n    {\n      type?: string | undefined;\n      properties?:\n        | {\n            field?: any;\n            operator?: any;\n            value?: any;\n            valueSrc?: any;\n          }\n        | undefined;\n    }\n  >,\n  attributeWithWeights: { id: string }"
+      }
+    ],
+    "extractedUnitCount": 32,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 23537,
+    "outputTokens": 14173,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

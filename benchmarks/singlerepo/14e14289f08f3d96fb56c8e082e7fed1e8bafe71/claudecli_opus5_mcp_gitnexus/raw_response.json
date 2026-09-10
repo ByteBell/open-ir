@@ -1,0 +1,84 @@
+{
+  "duration_api_ms": 324585,
+  "stop_reason": "end_turn",
+  "session_id": "58962216-513a-4a2f-84cb-5728911ad5b1",
+  "total_cost_usd": 15.420273000000002,
+  "usage": {
+    "input_tokens": 2961375,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 24444,
+    "output_tokens_details": { "thinking_tokens": 14499 },
+    "server_tool_use": { "web_search_requests": 0, "web_fetch_requests": 0 },
+    "service_tier": "standard",
+    "cache_creation": { "ephemeral_1h_input_tokens": 0, "ephemeral_5m_input_tokens": 0 },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 127414,
+        "output_tokens": 2893,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_creation": { "ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0 },
+        "type": "message"
+      }
+    ],
+    "speed": "standard"
+  },
+  "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 2223,
+      "outputTokens": 15,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.002298,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000,
+      "canonicalModel": "claude-haiku-4-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    },
+    "claude-opus-5": {
+      "inputTokens": 2961375,
+      "outputTokens": 24444,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 15.417975000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000,
+      "canonicalModel": "claude-opus-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "extra_usage_disabled",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": { "background": 0, "foreground": 0, "unset": 0 },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": { "parent": 0, "user": 0, "system": 0 },
+    "refused": { "depth_limit": 0, "concurrency_limit": 0, "budget": 0 },
+    "by_type": {}
+  },
+  "is_error": false,
+  "num_turns": 50,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "{\n  \"contract\": \"For a team event type whose host set is partitioned into always-present (fixed) hosts and a rotating (round-robin) pool, the booking pipeline must validate availability for *every* host class the event requires before the booking is accepted — a booking is admissible only if at least one fixed host AND at least one round-robin host is free for the requested interval — and when that condition fails the pipeline must abort with a specific, typed error code that names the unmet condition and is mapped to a deterministic HTTP status and a user-facing message, rather than letting the request proceed with an empty round-robin pool and surfacing whatever generic failure happens downstream.\",\n  \"defect_location\": {\n    \"repo\": \"calcom/cal.com\",\n    \"summary\": \"packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts:71-226 splits hosts into three disjoint buckets — it returns `{ qualifiedRRUsers, additionalFallbackRRUsers, fixedUsers }` (declared at lines 84-88, populated at lines 145-171, returned at lines 199-225) — and marks every host `isFixed: true` when the event is not ROUND_ROBIN (lines 118-125), so for a mixed event the fixed and round-robin pools are genuinely separate objects by the time the availability gate runs. The gate itself, packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts:55-255, is class-blind: it takes a single flat `users: IsFixedAwareUser[]` list (lines 56-58), runs one `getUsersAvailability` pass over `eventType.users` (the `usersAvailability` call in the body) and its declared return type is only `Promise<[IsFixedAwareUser, ...IsFixedAwareUser[]]>` (line 61) — i.e. its sole post-condition is 'at least one user, of any class, survived'. Nothing in that signature or in the file's error vocabulary (it throws ErrorCode.RestrictionScheduleNotFound / ErrorCode.BookingNotAllowedByRestrictionSchedule, seen in the body) distinguishes 'no fixed host free' from 'no round-robin host free', so an available fixed host alone satisfies the gate and the booking is admitted. The consequence is visible downstream in packages/lib/server/getLuckyUser.ts: packages/features/bookings/lib/handleNewBooking.ts:387-2228 (`handler`) calls `getLuckyUser` (getLuckyUser.ts:505-535), which delegates to getLuckyUser_requiresDataToBePreFetched (getLuckyUser.ts:553-615). With an empty round-robin pool the early-return at lines 567-569 does not fire, `getUsersWithHighestPriority` (getLuckyUser.ts:296-316) yields nothing, and leastRecentlyBookedUser (getLuckyUser.ts:154-210) ends at `availableUsers.sort(...)[0]` (lines 200-205), which returns `undefined` rather than throwing — an unchecked absent organizer that only detonates later in the handler, after the booking has been taken. Because no typed code is raised at the point of failure, the error never reaches the typed switch in packages/lib/server/getServerErrorFromUnknown.ts:100-136, whose 409 arm already enumerates ErrorCode.NoAvailableUsersFound and ErrorCode.HostsUnavailableForBooking but has no round-robin-specific member, so it falls to `default: return 500` (lines 131-135). The same blind spot exists in the API surface: apps/api/v2/src/ee/bookings/2024-08-13/services/errors.service.ts:34-54 only recognises the literals `no_available_users_found_error` and `hosts_unavailable_for_booking` and otherwise re-throws untranslated, and the booker's renderer packages/features/bookings/Booker/components/BookEventForm/BookEventForm.tsx:270-314 simply does `t(error.message)` and falls back to `t(\\\"can_you_try_again\\\")` when no message survives — which is exactly the generic failure the report describes. Fixing this requires the gate to be told which hosts are fixed and which are rotating and to assert both pools non-empty (ensureAvailableUsers.ts, handleNewBooking.ts, loadAndValidateUsers.ts, types.ts:34-42 for IsFixedAwareUser), plus a new member in packages/lib/errorCodes.ts wired into getServerErrorFromUnknown.ts:100-136, errors.service.ts:34-54 and the locale catalogue apps/web/public/static/locales/en/common.json.\",\n  },\n  \"answer\": [\n    \"packages/features/bookings/lib/handleNewBooking.ts\",\n    \"packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts\",\n    \"packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts\",\n    \"packages/lib/errorCodes.ts\",\n    \"packages/lib/server/getServerErrorFromUnknown.ts\",\n    \"packages/lib/server/getLuckyUser.ts\",\n    \"apps/web/public/static/locales/en/common.json\",\n    \"apps/api/v2/src/ee/bookings/2024-08-13/services/errors.service.ts\",\n    \"packages/lib/bookings/findQualifiedHostsWithDelegationCredentials.ts\",\n    \"packages/features/bookings/lib/handleNewBooking/types.ts\",\n    \"packages/lib/getUserAvailability.ts\",\n    \"packages/lib/getAggregatedAvailability.ts\",\n    \"packages/trpc/server/routers/viewer/slots/util.ts\",\n    \"packages/features/bookings/lib/handleNewBooking/test/team-bookings/collective-scheduling.test.ts\",\n    \"packages/features/bookings/lib/handleNewBooking/test/fresh-booking.test.ts\",\n    \"packages/features/bookings/lib/handleNewBooking/test/team-bookings/seatedRoundRobin.test.ts\",\n    \"packages/lib/server/getServerErrorFromUnknown.test.ts\",\n    \"apps/web/test/utils/bookingScenario/bookingScenario.ts\",\n    \"apps/web/test/utils/bookingScenario/expects.ts\",\n    \"packages/features/ee/round-robin/roundRobinReassignment.ts\",\n    \"packages/features/bookings/Booker/components/hooks/useBookings.ts\",\n    \"packages/features/bookings/lib/handleSeats/handleSeats.ts\",\n    \"packages/features/bookings/lib/handleNewBooking/createBooking.ts\",\n    \"packages/lib/bookings/filterHostsByLeadThreshold.ts\",\n    \"packages/lib/bookings/filterHostsBySameRoundRobinHost.ts\",\n    \"packages/lib/errors.ts\",\n    \"packages/platform/libraries/index.ts\",\n    \"packages/lib/bookings/findQualifiedHostsWithDelegationCredentials.test.ts\",\n    \"packages/lib/server/getLuckyUser.test.ts\",\n    \"apps/api/v1/pages/api/bookings/_post.ts\",\n    \"packages/features/bookings/Booker/components/BookEventForm/BookEventForm.tsx\",\n    \"packages/features/bookings/lib/handleNewBooking/loadUsers.ts\",\n    \"packages/features/bookings/lib/conflictChecker/checkForConflicts.ts\",\n    \"packages/lib/date-ranges.ts\",\n    \"packages/features/ee/round-robin/roundRobinManualReassignment.ts\",\n    \"packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts\"\n  ]\n}",
+  "ttft_ms": 1590,
+  "type": "result",
+  "duration_ms": 325788,
+  "uuid": "e0b80eb1-9df1-4de9-acae-489032b3a266",
+  "ttft_stream_ms": 1074,
+  "time_to_request_ms": 16,
+  "queued_turn_count": 0
+}

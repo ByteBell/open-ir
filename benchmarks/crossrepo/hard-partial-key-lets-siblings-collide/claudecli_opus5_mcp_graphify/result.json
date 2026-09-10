@@ -1,0 +1,361 @@
+{
+  "arm": "claudecli_opus5_mcp_graphify",
+  "contract": "Any key used to index, cache, route, or join a piece of state must be a total encoding of that state's identity: it has to include every dimension that can distinguish two logically different entries \u2014 the owner/scope that produced the entry, the endpoint/type/path it belongs to, and the runtime type of the value \u2014 not merely the payload dimension that some downstream equality check, filter clause, or comparison happens to look at. Two entries that are logically different must never be able to produce the same key; conversely a key must be stable for entries that are genuinely the same. Every file named below either builds such a key, defines the normalization/hash that makes the key total, or consumes the key as an identity for lookup/routing, and so must agree on this completeness rule.",
+  "defect_location": {
+    "repo": "db",
+    "summary": "The live-query 'includes' pipeline runs a correlated subquery per parent entry and then routes each child result back onto the parent row through a routing key. That key is computed by computeRoutingKey() at packages/db/src/query/live/collection-config-builder.ts:1799, which is called from .setupIncludesOutput() (packages/db/src/query/live/collection-config-builder.ts:878), setupNestedPipelines() (packages/db/src/query/live/collection-config-builder.ts:1306), updateRoutingIndex() (packages/db/src/query/live/collection-config-builder.ts:1601-1624) and flushIncludesState() (packages/db/src/query/live/collection-config-builder.ts:1885, 1991). The key it produces is derived only from the correlated value the child computation yields, not from the identity of the parent entry that spawned that computation, so the NestedRouteIndex / NestedRouteReverseIndex / NestedRouteChildToNested structures declared at packages/db/src/query/live/collection-config-builder.ts:1160-1176 cannot separate two parents whose subqueries produce the same value; removeChildKeyFromRoute() (packages/db/src/query/live/collection-config-builder.ts:1560), cleanRoutingIndexOnDelete() (packages/db/src/query/live/collection-config-builder.ts:1741), attachChildCollectionToParent() (packages/db/src/query/live/collection-config-builder.ts:2165) and setIncludedValue() (packages/db/src/query/live/collection-config-builder.ts:2183) then write the child value onto the wrong parent row. The compile-time half of the same key lives in packages/db/src/query/compiler/index.ts, where INCLUDES_ROUTING (packages/db/src/query/compiler/index.ts:64) and getIncludesRoutingKey()/getUniqueIncludesRoutingKey() (packages/db/src/query/compiler/index.ts:1865-1892, called from extractIncludesFromSelect() at :1779, collectIncludesFromSelectValue() at :1845 and compileQuery() at :373) mint the routing namespace the runtime key is written into, so both files must change together. This breaks the contract because the join key encodes only the computed payload and omits the producing parent's identity, exactly the dimension that makes the two cases logically different \u2014 the same completeness rule that packages/db-ivm/src/hashing/hash.ts:51-154 (type-tagged hashing, markers at packages/db-ivm/src/hashing/murmur.ts:6-10) and packages/db/src/utils/comparison.ts:187-232 (normalizeValue/normalizeForBTree) enforce for index keys inside this very repository."
+  },
+  "case_id": "xrepo-v6-2-partial-key-lets-siblings-collide-hard",
+  "case_question": "A correlated per-parent computation joins its result back to the parent that asked for it using a key built only from the computed value itself - never from which parent produced it. So when two different parents' correlated computations happen to produce the same value, the join can no longer tell them apart, and a value silently attaches itself to the wrong parent's row - the correlation was real, but the key that was supposed to carry it only captured part of what made the two cases different. The same hazard is handled deliberately elsewhere in the folder: several libraries look up or normalize a piece of state using a key computed from an object, and that key has to capture every dimension that can make two logically different objects collide, not merely the dimension an equality check or a filter clause happens to reference. Which files build the join key that drops the parent's identity, and which own the key-completeness contract it has to be brought in line with?",
+  "retrieved": 26,
+  "gold_counts": {
+    "min_repos": 4,
+    "min_files": 9
+  },
+  "gold_size": 9,
+  "gold_repo_count": 4,
+  "metrics": {
+    "recall@10": 0.2222,
+    "recall@25": 0.2222,
+    "recall@50": 0.2222,
+    "recall@100": 0.2222,
+    "precision@5": 0.2,
+    "precision@10": 0.2,
+    "MRR": 0.5,
+    "first_hit_rank": 2,
+    "hits_at_25": "2/9",
+    "repo_recall": 1.0,
+    "repos_found": "4/4",
+    "repos_named": 9,
+    "invalid_path_rate": 0.0,
+    "cap_at_run_time": 100
+  },
+  "prf": {
+    "full_list": {
+      "precision": 0.0769,
+      "recall": 0.2222,
+      "f1": 0.1143,
+      "hits": 2,
+      "retrieved": 26,
+      "gold_size": 9
+    },
+    "@10": {
+      "precision": 0.2,
+      "recall": 0.2222,
+      "f1": 0.2105,
+      "hits": 2,
+      "retrieved": 10,
+      "gold_size": 9
+    },
+    "@25": {
+      "precision": 0.08,
+      "recall": 0.2222,
+      "f1": 0.1176,
+      "hits": 2,
+      "retrieved": 25,
+      "gold_size": 9
+    },
+    "@50": {
+      "precision": 0.0769,
+      "recall": 0.2222,
+      "f1": 0.1143,
+      "hits": 2,
+      "retrieved": 26,
+      "gold_size": 9
+    },
+    "@100": {
+      "precision": 0.0769,
+      "recall": 0.2222,
+      "f1": 0.1143,
+      "hits": 2,
+      "retrieved": 26,
+      "gold_size": 9
+    }
+  },
+  "hits": ["db::packages/db/src/query/compiler/index.ts", "db::packages/db/src/query/compiler/joins.ts"],
+  "ranked_detail": [
+    {
+      "rank": 1,
+      "repo": "db",
+      "path": "packages/db/src/query/live/collection-config-builder.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 2,
+      "repo": "db",
+      "path": "packages/db/src/query/compiler/index.ts",
+      "gold": true,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 3,
+      "repo": "db",
+      "path": "packages/db-ivm/src/hashing/hash.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 4,
+      "repo": "db",
+      "path": "packages/db/src/utils/comparison.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 5,
+      "repo": "db",
+      "path": "packages/db/src/indexes/auto-index.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 6,
+      "repo": "db",
+      "path": "packages/db/src/query/compiler/joins.ts",
+      "gold": true,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 7,
+      "repo": "db",
+      "path": "packages/db-ivm/src/hashing/murmur.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 8,
+      "repo": "db",
+      "path": "packages/db-ivm/src/indexes.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 9,
+      "repo": "db",
+      "path": "packages/db/src/query/compiler/types.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 10,
+      "repo": "query",
+      "path": "packages/query-core/src/utils.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 11,
+      "repo": "query",
+      "path": "packages/query-core/src/queryCache.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 12,
+      "repo": "query",
+      "path": "packages/query-core/src/queryClient.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 13,
+      "repo": "query",
+      "path": "packages/query-core/src/mutationObserver.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 14,
+      "repo": "redux-toolkit",
+      "path": "packages/toolkit/src/query/defaultSerializeQueryArgs.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 15,
+      "repo": "redux-toolkit",
+      "path": "packages/toolkit/src/query/createApi.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 16,
+      "repo": "redux-toolkit",
+      "path": "packages/toolkit/src/query/core/buildInitiate.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 17,
+      "repo": "redux-toolkit",
+      "path": "packages/toolkit/src/query/core/apiState.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 18,
+      "repo": "redux-toolkit",
+      "path": "packages/toolkit/src/query/core/buildSlice.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 19,
+      "repo": "jotai",
+      "path": "src/vanilla/utils/atomFamily.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 20,
+      "repo": "tldraw",
+      "path": "packages/store/src/lib/StoreQueries.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 21,
+      "repo": "tldraw",
+      "path": "packages/store/src/lib/executeQuery.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 22,
+      "repo": "reselect",
+      "path": "src/weakMapMemoize.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 23,
+      "repo": "reselect",
+      "path": "src/lruMemoize.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 24,
+      "repo": "xyflow",
+      "path": "packages/system/src/utils/edges/general.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 25,
+      "repo": "table",
+      "path": "packages/table-core/src/utils/getGroupedRowModel.ts",
+      "gold": false,
+      "exists_at_pin": true
+    },
+    {
+      "rank": 26,
+      "repo": "redux-devtools",
+      "path": "packages/redux-devtools-rtk-query-monitor/src/utils/rtk-query.ts",
+      "gold": false,
+      "exists_at_pin": true
+    }
+  ],
+  "invalid_paths": [],
+  "missed_gold": [
+    "db::packages/db/src/query/builder/index.ts",
+    "db::packages/db/src/query/builder/types.ts",
+    "db::packages/db/src/query/compiler/group-by.ts",
+    "db::packages/db/src/query/ir.ts",
+    "redux-toolkit::packages/toolkit/src/entities/create_adapter.ts",
+    "table::packages/table-core/src/features/RowSelection.ts",
+    "query::packages/query-core/src/mutationCache.ts"
+  ],
+  "retriever": {
+    "surface": "Opus 5 with ONLY the graphify knowledge-graph MCP server: a single graph merged across all 14 pinned repos. No Bash, Read, Grep, Glob, filesystem access, network, or subagents.",
+    "repo_pins": {
+      "redux": "3aa561f9fc13f3287e6d83764f85fe0e82437c5f",
+      "redux-toolkit": "b1c5130154c454ca8387f55da6122fcb507c560c",
+      "react-redux": "ad5d1e0816d0cb1464b25cf2853f2a7d73433f5b",
+      "reselect": "8d87c27b75f55883629be75d1eae1c27832d907a",
+      "redux-thunk": "184205d49f707c6f203269e0d39ad85824801816",
+      "react": "3a717e42438afac81020cdec297dadb5613a4304",
+      "jotai": "5c4ca26b0db5571114be58393e17854a771f7790",
+      "zustand": "beca84e600e4e250f6b244d22878e72948f331c7",
+      "db": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+      "xyflow": "360f5b13e2bc6899ea06b4be1a49b068d86926cf",
+      "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+      "table": "d08af367e11c539bb7e18c2472aa761149ef6db6",
+      "tldraw": "5590d14d8edd4faab7dc1177b6e1adb28876fd23",
+      "redux-devtools": "f4b4668c30ae08920c59a76cc4629c35c16ef0fa"
+    },
+    "checkout_verified": "run.sh gates on git rev-parse HEAD == pinned commit for all 14 repositories before launch",
+    "isolation": "kernel-enforced by sandbox-exec: gold, the answer vault and every sibling arm are unreadable; no prior-run transcript is readable; fresh cwd; no settings sources loaded",
+    "surface_pure": true
+  },
+  "cost": {
+    "session_id": "48f0e1ef-c618-4de8-90c5-b61b66bca119",
+    "arm": "claudecli_opus5_mcp_graphify",
+    "case": "xrepo-v6-2-partial-key-lets-siblings-collide",
+    "model": ["claude-haiku-4-5-20251001", "claude-opus-5"],
+    "launch": "fresh isolated `claude -p` under sandbox-exec, --setting-sources '' --disable-slash-commands, --strict-mcp-config with ONLY the shared graphify MCP server (one graph merged across all 14 pinned repos), --allowedTools mcp__graphify__* and --disallowedTools Bash,Read,Write,Edit,Grep,Glob,...",
+    "price_per_mtok_usd": {
+      "input": 5.0,
+      "output": 25.0,
+      "cache_write": 6.25,
+      "cache_read": 0.5
+    },
+    "usd_per_query_cli": 13.680449000000003,
+    "usd_per_query_list_price": 13.677485,
+    "duration_ms": 393075,
+    "wall_seconds": 409,
+    "num_turns": 56,
+    "tokens": {
+      "input": 2597577,
+      "output": 27584,
+      "cache_creation": 0,
+      "cache_read": 0
+    },
+    "tokens_retrieved": 40033,
+    "cache_first_turn_read": 0,
+    "cache_inherited": false,
+    "cache_clean": true,
+    "cache_mode": "cold",
+    "cache_clean_note": "cache_clean means no cache was inherited from an earlier session, which is what the run conditions require -- NOT that the run read no cache at all. In-run cache (the totals below) is expected and comparable. Judged on cache_read at the first assistant turn.",
+    "tool_calls": {
+      "ToolSearch": 2,
+      "mcp__graphify__graph_stats": 2,
+      "mcp__graphify__query_graph": 25,
+      "mcp__graphify__god_nodes": 1,
+      "mcp__graphify__get_node": 4,
+      "mcp__graphify__get_neighbors": 21
+    },
+    "disallowed_tool_calls": {},
+    "non_retrieval_tool_calls": {
+      "ToolSearch": 2
+    },
+    "mcp_tool_calls": {
+      "mcp__graphify__graph_stats": 2,
+      "mcp__graphify__query_graph": 25,
+      "mcp__graphify__god_nodes": 1,
+      "mcp__graphify__get_node": 4,
+      "mcp__graphify__get_neighbors": 21
+    },
+    "surface_pure": true,
+    "surface_pure_note": "Arm surface is Opus 5 with ONLY the graphify knowledge-graph MCP server (query_graph, get_node, get_neighbors, get_community, god_nodes, graph_stats, shortest_path) against a single graph merged across all 14 pinned repos. Bash/Read/Grep/Glob/Write/Edit and every other MCP server are excluded by --disallowedTools and --strict-mcp-config, so a filesystem-grep escape was not merely unused but impossible. Any tool outside the graphify allow-list counts as a surface violation.",
+    "sandbox": {
+      "mechanism": "sandbox-exec (macOS seatbelt), profile pinned at sandbox.sb",
+      "gold_readable": false,
+      "other_arms_readable": false,
+      "transcripts_readable": false,
+      "out_of_arena_paths_attempted": {},
+      "reads_refused_by_kernel": 0,
+      "contamination_possible": false,
+      "note": "The benchmark tree is denied wholesale and only the 14 repo directories plus cross-repo/_indexes/graphify/merged (the graphify MCP server's own graph.json) are re-allowed, so golden.json, DONOTREADTHISFOLDER/ and every sibling arm's results fail with EPERM. ~/.claude/projects is denied too, so no earlier session transcript - nor this run's own - is readable. cwd was a fresh empty directory, no settings sources were loaded and slash commands were disabled, so no CLAUDE.md, skills, plugins or hooks applied; auto-memory is unreadable under the sandbox."
+    },
+    "transcript": "/Users/sauravverma/.claude/projects/-private-tmp-xrepo-runs-xrepo-v6-2-partial-key-lets-siblings-collide-graphify/48f0e1ef-c618-4de8-90c5-b61b66bca119.jsonl",
+    "prompt_caching": "default (caching not disabled)",
+    "index": {
+      "tool": "graphify",
+      "index_location": "~/programs/benchmarks/react-ecosystem/cross-repo/_indexes/graphify/merged/graphify-out/graph.json",
+      "build": "per-repo `graphify extract <repo> --code-only --no-cluster`, then `graphify merge-graphs` across all 14 repos into one cross-repo graph (shared across every cross-repo case, built once)"
+    }
+  },
+  "comparable": true
+}

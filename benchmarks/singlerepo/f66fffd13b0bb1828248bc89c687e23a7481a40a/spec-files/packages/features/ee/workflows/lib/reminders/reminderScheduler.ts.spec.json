@@ -1,0 +1,1425 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+    "language": "typescript",
+    "sizeBytes": 11083,
+    "tokenCount": 2771,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-09-04T07:29:56.168Z",
+    "module": {
+      "purpose": "This file orchestrates scheduling, cancellation handling, and fallback delivery for workflow reminders across SMS, email, WhatsApp, and AI phone-call actions.",
+      "summary": "The module processes verified workflow steps against either calendar-event or form-submission context. It applies SMS rate limits, resolves attendee phone numbers for seated bookings, generates shared scheduling parameters, and dispatches action-specific reminder managers. Event-triggered email workflows may be lazily scheduled, while cancellation workflows process only cancellation-triggered definitions. When users lack credits, already scheduled messages are cancelled through Twilio and converted into attendee email notifications. Public operations are wrapped with reporting instrumentation.",
+      "businessContext": "This supports appointment communications and workflow automation for scheduling products. Failures can prevent reminders, cancellation notices, or fallback customer notifications from reaching attendees and hosts.",
+      "classes": [
+        "WorkflowContextData (~L28-33): Union context carrying either booking information or form submission data",
+        "ExtendedCalendarEvent (~L35-45): Calendar event enriched with event type, host, and booking metadata",
+        "ProcessWorkflowStepParams (~L47-58): Input parameters for processing one workflow action step",
+        "ScheduleWorkflowRemindersArgs (~L60-64): Arguments controlling workflow reminder scheduling and credit validation",
+        "SendCancelledRemindersArgs (~L258-264): Arguments required to process cancellation-triggered reminder workflows"
+      ],
+      "functions": [
+        "getReminderPhoneNumber (~L66-88): Resolves destination phone numbers for attendee messaging actions",
+        "processWorkflowStep (~L90-205): Validates context and dispatches one workflow step to its provider",
+        "_scheduleWorkflowReminders (~L207-256): Iterates workflows and schedules eligible reminder actions",
+        "_sendCancelledReminders (~L266-287): Processes workflow steps triggered by event cancellation",
+        "_cancelScheduledMessagesAndScheduleEmails (~L289-337): Cancels messages and converts attendee notifications into emails",
+        "scheduleWorkflowReminders (~L339-342): Reports and exposes the workflow reminder scheduling operation",
+        "sendCancelledReminders (~L343-343): Reports and exposes cancellation reminder processing",
+        "cancelScheduledMessagesAndScheduleEmails (~L344-347): Reports and exposes credit-based message conversion"
+      ],
+      "keywords": [
+        "workflow reminders",
+        "SMS rate limiting",
+        "WhatsApp notifications",
+        "lazy email workflows",
+        "AI phone calls",
+        "booking seat resolution",
+        "credit validation",
+        "Twilio cancellation",
+        "form trigger workflows",
+        "cancellation notifications"
+      ],
+      "ontologyConcepts": [
+        "Workflow orchestration",
+        "Reminder scheduling",
+        "Notification routing",
+        "Trigger-based automation",
+        "Rate limiting",
+        "Credit enforcement",
+        "Message cancellation",
+        "Fallback delivery"
+      ],
+      "businessEntities": [
+        "Workflow",
+        "WorkflowStep",
+        "Booking",
+        "Attendee",
+        "CalendarEvent",
+        "FormSubmission",
+        "Reminder",
+        "Seat"
+      ],
+      "systemCapabilities": [
+        "Schedule multi-channel workflow reminders",
+        "Route notifications to attendees and hosts",
+        "Enforce messaging rate limits and credits",
+        "Handle calendar and form-triggered workflows",
+        "Cancel scheduled messages",
+        "Convert cancelled messages into emails"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../types",
+          "symbols": ["FormSubmissionData"],
+          "anchor": { "startLine": 23, "endLine": 23 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/types.ts"
+        },
+        {
+          "spec": "../types",
+          "symbols": ["BookingInfo"],
+          "anchor": { "startLine": 24, "endLine": 24 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/types.ts"
+        },
+        {
+          "spec": "./smsReminderManager",
+          "symbols": ["ScheduleTextReminderAction", "scheduleSMSReminder"],
+          "anchor": { "startLine": 25, "endLine": 25 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts"
+        },
+        {
+          "spec": "./smsReminderManager",
+          "symbols": ["scheduleSMSReminder"],
+          "anchor": { "startLine": 99, "endLine": 99 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts"
+        },
+        {
+          "spec": "./emailReminderManager",
+          "symbols": ["scheduleEmailReminder"],
+          "anchor": { "startLine": 114, "endLine": 114 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts"
+        },
+        {
+          "spec": "./whatsappReminderManager",
+          "symbols": ["scheduleWhatsappReminder"],
+          "anchor": { "startLine": 135, "endLine": 135 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/whatsappReminderManager.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/whatsappReminderManager.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/whatsappReminderManager.ts"
+        },
+        {
+          "spec": "./aiPhoneCallManager",
+          "symbols": ["scheduleAIPhoneCall"],
+          "anchor": { "startLine": 154, "endLine": 154 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/aiPhoneCallManager.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/aiPhoneCallManager.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/aiPhoneCallManager.ts"
+        },
+        {
+          "spec": "./providers/twilioProvider",
+          "symbols": ["twilio"],
+          "anchor": { "startLine": 257, "endLine": 257 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/providers/twilioProvider.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/providers/twilioProvider.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/providers/twilioProvider.ts"
+        },
+        {
+          "spec": "./providers/emailProvider",
+          "symbols": ["sendOrScheduleWorkflowEmails"],
+          "anchor": { "startLine": 258, "endLine": 258 },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "symbols": ["BookingSeatRepository"],
+          "package": "@calcom",
+          "subpath": "features/bookings/repositories/BookingSeatRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@calcom/features/ee/billing/credit-service",
+          "symbols": ["CreditCheckFn"],
+          "package": "@calcom",
+          "subpath": "features/ee/billing/credit-service",
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+          "symbols": [
+            "isAttendeeAction",
+            "isSMSAction",
+            "isSMSOrWhatsappAction",
+            "isWhatsappAction",
+            "isCalAIAction",
+            "isEmailAction"
+          ],
+          "package": "@calcom",
+          "subpath": "features/ee/workflows/lib/actionHelperFunctions",
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 9 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/EmailWorkflowService",
+          "symbols": ["EmailWorkflowService"],
+          "package": "@calcom",
+          "subpath": "features/ee/workflows/lib/service/EmailWorkflowService",
+          "isBuiltin": false,
+          "anchor": { "startLine": 10, "endLine": 10 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "symbols": ["WorkflowService"],
+          "package": "@calcom",
+          "subpath": "features/ee/workflows/lib/service/WorkflowService",
+          "isBuiltin": false,
+          "anchor": { "startLine": 11, "endLine": 11 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/types",
+          "symbols": ["Workflow", "WorkflowStep"],
+          "package": "@calcom",
+          "subpath": "features/ee/workflows/lib/types",
+          "isBuiltin": false,
+          "anchor": { "startLine": 12, "endLine": 12 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+          "symbols": ["WorkflowReminderRepository"],
+          "package": "@calcom",
+          "subpath": "features/ee/workflows/repositories/WorkflowReminderRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 13, "endLine": 13 }
+        },
+        {
+          "spec": "@calcom/lib/formatCalendarEvent",
+          "symbols": ["formatCalEventExtended"],
+          "package": "@calcom",
+          "subpath": "lib/formatCalendarEvent",
+          "isBuiltin": false,
+          "anchor": { "startLine": 14, "endLine": 14 }
+        },
+        {
+          "spec": "@calcom/lib/sentryWrapper",
+          "symbols": ["withReporting"],
+          "package": "@calcom",
+          "subpath": "lib/sentryWrapper",
+          "isBuiltin": false,
+          "anchor": { "startLine": 15, "endLine": 15 }
+        },
+        {
+          "spec": "@calcom/lib/server/i18n",
+          "symbols": ["getTranslation"],
+          "package": "@calcom",
+          "subpath": "lib/server/i18n",
+          "isBuiltin": false,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        },
+        {
+          "spec": "@calcom/lib/smsLockState",
+          "symbols": ["checkSMSRateLimit"],
+          "package": "@calcom",
+          "subpath": "lib/smsLockState",
+          "isBuiltin": false,
+          "anchor": { "startLine": 17, "endLine": 17 }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom",
+          "subpath": "prisma",
+          "isBuiltin": false,
+          "anchor": { "startLine": 18, "endLine": 18 }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["SchedulingType", "WorkflowActions", "WorkflowTriggerEvents"],
+          "package": "@calcom",
+          "subpath": "prisma/enums",
+          "isBuiltin": false,
+          "anchor": { "startLine": 19, "endLine": 20 }
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["CalendarEvent"],
+          "package": "@calcom",
+          "subpath": "types/Calendar",
+          "isBuiltin": false,
+          "anchor": { "startLine": 21, "endLine": 21 }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+          "symbols": ["WorkflowReminderRepository"],
+          "package": "@calcom",
+          "subpath": "features/ee/workflows/repositories/WorkflowReminderRepository",
+          "isBuiltin": false,
+          "anchor": { "startLine": 247, "endLine": 249 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads attendee phone details from Prisma through BookingSeatRepository.",
+          "Reads scheduled reminders and updates their delivery mode through WorkflowReminderRepository.",
+          "Loads translations for attendee locales."
+        ],
+        "network": [
+          "Schedules SMS, email, WhatsApp, and AI phone-call workflow actions.",
+          "Cancels SMS messages through the Twilio provider.",
+          "Sends or schedules replacement workflow emails."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "scheduleWorkflowReminders",
+          "shape": "withReporting(_scheduleWorkflowReminders, \"scheduleWorkflowReminders\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "sendCancelledReminders",
+          "shape": "withReporting(_sendCancelledReminders, \"sendCancelledReminders\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "cancelScheduledMessagesAndScheduleEmails",
+          "shape": "withReporting(_cancelScheduledMessagesAndScheduleEmails, \"cancelScheduledMessagesAndScheduleEmails\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "WorkflowContextData",
+          "shape": "type WorkflowContextData = { evt: BookingInfo; formData?: never } | { evt?: never; formData: FormSubmissionData }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ExtendedCalendarEvent",
+          "shape": "type ExtendedCalendarEvent = Omit<CalendarEvent, \"bookerUrl\"> & { metadata?: { videoCallUrl: string | undefined }; eventType: { slug: string; schedulingType?: SchedulingType | null; hosts?: { user: { email: string; destinationCalendar?: { primaryEmail: string | null } | null } }[] }; rescheduleReason?: string | null; cancellationReason?: string | null; bookerUrl: string }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScheduleWorkflowRemindersArgs",
+          "shape": "type ScheduleWorkflowRemindersArgs = ProcessWorkflowStepParams & { workflows: Workflow[]; isDryRun?: boolean; creditCheckFn: CreditCheckFn }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SendCancelledRemindersArgs",
+          "shape": "interface SendCancelledRemindersArgs { workflows: Workflow[]; smsReminderNumber: string | null; evt: ExtendedCalendarEvent; hideBranding?: boolean; creditCheckFn: CreditCheckFn }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "Workflow", "shape": "Workflow", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "WorkflowStep", "shape": "WorkflowStep", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "BookingInfo",
+          "shape": "BookingInfo",
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/types.ts"
+        },
+        {
+          "name": "FormSubmissionData",
+          "shape": "FormSubmissionData",
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/types.ts"
+        },
+        { "name": "CreditCheckFn", "shape": "CreditCheckFn", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "WorkflowActions", "shape": "WorkflowActions", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "WorkflowTriggerEvents",
+          "shape": "WorkflowTriggerEvents",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "CalendarEvent", "shape": "CalendarEvent", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "getReminderPhoneNumber",
+          "intent": "Selects recipient phone based on action, seat, and fallback number.",
+          "structureKind": "branch",
+          "predicate": "!isAttendeeAction",
+          "branchOutcomes": [
+            "non-attendee action returns stepSendTo",
+            "attendee action with seat reference loads attendee phone or falls back",
+            "attendee action without seat reference returns smsReminderNumber"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 66, "endLine": 88 }
+        },
+        {
+          "name": "processWorkflowStep guards",
+          "intent": "Skips unverified steps and steps lacking event or form context.",
+          "structureKind": "branch",
+          "predicate": "!step?.verifiedAt",
+          "branchOutcomes": [
+            "unverified step returns",
+            "verified step continues",
+            "missing formatted event and form data returns"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 90, "endLine": 110 }
+        },
+        {
+          "name": "processWorkflowStep action dispatch",
+          "intent": "Schedules the workflow step according to its action type.",
+          "structureKind": "branch",
+          "predicate": "isSMSAction(step.action)",
+          "branchOutcomes": [
+            "SMS action dynamically loads and schedules an SMS reminder",
+            "non-SMS action may schedule email, WhatsApp, or CalAI",
+            "unrecognized action performs no scheduling"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 111, "endLine": 205 }
+        },
+        {
+          "name": "_scheduleWorkflowReminders",
+          "intent": "Iterates workflows and schedules eligible workflow steps.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "workflow of workflows",
+          "terminationCondition": null,
+          "anchor": { "startLine": 207, "endLine": 256 }
+        },
+        {
+          "name": "_scheduleWorkflowReminders steps",
+          "intent": "Uses lazy email scheduling for event emails, otherwise processes steps.",
+          "structureKind": "branch",
+          "predicate": "isEmailAction(step.action)",
+          "branchOutcomes": [
+            "before/after event email with event uses lazy scheduling",
+            "all other steps use processWorkflowStep"
+          ],
+          "bounds": "step of workflow.steps",
+          "terminationCondition": null,
+          "anchor": { "startLine": 224, "endLine": 253 }
+        },
+        {
+          "name": "_sendCancelledReminders",
+          "intent": "Processes steps for workflows triggered by event cancellation.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "workflow of workflows",
+          "terminationCondition": null,
+          "anchor": { "startLine": 266, "endLine": 287 }
+        },
+        {
+          "name": "_cancelScheduledMessagesAndScheduleEmails",
+          "intent": "Cancels scheduled messages and replaces attendee SMS with emails.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 289, "endLine": 337 }
+        },
+        {
+          "name": "reported exports",
+          "intent": "Exports all public operations wrapped with reporting.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 338, "endLine": 347 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "WorkflowContextData",
+          "signature": "export type WorkflowContextData =\n  | { evt: BookingInfo; formData?: never }\n  | {\n      evt?: never;\n      formData: FormSubmissionData;\n    };",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 28, "endLine": 33 }
+        },
+        {
+          "kind": "type",
+          "name": "ExtendedCalendarEvent",
+          "signature": "export type ExtendedCalendarEvent = Omit<CalendarEvent, \"bookerUrl\"> & {\n  metadata?: { videoCallUrl: string | undefined };\n  eventType: {\n    slug: string;\n    schedulingType?: SchedulingType | null;\n    hosts?: { user: { email: string; destinationCalendar?: { primaryEmail: string | null } | null } }[];\n  };\n  rescheduleReason?: string | null;\n  cancellationReason?: string | null;\n  bookerUrl: string;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 35, "endLine": 45 }
+        },
+        {
+          "kind": "type",
+          "name": "ProcessWorkflowStepParams",
+          "signature": "type ProcessWorkflowStepParams = (\n  | { calendarEvent: ExtendedCalendarEvent; formData?: never }\n  | {\n      calendarEvent?: never;\n      formData: FormSubmissionData;\n    }\n) & {\n  smsReminderNumber: string | null;\n  emailAttendeeSendToOverride?: string;\n  hideBranding?: boolean;\n  seatReferenceUid?: string;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 47, "endLine": 58 }
+        },
+        {
+          "kind": "type",
+          "name": "ScheduleWorkflowRemindersArgs",
+          "signature": "export type ScheduleWorkflowRemindersArgs = ProcessWorkflowStepParams & {\n  workflows: Workflow[];\n  isDryRun?: boolean;\n  creditCheckFn: CreditCheckFn;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 60, "endLine": 64 }
+        },
+        {
+          "kind": "function",
+          "name": "getReminderPhoneNumber",
+          "signature": "const getReminderPhoneNumber = async (\n  action: WorkflowActions,\n  seatReferenceUid: string | undefined,\n  smsReminderNumber: string | null,\n  stepSendTo: string | null\n) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 66, "endLine": 71 }
+        },
+        {
+          "kind": "function",
+          "name": "processWorkflowStep",
+          "signature": "const processWorkflowStep = async (\n  workflow: Workflow,\n  step: WorkflowStep,\n  {\n    smsReminderNumber,\n    calendarEvent,\n    emailAttendeeSendToOverride,\n    hideBranding,\n    seatReferenceUid,\n    formData,\n  }: ProcessWorkflowStepParams,\n  creditCheckFn: CreditCheckFn\n) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 90, "endLine": 102 }
+        },
+        {
+          "kind": "function",
+          "name": "_scheduleWorkflowReminders",
+          "signature": "const _scheduleWorkflowReminders = async (args: ScheduleWorkflowRemindersArgs) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 207, "endLine": 207 }
+        },
+        {
+          "kind": "interface",
+          "name": "SendCancelledRemindersArgs",
+          "signature": "export interface SendCancelledRemindersArgs",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 258, "endLine": 258 }
+        },
+        {
+          "kind": "function",
+          "name": "_sendCancelledReminders",
+          "signature": "const _sendCancelledReminders = async (args: SendCancelledRemindersArgs) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 266, "endLine": 266 }
+        },
+        {
+          "kind": "function",
+          "name": "_cancelScheduledMessagesAndScheduleEmails",
+          "signature": "const _cancelScheduledMessagesAndScheduleEmails = async ({\n  teamId,\n  userIdsWithNoCredits,\n}: {\n  teamId?: number | null;\n  userIdsWithNoCredits: number[];\n}) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 289, "endLine": 295 }
+        },
+        {
+          "kind": "function",
+          "name": "scheduleWorkflowReminders",
+          "signature": "export const scheduleWorkflowReminders = withReporting(\n  _scheduleWorkflowReminders,\n  \"scheduleWorkflowReminders\"\n);",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 339, "endLine": 342 }
+        },
+        {
+          "kind": "function",
+          "name": "sendCancelledReminders",
+          "signature": "export const sendCancelledReminders = withReporting(_sendCancelledReminders, \"sendCancelledReminders\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 343, "endLine": 343 }
+        },
+        {
+          "kind": "function",
+          "name": "cancelScheduledMessagesAndScheduleEmails",
+          "signature": "export const cancelScheduledMessagesAndScheduleEmails = withReporting(\n  _cancelScheduledMessagesAndScheduleEmails,\n  \"cancelScheduledMessagesAndScheduleEmails\"\n);",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 344, "endLine": 347 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "union",
+          "name": "WorkflowContextData",
+          "shape": "| { evt: BookingInfo; formData?: never }\n  | {\n      evt?: never;\n      formData: FormSubmissionData;\n    }",
+          "discriminant": "evt",
+          "anchor": { "startLine": 28, "endLine": 33 }
+        },
+        {
+          "kind": "intersection",
+          "name": "ExtendedCalendarEvent",
+          "shape": "Omit<CalendarEvent, \"bookerUrl\"> & {\n  metadata?: { videoCallUrl: string | undefined };\n  eventType: {\n    slug: string;\n    schedulingType?: SchedulingType | null;\n    hosts?: { user: { email: string; destinationCalendar?: { primaryEmail: string | null } | null } }[];\n  };\n  rescheduleReason?: string | null;\n  cancellationReason?: string | null;\n  bookerUrl: string;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 35, "endLine": 45 }
+        },
+        {
+          "kind": "intersection",
+          "name": "ProcessWorkflowStepParams",
+          "shape": "(\n  | { calendarEvent: ExtendedCalendarEvent; formData?: never }\n  | {\n      calendarEvent?: never;\n      formData: FormSubmissionData;\n    }\n) & {\n  smsReminderNumber: string | null;\n  emailAttendeeSendToOverride?: string;\n  hideBranding?: boolean;\n  seatReferenceUid?: string;\n}",
+          "discriminant": "calendarEvent",
+          "anchor": { "startLine": 47, "endLine": 58 }
+        },
+        {
+          "kind": "intersection",
+          "name": "ScheduleWorkflowRemindersArgs",
+          "shape": "ProcessWorkflowStepParams & {\n  workflows: Workflow[];\n  isDryRun?: boolean;\n  creditCheckFn: CreditCheckFn;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 60, "endLine": 64 }
+        },
+        {
+          "kind": "interface",
+          "name": "SendCancelledRemindersArgs",
+          "shape": "{\n  workflows: Workflow[];\n  smsReminderNumber: string | null;\n  evt: ExtendedCalendarEvent;\n  hideBranding?: boolean;\n  creditCheckFn: CreditCheckFn;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 258, "endLine": 264 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "isDryRun=true",
+          "handled": true,
+          "behavior": "scheduleWorkflowReminders returns without processing workflows.",
+          "anchor": { "startLine": 207, "endLine": 220 }
+        },
+        {
+          "inputShape": "empty workflows array",
+          "handled": true,
+          "behavior": "Scheduling and cancellation functions return without processing.",
+          "anchor": { "startLine": 219, "endLine": 220 }
+        },
+        {
+          "inputShape": "workflow with no steps",
+          "handled": true,
+          "behavior": "The workflow is skipped.",
+          "anchor": { "startLine": 221, "endLine": 223 }
+        },
+        {
+          "inputShape": "step without verifiedAt",
+          "handled": true,
+          "behavior": "The step is ignored.",
+          "anchor": { "startLine": 103, "endLine": 103 }
+        },
+        {
+          "inputShape": "missing calendarEvent and missing formData",
+          "handled": true,
+          "behavior": "The step is ignored after event formatting.",
+          "anchor": { "startLine": 105, "endLine": 107 }
+        },
+        {
+          "inputShape": "form-trigger EMAIL_HOST step",
+          "handled": true,
+          "behavior": "The email step returns without scheduling because host email is unsupported for form triggers.",
+          "anchor": { "startLine": 144, "endLine": 148 }
+        },
+        {
+          "inputShape": "form-trigger WhatsApp step",
+          "handled": true,
+          "behavior": "The WhatsApp step returns without scheduling.",
+          "anchor": { "startLine": 164, "endLine": 168 }
+        },
+        {
+          "inputShape": "attendee action with seat reference but missing attendee phone",
+          "handled": true,
+          "behavior": "Uses smsReminderNumber as the phone fallback.",
+          "anchor": { "startLine": 79, "endLine": 85 }
+        },
+        {
+          "inputShape": "scheduled message without attendee",
+          "handled": true,
+          "behavior": "Cancels the message but does not send a replacement email.",
+          "anchor": { "startLine": 311, "endLine": 331 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "No local catch is present; failures from rate limiting, repositories, dynamic imports, or scheduling calls reject the enclosing operation.",
+          "fallback": null,
+          "anchor": { "startLine": 111, "endLine": 203 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "SMS cancellation rejections are collected independently by Promise.allSettled.",
+          "fallback": null,
+          "anchor": { "startLine": 306, "endLine": 312 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Replacement-email task rejections are collected independently by Promise.allSettled.",
+          "fallback": null,
+          "anchor": { "startLine": 313, "endLine": 332 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "Each processing input supplies exactly one of calendarEvent or formData.",
+          "anchor": { "startLine": 47, "endLine": 58 }
+        },
+        {
+          "kind": "schema",
+          "description": "Workflow steps provide action, verification, timing, and recipient fields expected by downstream schedulers.",
+          "anchor": { "startLine": 90, "endLine": 101 }
+        },
+        {
+          "kind": "init-order",
+          "description": "The imported Prisma client is initialized and usable when repositories are constructed.",
+          "anchor": { "startLine": 19, "endLine": 19 }
+        },
+        {
+          "kind": "caller",
+          "description": "The caller supplies a creditCheckFn for common scheduling parameters.",
+          "anchor": { "startLine": 60, "endLine": 64 }
+        },
+        {
+          "kind": "schema",
+          "description": "Scheduled messages expose reference, booking, workflow-step, scheduled-date, and identifier fields.",
+          "anchor": { "startLine": 311, "endLine": 335 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact side effects and failure behavior do the dynamically imported scheduling managers implement?",
+          "affects": "side_effects,error_handling",
+          "anchor": { "startLine": 126, "endLine": 203 },
+          "resolution": null
+        },
+        {
+          "question": "What does withReporting do when the wrapped operation succeeds or fails?",
+          "affects": "error_handling,side_effects",
+          "anchor": { "startLine": 338, "endLine": 347 },
+          "resolution": null
+        },
+        {
+          "question": "What precise rate-limit behavior and errors are produced by checkSMSRateLimit?",
+          "affects": "error_handling,edge_cases",
+          "anchor": { "startLine": 111, "endLine": 115 },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "skips-dry-run",
+          "scenario": "Scheduling is requested in dry-run mode.",
+          "given": ["isDryRun = true"],
+          "when": "scheduleWorkflowReminders(args)",
+          "then": "No reminder is scheduled.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Dry runs must not produce scheduling side effects."
+        },
+        {
+          "testId": "skips-empty-workflows",
+          "scenario": "Scheduling is requested with no workflows.",
+          "given": ["workflows = []"],
+          "when": "scheduleWorkflowReminders(args)",
+          "then": "No reminder is scheduled.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "An empty workflow collection is a no-op."
+        },
+        {
+          "testId": "skips-unverified-step",
+          "scenario": "A workflow contains a step without verification.",
+          "given": ["step.verifiedAt = undefined"],
+          "when": "scheduleWorkflowReminders(args)",
+          "then": "The unverified step is not processed.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Only verified reminder steps may execute."
+        },
+        {
+          "testId": "rejects-form-host-email",
+          "scenario": "A form-triggered workflow contains an EMAIL_HOST step.",
+          "given": ["formData is provided", "calendarEvent is undefined", "step.action === WorkflowActions.EMAIL_HOST"],
+          "when": "scheduleWorkflowReminders(args)",
+          "then": "The host email reminder is not scheduled.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Host email actions are explicitly unsupported for form triggers."
+        },
+        {
+          "testId": "rejects-form-whatsapp",
+          "scenario": "A form-triggered workflow contains a WhatsApp step.",
+          "given": ["formData is provided", "calendarEvent is undefined", "isWhatsappAction(step.action) === true"],
+          "when": "scheduleWorkflowReminders(args)",
+          "then": "The WhatsApp reminder is not scheduled.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "WhatsApp actions are explicitly unsupported for form triggers."
+        },
+        {
+          "testId": "schedules-cancelled-workflows-only",
+          "scenario": "Cancelled reminders are requested for workflows with mixed trigger events.",
+          "given": ["workflow.trigger !== WorkflowTriggerEvents.EVENT_CANCELLED"],
+          "when": "sendCancelledReminders(args)",
+          "then": "That workflow is skipped.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Cancellation processing is restricted to EVENT_CANCELLED workflows."
+        },
+        {
+          "testId": "converts-attendee-sms-to-email",
+          "scenario": "Scheduled attendee SMS messages must be cancelled because users have no credits.",
+          "given": [
+            "scheduledMessages contains an attendee SMS reminder",
+            "userIdsWithNoCredits contains the affected user"
+          ],
+          "when": "cancelScheduledMessagesAndScheduleEmails({ teamId, userIdsWithNoCredits })",
+          "then": "The SMS is cancelled and an email is sent or scheduled to the attendee.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Credit exhaustion preserves attendee notification through email fallback."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "WorkflowContextData",
+        "ExtendedCalendarEvent",
+        "ProcessWorkflowStepParams",
+        "ScheduleWorkflowRemindersArgs",
+        "getReminderPhoneNumber",
+        "processWorkflowStep",
+        "_scheduleWorkflowReminders",
+        "SendCancelledRemindersArgs",
+        "_sendCancelledReminders",
+        "_cancelScheduledMessagesAndScheduleEmails",
+        "scheduleWorkflowReminders",
+        "sendCancelledReminders",
+        "cancelScheduledMessagesAndScheduleEmails"
+      ],
+      "moduleLevelCode": "import { BookingSeatRepository } from \"@calcom/features/bookings/repositories/BookingSeatRepository\";\nimport type { CreditCheckFn } from \"@calcom/features/ee/billing/credit-service\";\nimport {\n  isAttendeeAction,\n  isSMSAction,\n  isSMSOrWhatsappAction,\n  isWhatsappAction,\n  isCalAIAction,\n} from \"@calcom/features/ee/workflows/lib/actionHelperFunctions\";\nimport { isEmailAction } from \"@calcom/features/ee/workflows/lib/actionHelperFunctions\";\nimport { EmailWorkflowService } from \"@calcom/features/ee/workflows/lib/service/EmailWorkflowService\";\nimport { WorkflowService } from \"@calcom/features/ee/workflows/lib/service/WorkflowService\";\nimport type { Workflow, WorkflowStep } from \"@calcom/features/ee/workflows/lib/types\";\nimport { WorkflowReminderRepository } from \"@calcom/features/ee/workflows/repositories/WorkflowReminderRepository\";\nimport { formatCalEventExtended } from \"@calcom/lib/formatCalendarEvent\";\nimport { withReporting } from \"@calcom/lib/sentryWrapper\";\nimport { getTranslation } from \"@calcom/lib/server/i18n\";\nimport { checkSMSRateLimit } from \"@calcom/lib/smsLockState\";\nimport { prisma } from \"@calcom/prisma\";\nimport { SchedulingType } from \"@calcom/prisma/enums\";\nimport { WorkflowActions, WorkflowTriggerEvents } from \"@calcom/prisma/enums\";\nimport type { CalendarEvent } from \"@calcom/types/Calendar\";\n\nimport type { FormSubmissionData } from \"../types\";\nimport type { BookingInfo } from \"../types\";\nimport type { ScheduleTextReminderAction } from \"./smsReminderManager\";",
+      "exports": [
+        { "name": "WorkflowContextData", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ExtendedCalendarEvent", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ScheduleWorkflowRemindersArgs", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "SendCancelledRemindersArgs", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "scheduleWorkflowReminders", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "sendCancelledReminders", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "cancelScheduledMessagesAndScheduleEmails", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "BookingSeatRepository",
+          "module": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CreditCheckFn",
+          "module": "@calcom/features/ee/billing/credit-service",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "isAttendeeAction",
+          "module": "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "isSMSAction",
+          "module": "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "isSMSOrWhatsappAction",
+          "module": "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "isWhatsappAction",
+          "module": "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "isCalAIAction",
+          "module": "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "isEmailAction",
+          "module": "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EmailWorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/EmailWorkflowService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Workflow",
+          "module": "@calcom/features/ee/workflows/lib/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowStep",
+          "module": "@calcom/features/ee/workflows/lib/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowReminderRepository",
+          "module": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "formatCalEventExtended",
+          "module": "@calcom/lib/formatCalendarEvent",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "withReporting", "module": "@calcom/lib/sentryWrapper", "alias": null, "kind": "external" },
+        { "symbol": "getTranslation", "module": "@calcom/lib/server/i18n", "alias": null, "kind": "external" },
+        { "symbol": "checkSMSRateLimit", "module": "@calcom/lib/smsLockState", "alias": null, "kind": "external" },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "external" },
+        { "symbol": "SchedulingType", "module": "@calcom/prisma/enums", "alias": null, "kind": "external" },
+        { "symbol": "WorkflowActions", "module": "@calcom/prisma/enums", "alias": null, "kind": "external" },
+        { "symbol": "WorkflowTriggerEvents", "module": "@calcom/prisma/enums", "alias": null, "kind": "external" },
+        { "symbol": "CalendarEvent", "module": "@calcom/types/Calendar", "alias": null, "kind": "external" },
+        { "symbol": "FormSubmissionData", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "BookingInfo", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "ScheduleTextReminderAction", "module": "./smsReminderManager", "alias": null, "kind": "internal" },
+        { "symbol": "scheduleSMSReminder", "module": "./smsReminderManager", "alias": null, "kind": "internal" },
+        { "symbol": "scheduleEmailReminder", "module": "./emailReminderManager", "alias": null, "kind": "internal" },
+        {
+          "symbol": "scheduleWhatsappReminder",
+          "module": "./whatsappReminderManager",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "scheduleAIPhoneCall", "module": "./aiPhoneCallManager", "alias": null, "kind": "internal" },
+        { "symbol": "twilio", "module": "./providers/twilioProvider", "alias": null, "kind": "internal" },
+        {
+          "symbol": "sendOrScheduleWorkflowEmails",
+          "module": "./providers/emailProvider",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__WorkflowContextData_1#type_alias:WorkflowContextData",
+        "unitKind": "type_alias",
+        "name": "WorkflowContextData",
+        "qualifiedName": "WorkflowContextData",
+        "parentUnitId": null,
+        "startLine": 28,
+        "endLine": 33,
+        "isBehavioral": false,
+        "source": "export type WorkflowContextData =\n  | { evt: BookingInfo; formData?: never }\n  | {\n      evt?: never;\n      formData: FormSubmissionData;\n    };"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__ExtendedCalendarEvent_2#type_alias:ExtendedCalendarEvent",
+        "unitKind": "type_alias",
+        "name": "ExtendedCalendarEvent",
+        "qualifiedName": "ExtendedCalendarEvent",
+        "parentUnitId": null,
+        "startLine": 35,
+        "endLine": 45,
+        "isBehavioral": false,
+        "source": "export type ExtendedCalendarEvent = Omit<CalendarEvent, \"bookerUrl\"> & {\n  metadata?: { videoCallUrl: string | undefined };\n  eventType: {\n    slug: string;\n    schedulingType?: SchedulingType | null;\n    hosts?: { user: { email: string; destinationCalendar?: { primaryEmail: string | null } | null } }[];\n  };\n  rescheduleReason?: string | null;\n  cancellationReason?: string | null;\n  bookerUrl: string;\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__ProcessWorkflowStepParams_3#type_alias:ProcessWorkflowStepParams",
+        "unitKind": "type_alias",
+        "name": "ProcessWorkflowStepParams",
+        "qualifiedName": "ProcessWorkflowStepParams",
+        "parentUnitId": null,
+        "startLine": 47,
+        "endLine": 52,
+        "isBehavioral": false,
+        "source": "type ProcessWorkflowStepParams = (\n  | { calendarEvent: ExtendedCalendarEvent; formData?: never }\n  | {\n      calendarEvent?: never;\n      formData: FormSubmissionData;\n    }"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__ScheduleWorkflowRemindersArgs_4#type_alias:ScheduleWorkflowRemindersArgs",
+        "unitKind": "type_alias",
+        "name": "ScheduleWorkflowRemindersArgs",
+        "qualifiedName": "ScheduleWorkflowRemindersArgs",
+        "parentUnitId": null,
+        "startLine": 60,
+        "endLine": 64,
+        "isBehavioral": false,
+        "source": "export type ScheduleWorkflowRemindersArgs = ProcessWorkflowStepParams & {\n  workflows: Workflow[];\n  isDryRun?: boolean;\n  creditCheckFn: CreditCheckFn;\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__getReminderPhoneNumber_5#function:getReminderPhoneNumber",
+        "unitKind": "function",
+        "name": "getReminderPhoneNumber",
+        "qualifiedName": "getReminderPhoneNumber",
+        "parentUnitId": null,
+        "startLine": 66,
+        "endLine": 70,
+        "isBehavioral": true,
+        "source": "const getReminderPhoneNumber = async (\n  action: WorkflowActions,\n  seatReferenceUid: string | undefined,\n  smsReminderNumber: string | null,\n  stepSendTo: string | null",
+        "detail": {
+          "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__getReminderPhoneNumber_5#function:getReminderPhoneNumber",
+          "fileId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__getReminderPhoneNumber_5",
+          "unitKind": "function",
+          "name": "getReminderPhoneNumber",
+          "qualifiedName": "getReminderPhoneNumber",
+          "parentUnitId": null,
+          "startLine": 66,
+          "endLine": 70,
+          "signature": "async (action: WorkflowActions, seatReferenceUid: string | undefined, smsReminderNumber: string | null, stepSendTo: string | null) => Promise<string | undefined>",
+          "parameters": [
+            {
+              "name": "action",
+              "type": "WorkflowActions",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "seatReferenceUid",
+              "type": "string | undefined",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "smsReminderNumber",
+              "type": "string | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "stepSendTo",
+              "type": "string | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "Promise<string | undefined>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines the phone number to use for a reminder based on the action, seat reference, SMS number and step target.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "c7c5c196004ad2ce3bc6d3154d11211ca7a10c80fbf84c801dcaf6fdbab92a2b"
+        }
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__processWorkflowStep_6#function:processWorkflowStep",
+        "unitKind": "function",
+        "name": "processWorkflowStep",
+        "qualifiedName": "processWorkflowStep",
+        "parentUnitId": null,
+        "startLine": 90,
+        "endLine": 101,
+        "isBehavioral": true,
+        "source": "const processWorkflowStep = async (\n  workflow: Workflow,\n  step: WorkflowStep,\n  {\n    smsReminderNumber,\n    calendarEvent,\n    emailAttendeeSendToOverride,\n    hideBranding,\n    seatReferenceUid,\n    formData,\n  }: ProcessWorkflowStepParams,\n  creditCheckFn: CreditCheckFn"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts___scheduleWorkflowReminders_7#function:_scheduleWorkflowReminders",
+        "unitKind": "function",
+        "name": "_scheduleWorkflowReminders",
+        "qualifiedName": "_scheduleWorkflowReminders",
+        "parentUnitId": null,
+        "startLine": 207,
+        "endLine": 256,
+        "isBehavioral": true,
+        "source": "const _scheduleWorkflowReminders = async (args: ScheduleWorkflowRemindersArgs) => {\n  const {\n    workflows,\n    smsReminderNumber,\n    calendarEvent: evt,\n    emailAttendeeSendToOverride = \"\",\n    hideBranding,\n    seatReferenceUid,\n    isDryRun = false,\n    formData,\n    creditCheckFn,\n  } = args;\n  if (isDryRun || !workflows.length) return;\n\n  for (const workflow of workflows) {\n    if (workflow.steps.length === 0) continue;\n\n    for (const step of workflow.steps) {\n      if (\n        // These tasks currently write the entire payload in the task\n        (workflow.trigger === WorkflowTriggerEvents.BEFORE_EVENT ||\n          workflow.trigger === WorkflowTriggerEvents.AFTER_EVENT) &&\n        isEmailAction(step.action) &&\n        evt\n      ) {\n        await WorkflowService.scheduleLazyEmailWorkflow({\n          evt,\n          workflowStepId: step.id,\n          workflowTriggerEvent: workflow.trigger,\n          workflow,\n          seatReferenceId: args.seatReferenceUid,\n        });\n        continue;\n      }\n\n      await processWorkflowStep(\n        workflow,\n        step,\n        {\n          emailAttendeeSendToOverride,\n          smsReminderNumber,\n          hideBranding,\n          seatReferenceUid,\n          ...(evt ? { calendarEvent: evt } : { formData }),\n        },\n        creditCheckFn\n      );\n    }\n  }\n};",
+        "detail": {
+          "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts___scheduleWorkflowReminders_7#function:_scheduleWorkflowReminders",
+          "fileId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts___scheduleWorkflowReminders_7",
+          "unitKind": "function",
+          "name": "_scheduleWorkflowReminders",
+          "qualifiedName": "_scheduleWorkflowReminders",
+          "parentUnitId": null,
+          "startLine": 207,
+          "endLine": 256,
+          "signature": "async (args: ScheduleWorkflowRemindersArgs) => Promise<void>",
+          "parameters": [
+            {
+              "name": "args",
+              "type": "ScheduleWorkflowRemindersArgs",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The `args` object must be provided."],
+          "postconditions": [
+            "All applicable workflow steps have been processed or scheduled.",
+            "The function completes without returning a value."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If `isDryRun` is true or `workflows` is empty, the function returns immediately.",
+            "Workflows with no steps are skipped.",
+            "Steps that correspond to email actions on BEFORE_EVENT or AFTER_EVENT triggers result in a lazy email schedule instead of processing."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "WorkflowService.scheduleLazyEmailWorkflow", "source": "WorkflowService", "kind": "internal" },
+            { "name": "processWorkflowStep", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "WorkflowTriggerEvents",
+            "isEmailAction",
+            "ScheduleWorkflowRemindersArgs",
+            "WorkflowService",
+            "processWorkflowStep"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Schedules workflow reminders based on the supplied arguments, iterating over workflows and their steps, dispatching lazy email workflows or processing each step as appropriate.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "7907ca8b54ccd720ff4a0a74566d11499680323b076deb95cd13a05bc3fd250b"
+        }
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__SendCancelledRemindersArgs_8#interface:SendCancelledRemindersArgs",
+        "unitKind": "interface",
+        "name": "SendCancelledRemindersArgs",
+        "qualifiedName": "SendCancelledRemindersArgs",
+        "parentUnitId": null,
+        "startLine": 258,
+        "endLine": 264,
+        "isBehavioral": false,
+        "source": "export interface SendCancelledRemindersArgs {\n  workflows: Workflow[];\n  smsReminderNumber: string | null;\n  evt: ExtendedCalendarEvent;\n  hideBranding?: boolean;\n  creditCheckFn: CreditCheckFn;\n}"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts___sendCancelledReminders_9#function:_sendCancelledReminders",
+        "unitKind": "function",
+        "name": "_sendCancelledReminders",
+        "qualifiedName": "_sendCancelledReminders",
+        "parentUnitId": null,
+        "startLine": 266,
+        "endLine": 287,
+        "isBehavioral": true,
+        "source": "const _sendCancelledReminders = async (args: SendCancelledRemindersArgs) => {\n  const { smsReminderNumber, evt, workflows, hideBranding, creditCheckFn } = args;\n\n  if (!workflows.length) return;\n\n  for (const workflow of workflows) {\n    if (workflow.trigger !== WorkflowTriggerEvents.EVENT_CANCELLED) continue;\n\n    for (const step of workflow.steps) {\n      await processWorkflowStep(\n        workflow,\n        step,\n        {\n          smsReminderNumber,\n          hideBranding,\n          calendarEvent: evt,\n        },\n        creditCheckFn\n      );\n    }\n  }\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts___cancelScheduledMessagesAndScheduleEmails_10#function:_cancelScheduledMessagesAndScheduleEmails",
+        "unitKind": "function",
+        "name": "_cancelScheduledMessagesAndScheduleEmails",
+        "qualifiedName": "_cancelScheduledMessagesAndScheduleEmails",
+        "parentUnitId": null,
+        "startLine": 289,
+        "endLine": 337,
+        "isBehavioral": true,
+        "source": "const _cancelScheduledMessagesAndScheduleEmails = async ({\n  teamId,\n  userIdsWithNoCredits,\n}: {\n  teamId?: number | null;\n  userIdsWithNoCredits: number[];\n}) => {\n  const { WorkflowReminderRepository } = await import(\n    \"@calcom/features/ee/workflows/repositories/WorkflowReminderRepository\"\n  );\n\n  const workflowReminderRepository = new WorkflowReminderRepository(prisma);\n  const scheduledMessages = await workflowReminderRepository.findScheduledMessagesToCancel({\n    teamId,\n    userIdsWithNoCredits,\n  });\n\n  const [twilio, { sendOrScheduleWorkflowEmails }] = await Promise.all([\n    import(\"./providers/twilioProvider\"),\n    import(\"./providers/emailProvider\"),\n  ]);\n\n  await Promise.allSettled(scheduledMessages.map((msg) => twilio.cancelSMS(msg.referenceId ?? \"\")));\n\n  await Promise.allSettled(\n    scheduledMessages.map(async (msg) => {\n      if (msg.workflowStep?.action && isAttendeeAction(msg.workflowStep.action)) {\n        const messageBody = await twilio.getMessageBody(msg.referenceId ?? \"\");\n        const sendTo = msg.booking?.attendees?.[0];\n\n        if (sendTo) {\n          const t = await getTranslation(sendTo.locale ?? \"en\", \"common\");\n          await sendOrScheduleWorkflowEmails({\n            to: [sendTo.email],\n            subject: t(\"notification_about_your_booking\"),\n            html: messageBody,\n            replyTo: msg.booking?.user?.email ?? \"\",\n            sendAt: msg.scheduledDate,\n            referenceUid: msg.uuid || undefined,\n          });\n        }\n      }\n    })\n  );\n\n  await workflowReminderRepository.updateRemindersToEmail({\n    reminderIds: scheduledMessages.map((msg) => msg.id),\n  });\n};",
+        "detail": {
+          "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts___cancelScheduledMessagesAndScheduleEmails_10#function:_cancelScheduledMessagesAndScheduleEmails",
+          "fileId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts___cancelScheduledMessagesAndScheduleEmails_10",
+          "unitKind": "function",
+          "name": "_cancelScheduledMessagesAndScheduleEmails",
+          "qualifiedName": "_cancelScheduledMessagesAndScheduleEmails",
+          "parentUnitId": null,
+          "startLine": 289,
+          "endLine": 337,
+          "signature": "async ({ teamId, userIdsWithNoCredits }: { teamId?: number | null; userIdsWithNoCredits: number[] }) => Promise<void>",
+          "parameters": [
+            {
+              "name": "teamId",
+              "type": "number | null | undefined",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "userIdsWithNoCredits",
+              "type": "number[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "teamId may be undefined or null; userIdsWithNoCredits is an array of user IDs",
+            "prisma instance is available in the surrounding scope",
+            "WorkflowReminderRepository module can be imported"
+          ],
+          "postconditions": [
+            "All scheduled messages matching the criteria are cancelled via Twilio",
+            "Email notifications are sent or scheduled for workflow steps with attendee actions",
+            "Reminder records are updated to use email delivery"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If a scheduled message lacks a referenceId, Twilio cancel is called with an empty string",
+            "If getMessageBody fails, the failure is captured by Promise.allSettled and does not abort the whole operation"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["workflowReminderRepository.updateRemindersToEmail"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "WorkflowReminderRepository.findScheduledMessagesToCancel",
+              "source": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+              "kind": "internal"
+            },
+            { "name": "twilio.cancelSMS", "source": "./providers/twilioProvider", "kind": "internal" },
+            { "name": "twilio.getMessageBody", "source": "./providers/twilioProvider", "kind": "internal" },
+            { "name": "sendOrScheduleWorkflowEmails", "source": "./providers/emailProvider", "kind": "internal" },
+            {
+              "name": "workflowReminderRepository.updateRemindersToEmail",
+              "source": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+              "kind": "internal"
+            },
+            { "name": "getTranslation", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "WorkflowReminderRepository",
+            "twilio",
+            "sendOrScheduleWorkflowEmails",
+            "isAttendeeAction",
+            "getTranslation"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Cancels scheduled reminder messages for the given team and users without credits, then schedules email notifications for workflow steps that require attendee actions.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "sourceHash": "",
+          "semanticFingerprint": "7738b53b82cd17c0c5878d374c81b745bcc7b302ad913dceeecbf38ea15644e9"
+        }
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__scheduleWorkflowReminders_11#const:scheduleWorkflowReminders",
+        "unitKind": "const",
+        "name": "scheduleWorkflowReminders",
+        "qualifiedName": "scheduleWorkflowReminders",
+        "parentUnitId": null,
+        "startLine": 339,
+        "endLine": 342,
+        "isBehavioral": true,
+        "source": "export const scheduleWorkflowReminders = withReporting(\n  _scheduleWorkflowReminders,\n  \"scheduleWorkflowReminders\"\n);"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__sendCancelledReminders_12#const:sendCancelledReminders",
+        "unitKind": "const",
+        "name": "sendCancelledReminders",
+        "qualifiedName": "sendCancelledReminders",
+        "parentUnitId": null,
+        "startLine": 343,
+        "endLine": 343,
+        "isBehavioral": true,
+        "source": "export const sendCancelledReminders = withReporting(_sendCancelledReminders, \"sendCancelledReminders\");"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts__cancelScheduledMessagesAndScheduleEmails_13#const:cancelScheduledMessagesAndScheduleEmails",
+        "unitKind": "const",
+        "name": "cancelScheduledMessagesAndScheduleEmails",
+        "qualifiedName": "cancelScheduledMessagesAndScheduleEmails",
+        "parentUnitId": null,
+        "startLine": 344,
+        "endLine": 347,
+        "isBehavioral": true,
+        "source": "export const cancelScheduledMessagesAndScheduleEmails = withReporting(\n  _cancelScheduledMessagesAndScheduleEmails,\n  \"cancelScheduledMessagesAndScheduleEmails\"\n);"
+      }
+    ]
+  },
+  "out": [
+    "packages/features/ee/workflows/lib/reminders/aiPhoneCallManager.ts",
+    "packages/features/ee/workflows/lib/reminders/smsReminderManager.ts",
+    "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+    "packages/features/ee/workflows/lib/types.ts",
+    "packages/features/ee/workflows/lib/reminders/whatsappReminderManager.ts",
+    "packages/features/ee/workflows/lib/reminders/providers/twilioProvider.ts",
+    "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts"
+  ],
+  "in": [
+    "packages/features/bookings/lib/handleCancelBooking.ts",
+    "packages/features/ee/round-robin/roundRobinManualReassignment.ts",
+    "packages/features/ee/workflows/lib/service/WorkflowService.test.ts",
+    "packages/features/ee/workflows/lib/reminders/aiPhoneCallManager.ts",
+    "packages/features/ee/workflows/lib/reminders/reminderScheduler.test.ts",
+    "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+    "packages/features/ee/workflows/lib/reminders/scheduleMandatoryReminder.ts",
+    "packages/features/ee/billing/credit-service.ts"
+  ],
+  "externals": [
+    "@calcom/features/bookings/repositories/BookingSeatRepository",
+    "@calcom/features/ee/billing/credit-service",
+    "@calcom/features/ee/workflows/lib/actionHelperFunctions",
+    "@calcom/features/ee/workflows/lib/service/EmailWorkflowService",
+    "@calcom/features/ee/workflows/lib/service/WorkflowService",
+    "@calcom/features/ee/workflows/lib/types",
+    "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+    "@calcom/lib/formatCalendarEvent",
+    "@calcom/lib/sentryWrapper",
+    "@calcom/lib/server/i18n",
+    "@calcom/lib/smsLockState",
+    "@calcom/prisma",
+    "@calcom/prisma/enums",
+    "@calcom/types/Calendar"
+  ],
+  "impact": {
+    "seeds": 13,
+    "callers": 4,
+    "impactedFiles": [
+      "packages/features/ee/billing/credit-service.ts",
+      "packages/features/ee/round-robin/roundRobinManualReassignment.ts"
+    ]
+  }
+}

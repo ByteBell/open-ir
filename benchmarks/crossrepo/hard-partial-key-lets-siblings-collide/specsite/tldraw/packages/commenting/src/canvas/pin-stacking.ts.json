@@ -1,0 +1,934 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/commenting/src/canvas/pin-stacking.ts",
+    "language": "typescript",
+    "sizeBytes": 3738,
+    "tokenCount": 933,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:18:36.579Z",
+    "module": {
+      "purpose": "Groups coincident comment pins in page space and provides stable membership comparisons and liveness checks for the canvas overlay.",
+      "summary": "This module converts comment-thread anchors into quantized page-space stack keys, groups same-page threads into ordered multi-member stacks, compares stack maps by membership, and verifies whether an open stack remains represented on the canvas. It deliberately keys by page coordinates rather than camera-dependent screen positions, preserving overlay state when members change while allowing reactive liveness checks to observe anchor movement.",
+      "businessContext": "Supports collaborative canvas commenting by consolidating overlapping comment pins into count badges and maintaining their open-stack state. Failures can hide comments, create unstable badges, or leave stale stack selections visible.",
+      "classes": [],
+      "functions": [
+        "pinStackKey (~L14-16): Quantizes a page point into its stable stack identity",
+        "computePinStacks (~L28-59): Groups same-page anchored threads into ordered stack memberships",
+        "pinStacksEqual (~L69-85): Compares stack maps for identical membership and ordering",
+        "isOpenStackKeyLive (~L94-108): Checks whether an open stack remains present and positioned"
+      ],
+      "keywords": [
+        "pin stacking",
+        "page-space anchors",
+        "comment threads",
+        "tldraw",
+        "quantization",
+        "canvas overlay",
+        "stack membership",
+        "anchor liveness"
+      ],
+      "ontologyConcepts": [
+        "spatial quantization",
+        "grouping",
+        "stable identity",
+        "value equality",
+        "reactive liveness",
+        "ordered membership"
+      ],
+      "businessEntities": ["comment thread", "pin", "anchor", "stack", "canvas page", "overlay"],
+      "systemCapabilities": [
+        "Quantize comment pin coordinates",
+        "Group coincident comment threads",
+        "Preserve stable stack membership",
+        "Compare stack maps by value",
+        "Detect stale open stacks"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./thread-state",
+          "symbols": ["anchorPagePoint"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/commenting/src/canvas/thread-state.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/thread-state.ts",
+          "resolvedHint": "packages/commenting/src/canvas/thread-state.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "tldraw",
+          "symbols": ["Editor", "TLCommentThread"],
+          "package": "tldraw",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "pinStackKey",
+          "shape": "export function pinStackKey(point: { x: number; y: number }): string",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "computePinStacks",
+          "shape": "export function computePinStacks(editor: Editor, threads: readonly TLCommentThread[]): Map<string, readonly string[]>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "pinStacksEqual",
+          "shape": "export function pinStacksEqual(a: ReadonlyMap<string, readonly string[]>, b: ReadonlyMap<string, readonly string[]>): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isOpenStackKeyLive",
+          "shape": "export function isOpenStackKeyLive(editor: Editor, key: string, stacks: ReadonlyMap<string, readonly string[]>, threadsById: ReadonlyMap<string, TLCommentThread>): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "anchorPagePoint",
+          "shape": "anchorPagePoint(editor, thread.anchor)",
+          "resolvedRelativePath": "packages/commenting/src/canvas/thread-state.ts",
+          "resolvedFileId": "packages/commenting/src/canvas/thread-state.ts"
+        },
+        { "name": "Editor", "shape": "Editor", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLCommentThread", "shape": "TLCommentThread", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "page-thread grouping",
+          "intent": "Filters current-page threads and groups resolvable anchors by quantized page coordinate",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "threads",
+          "terminationCondition": null,
+          "anchor": { "startLine": 36, "endLine": 47 }
+        },
+        {
+          "name": "anchor eligibility",
+          "intent": "Skips threads outside the current page or without resolvable anchor points",
+          "structureKind": "branch",
+          "predicate": "thread.pageId !== pageId",
+          "branchOutcomes": ["continue for non-current-page thread", "resolve anchor for current-page thread"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 37, "endLine": 39 }
+        },
+        {
+          "name": "stack membership accumulation",
+          "intent": "Appends threads to existing coordinate groups or creates new groups",
+          "structureKind": "branch",
+          "predicate": "group",
+          "branchOutcomes": ["append to existing group", "create coordinate group"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 41, "endLine": 46 }
+        },
+        {
+          "name": "stack materialization",
+          "intent": "Drops singleton groups and maps every member to ordered stack identifiers",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "groups.values()",
+          "terminationCondition": null,
+          "anchor": { "startLine": 50, "endLine": 57 }
+        },
+        {
+          "name": "membership equality",
+          "intent": "Checks map size, member presence, group lengths, and identifier ordering",
+          "structureKind": "branch",
+          "predicate": "a === b",
+          "branchOutcomes": ["same map identity returns true", "different contents continue comparison"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 73, "endLine": 84 }
+        },
+        {
+          "name": "open-stack liveness",
+          "intent": "Scans surviving threads for an anchor that still quantizes to the requested key",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "stacks.keys()",
+          "terminationCondition": null,
+          "anchor": { "startLine": 100, "endLine": 106 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "pinStackKey",
+          "signature": "export function pinStackKey(point: { x: number; y: number }): string",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string",
+          "exported": true,
+          "anchor": { "startLine": 14, "endLine": 14 }
+        },
+        {
+          "kind": "function",
+          "name": "computePinStacks",
+          "signature": "export function computePinStacks(\n\teditor: Editor,\n\tthreads: readonly TLCommentThread[]\n): Map<string, readonly string[]>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Map<string, readonly string[]>",
+          "exported": true,
+          "anchor": { "startLine": 28, "endLine": 31 }
+        },
+        {
+          "kind": "function",
+          "name": "pinStacksEqual",
+          "signature": "export function pinStacksEqual(\n\ta: ReadonlyMap<string, readonly string[]>,\n\tb: ReadonlyMap<string, readonly string[]>\n): boolean",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 69, "endLine": 72 }
+        },
+        {
+          "kind": "function",
+          "name": "isOpenStackKeyLive",
+          "signature": "export function isOpenStackKeyLive(\n\teditor: Editor,\n\tkey: string,\n\tstacks: ReadonlyMap<string, readonly string[]>,\n\tthreadsById: ReadonlyMap<string, TLCommentThread>\n): boolean",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 94, "endLine": 99 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Empty thread collection",
+          "handled": true,
+          "behavior": "Returns an empty stack map.",
+          "anchor": { "startLine": 34, "endLine": 34 }
+        },
+        {
+          "inputShape": "Thread from another page",
+          "handled": true,
+          "behavior": "Skips the thread without creating a stack entry.",
+          "anchor": { "startLine": 36, "endLine": 37 }
+        },
+        {
+          "inputShape": "Thread with unresolved anchor",
+          "handled": true,
+          "behavior": "Skips the thread when anchorPagePoint returns no point.",
+          "anchor": { "startLine": 38, "endLine": 39 }
+        },
+        {
+          "inputShape": "Singleton coordinate group",
+          "handled": true,
+          "behavior": "Excludes the group because individual pins do not form stacks.",
+          "anchor": { "startLine": 50, "endLine": 51 }
+        },
+        {
+          "inputShape": "Equal creation timestamps",
+          "handled": true,
+          "behavior": "Uses identifier ordering as the deterministic tie-breaker.",
+          "anchor": { "startLine": 52, "endLine": 52 }
+        },
+        {
+          "inputShape": "Missing thread while checking an open stack",
+          "handled": true,
+          "behavior": "Continues scanning remaining stack members.",
+          "anchor": { "startLine": 101, "endLine": 102 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<",
+          "left": "group.length",
+          "right": "2",
+          "inclusive": false,
+          "intent": "Excludes groups smaller than two members from stack materialization.",
+          "anchor": { "startLine": 51, "endLine": 51 }
+        },
+        {
+          "operator": "<",
+          "left": "a.id",
+          "right": "b.id",
+          "inclusive": false,
+          "intent": "Chooses the lexicographically earlier identifier as the tie-break winner.",
+          "anchor": { "startLine": 52, "endLine": 52 }
+        },
+        {
+          "operator": "<",
+          "left": "i",
+          "right": "group.length",
+          "inclusive": false,
+          "intent": "Scans every identifier in a candidate group.",
+          "anchor": { "startLine": 80, "endLine": 80 }
+        }
+      ],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "ordering",
+          "description": "Stack members are ordered by ascending creation time, then lexicographic identifier.",
+          "anchor": { "startLine": 52, "endLine": 53 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Only groups containing at least two threads become stack entries.",
+          "anchor": { "startLine": 51, "endLine": 51 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Every member identifier in a materialized group maps to the same ordered identifier array.",
+          "anchor": { "startLine": 54, "endLine": 55 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Equality requires identical map membership and ordered group contents, not merely equal size.",
+          "anchor": { "startLine": 74, "endLine": 84 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide an editor whose current page and anchor resolution reflect the canvas state being evaluated.",
+          "anchor": { "startLine": 33, "endLine": 38 }
+        },
+        {
+          "kind": "schema",
+          "description": "Thread creation timestamps and identifiers are available and comparable for deterministic ordering.",
+          "anchor": { "startLine": 52, "endLine": 53 }
+        },
+        {
+          "kind": "caller",
+          "description": "The caller supplies a threadsById map representing the current thread set when checking liveness.",
+          "anchor": { "startLine": 94, "endLine": 99 }
+        }
+      ],
+      "ambiguities": [],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Functions perform synchronous, local map and array processing; anchor resolution is called synchronously."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "quantizes-nearby-points",
+          "scenario": "Two page points within the configured per-axis quantum resolve to the same stack key.",
+          "given": ["const a = { x: 10, y: 20 }", "const b = { x: 10.04, y: 20.04 }"],
+          "when": "pinStackKey(a) === pinStackKey(b)",
+          "then": "expect(pinStackKey(a)).toBe(pinStackKey(b))",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves tolerance for floating-point noise when identifying coincident pins."
+        },
+        {
+          "testId": "separates-points-across-quantum",
+          "scenario": "Points that quantize to different coordinates receive different stack keys.",
+          "given": ["const a = { x: 10, y: 20 }", "const b = { x: 10.1, y: 20 }"],
+          "when": "pinStackKey(a) !== pinStackKey(b)",
+          "then": "expect(pinStackKey(a)).not.toBe(pinStackKey(b))",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures distinct page-space locations do not collapse into one stack."
+        },
+        {
+          "testId": "groups-coincident-current-page-threads",
+          "scenario": "Multiple current-page threads with coincident valid anchors are mapped to one ordered member list.",
+          "given": [
+            "editor.getCurrentPageId() returns 'page:1'",
+            "threads contain two threads on 'page:1' with anchors resolving to the same point",
+            "threadA.createdAt < threadB.createdAt"
+          ],
+          "when": "computePinStacks(editor, [threadA, threadB])",
+          "then": "expect(result.get(threadA.id)).toEqual([threadA.id, threadB.id]); expect(result.get(threadB.id)).toEqual([threadA.id, threadB.id])",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins in the same stack must expose identical oldest-first membership."
+        },
+        {
+          "testId": "excludes-singletons",
+          "scenario": "A thread without another coincident thread is not represented in the stack map.",
+          "given": ["threads contain one current-page thread with a valid anchor"],
+          "when": "computePinStacks(editor, threads)",
+          "then": "expect(result).toEqual(new Map())",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Only groups of at least two threads render as stack badges."
+        },
+        {
+          "testId": "excludes-other-page-and-unanchored-threads",
+          "scenario": "Threads from another page or with no resolved page anchor are omitted.",
+          "given": [
+            "editor.getCurrentPageId() returns 'page:1'",
+            "one thread has pageId 'page:2'",
+            "one thread on 'page:1' resolves anchorPagePoint(editor, thread.anchor) to null"
+          ],
+          "when": "computePinStacks(editor, threads)",
+          "then": "expect(result).not.toHaveProperty('excludedThreadId')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Stack computation is limited to visible, resolvable anchors on the current page."
+        },
+        {
+          "testId": "orders-stack-members-by-creation",
+          "scenario": "Stack members are ordered by creation time and use id ordering as the tie-breaker.",
+          "given": [
+            "threadA.createdAt === threadB.createdAt",
+            "threadA.id < threadB.id",
+            "threadA and threadB resolve to the same page point"
+          ],
+          "when": "computePinStacks(editor, [threadB, threadA])",
+          "then": "expect(result.get(threadA.id)).toEqual([threadA.id, threadB.id])",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Stable ordering keeps stack member presentation deterministic."
+        },
+        {
+          "testId": "compares-stack-membership-by-value",
+          "scenario": "Maps with equal ids and equal ordered member arrays compare equal even when independently allocated.",
+          "given": [
+            "const a = new Map([['thread:1', ['thread:1', 'thread:2']]])",
+            "const b = new Map([['thread:1', ['thread:1', 'thread:2']]])"
+          ],
+          "when": "pinStacksEqual(a, b)",
+          "then": "expect(pinStacksEqual(a, b)).toBe(true)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Allows callers to preserve map identity when grouping membership has not changed."
+        },
+        {
+          "testId": "detects-different-stack-membership",
+          "scenario": "Maps with different member counts or ordering compare unequal.",
+          "given": [
+            "const a = new Map([['thread:1', ['thread:1', 'thread:2']]])",
+            "const b = new Map([['thread:1', ['thread:2', 'thread:1']]])"
+          ],
+          "when": "pinStacksEqual(a, b)",
+          "then": "expect(pinStacksEqual(a, b)).toBe(false)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Stack membership includes ordered ids, not merely the set of members."
+        },
+        {
+          "testId": "live-stack-key-requires-current-anchor",
+          "scenario": "An open key remains live while at least one member still resolves to that key on the current page.",
+          "given": [
+            "stacks contains thread ids for key '100:200'",
+            "threadsById contains a member whose anchor resolves to { x: 10, y: 20 }"
+          ],
+          "when": "isOpenStackKeyLive(editor, '100:200', stacks, threadsById)",
+          "then": "expect(result).toBe(true)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Open-stack state survives while any member still occupies the keyed page-space stack."
+        },
+        {
+          "testId": "clears-moved-or-emptied-stack-key",
+          "scenario": "An open key is not live when no mapped member exists or every member moved to another key.",
+          "given": [
+            "stacks contains key '100:200'",
+            "threadsById is empty or all member anchors resolve to points whose pinStackKey is not '100:200'"
+          ],
+          "when": "isOpenStackKeyLive(editor, '100:200', stacks, threadsById)",
+          "then": "expect(result).toBe(false)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Callers must clear open-stack state after a stack is emptied or moved."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "type-only tldraw imports",
+        "anchorPagePoint import",
+        "PIN_STACK_QUANTUM constant",
+        "pinStackKey function",
+        "computePinStacks function",
+        "pinStacksEqual function",
+        "isOpenStackKeyLive function"
+      ],
+      "moduleLevelCode": "import type { Editor, TLCommentThread } from 'tldraw'\nimport { anchorPagePoint } from './thread-state'",
+      "exports": [
+        { "name": "pinStackKey", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "computePinStacks", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "pinStacksEqual", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "isOpenStackKeyLive", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Editor", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentThread", "module": "tldraw", "alias": null, "kind": "external" },
+        { "symbol": "anchorPagePoint", "module": "./thread-state", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "PIN_STACK_QUANTUM", "value": "0.1", "kind": "number" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/commenting/src/canvas/pin-stacking.ts__pinStackKey#function:pinStackKey",
+        "unitKind": "function",
+        "name": "pinStackKey",
+        "qualifiedName": "pinStackKey",
+        "parentUnitId": null,
+        "startLine": 14,
+        "endLine": 16,
+        "isBehavioral": true,
+        "source": "\treturn `${Math.round(point.x / PIN_STACK_QUANTUM)}:${Math.round(point.y / PIN_STACK_QUANTUM)}`\n}\n",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/pin-stacking.ts__pinStackKey#function:pinStackKey",
+          "fileId": "packages/commenting/src/canvas/pin-stacking.ts__pinStackKey",
+          "unitKind": "function",
+          "name": "pinStackKey",
+          "qualifiedName": "pinStackKey",
+          "parentUnitId": null,
+          "startLine": 14,
+          "endLine": 16,
+          "signature": null,
+          "parameters": [
+            { "name": "point", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "string",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The point provides x and y coordinate values usable in numeric division and rounding."],
+          "postconditions": [
+            "Returns a string containing the rounded x coordinate divided by PIN_STACK_QUANTUM, followed by a colon and the rounded y coordinate divided by PIN_STACK_QUANTUM."
+          ],
+          "invariants": [
+            "The key uses the same PIN_STACK_QUANTUM for both coordinates.",
+            "The x and y components are separated by exactly one colon."
+          ],
+          "edgeCases": [
+            "Coordinates on or near quantization boundaries are rounded using JavaScript Math.round semantics.",
+            "Negative, fractional, or zero coordinates are processed through the same division-and-rounding operation."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["PIN_STACK_QUANTUM"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns the text form <rounded x / PIN_STACK_QUANTUM>:<rounded y / PIN_STACK_QUANTUM>.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Converts a point into a deterministic pin-stack key by quantizing and rounding its coordinates.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": ":",
+              "role": "Separates the quantized x and y coordinate components in the returned stack key."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "fa66f4b06c2c74d9ed3150f1ec04c0b4359f67900400fd7ef775d40df2bbcda5"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/pin-stacking.ts__computePinStacks#function:computePinStacks",
+        "unitKind": "function",
+        "name": "computePinStacks",
+        "qualifiedName": "computePinStacks",
+        "parentUnitId": null,
+        "startLine": 28,
+        "endLine": 59,
+        "isBehavioral": true,
+        "source": "\teditor: Editor,\n\tthreads: readonly TLCommentThread[]\n): Map<string, readonly string[]> {\n\tconst pageId = editor.getCurrentPageId()\n\tconst groups = new Map<string, TLCommentThread[]>()\n\n\tfor (const thread of threads) {\n\t\tif (thread.pageId !== pageId) continue\n\t\tconst point = anchorPagePoint(editor, thread.anchor)\n\t\tif (!point) continue\n\t\tconst key = pinStackKey(point)\n\t\tconst group = groups.get(key)\n\t\tif (group) {\n\t\t\tgroup.push(thread)\n\t\t} else {\n\t\t\tgroups.set(key, [thread])\n\t\t}\n\t}\n\n\tconst stacks = new Map<string, readonly string[]>()\n\tfor (const group of groups.values()) {\n\t\tif (group.length < 2) continue\n\t\tgroup.sort((a, b) => a.createdAt - b.createdAt || (a.id < b.id ? -1 : 1))\n\t\tconst ids = group.map((thread) => thread.id)\n\t\tfor (const id of ids) {\n\t\t\tstacks.set(id, ids)\n\t\t}\n\t}\n\treturn stacks\n}\n\n/**",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/pin-stacking.ts__computePinStacks#function:computePinStacks",
+          "fileId": "packages/commenting/src/canvas/pin-stacking.ts__computePinStacks",
+          "unitKind": "function",
+          "name": "computePinStacks",
+          "qualifiedName": "computePinStacks",
+          "parentUnitId": null,
+          "startLine": 28,
+          "endLine": 59,
+          "signature": "function computePinStacks(editor: Editor, threads: readonly TLCommentThread[]): Map<string, readonly string[]>",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "threads",
+              "type": "readonly TLCommentThread[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Map<string, readonly string[]>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "editor provides the current page ID and supports resolving thread anchors to page points.",
+            "threads contains TLCommentThread values with pageId, anchor, id, and createdAt fields."
+          ],
+          "postconditions": [
+            "Returns a Map whose keys are thread IDs belonging to stacks of at least two eligible threads.",
+            "Each returned value contains the IDs of all threads in that stack, ordered by ascending createdAt and then lexicographically by ID.",
+            "Threads from pages other than the editor's current page and threads whose anchors cannot be resolved are absent from the result.",
+            "The input threads collection is not reordered or otherwise mutated."
+          ],
+          "invariants": [
+            "Threads are grouped only when they belong to the current page and resolve to the same pin-stack key.",
+            "Every ID in a returned stack maps to the same readonly ID array for that stack.",
+            "A group with fewer than two eligible threads produces no entries."
+          ],
+          "edgeCases": [
+            "An empty thread collection returns an empty Map.",
+            "Threads from a different page are ignored.",
+            "Threads with anchors that do not resolve to a page point are ignored.",
+            "A single eligible thread at a point is not returned as a stack.",
+            "Threads with equal createdAt values are ordered lexicographically by ID."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "editor.getCurrentPageId", "source": "Editor", "kind": "external" },
+            { "name": "anchorPagePoint", "source": null, "kind": "internal" },
+            { "name": "pinStackKey", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Editor", "TLCommentThread", "Map"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns a Map<string, readonly string[]> keyed by each thread ID in a multi-thread stack. Each value is the ordered list of all thread IDs sharing that stack.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes stacks of comment-thread IDs for visible threads anchored at the same page point on the editor's current page. Only groups containing at least two eligible threads are returned, with each member mapped to the deterministically ordered IDs of its stack.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "computePinStacks(editor, threads) is called.",
+              "then": "The result contains both thread IDs as keys, and both keys map to the same ID list ordered by ascending createdAt.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "computePinStacks(editor, threads) is called.",
+              "then": "The result is empty.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "computePinStacks(editor, threads) is called.",
+              "then": "Both IDs map to the ordered list [\"a\", \"b\"].",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "d976cba8ebea955b3c96cca33129f4026c8c8b3eefb709fc44f1fb9b99bfc096"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/pin-stacking.ts__pinStacksEqual#function:pinStacksEqual",
+        "unitKind": "function",
+        "name": "pinStacksEqual",
+        "qualifiedName": "pinStacksEqual",
+        "parentUnitId": null,
+        "startLine": 69,
+        "endLine": 85,
+        "isBehavioral": true,
+        "source": "): boolean {\n\tif (a === b) return true\n\tif (a.size !== b.size) return false\n\tfor (const [id, group] of b) {\n\t\tconst prevGroup = a.get(id)\n\t\tif (!prevGroup) return false\n\t\tif (prevGroup === group) continue\n\t\tif (prevGroup.length !== group.length) return false\n\t\tfor (let i = 0; i < group.length; i++) {\n\t\t\tif (prevGroup[i] !== group[i]) return false\n\t\t}\n\t}\n\treturn true\n}\n\n/**\n * Whether an open-stack key still names a stack on the canvas — false once that stack is emptied,",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/pin-stacking.ts__pinStacksEqual#function:pinStacksEqual",
+          "fileId": "packages/commenting/src/canvas/pin-stacking.ts__pinStacksEqual",
+          "unitKind": "function",
+          "name": "pinStacksEqual",
+          "qualifiedName": "pinStacksEqual",
+          "parentUnitId": null,
+          "startLine": 69,
+          "endLine": 85,
+          "signature": "function pinStacksEqual(a: Map<string, string[]>, b: Map<string, string[]>): boolean",
+          "parameters": [
+            {
+              "name": "a",
+              "type": "Map<string, string[]>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "b",
+              "type": "Map<string, string[]>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["Both arguments are map-like collections whose values are ordered groups."],
+          "postconditions": [
+            "Returns true only when both maps have the same size, every key in the second map exists in the first map, and corresponding groups are equal by ordered element value.",
+            "Returns false when the map sizes differ, a key is absent from the first map, a group length differs, or any corresponding element differs."
+          ],
+          "invariants": [
+            "Input maps and groups are not mutated.",
+            "Group comparison is order-sensitive.",
+            "Reference-identical maps return true without inspecting their contents."
+          ],
+          "edgeCases": [
+            "The same map reference returns true.",
+            "Maps with different sizes return false.",
+            "A key present in the second map but absent from the first returns false.",
+            "Groups with different lengths return false.",
+            "Groups with the same elements in a different order return false.",
+            "Distinct group arrays with equal ordered elements return true."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether two pin-stack maps contain the same keys and equivalent ordered groups. It treats identical map references as equal and otherwise compares each group's length and element order.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "pinStacksEqual is called with those maps.",
+              "then": "It returns true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "pinStacksEqual is called with those maps.",
+              "then": "It returns false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "pinStacksEqual is called with those maps.",
+              "then": "It returns false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "d502c1365b5be833248616a01db9241b2c0b7dbcfc8fbc64afbae17da932c71d"
+        }
+      },
+      {
+        "unitId": "packages/commenting/src/canvas/pin-stacking.ts__isOpenStackKeyLive#function:isOpenStackKeyLive",
+        "unitKind": "function",
+        "name": "isOpenStackKeyLive",
+        "qualifiedName": "isOpenStackKeyLive",
+        "parentUnitId": null,
+        "startLine": 94,
+        "endLine": 108,
+        "isBehavioral": true,
+        "source": "\tthreadsById: ReadonlyMap<string, TLCommentThread>\n): boolean {\n\tfor (const id of stacks.keys()) {\n\t\tconst thread = threadsById.get(id)\n\t\tif (!thread) continue\n\t\tconst point = anchorPagePoint(editor, thread.anchor)\n\t\tif (point && pinStackKey(point) === key) return true\n\t}\n\treturn false\n}\n",
+        "detail": {
+          "unitId": "packages/commenting/src/canvas/pin-stacking.ts__isOpenStackKeyLive#function:isOpenStackKeyLive",
+          "fileId": "packages/commenting/src/canvas/pin-stacking.ts__isOpenStackKeyLive",
+          "unitKind": "function",
+          "name": "isOpenStackKeyLive",
+          "qualifiedName": "isOpenStackKeyLive",
+          "parentUnitId": null,
+          "startLine": 94,
+          "endLine": 108,
+          "signature": null,
+          "parameters": [
+            { "name": "editor", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "stacks", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "key", "type": null, "default": null, "optional": false, "variadic": false, "order": 2 },
+            {
+              "name": "threadsById",
+              "type": "ReadonlyMap<string, TLCommentThread>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "stacks is iterable and exposes thread identifiers through keys().",
+            "threadsById provides thread lookup by identifier.",
+            "Each resolved thread has an anchor usable by anchorPagePoint."
+          ],
+          "postconditions": [
+            "Returns true if at least one resolved thread has a page point whose pinStackKey equals key.",
+            "Returns false when no resolved thread has a matching live point."
+          ],
+          "invariants": [
+            "Only thread identifiers present in stacks are considered.",
+            "Missing thread records are ignored.",
+            "Threads whose anchor does not resolve to a page point are ignored.",
+            "Evaluation stops once a matching live stack key is found."
+          ],
+          "edgeCases": [
+            "A stack identifier with no corresponding entry in threadsById is skipped.",
+            "A resolved thread whose anchor produces no page point does not make the key live.",
+            "An empty stacks collection returns false.",
+            "If multiple threads are present, the result is true when any one resolves to key and false when none do."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "anchorPagePoint", "source": null, "kind": "external" },
+            { "name": "pinStackKey", "source": "isOpenStackKeyLive's module", "kind": "internal" }
+          ],
+          "symbolReferences": ["TLCommentThread"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether any thread represented by the provided stacks currently resolves to the specified pin stack key.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isOpenStackKeyLive is called with that key",
+              "then": "It returns true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isOpenStackKeyLive is called",
+              "then": "It returns false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isOpenStackKeyLive is called",
+              "then": "It returns true without requiring every stack entry to match.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "cf38561bf48785902e0e864c835390e4f7c9ae114e6fb97fa2e247fb98ca329b"
+        }
+      }
+    ]
+  },
+  "out": ["packages/commenting/src/canvas/thread-state.ts"],
+  "in": [
+    "packages/commenting/src/canvas/pin-stacking.test.ts",
+    "packages/commenting/src/canvas/comments-overlay.tsx",
+    "packages/commenting/src/canvas/thread-stack.tsx"
+  ],
+  "externals": ["tldraw"],
+  "impact": {
+    "seeds": 4,
+    "callers": 4,
+    "impactedFiles": [
+      "packages/commenting/src/canvas/comments-overlay.tsx",
+      "packages/commenting/src/canvas/thread-stack.tsx"
+    ]
+  }
+}

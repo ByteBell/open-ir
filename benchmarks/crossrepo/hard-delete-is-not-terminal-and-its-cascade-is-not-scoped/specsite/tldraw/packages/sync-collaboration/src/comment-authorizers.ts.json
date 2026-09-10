@@ -1,0 +1,1323 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/sync-collaboration/src/comment-authorizers.ts",
+    "language": "typescript",
+    "sizeBytes": 15446,
+    "tokenCount": 3852,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:07:35.147Z",
+    "module": {
+      "purpose": "Provides server-side authorization rules for comment, comment-thread, and comment-reaction records in a synchronized collaboration room.",
+      "summary": "This module builds record authorizers that gate all comment writes through session access, enforce session-derived attribution, protect immutable structural fields, and distinguish soft deletion from ordinary edits. It supports configurable commenting and per-write authorization while preserving canonical reaction identifiers, thread resolution attribution, write-once deletion flags, and server-only hard deletion semantics.",
+      "businessContext": "Supports collaborative document comments and reactions with trustworthy authorship and moderation controls. If authorization fails, users may forge attribution, alter comment relationships, or perform unauthorized deletion.",
+      "classes": [],
+      "functions": [
+        "createCommentAuthorizers (~L121-330): Builds authorization rules for all supported comment record types.",
+        "withUserId (~L141-149): Gates writes and resolves the session user identity once.",
+        "authorizeAuthored (~L155-172): Stamps attribution and enforces immutable ownership fields.",
+        "authorizeSoftDeleted (~L185-214): Enforces soft-delete lifecycle and modification permissions.",
+        "immutableFields (~L241-254): Rejects updates that alter protected record fields."
+      ],
+      "keywords": [
+        "comment authorization",
+        "soft deletion",
+        "session identity",
+        "canonical reaction id",
+        "thread resolution",
+        "record authorizer",
+        "immutable attribution",
+        "moderation",
+        "read-only session",
+        "collaboration sync"
+      ],
+      "ontologyConcepts": [
+        "authorization",
+        "identity attribution",
+        "ownership",
+        "soft deletion",
+        "immutability",
+        "moderation",
+        "access control",
+        "record synchronization"
+      ],
+      "businessEntities": ["Comment", "CommentThread", "CommentReaction", "Session", "User", "Workspace"],
+      "systemCapabilities": [
+        "Authorize collaborative comment writes",
+        "Enforce authenticated authorship",
+        "Control comment and thread deletion",
+        "Validate reaction identity and uniqueness",
+        "Protect immutable comment structure",
+        "Support configurable moderation rules"
+      ],
+      "configDependencies": [],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/store",
+          "symbols": ["UnknownRecord"],
+          "package": "@tldraw/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/sync-core",
+          "symbols": ["TLRecordAuthorizer", "TLRecordAuthorizers"],
+          "package": "@tldraw/sync-core",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["createCommentReactionId", "TLComment", "TLCommentReaction", "TLCommentThread"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 8 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["isEqual"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 9, "endLine": 9 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "CommentModification",
+          "shape": "| { readonly action: 'edit-comment'; readonly comment: TLComment }\n\t| { readonly action: 'delete-comment'; readonly comment: TLComment }\n\t| { readonly action: 'delete-thread'; readonly thread: TLCommentThread }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CommentModificationAuthContext",
+          "shape": "{\n\treadonly session: { sessionId: string; isReadonly: boolean; meta: SessionMeta }\n\treadonly userId: string | null\n\treadonly ownerId: string\n} & CommentModification",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CommentAuthorizerOptions",
+          "shape": "interface CommentAuthorizerOptions<SessionMeta>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "createCommentAuthorizers",
+          "shape": "function createCommentAuthorizers<SessionMeta>(\n\topts: CommentAuthorizerOptions<SessionMeta>\n): TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "UnknownRecord", "shape": "UnknownRecord", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "TLRecordAuthorizer",
+          "shape": "TLRecordAuthorizer<Rec, SessionMeta>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLRecordAuthorizers",
+          "shape": "TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "TLComment", "shape": "TLComment", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "TLCommentReaction",
+          "shape": "TLCommentReaction",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "TLCommentThread", "shape": "TLCommentThread", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "createCommentReactionId",
+          "shape": "createCommentReactionId(next.commentId, userId, next.emoji)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "session gate",
+          "intent": "Rejects disallowed sessions before resolving identity or applying record rules.",
+          "structureKind": "branch",
+          "predicate": "if (!canComment(args.session))",
+          "branchOutcomes": ["reject", "authorize rule"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 145, "endLine": 148 }
+        },
+        {
+          "name": "authored record handling",
+          "intent": "Stamps identity on creation and protects attribution during updates.",
+          "structureKind": "branch",
+          "predicate": "if (type === 'create')",
+          "branchOutcomes": ["create", "update", "delete"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 160, "endLine": 172 }
+        },
+        {
+          "name": "soft deletion policy",
+          "intent": "Separates delete authorization from edit authorization and prevents hard deletion.",
+          "structureKind": "branch",
+          "predicate": "if (prev.isDeleted === next.isDeleted)",
+          "branchOutcomes": ["edit", "delete transition", "reject"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 191, "endLine": 214 }
+        },
+        {
+          "name": "immutable field validation",
+          "intent": "Compares every protected field before delegating to the base rule.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const field of fields)",
+          "terminationCondition": null,
+          "anchor": { "startLine": 247, "endLine": 254 }
+        },
+        {
+          "name": "reaction validation",
+          "intent": "Restricts reaction deletion and validates canonical identity-derived reaction keys.",
+          "structureKind": "branch",
+          "predicate": "if (args.type === 'delete')",
+          "branchOutcomes": ["delete", "create", "update"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 275, "endLine": 294 }
+        },
+        {
+          "name": "authorizer assembly",
+          "intent": "Registers comment, thread, and reaction rules under sync record type names.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 297, "endLine": 329 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "CommentModification",
+          "signature": "export type CommentModification =",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 20, "endLine": 23 }
+        },
+        {
+          "kind": "type",
+          "name": "CommentModificationAuthContext",
+          "signature": "export type CommentModificationAuthContext<SessionMeta> = {",
+          "generics": "<SessionMeta>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 32, "endLine": 36 }
+        },
+        {
+          "kind": "interface",
+          "name": "CommentAuthorizerOptions",
+          "signature": "export interface CommentAuthorizerOptions<SessionMeta> {",
+          "generics": "<SessionMeta>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 43, "endLine": 87 }
+        },
+        {
+          "kind": "function",
+          "name": "createCommentAuthorizers",
+          "signature": "export function createCommentAuthorizers<SessionMeta>(\n\topts: CommentAuthorizerOptions<SessionMeta>\n): TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta> {",
+          "generics": "<SessionMeta>",
+          "decorators": [],
+          "returnType": "TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta>",
+          "exported": true,
+          "anchor": { "startLine": 121, "endLine": 330 }
+        },
+        {
+          "kind": "function",
+          "name": "withUserId",
+          "signature": "function withUserId<Rec extends UnknownRecord>(\n\t\trule: Rule<Rec>\n\t): TLRecordAuthorizer<Rec, SessionMeta> {",
+          "generics": "<Rec extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "TLRecordAuthorizer<Rec, SessionMeta>",
+          "exported": false,
+          "anchor": { "startLine": 141, "endLine": 149 }
+        },
+        {
+          "kind": "function",
+          "name": "authorizeAuthored",
+          "signature": "function authorizeAuthored<Rec extends UnknownRecord>(\n\t\tfield: keyof Rec & string,\n\t\t{ ownerOnlyUpdate = false } = {}\n\t): Rule<Rec> {",
+          "generics": "<Rec extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "Rule<Rec>",
+          "exported": false,
+          "anchor": { "startLine": 155, "endLine": 172 }
+        },
+        {
+          "kind": "function",
+          "name": "authorizeSoftDeleted",
+          "signature": "function authorizeSoftDeleted<Rec extends UnknownRecord & { isDeleted: boolean }>(\n\t\townerOf: (rec: Rec) => string,\n\t\tmodificationFor: (rec: Rec, write: 'edit' | 'delete') => CommentModification | null,\n\t\tbase: Rule<Rec>\n\t): Rule<Rec> {",
+          "generics": "<Rec extends UnknownRecord & { isDeleted: boolean }>",
+          "decorators": [],
+          "returnType": "Rule<Rec>",
+          "exported": false,
+          "anchor": { "startLine": 185, "endLine": 214 }
+        },
+        {
+          "kind": "function",
+          "name": "immutableFields",
+          "signature": "function immutableFields<Rec extends UnknownRecord>(\n\t\tfields: readonly (keyof Rec & string)[],\n\t\tbase: Rule<Rec>\n\t): Rule<Rec> {",
+          "generics": "<Rec extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "Rule<Rec>",
+          "exported": false,
+          "anchor": { "startLine": 241, "endLine": 254 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "union",
+          "name": "CommentModification",
+          "shape": "| { readonly action: 'edit-comment'; readonly comment: TLComment }\n\t| { readonly action: 'delete-comment'; readonly comment: TLComment }\n\t| { readonly action: 'delete-thread'; readonly thread: TLCommentThread }",
+          "discriminant": "action",
+          "anchor": { "startLine": 20, "endLine": 23 }
+        },
+        {
+          "kind": "intersection",
+          "name": "CommentModificationAuthContext",
+          "shape": "{\n\treadonly session: { sessionId: string; isReadonly: boolean; meta: SessionMeta }\n\treadonly userId: string | null\n\treadonly ownerId: string\n} & CommentModification",
+          "discriminant": "action",
+          "anchor": { "startLine": 32, "endLine": 36 }
+        },
+        {
+          "kind": "interface",
+          "name": "CommentAuthorizerOptions",
+          "shape": "{\n\t/**\n\t * Resolve the authenticated user id for a session from its host-provided `meta`. Return `null`\n\t * for anonymous sessions — they can't create records, and own none, so the default\n\t * {@link CommentAuthorizerOptions.canModifyComment} grants them no edits or deletes either.\n\t */\n\tgetUserId(session: { sessionId: string; isReadonly: boolean; meta: SessionMeta }): string | null\n\n\t/**\n\t * Whether a session may write comment records at all — checked before the per-type rules.\n\t * Defaults to `({ isReadonly }) => !isReadonly`, so read-only viewers can read threads but not\n\t * post. Override to decouple the lanes: `() => true` allows commenting on a read-only canvas.\n\t */\n\tcanComment?(session: { sessionId: string; isReadonly: boolean; meta: SessionMeta }): boolean\n\n\t/**\n\t * Whether a session may make a particular write against a particular stored record: editing or\n\t * deleting a comment, or deleting a thread. Defaults to `({ userId, ownerId }) => userId === ownerId` — the owner-only rule enforced up to now.\n\t * Override to widen it (a workspace admin or moderator who may take down anyone's comment) or\n\t * to narrow it (no edits after an hour).\n\t *\n\t * The counterpart to `canModifyComment` in `@tldraw/commenting`, which decides which\n\t * affordances the UI offers. This one is the real rule, and the two want widening together: a\n\t * delete the client offers and this rejects is applied locally, vetoed, and rebased away — the\n\t * comment comes back with nothing to explain it.\n\t *\n\t * Asked after {@link CommentAuthorizerOptions.canComment} and after the structural rules, so it\n\t * can only widen *who* may write, never *what* a write may contain. However permissive the\n\t * callback, attribution is still stamped from the session and immutable, `isDeleted` is still\n\t * write-once and never set at create, `threadId` and `createdAt` are still frozen, a\n\t * resolution is still the resolver's own, and clients still can't hard-delete.\n\t *\n\t * A soft delete that changes anything besides the flag is asked about twice — once as the\n\t * delete, once as an edit — so granting deletes alone can't be talked into an edit.\n\t *\n\t * Called at most once per authorized write, twice for that combined case.\n\t *\n\t * @example\n\t * ```ts\n\t * createCommentAuthorizers<SessionMeta>({\n\t * \tgetUserId: (session) => session.meta.userId,\n\t * \t// Moderators may take anything down. Editing stays the author's, whoever you are.\n\t * \tcanModifyComment: (ctx) =>\n\t * \t\t(ctx.action !== 'edit-comment' && isModerator(ctx.session.meta)) ||\n\t * \t\tctx.userId === ctx.ownerId,\n\t * })\n\t * ```\n\t */\n\tcanModifyComment?(ctx: CommentModificationAuthContext<SessionMeta>): boolean\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 43, "endLine": 87 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Anonymous session creating an authored record",
+          "handled": true,
+          "behavior": "Rejected because no user identity exists for attribution.",
+          "anchor": { "startLine": 161, "endLine": 163 }
+        },
+        {
+          "inputShape": "Read-only session attempting any comment write",
+          "handled": true,
+          "behavior": "Rejected before the user identity is resolved.",
+          "anchor": { "startLine": 145, "endLine": 148 }
+        },
+        {
+          "inputShape": "Record created with isDeleted already true",
+          "handled": true,
+          "behavior": "Rejected because deletion is write-once and cannot occur at creation.",
+          "anchor": { "startLine": 195, "endLine": 198 }
+        },
+        {
+          "inputShape": "Update attempting to clear an existing deletion flag",
+          "handled": true,
+          "behavior": "Rejected permanently.",
+          "anchor": { "startLine": 205, "endLine": 207 }
+        },
+        {
+          "inputShape": "Soft delete that also changes ordinary record fields",
+          "handled": true,
+          "behavior": "Requires both delete and edit authorization.",
+          "anchor": { "startLine": 209, "endLine": 213 }
+        },
+        {
+          "inputShape": "Reaction with a non-canonical id",
+          "handled": true,
+          "behavior": "Rejected on creation.",
+          "anchor": { "startLine": 281, "endLine": 285 }
+        },
+        {
+          "inputShape": "Resolution attributed to another user",
+          "handled": true,
+          "behavior": "Rejected on creation or when the resolution attribution changes.",
+          "anchor": { "startLine": 222, "endLine": 232 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "userId",
+          "right": "ownerId",
+          "inclusive": true,
+          "intent": "Default modification permission requires the session user to own the record.",
+          "anchor": { "startLine": 128, "endLine": 128 }
+        },
+        {
+          "operator": "==",
+          "left": "type",
+          "right": "'create'",
+          "inclusive": true,
+          "intent": "Selects creation-specific attribution behavior.",
+          "anchor": { "startLine": 161, "endLine": 161 }
+        },
+        {
+          "operator": "==",
+          "left": "next[field]",
+          "right": "prev[field]",
+          "inclusive": false,
+          "intent": "Rejects attribution changes.",
+          "anchor": { "startLine": 166, "endLine": 166 }
+        },
+        {
+          "operator": "==",
+          "left": "userId",
+          "right": "prev[field]",
+          "inclusive": false,
+          "intent": "Rejects updates by non-owners when owner-only mode is enabled.",
+          "anchor": { "startLine": 167, "endLine": 167 }
+        },
+        {
+          "operator": "==",
+          "left": "args.type",
+          "right": "'delete'",
+          "inclusive": true,
+          "intent": "Rejects client hard-delete operations.",
+          "anchor": { "startLine": 192, "endLine": 192 }
+        },
+        {
+          "operator": "==",
+          "left": "args.type",
+          "right": "'create'",
+          "inclusive": true,
+          "intent": "Applies the never-born-deleted rule.",
+          "anchor": { "startLine": 195, "endLine": 195 }
+        },
+        {
+          "operator": "==",
+          "left": "prev.isDeleted",
+          "right": "next.isDeleted",
+          "inclusive": true,
+          "intent": "Classifies an update as an edit when deletion state is unchanged.",
+          "anchor": { "startLine": 205, "endLine": 205 }
+        },
+        {
+          "operator": "==",
+          "left": "prev.resolved?.at",
+          "right": "next.resolved?.at",
+          "inclusive": false,
+          "intent": "Detects resolution timestamp changes.",
+          "anchor": { "startLine": 230, "endLine": 230 }
+        },
+        {
+          "operator": "==",
+          "left": "prev.resolved?.by",
+          "right": "next.resolved?.by",
+          "inclusive": false,
+          "intent": "Detects resolution attribution changes.",
+          "anchor": { "startLine": 230, "endLine": 230 }
+        },
+        {
+          "operator": "==",
+          "left": "next[field]",
+          "right": "prev[field]",
+          "inclusive": false,
+          "intent": "Rejects changes to configured immutable fields.",
+          "anchor": { "startLine": 250, "endLine": 250 }
+        },
+        {
+          "operator": "==",
+          "left": "args.type",
+          "right": "'delete'",
+          "inclusive": true,
+          "intent": "Selects reaction deletion handling.",
+          "anchor": { "startLine": 275, "endLine": 275 }
+        },
+        {
+          "operator": "==",
+          "left": "userId",
+          "right": "args.prev.userId",
+          "inclusive": true,
+          "intent": "Allows only the reactor to delete a reaction.",
+          "anchor": { "startLine": 276, "endLine": 276 }
+        },
+        {
+          "operator": "==",
+          "left": "args.type",
+          "right": "'create'",
+          "inclusive": true,
+          "intent": "Applies canonical reaction-id validation on creation.",
+          "anchor": { "startLine": 281, "endLine": 281 }
+        },
+        {
+          "operator": "==",
+          "left": "next.id",
+          "right": "createCommentReactionId(next.commentId, userId, next.emoji)",
+          "inclusive": false,
+          "intent": "Rejects reaction ids that do not match their canonical triple.",
+          "anchor": { "startLine": 285, "endLine": 285 }
+        },
+        {
+          "operator": "==",
+          "left": "next.commentId",
+          "right": "prev.commentId",
+          "inclusive": false,
+          "intent": "Prevents moving a reaction to another comment.",
+          "anchor": { "startLine": 289, "endLine": 289 }
+        },
+        {
+          "operator": "==",
+          "left": "next.threadId",
+          "right": "prev.threadId",
+          "inclusive": false,
+          "intent": "Prevents changing the reaction's thread linkage.",
+          "anchor": { "startLine": 290, "endLine": 290 }
+        },
+        {
+          "operator": "==",
+          "left": "next.pageId",
+          "right": "prev.pageId",
+          "inclusive": false,
+          "intent": "Prevents changing the reaction's page linkage.",
+          "anchor": { "startLine": 291, "endLine": 291 }
+        },
+        {
+          "operator": "==",
+          "left": "next.emoji",
+          "right": "prev.emoji",
+          "inclusive": false,
+          "intent": "Prevents changing the emoji underlying a reaction identity.",
+          "anchor": { "startLine": 292, "endLine": 292 }
+        },
+        {
+          "operator": "==",
+          "left": "write",
+          "right": "'delete'",
+          "inclusive": true,
+          "intent": "Maps soft-delete checks to delete authorization.",
+          "anchor": { "startLine": 302, "endLine": 302 }
+        },
+        {
+          "operator": "==",
+          "left": "write",
+          "right": "'delete'",
+          "inclusive": true,
+          "intent": "Leaves thread resolve and reopen operations outside modification authorization.",
+          "anchor": { "startLine": 320, "endLine": 320 }
+        }
+      ],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "Every client-originated write passes canComment before type-specific authorization.",
+          "anchor": { "startLine": 145, "endLine": 148 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Created authored records receive the current session user as attribution.",
+          "anchor": { "startLine": 161, "endLine": 169 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Attribution, thread linkage, and creation timestamps cannot change after creation.",
+          "anchor": { "startLine": 165, "endLine": 168 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Soft-deleted records cannot be restored and cannot be hard-deleted by clients.",
+          "anchor": { "startLine": 192, "endLine": 207 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Reaction identifiers remain canonical for comment, user, and emoji.",
+          "anchor": { "startLine": 281, "endLine": 285 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The returned map is supplied to a sync server authorizeRecord configuration.",
+          "anchor": { "startLine": 89, "endLine": 103 }
+        },
+        {
+          "kind": "schema",
+          "description": "Incoming records conform to TLComment, TLCommentThread, and TLCommentReaction shapes.",
+          "anchor": { "startLine": 121, "endLine": 123 }
+        },
+        {
+          "kind": "caller",
+          "description": "Server-initiated record removals bypass client authorizers for cascading cleanup.",
+          "anchor": { "startLine": 272, "endLine": 274 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What host-specific session metadata and user authentication guarantees does getUserId rely on?",
+          "affects": "identity attribution",
+          "anchor": { "startLine": 48, "endLine": 48 },
+          "resolution": null
+        },
+        {
+          "question": "Which sync-server lifecycle performs server-side pruning of soft-deleted records?",
+          "affects": "hard deletion and retention",
+          "anchor": { "startLine": 206, "endLine": 207 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Authorization rules are synchronous, stateless with respect to calls, and return a record or null."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-anonymous-creates",
+          "scenario": "An anonymous session attempts to create a comment, thread, or reaction.",
+          "given": ["getUserId: () => null", "canComment: () => true"],
+          "when": "authorizer({ type: 'create', session, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Records requiring attribution must not be created without an authenticated user."
+        },
+        {
+          "testId": "stamps-authorship-on-create",
+          "scenario": "An authenticated session creates an authored comment or reaction.",
+          "given": ["getUserId: () => 'user-1'", "canComment: () => true"],
+          "when": "authorizer({ type: 'create', session, next })",
+          "then": "the returned record has authorId or userId equal to 'user-1'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Attribution is always taken from the session rather than client input."
+        },
+        {
+          "testId": "rejects-readonly-comment-writes",
+          "scenario": "A read-only session attempts any comment record write using the default access gate.",
+          "given": ["session.isReadonly === true"],
+          "when": "authorizer({ type: 'create', session, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The default canComment policy denies writes from read-only viewers."
+        },
+        {
+          "testId": "rejects-immutable-attribution",
+          "scenario": "An update changes a comment author, reaction user, or thread creator.",
+          "given": ["prev.authorId === 'user-1'", "next.authorId === 'user-2'"],
+          "when": "authorizer({ type: 'update', session, prev, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Authorship fields cannot be forged or transferred after creation."
+        },
+        {
+          "testId": "rejects-immutable-structure",
+          "scenario": "An update changes a comment threadId or createdAt, or a reaction identity field.",
+          "given": ["prev.threadId !== next.threadId"],
+          "when": "authorizer({ type: 'update', session, prev, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Structural identity and ordering fields are frozen after creation."
+        },
+        {
+          "testId": "rejects-hard-delete",
+          "scenario": "A client attempts to remove a comment or thread record directly.",
+          "given": ["type === 'delete'"],
+          "when": "authorizer({ type: 'delete', session, prev })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Client deletion is represented only by a soft-delete flag."
+        },
+        {
+          "testId": "rejects-create-as-deleted",
+          "scenario": "A client creates a comment or thread with isDeleted already set.",
+          "given": ["next.isDeleted === true"],
+          "when": "authorizer({ type: 'create', session, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Deletion is write-once and cannot be smuggled into record creation."
+        },
+        {
+          "testId": "rejects-un-delete",
+          "scenario": "An update attempts to clear an existing soft-delete flag.",
+          "given": ["prev.isDeleted === true", "next.isDeleted === false"],
+          "when": "authorizer({ type: 'update', session, prev, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Soft deletion is irreversible until server-side pruning."
+        },
+        {
+          "testId": "requires-delete-and-edit-permissions",
+          "scenario": "A soft-delete update also changes another field and the caller has delete permission but not edit permission.",
+          "given": [
+            "prev.isDeleted === false",
+            "next.isDeleted === true",
+            "next.body !== prev.body",
+            "canModifyComment: ({ action }) => action === 'delete-comment'"
+          ],
+          "when": "authorizer({ type: 'update', session, prev, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Delete permission must not authorize unrelated edits bundled into the same write."
+        },
+        {
+          "testId": "allows-thread-resolution-by-session-user",
+          "scenario": "An authenticated user resolves or reopens a thread with their own user id in the resolution attribution.",
+          "given": ["getUserId: () => 'user-1'", "next.resolved.by === 'user-1'"],
+          "when": "authorizer({ type: 'update', session, prev, next })",
+          "then": "the returned thread is accepted",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Resolution is open to room members but its attribution must belong to the acting user."
+        },
+        {
+          "testId": "rejects-forged-resolution",
+          "scenario": "A thread update assigns a non-null resolution to another user's identity.",
+          "given": ["getUserId: () => 'user-1'", "next.resolved.by === 'user-2'"],
+          "when": "authorizer({ type: 'update', session, prev, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Clients cannot claim that another user resolved the thread."
+        },
+        {
+          "testId": "requires-canonical-reaction-id",
+          "scenario": "A user creates a reaction whose id does not match its comment, user, and emoji tuple.",
+          "given": [
+            "getUserId: () => 'user-1'",
+            "next.id !== createCommentReactionId(next.commentId, 'user-1', next.emoji)"
+          ],
+          "when": "authorizer({ type: 'create', session, next })",
+          "then": "the result is null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Canonical ids prevent reaction-slot squatting and duplicate triples."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "type imports",
+        "CommentModification union type",
+        "CommentModificationAuthContext intersection type",
+        "CommentAuthorizerOptions interface",
+        "createCommentAuthorizers exported function",
+        "Rule local type",
+        "withUserId nested function",
+        "authorizeAuthored nested function",
+        "authorizeSoftDeleted nested function",
+        "authorizeThreadResolution local rule",
+        "immutableFields nested function",
+        "authorizeReactionBase local rule",
+        "authorizeReaction local rule",
+        "authorizer map return"
+      ],
+      "moduleLevelCode": "import type { UnknownRecord } from '@tldraw/store'\nimport type { TLRecordAuthorizer, TLRecordAuthorizers } from '@tldraw/sync-core'\nimport {\n\tcreateCommentReactionId,\n\ttype TLComment,\n\ttype TLCommentReaction,\n\ttype TLCommentThread,\n} from '@tldraw/tlschema'\nimport { isEqual } from '@tldraw/utils'",
+      "exports": [
+        { "name": "CommentModification", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "CommentModificationAuthContext", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "CommentAuthorizerOptions", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "createCommentAuthorizers", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "UnknownRecord", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "TLRecordAuthorizer", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "TLRecordAuthorizers", "module": "@tldraw/sync-core", "alias": null, "kind": "external" },
+        { "symbol": "createCommentReactionId", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLComment", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentReaction", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLCommentThread", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "isEqual", "module": "@tldraw/utils", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+        "unitKind": "function",
+        "name": "createCommentAuthorizers",
+        "qualifiedName": "createCommentAuthorizers",
+        "parentUnitId": null,
+        "startLine": 121,
+        "endLine": 330,
+        "isBehavioral": true,
+        "source": " * Comment records ride alongside your document records, so widen the room's record union to\n * include them, then spread the result into the authorizer map alongside your own entries:\n *\n * @example\n * ```ts\n * interface SessionMeta {\n * \tuserId: string | null\n * }\n *\n * type MyRecord = TLRecord | TLComment | TLCommentThread | TLCommentReaction\n *\n * new TLSocketRoom<MyRecord, SessionMeta>({\n * \tauthorizeRecord: {\n * \t\t...createCommentAuthorizers<SessionMeta>({ getUserId: (session) => session.meta.userId }),\n * \t},\n * })\n * ```\n *\n * @public\n */\nexport function createCommentAuthorizers<SessionMeta>(\n\topts: CommentAuthorizerOptions<SessionMeta>\n): TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta> {\n\tconst {\n\t\tgetUserId,\n\t\tcanComment = ({ isReadonly }: { isReadonly: boolean }) => !isReadonly,\n\t\tcanModifyComment = ({ userId, ownerId }: CommentModificationAuthContext<SessionMeta>) =>\n\t\t\tuserId === ownerId,\n\t} = opts\n\n\t/** A rule is an authorizer that receives the session's user id, resolved for it exactly once. */\n\ttype Rule<Rec extends UnknownRecord> = (\n\t\tuserId: string | null,\n\t\targs: Parameters<TLRecordAuthorizer<Rec, SessionMeta>>[0]\n\t) => Rec | null\n\n\t/**\n\t * Adapt a rule to the authorizer signature: gate on `canComment` first, then resolve the\n\t * session's user id exactly once.\n\t */\n\tfunction withUserId<Rec extends UnknownRecord>(\n\t\trule: Rule<Rec>\n\t): TLRecordAuthorizer<Rec, SessionMeta> {\n\t\treturn (args) => {\n\t\t\tif (!canComment(args.session)) return null\n\t\t\treturn rule(getUserId(args.session), args)\n\t\t}\n\t}\n\n\t/**\n\t * Authorize a record whose attribution lives in `field`: stamped from the session on create,\n\t * immutable on update. With `ownerOnlyUpdate`, only the author may update it at all.\n\t */\n\tfunction authorizeAuthored<Rec extends UnknownRecord>(\n\t\tfield: keyof Rec & string,\n\t\t{ ownerOnlyUpdate = false } = {}\n\t): Rule<Rec> {\n\t\treturn (userId, { type, prev, next }) => {\n\t\t\tif (type === 'create') {\n\t\t\t\tif (!userId) return null // no identity to attribute → reject\n\t\t\t\treturn { ...next, [field]: userId } as Rec\n\t\t\t}\n\t\t\tif (type === 'update') {\n\t\t\t\tif (next[field] !== prev[field]) return null // attribution is immutable\n\t\t\t\tif (ownerOnlyUpdate && userId !== prev[field]) return null // only the author edits\n\t\t\t\treturn next\n\t\t\t}\n\t\t\treturn prev\n\t\t}\n\t}\n\n\t/**\n\t * Police a soft-deleted record type on top of `base`, asking `canModifyComment` who may make the\n\t * write: `isDeleted` is write-once, never set at create, and clients never hard-delete these\n\t * records. Removals are server-initiated only, so once the server prunes a flagged record there\n\t * is no un-delete.\n\t *\n\t * An update here is one of two writes, asked about separately: flipping `isDeleted` is a delete,\n\t * anything else is an edit. Telling them apart is what lets a host grant deletes without granting\n\t * edits — and an update that does both has to clear both gates, so a delete can't carry an edit\n\t * out with it.\n\t *\n\t * `modificationFor` returns null for a write `canModifyComment` isn't asked about: a thread's\n\t * \"edit\" is a resolve or reopen, which is open to anyone with access and policed by `base`.\n\t */\n\tfunction authorizeSoftDeleted<Rec extends UnknownRecord & { isDeleted: boolean }>(\n\t\townerOf: (rec: Rec) => string,\n\t\tmodificationFor: (rec: Rec, write: 'edit' | 'delete') => CommentModification | null,\n\t\tbase: Rule<Rec>\n\t): Rule<Rec> {\n\t\treturn (userId, args) => {\n\t\t\tif (args.type === 'delete') return null\n\t\t\tconst result = base(userId, args)\n\t\t\tif (!result) return null\n\t\t\t// A record can't be born deleted — that would smuggle a deletion past the update checks.\n\t\t\tif (args.type === 'create') return args.next.isDeleted ? null : result\n\n\t\t\tconst { prev, next, session } = args\n\t\t\tconst mayModify = (write: 'edit' | 'delete') => {\n\t\t\t\tconst modification = modificationFor(prev, write)\n\t\t\t\tif (!modification) return true\n\t\t\t\treturn canModifyComment({ session, userId, ownerId: ownerOf(prev), ...modification })\n\t\t\t}\n\n\t\t\tif (prev.isDeleted === next.isDeleted) return mayModify('edit') ? result : null\n\n\t\t\tif (prev.isDeleted) return null // write-once: never cleared\n\t\t\tif (!mayModify('delete')) return null\n\t\t\t// The built-in client deletes by setting the flag and nothing else. An update carrying\n\t\t\t// more than that is also an edit, and has to be allowed as one — otherwise a delete-only\n\t\t\t// permission could rewrite a comment on its way out.\n\t\t\tif (!isEqual({ ...next, isDeleted: prev.isDeleted }, prev) && !mayModify('edit')) return null\n\t\t\treturn result\n\t\t}\n\t}\n\n\t/**\n\t * Threads stay editable by anyone with access (resolve/reopen), but resolution is itself an\n\t * attribution: a non-null `resolved.by` must be the session's own user.\n\t */\n\tconst authorizeThreadResolution: Rule<TLCommentThread> = (userId, args) => {\n\t\tconst result = authorizeAuthored<TLCommentThread>('createdBy')(userId, args)\n\t\tif (!result) return null\n\t\tif (args.type === 'create') {\n\t\t\t// Delete + re-put could otherwise smuggle in a resolution forged in someone else's name.\n\t\t\tconst { next } = args\n\t\t\tif (next.resolved && next.resolved.by !== userId) return null\n\t\t}\n\t\tif (args.type === 'update') {\n\t\t\tconst { prev, next } = args\n\t\t\tconst changed =\n\t\t\t\tprev.resolved?.at !== next.resolved?.at || prev.resolved?.by !== next.resolved?.by\n\t\t\tif (changed && next.resolved && next.resolved.by !== userId) return null\n\t\t}\n\t\treturn result\n\t}\n\n\t/**\n\t * Reject an update that changes any of `fields` — the structural ones an update must never touch.\n\t * A mutable `threadId` would let an author re-parent a comment between conversations (and, where\n\t * threads span files, between files); a mutable `createdAt` would let it be re-sorted after the fact.\n\t */\n\tfunction immutableFields<Rec extends UnknownRecord>(\n\t\tfields: readonly (keyof Rec & string)[],\n\t\tbase: Rule<Rec>\n\t): Rule<Rec> {\n\t\treturn (userId, args) => {\n\t\t\tif (args.type === 'update') {\n\t\t\t\tconst { prev, next } = args\n\t\t\t\tfor (const field of fields) {\n\t\t\t\t\tif (next[field] !== prev[field]) return null\n\t\t\t\t}\n\t\t\t}\n\t\t\treturn base(userId, args)\n\t\t}\n\t}\n\n\tconst authorizeReactionBase = authorizeAuthored<TLCommentReaction>('userId', {\n\t\townerOnlyUpdate: true,\n\t})\n\n\t/**\n\t * A reaction's id is derived from its (comment, user, emoji) triple. The base rule already stamps\n\t * `userId` and lets only the owner change a reaction, but the id, comment, and emoji are all\n\t * client-supplied, so this adds:\n\t *\n\t * - On **create**, the id must be canonical for `commentId` + the session's user + `next.emoji`.\n\t *   Otherwise a forged client could squat another user's id slot, or land two records on one triple.\n\t *\n\t * - On **update**, everything feeding the id is immutable, so a re-react is a create/delete rather\n\t *   than an update and the id can never drift from its fields.\n\t */\n\tconst authorizeReaction: Rule<TLCommentReaction> = (userId, args) => {\n\t\t// Only the reactor may remove their own reaction. Cascades still sweep every reactor's\n\t\t// records because server-initiated writes carry no session and so skip authorizers\n\t\t// entirely — an open client delete was never what made the sweep work.\n\t\tif (args.type === 'delete') {\n\t\t\treturn userId && userId === args.prev.userId ? args.prev : null\n\t\t}\n\t\tconst result = authorizeReactionBase(userId, args)\n\t\tif (!result) return null\n\t\tif (args.type === 'create') {\n\t\t\t// Unreachable: the base rule already rejected identity-less creates. Checked to narrow.\n\t\t\tif (!userId) return null\n\t\t\tconst { next } = args\n\t\t\tif (next.id !== createCommentReactionId(next.commentId, userId, next.emoji)) {\n\t\t\t\treturn null\n\t\t\t}\n\t\t}\n\t\tif (args.type === 'update') {\n\t\t\tconst { prev, next } = args\n\t\t\tif (next.commentId !== prev.commentId) return null\n\t\t\tif (next.threadId !== prev.threadId) return null\n\t\t\tif (next.pageId !== prev.pageId) return null\n\t\t\tif (next.emoji !== prev.emoji) return null\n\t\t}\n\t\treturn result\n\t}\n\n\treturn {\n\t\tcomment: withUserId(\n\t\t\tauthorizeSoftDeleted<TLComment>(\n\t\t\t\t(comment) => comment.authorId,\n\t\t\t\t(comment, write) => ({\n\t\t\t\t\taction: write === 'delete' ? 'delete-comment' : 'edit-comment',\n\t\t\t\t\tcomment,\n\t\t\t\t}),\n\t\t\t\t// The owner-only update check that used to sit here (`ownerOnlyUpdate`) is now\n\t\t\t\t// `canModifyComment`'s to make, since it can tell an edit from a delete. Attribution\n\t\t\t\t// is still stamped from the session and immutable either way.",
+        "detail": {
+          "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+          "fileId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers",
+          "unitKind": "function",
+          "name": "createCommentAuthorizers",
+          "qualifiedName": "createCommentAuthorizers",
+          "parentUnitId": null,
+          "startLine": 121,
+          "endLine": 330,
+          "signature": "export function createCommentAuthorizers<SessionMeta>(\n\topts: CommentAuthorizerOptions<SessionMeta>\n): TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta>",
+          "parameters": [
+            {
+              "name": "opts",
+              "type": "CommentAuthorizerOptions<SessionMeta>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["SessionMeta"],
+          "logicOutline": [],
+          "preconditions": [
+            "opts is provided and supplies a getUserId callback.",
+            "The returned authorizers are invoked with sessions and record-operation arguments matching TLRecordAuthorizer contracts."
+          ],
+          "postconditions": [
+            "Returns a TLRecordAuthorizers map covering TLComment, TLCommentThread, and TLCommentReaction records.",
+            "Each authorization operation first applies canComment, defaulting to rejection for readonly sessions.",
+            "Each authorized operation resolves the session user id once before applying record-specific rules.",
+            "Default policies permit commenting only when isReadonly is false and permit comment modification only when userId equals ownerId."
+          ],
+          "invariants": [
+            "Attribution fields stamped during creation are derived from the resolved session user id rather than trusted client attribution.",
+            "Attribution and structural identity fields remain immutable on updates where the record-specific rules require them.",
+            "Soft-deleted records cannot be created as already deleted, undeleted, or hard-deleted through client authorization.",
+            "Reaction identity remains tied to commentId, the resolved user id, and emoji."
+          ],
+          "edgeCases": [
+            "If canComment returns false, the operation is rejected without applying the record-specific rule.",
+            "If a create operation has no resolved user id, authored records are rejected.",
+            "If no canComment callback is supplied, readonly sessions are rejected and non-readonly sessions are allowed through the gate.",
+            "If no canModifyComment callback is supplied, modifications are allowed only when the resolved user id equals the record owner.",
+            "A client delete of a reaction is accepted only when the resolved user id matches the reaction's userId; server-initiated pruning is outside these client authorizers."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Rejects unauthorized or structurally invalid operations by returning null from the applicable authorizer; it does not define a thrown-error contract.",
+            "returnsOnError": "The applicable record authorizer returns null."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "opts.getUserId", "source": "caller-provided CommentAuthorizerOptions", "kind": "external" },
+            { "name": "opts.canComment", "source": "caller-provided CommentAuthorizerOptions", "kind": "external" },
+            {
+              "name": "opts.canModifyComment",
+              "source": "caller-provided CommentAuthorizerOptions",
+              "kind": "external"
+            },
+            { "name": "isEqual", "source": "imported dependency", "kind": "external" },
+            { "name": "createCommentReactionId", "source": "imported dependency", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "CommentAuthorizerOptions",
+            "TLRecordAuthorizers",
+            "TLComment",
+            "TLCommentThread",
+            "TLCommentReaction",
+            "TLRecordAuthorizer",
+            "UnknownRecord",
+            "CommentModificationAuthContext",
+            "CommentModification"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates record authorizers for comments, comment threads, and comment reactions. The authorizers derive identity from session metadata, gate writes by comment access policy, and enforce attribution and record-specific mutation rules.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "create",
+              "role": "Record operation discriminator used to apply creation authorization rules."
+            },
+            {
+              "kind": "enum-value",
+              "value": "update",
+              "role": "Record operation discriminator used to apply update authorization rules."
+            },
+            {
+              "kind": "enum-value",
+              "value": "delete",
+              "role": "Record operation discriminator used to apply deletion authorization rules."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned comment authorizer is invoked for creation of a comment with a valid record payload.",
+              "then": "The operation is authorized only when a non-null user id is resolved, and the resulting comment attribution is stamped with that user id.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The corresponding returned authorizer is invoked.",
+              "then": "It returns null and does not authorize the operation.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned reaction authorizer is invoked for creation.",
+              "then": "It returns null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7266ee5508e744a141f05716e59a9bef804834748105f4b5d4dc6c837fea5f92"
+        }
+      },
+      {
+        "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.withUserId#function:createCommentAuthorizers.withUserId",
+        "unitKind": "function",
+        "name": "withUserId",
+        "qualifiedName": "createCommentAuthorizers.withUserId",
+        "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+        "startLine": 141,
+        "endLine": 149,
+        "isBehavioral": true,
+        "source": "export function createCommentAuthorizers<SessionMeta>(\n\topts: CommentAuthorizerOptions<SessionMeta>\n): TLRecordAuthorizers<TLComment | TLCommentThread | TLCommentReaction, SessionMeta> {\n\tconst {\n\t\tgetUserId,\n\t\tcanComment = ({ isReadonly }: { isReadonly: boolean }) => !isReadonly,\n\t\tcanModifyComment = ({ userId, ownerId }: CommentModificationAuthContext<SessionMeta>) =>\n\t\t\tuserId === ownerId,\n\t} = opts",
+        "detail": {
+          "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.withUserId#function:createCommentAuthorizers.withUserId",
+          "fileId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.withUserId",
+          "unitKind": "function",
+          "name": "withUserId",
+          "qualifiedName": "createCommentAuthorizers.withUserId",
+          "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+          "startLine": 141,
+          "endLine": 149,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the user-ID-specific authorization function associated with createCommentAuthorizers. Its callable surface and behavior are not specified by the provided unit source.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "be882324ecaa063fa1157cfa90ffd160375535520685cce5be23e48e50eac0e4"
+        }
+      },
+      {
+        "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.authorizeAuthored#function:createCommentAuthorizers.authorizeAuthored",
+        "unitKind": "function",
+        "name": "authorizeAuthored",
+        "qualifiedName": "createCommentAuthorizers.authorizeAuthored",
+        "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+        "startLine": 155,
+        "endLine": 172,
+        "isBehavioral": true,
+        "source": "\t) => Rec | null\n\n\t/**\n\t * Adapt a rule to the authorizer signature: gate on `canComment` first, then resolve the\n\t * session's user id exactly once.\n\t */\n\tfunction withUserId<Rec extends UnknownRecord>(\n\t\trule: Rule<Rec>\n\t): TLRecordAuthorizer<Rec, SessionMeta> {\n\t\treturn (args) => {\n\t\t\tif (!canComment(args.session)) return null\n\t\t\treturn rule(getUserId(args.session), args)\n\t\t}\n\t}\n\n\t/**\n\t * Authorize a record whose attribution lives in `field`: stamped from the session on create,\n\t * immutable on update. With `ownerOnlyUpdate`, only the author may update it at all.",
+        "detail": {
+          "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.authorizeAuthored#function:createCommentAuthorizers.authorizeAuthored",
+          "fileId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.authorizeAuthored",
+          "unitKind": "function",
+          "name": "authorizeAuthored",
+          "qualifiedName": "createCommentAuthorizers.authorizeAuthored",
+          "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+          "startLine": 155,
+          "endLine": 172,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The record attribution field is configured by the enclosing authorizer factory.",
+            "A session capable of resolving a user id is supplied when authorization is evaluated."
+          ],
+          "postconditions": [
+            "A newly authorized record has its attribution field stamped with the session user id.",
+            "An authorized update cannot alter the attribution field.",
+            "When owner-only updates are enabled, only the record author may update the record."
+          ],
+          "invariants": [
+            "Record attribution is immutable after creation.",
+            "The attribution value is derived from the authenticated session rather than trusted create input."
+          ],
+          "edgeCases": [
+            "Create operations overwrite or stamp the attribution field with the session user id.",
+            "Updates attempting to change the attribution field are rejected.",
+            "When owner-only update behavior is enabled, updates by a non-author are rejected even if they do not change attribution.",
+            "Sessions that fail the enclosing comment authorization gate are rejected."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns null for unauthorized operations, including attempts to violate attribution immutability or owner-only update restrictions.",
+            "returnsOnError": "null"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["UnknownRecord", "SessionMeta"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates an authorizer for records whose attribution is stored in a designated field. On creation, the field is stamped from the session user; on update, the attribution remains immutable, with optional restriction of all updates to the author.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "b8be57cd0152cc599012915c2b5771dbebe87e65629023af48593a710027df67"
+        }
+      },
+      {
+        "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.authorizeSoftDeleted#function:createCommentAuthorizers.authorizeSoftDeleted",
+        "unitKind": "function",
+        "name": "authorizeSoftDeleted",
+        "qualifiedName": "createCommentAuthorizers.authorizeSoftDeleted",
+        "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+        "startLine": 185,
+        "endLine": 214,
+        "isBehavioral": true,
+        "source": "\t\t\t\tif (ownerOnlyUpdate && userId !== prev[field]) return null // only the author edits\n\t\t\t\treturn next\n\t\t\t}\n\t\t\treturn prev\n\t\t}\n\t}\n\n\t/**\n\t * Police a soft-deleted record type on top of `base`, asking `canModifyComment` who may make the\n\t * write: `isDeleted` is write-once, never set at create, and clients never hard-delete these\n\t * records. Removals are server-initiated only, so once the server prunes a flagged record there\n\t * is no un-delete.\n\t *\n\t * An update here is one of two writes, asked about separately: flipping `isDeleted` is a delete,\n\t * anything else is an edit. Telling them apart is what lets a host grant deletes without granting\n\t * edits — and an update that does both has to clear both gates, so a delete can't carry an edit\n\t * out with it.\n\t *\n\t * `modificationFor` returns null for a write `canModifyComment` isn't asked about: a thread's\n\t * \"edit\" is a resolve or reopen, which is open to anyone with access and policed by `base`.\n\t */\n\tfunction authorizeSoftDeleted<Rec extends UnknownRecord & { isDeleted: boolean }>(\n\t\townerOf: (rec: Rec) => string,\n\t\tmodificationFor: (rec: Rec, write: 'edit' | 'delete') => CommentModification | null,\n\t\tbase: Rule<Rec>\n\t): Rule<Rec> {\n\t\treturn (userId, args) => {\n\t\t\tif (args.type === 'delete') return null\n\t\t\tconst result = base(userId, args)\n\t\t\tif (!result) return null",
+        "detail": {
+          "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.authorizeSoftDeleted#function:createCommentAuthorizers.authorizeSoftDeleted",
+          "fileId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.authorizeSoftDeleted",
+          "unitKind": "function",
+          "name": "authorizeSoftDeleted",
+          "qualifiedName": "createCommentAuthorizers.authorizeSoftDeleted",
+          "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+          "startLine": 185,
+          "endLine": 214,
+          "signature": "function authorizeSoftDeleted<Rec extends UnknownRecord & { isDeleted: boolean }>(ownerOf: (rec: Rec) => string, modificationFor: (rec: Rec, write: 'edit' | 'delete') => CommentModification | null, base: Rule<Rec>): Rule<Rec>",
+          "parameters": [
+            {
+              "name": "ownerOf",
+              "type": "(rec: Rec) => string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "modificationFor",
+              "type": "(rec: Rec, write: 'edit' | 'delete') => CommentModification | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            { "name": "base", "type": "Rule<Rec>", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": "Rule<Rec>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["Rec extends UnknownRecord & { isDeleted: boolean }"],
+          "logicOutline": [],
+          "preconditions": [
+            "ownerOf identifies the author of a record.",
+            "modificationFor returns the applicable comment modification authorization or null for a given record and write kind.",
+            "base is a valid authorization rule for Rec.",
+            "Records contain a boolean isDeleted field."
+          ],
+          "postconditions": [
+            "A client delete operation is rejected.",
+            "A create operation cannot create a record with isDeleted set.",
+            "An update that changes isDeleted is classified as a delete write; other updates are classified as edit writes.",
+            "An update combining a deletion-state change with other edits must satisfy both the delete and edit authorization requirements.",
+            "Authorization denied by base or by the applicable modification authorization returns null."
+          ],
+          "invariants": [
+            "The isDeleted field is write-once from false to true and cannot be unset.",
+            "Hard deletion is server-initiated rather than client-authorized.",
+            "A modificationFor result of null means that authorization is not requested for that write and base remains the governing rule.",
+            "Authorization for a deletion-state change is distinct from authorization for ordinary edits."
+          ],
+          "edgeCases": [
+            "A delete-typed request returns null without delegating to base.",
+            "A create request attempting to set isDeleted is rejected.",
+            "An update that only changes isDeleted is treated as a delete rather than an edit.",
+            "An update that changes both isDeleted and other fields must pass both relevant authorization checks.",
+            "An update that does not change isDeleted is treated as an edit; resolve or reopen-style changes can therefore be governed by base when modificationFor does not request a separate authorization.",
+            "An already soft-deleted record cannot be undeleted."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns null for unauthorized, hard-delete, create-with-isDeleted, undelete, or otherwise invalid writes.",
+            "returnsOnError": "null"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "base", "source": "parameter", "kind": "internal" },
+            { "name": "modificationFor", "source": "parameter", "kind": "internal" },
+            { "name": "ownerOf", "source": "parameter", "kind": "internal" }
+          ],
+          "symbolReferences": ["UnknownRecord", "CommentModification", "Rule"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns a rule that applies base authorization to soft-deleted comment records while separately authorizing edits and deletion-state changes. It prevents client hard-deletes, creation of already-deleted records, and unauthorized or combined writes that bypass either authorization gate.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "edit",
+              "role": "Identifies an ordinary record modification for modificationFor."
+            },
+            {
+              "kind": "enum-value",
+              "value": "delete",
+              "role": "Identifies a change to the soft-deletion state for modificationFor."
+            },
+            {
+              "kind": "format-string",
+              "value": "isDeleted",
+              "role": "The contractual record field controlling soft deletion."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned authorization rule is invoked.",
+              "then": "It returns null and does not authorize the client hard-delete.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned authorization rule is invoked.",
+              "then": "It returns null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned authorization rule is invoked.",
+              "then": "The write is treated as both a delete and an edit, and authorization succeeds only if both gates permit it.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "8d37274a4514a6ef96361b4c65adba30bc3bd507578d3b3e48d8dccb4b446627"
+        }
+      },
+      {
+        "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.immutableFields#function:createCommentAuthorizers.immutableFields",
+        "unitKind": "function",
+        "name": "immutableFields",
+        "qualifiedName": "createCommentAuthorizers.immutableFields",
+        "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+        "startLine": 241,
+        "endLine": 254,
+        "isBehavioral": true,
+        "source": "\tconst authorizeThreadResolution: Rule<TLCommentThread> = (userId, args) => {\n\t\tconst result = authorizeAuthored<TLCommentThread>('createdBy')(userId, args)\n\t\tif (!result) return null\n\t\tif (args.type === 'create') {\n\t\t\t// Delete + re-put could otherwise smuggle in a resolution forged in someone else's name.\n\t\t\tconst { next } = args\n\t\t\tif (next.resolved && next.resolved.by !== userId) return null\n\t\t}\n\t\tif (args.type === 'update') {\n\t\t\tconst { prev, next } = args\n\t\t\tconst changed =\n\t\t\t\tprev.resolved?.at !== next.resolved?.at || prev.resolved?.by !== next.resolved?.by\n\t\t\tif (changed && next.resolved && next.resolved.by !== userId) return null\n\t\t}",
+        "detail": {
+          "unitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.immutableFields#function:createCommentAuthorizers.immutableFields",
+          "fileId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers.immutableFields",
+          "unitKind": "function",
+          "name": "immutableFields",
+          "qualifiedName": "createCommentAuthorizers.immutableFields",
+          "parentUnitId": "packages/sync-collaboration/src/comment-authorizers.ts__createCommentAuthorizers#function:createCommentAuthorizers",
+          "startLine": 241,
+          "endLine": 254,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The authorization arguments identify a create or update operation and provide the corresponding comment-thread records."
+          ],
+          "postconditions": [
+            "Returns null when authored access is denied.",
+            "For create operations, rejects a resolved value whose by field differs from the caller user ID.",
+            "For update operations, rejects changes to resolved.at or resolved.by when the resulting resolved.by differs from the caller user ID."
+          ],
+          "invariants": [
+            "A resolution author introduced or changed by this authorization rule must equal the calling user ID.",
+            "Existing resolution fields are accepted when they are unchanged during an update."
+          ],
+          "edgeCases": [
+            "If authorizeAuthored for createdBy returns a falsy result, authorization returns null without applying resolution-specific checks.",
+            "On create, a truthy resolved value authored by another user is rejected with null.",
+            "On update, changes to resolved.at or resolved.by are rejected when next.resolved exists and its by field belongs to another user.",
+            "On update, unchanged resolution fields do not trigger the resolution-author check."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns null when authored authorization fails or when a newly assigned or changed resolution is attributed to another user.",
+            "returnsOnError": "null"
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "authorizeAuthored<TLCommentThread>('createdBy')", "source": null, "kind": "internal" }],
+          "symbolReferences": ["Rule<TLCommentThread>", "TLCommentThread"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Authorizes comment-thread resolution changes only when the caller is authorized as the creator and any newly assigned resolution author matches the caller.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The authorization rule is evaluated.",
+              "then": "The resolution-specific checks do not reject the operation.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The authorization rule is evaluated.",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The authorization rule is evaluated.",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "478f8f5da1922dee58a38c46f09205e328aa5287f9b9f05985fd33b07696cced"
+        }
+      }
+    ]
+  },
+  "out": [],
+  "in": ["packages/sync-collaboration/src/comment-authorizers.test.ts", "packages/sync-collaboration/src/index.ts"],
+  "externals": ["@tldraw/store", "@tldraw/sync-core", "@tldraw/tlschema", "@tldraw/utils"],
+  "impact": { "seeds": 5, "callers": 0, "impactedFiles": [] }
+}

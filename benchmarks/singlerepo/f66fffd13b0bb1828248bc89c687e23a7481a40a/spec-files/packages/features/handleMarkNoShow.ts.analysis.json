@@ -1,0 +1,1616 @@
+{
+  "relativePath": "packages/features/handleMarkNoShow.ts",
+  "language": "typescript",
+  "sha256": "034a26ba0558ebec0a23807c7a69c785168d79c0ee5eb8ded1462ae1fad5775a",
+  "sizeBytes": 18058,
+  "tokenCount": 4515,
+  "lineCount": 540,
+  "analysedAt": "2026-09-04T07:31:50.562Z",
+  "analysis": {
+    "module": {
+      "purpose": "Coordinates marking booking hosts and attendees as no-shows, updating persistence, enforcing access and timing rules, and notifying audits, webhooks, workflows, and connected applications.",
+      "summary": "This feature orchestrates no-show status changes for booking hosts and attendees. It loads booking and attendee data, validates authorization and meeting timing, persists attendee and host status, builds localized responses, emits webhook and application updates, schedules configured workflow reminders, and records audit information with actor context. Separate entry points support guest host actions and authenticated host actions.",
+      "businessContext": "Supports appointment attendance tracking for hosts and attendees across scheduled bookings.\nFailures can leave booking records, integrations, reminders, and audit history inconsistent.",
+      "classes": [
+        "NoShowAttendees (~L33-33): Represents attendee email addresses paired with their no-show status.",
+        "GetWebhooksServiceArgs (~L35-46): Defines booking and organization context required to initialize webhook delivery.",
+        "HandleMarkHostNoShowArgs (~L48-54): Defines inputs for marking a booking host as no-show.",
+        "HandleMarkAttendeesAndHostNoShowArgs (~L56-65): Defines authenticated inputs for updating attendee and host attendance statuses.",
+        "HandleMarkNoShowArgs (~L67-77): Defines shared orchestration inputs including booking, actor, authorization, and platform context.",
+        "ResponsePayloadResult (~L112-116): Describes the returned attendee, host, and localized status message.",
+        "ResponsePayload (~L118-148): Accumulates attendee, host, and message results for no-show operations.",
+        "EmailToAttendeeMap (~L150-150): Maps attendee email addresses to persisted attendee records and statuses."
+      ],
+      "functions": [
+        "buildResultPayload (~L79-103): Updates attendees and constructs a localized no-show response payload.",
+        "logFailedResults (~L105-110): Logs rejected attendee update operations from settled asynchronous results.",
+        "constructor (~L123-127): Initializes an empty response payload with default attendance values.",
+        "setAttendees (~L129-131): Stores updated attendee no-show results in the response payload.",
+        "setNoShowHost (~L133-135): Stores the updated host no-show status in the response payload.",
+        "setMessage (~L137-139): Stores the localized operation message in the response payload.",
+        "getPayload (~L141-147): Returns accumulated attendee, host, and message response data.",
+        "getBookingAttendeesFromEmails (~L152-163): Loads booking attendees by email and indexes them for updates.",
+        "fireNoShowUpdated (~L165-229): Builds audit data and emits no-show changes through booking event handling.",
+        "handleMarkNoShow (~L231-418): Orchestrates validation, persistence, notifications, workflows, auditing, and response construction.",
+        "updateAttendees (~L420-445): Persists attendee no-show statuses and returns successfully updated records.",
+        "getWebhooksService (~L447-458): Initializes webhook delivery for booking no-show update events.",
+        "assertCanAccessBooking (~L460-483): Verifies user access and prevents premature no-show status changes.",
+        "handleMarkHostNoShow (~L485-508): Creates a guest actor and delegates host no-show processing.",
+        "handleMarkAttendeesAndHostNoShow (~L515-537): Creates an authenticated actor and delegates attendance processing."
+      ],
+      "keywords": [
+        "booking no-show",
+        "attendee attendance status",
+        "booking audit",
+        "booking webhooks",
+        "workflow reminders",
+        "actor tracking",
+        "booking access authorization",
+        "platform client integration",
+        "attendee repository",
+        "localized response payload"
+      ],
+      "ontologyConcepts": [
+        "Attendance status",
+        "Booking authorization",
+        "Audit event",
+        "Webhook notification",
+        "Workflow scheduling",
+        "Actor attribution",
+        "Transactional update",
+        "Localized response"
+      ],
+      "businessEntities": ["Booking", "Attendee", "Host", "Event type", "Organization", "Workflow", "Webhook", "Actor"],
+      "systemCapabilities": [
+        "Mark booking participants as no-show",
+        "Authorize attendance status changes",
+        "Persist attendee and host status",
+        "Notify external integrations",
+        "Schedule no-show workflows",
+        "Record attendance audit events"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./noShow/handleSendingAttendeeNoShowDataToApps",
+          "symbols": ["handleSendingAttendeeNoShowDataToApps"],
+          "anchor": {
+            "startLine": 31,
+            "endLine": 31
+          },
+          "resolvedRelativePath": "packages/features/noShow/handleSendingAttendeeNoShowDataToApps.ts",
+          "resolvedFileId": "packages/features/noShow/handleSendingAttendeeNoShowDataToApps.ts",
+          "resolvedHint": "packages/features/noShow/handleSendingAttendeeNoShowDataToApps.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "node:process",
+          "symbols": ["process"],
+          "package": "process",
+          "subpath": null,
+          "isBuiltin": true,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          }
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/dto/types",
+          "symbols": ["Actor"],
+          "package": "@calcom/features",
+          "subpath": "booking-audit/lib/dto/types",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/makeActor",
+          "symbols": ["buildActorEmail", "getUniqueIdentifier", "makeGuestActor", "makeUserActor"],
+          "package": "@calcom/features",
+          "subpath": "booking-audit/lib/makeActor",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 8
+          }
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/types/actionSource",
+          "symbols": ["ValidActionSource"],
+          "package": "@calcom/features",
+          "subpath": "booking-audit/lib/types/actionSource",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "symbols": ["getBookingEventHandlerService"],
+          "package": "@calcom/features",
+          "subpath": "bookings/di/BookingEventHandlerService.container",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          }
+        },
+        {
+          "spec": "@calcom/features/di/containers/FeaturesRepository",
+          "symbols": ["getFeaturesRepository"],
+          "package": "@calcom/features",
+          "subpath": "di/containers/FeaturesRepository",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/repositories/AttendeeRepository",
+          "symbols": ["AttendeeRepository"],
+          "package": "@calcom/features",
+          "subpath": "bookings/repositories/AttendeeRepository",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 12,
+            "endLine": 12
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/repositories/BookingRepository",
+          "symbols": ["BookingRepository"],
+          "package": "@calcom/features",
+          "subpath": "bookings/repositories/BookingRepository",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 13,
+            "endLine": 13
+          }
+        },
+        {
+          "spec": "@calcom/features/bookings/services/BookingAccessService",
+          "symbols": ["BookingAccessService"],
+          "package": "@calcom/features",
+          "subpath": "bookings/services/BookingAccessService",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/billing/credit-service",
+          "symbols": ["CreditService"],
+          "package": "@calcom/features",
+          "subpath": "ee/billing/credit-service",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 15,
+            "endLine": 15
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "symbols": ["getBookerBaseUrl"],
+          "package": "@calcom/features",
+          "subpath": "ee/organizations/lib/getBookerUrlServer",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 16,
+            "endLine": 16
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "symbols": ["getAllWorkflowsFromEventType"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/getAllWorkflowsFromEventType",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "symbols": ["ExtendedCalendarEvent"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/reminders/reminderScheduler",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 18,
+            "endLine": 18
+          }
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "symbols": ["WorkflowService"],
+          "package": "@calcom/features",
+          "subpath": "ee/workflows/lib/service/WorkflowService",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 19,
+            "endLine": 19
+          }
+        },
+        {
+          "spec": "@calcom/features/webhooks/lib/WebhookService",
+          "symbols": ["WebhookService"],
+          "package": "@calcom/features",
+          "subpath": "webhooks/lib/WebhookService",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 20,
+            "endLine": 20
+          }
+        },
+        {
+          "spec": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "symbols": ["getOrgIdFromMemberOrTeamId"],
+          "package": "@calcom/lib",
+          "subpath": "getOrgIdFromMemberOrTeamId",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 21,
+            "endLine": 21
+          }
+        },
+        {
+          "spec": "@calcom/lib/http-error",
+          "symbols": ["HttpError"],
+          "package": "@calcom/lib",
+          "subpath": "http-error",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 22,
+            "endLine": 22
+          }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 23,
+            "endLine": 23
+          }
+        },
+        {
+          "spec": "@calcom/lib/server/i18n",
+          "symbols": ["getTranslation"],
+          "package": "@calcom/lib",
+          "subpath": "server/i18n",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 24,
+            "endLine": 24
+          }
+        },
+        {
+          "spec": "@calcom/lib/timeFormat",
+          "symbols": ["getTimeFormatStringFromUserTimeFormat"],
+          "package": "@calcom/lib",
+          "subpath": "timeFormat",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 25,
+            "endLine": 25
+          }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 26,
+            "endLine": 26
+          }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["WebhookTriggerEvents", "WorkflowTriggerEvents"],
+          "package": "@calcom/prisma",
+          "subpath": "enums",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 27,
+            "endLine": 27
+          }
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["bookingMetadataSchema", "PlatformClientParams"],
+          "package": "@calcom/prisma",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 28,
+            "endLine": 28
+          }
+        },
+        {
+          "spec": "@calcom/trpc/server/routers/loggedInViewer/markNoShow.schema",
+          "symbols": ["TNoShowInputSchema"],
+          "package": "@calcom/trpc",
+          "subpath": "server/routers/loggedInViewer/markNoShow.schema",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 29,
+            "endLine": 29
+          }
+        },
+        {
+          "spec": "i18next",
+          "symbols": ["TFunction"],
+          "package": "i18next",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 30,
+            "endLine": 30
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads booking, organization, attendee, authorization, feature, translation, and workflow data from services or the database.",
+          "Updates attendee and host no-show statuses in the database.",
+          "Writes failed attendee-update reasons to stderr.",
+          "Logs caught errors through the application logger."
+        ],
+        "network": [
+          "Initializes and sends a BOOKING_NO_SHOW_UPDATED webhook payload.",
+          "Schedules BOOKING_NO_SHOW_UPDATED workflow reminders."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "event",
+          "role": "provides",
+          "address": "BOOKING_NO_SHOW_UPDATED",
+          "payloadRef": "ResponsePayloadResult",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "NoShowAttendees",
+          "shape": "export type NoShowAttendees = { email: string; noShow: boolean }[];",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleMarkHostNoShow",
+          "shape": "export const handleMarkHostNoShow = async ({ bookingUid, noShowHost, actionSource, locale, platformClientParams }: HandleMarkHostNoShowArgs): Promise<ResponsePayloadResult>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleMarkAttendeesAndHostNoShow",
+          "shape": "export const handleMarkAttendeesAndHostNoShow = async ({ bookingUid, attendees, noShowHost, userId, userUuid, actionSource, locale, platformClientParams }: HandleMarkAttendeesAndHostNoShowArgs): Promise<ResponsePayloadResult>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleMarkNoShow",
+          "shape": "const handleMarkNoShow = async ({ bookingUid, attendees, noShowHost, userId, actor, locale, platformClientParams, actionSource }: HandleMarkNoShowArgs): Promise<ResponsePayloadResult>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TNoShowInputSchema",
+          "shape": "NonNullable<TNoShowInputSchema[\"attendees\"]>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "PlatformClientParams",
+          "shape": "platformClientParams?: PlatformClientParams",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ValidActionSource",
+          "shape": "actionSource: ValidActionSource",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Actor",
+          "shape": "actor: Actor",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ExtendedCalendarEvent",
+          "shape": "const calendarEvent: ExtendedCalendarEvent",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BOOKING_NO_SHOW_UPDATED",
+          "shape": "WebhookTriggerEvents.BOOKING_NO_SHOW_UPDATED",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BOOKING_NO_SHOW_UPDATED",
+          "shape": "WorkflowTriggerEvents.BOOKING_NO_SHOW_UPDATED",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "buildResultPayload",
+          "intent": "Updates attendees and creates a translated response payload.",
+          "structureKind": "branch",
+          "predicate": "updatedAttendees.length === 1",
+          "branchOutcomes": ["single updated attendee", "multiple or zero updated attendees"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 79,
+            "endLine": 103
+          }
+        },
+        {
+          "name": "updateAttendees",
+          "intent": "Updates known attendees concurrently and keeps only fulfilled updates.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "attendees.map((attendee) =>",
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 420,
+            "endLine": 445
+          }
+        },
+        {
+          "name": "fireNoShowUpdated",
+          "intent": "Builds audit data and emits a no-show update event when changed.",
+          "structureKind": "branch",
+          "predicate": "isSomethingChanged",
+          "branchOutcomes": ["audit data changed", "no audit data changed"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 165,
+            "endLine": 229
+          }
+        },
+        {
+          "name": "handleMarkNoShow",
+          "intent": "Loads booking data, updates requested statuses, and returns the response.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 231,
+            "endLine": 418
+          }
+        },
+        {
+          "name": "attendee no-show processing",
+          "intent": "Authorizes attendee changes, sends webhooks, and schedules workflows.",
+          "structureKind": "branch",
+          "predicate": "attendees && attendeeEmails.length > 0",
+          "branchOutcomes": ["attendee updates requested", "no attendee updates requested"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 264,
+            "endLine": 392
+          }
+        },
+        {
+          "name": "workflow scheduling",
+          "intent": "Builds calendar data and schedules workflows when configured.",
+          "structureKind": "try",
+          "predicate": "workflows.length > 0",
+          "branchOutcomes": ["workflows configured", "no workflows configured"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 289,
+            "endLine": 385
+          }
+        },
+        {
+          "name": "assertCanAccessBooking",
+          "intent": "Requires authorization and rejects bookings before or outside the meeting.",
+          "structureKind": "branch",
+          "predicate": "!isAuthorized",
+          "branchOutcomes": ["user unauthorized", "user authorized"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 460,
+            "endLine": 483
+          }
+        },
+        {
+          "name": "public and authenticated entry points",
+          "intent": "Constructs guest or user actors and delegates to the common handler.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 485,
+            "endLine": 539
+          }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "buildResultPayload",
+          "signature": "const buildResultPayload = async ({\n  attendees,\n  t,\n  emailToAttendeeMap,\n}: {\n  attendees: NonNullable<TNoShowInputSchema[\"attendees\"]>;\n  t: TFunction;\n  emailToAttendeeMap: EmailToAttendeeMap;\n}): Promise<{message: string; attendees: NoShowAttendees}> =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<{message: string; attendees: NoShowAttendees}>",
+          "exported": false,
+          "anchor": {
+            "startLine": 79,
+            "endLine": 87
+          }
+        },
+        {
+          "kind": "function",
+          "name": "logFailedResults",
+          "signature": "const logFailedResults = (results: PromiseSettledResult<unknown>[]) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 105,
+            "endLine": 105
+          }
+        },
+        {
+          "kind": "class",
+          "name": "ResponsePayload",
+          "signature": "class ResponsePayload",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 118,
+            "endLine": 118
+          }
+        },
+        {
+          "kind": "method",
+          "name": "constructor",
+          "signature": "constructor()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 123,
+            "endLine": 123
+          }
+        },
+        {
+          "kind": "method",
+          "name": "setAttendees",
+          "signature": "setAttendees(attendees: { email: string; noShow: boolean }[])",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 129,
+            "endLine": 129
+          }
+        },
+        {
+          "kind": "method",
+          "name": "setNoShowHost",
+          "signature": "setNoShowHost(noShowHost: boolean)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 133,
+            "endLine": 133
+          }
+        },
+        {
+          "kind": "method",
+          "name": "setMessage",
+          "signature": "setMessage(message: string)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 137,
+            "endLine": 137
+          }
+        },
+        {
+          "kind": "method",
+          "name": "getPayload",
+          "signature": "getPayload(): ResponsePayloadResult",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ResponsePayloadResult",
+          "exported": false,
+          "anchor": {
+            "startLine": 141,
+            "endLine": 141
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getBookingAttendeesFromEmails",
+          "signature": "const getBookingAttendeesFromEmails = async (\n  bookingUid: string,\n  emails: string[]\n): Promise<EmailToAttendeeMap> =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<EmailToAttendeeMap>",
+          "exported": false,
+          "anchor": {
+            "startLine": 152,
+            "endLine": 155
+          }
+        },
+        {
+          "kind": "function",
+          "name": "fireNoShowUpdated",
+          "signature": "async function fireNoShowUpdated({\n  updatedNoShowHost,\n  hostUserUuid,\n  booking,\n  updatedAttendees,\n  emailToAttendeeMap,\n  actor,\n  orgId,\n  actionSource,\n}: {\n  updatedNoShowHost?: boolean;\n  hostUserUuid?: string;\n  booking: {\n    uid: string;\n    noShowHost: boolean | null;\n  };\n  updatedAttendees?: NoShowAttendees;\n  emailToAttendeeMap: EmailToAttendeeMap;\n  actor: Actor;\n  orgId: number | null;\n  actionSource: ValidActionSource;\n}): Promise<void>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "anchor": {
+            "startLine": 165,
+            "endLine": 186
+          }
+        },
+        {
+          "kind": "function",
+          "name": "handleMarkNoShow",
+          "signature": "const handleMarkNoShow = async ({\n  bookingUid,\n  attendees,\n  noShowHost,\n  userId,\n  actor,\n  locale,\n  platformClientParams,\n  actionSource,\n}: HandleMarkNoShowArgs): Promise<ResponsePayloadResult> =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<ResponsePayloadResult>",
+          "exported": true,
+          "anchor": {
+            "startLine": 231,
+            "endLine": 240
+          }
+        },
+        {
+          "kind": "function",
+          "name": "updateAttendees",
+          "signature": "const updateAttendees = async ({\n  attendees,\n  emailToAttendeeMap,\n}: {\n  attendees: NonNullable<TNoShowInputSchema[\"attendees\"]>;\n  emailToAttendeeMap: EmailToAttendeeMap; \n}): Promise<NoShowAttendees> =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<NoShowAttendees>",
+          "exported": false,
+          "anchor": {
+            "startLine": 420,
+            "endLine": 426
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getWebhooksService",
+          "signature": "const getWebhooksService = async ({ platformClientId, orgId, booking }: GetWebhooksServiceArgs) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 447,
+            "endLine": 447
+          }
+        },
+        {
+          "kind": "function",
+          "name": "assertCanAccessBooking",
+          "signature": "const assertCanAccessBooking = async (bookingUid: string, userId?: number) =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 460,
+            "endLine": 460
+          }
+        },
+        {
+          "kind": "function",
+          "name": "handleMarkHostNoShow",
+          "signature": "export const handleMarkHostNoShow = async ({\n  bookingUid,\n  noShowHost,\n  actionSource,\n  locale,\n  platformClientParams,\n}: HandleMarkHostNoShowArgs): Promise<ResponsePayloadResult> =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<ResponsePayloadResult>",
+          "exported": true,
+          "anchor": {
+            "startLine": 485,
+            "endLine": 491
+          }
+        },
+        {
+          "kind": "function",
+          "name": "handleMarkAttendeesAndHostNoShow",
+          "signature": "export const handleMarkAttendeesAndHostNoShow = async ({\n  bookingUid,\n  attendees,\n  noShowHost,\n  userId,\n  userUuid,\n  actionSource,\n  locale,\n  platformClientParams,\n}: HandleMarkAttendeesAndHostNoShowArgs): Promise<ResponsePayloadResult> =>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<ResponsePayloadResult>",
+          "exported": true,
+          "anchor": {
+            "startLine": 515,
+            "endLine": 524
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "NoShowAttendees",
+          "shape": "{ email: string; noShow: boolean }[]",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 33,
+            "endLine": 33
+          }
+        },
+        {
+          "kind": "type",
+          "name": "GetWebhooksServiceArgs",
+          "shape": "{\n  platformClientId?: string;\n  orgId: number | undefined;\n  booking: {\n    id: number;\n    eventType: {\n      id: number;\n      teamId: number | null;\n      userId: number | null;\n    } | null;\n  } | null;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 35,
+            "endLine": 46
+          }
+        },
+        {
+          "kind": "type",
+          "name": "HandleMarkHostNoShowArgs",
+          "shape": "{\n  bookingUid: string;\n  noShowHost: boolean;\n  actionSource: ValidActionSource;\n  locale?: string;\n  platformClientParams?: PlatformClientParams;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 54
+          }
+        },
+        {
+          "kind": "type",
+          "name": "HandleMarkAttendeesAndHostNoShowArgs",
+          "shape": "{\n  bookingUid: string;\n  attendees?: { email: string; noShow: boolean }[];\n  noShowHost?: boolean;\n  userId: number;\n  userUuid: string;\n  actionSource: ValidActionSource;\n  locale?: string;\n  platformClientParams?: PlatformClientParams;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 56,
+            "endLine": 65
+          }
+        },
+        {
+          "kind": "type",
+          "name": "HandleMarkNoShowArgs",
+          "shape": "{\n  bookingUid: string;\n  attendees?: { email: string; noShow: boolean }[];\n  noShowHost?: boolean;\n  userId?: number;\n  userUuid?: string;\n  actionSource: ValidActionSource;\n  locale?: string;\n  platformClientParams?: PlatformClientParams;\n  actor: Actor;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 67,
+            "endLine": 77
+          }
+        },
+        {
+          "kind": "type",
+          "name": "ResponsePayloadResult",
+          "shape": "{\n  attendees: NoShowAttendees;\n  noShowHost: boolean;\n  message: string;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 112,
+            "endLine": 116
+          }
+        },
+        {
+          "kind": "type",
+          "name": "EmailToAttendeeMap",
+          "shape": "Record<string, { id: number; email: string; noShow: boolean | null }>",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 150,
+            "endLine": 150
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "bookingUid does not identify a booking",
+          "handled": true,
+          "behavior": "Throws a 404 HttpError internally, then the outer handler converts it to a 500 HttpError with message \"Failed to update no-show status\".",
+          "anchor": {
+            "startLine": 252,
+            "endLine": 254
+          }
+        },
+        {
+          "inputShape": "attendees is absent or empty",
+          "handled": true,
+          "behavior": "Skips attendee updates, webhook processing, workflow scheduling, and attendee app notifications; host processing may still occur.",
+          "anchor": {
+            "startLine": 245,
+            "endLine": 266
+          }
+        },
+        {
+          "inputShape": "attendee email is not found in the booking",
+          "handled": true,
+          "behavior": "Does not update that attendee and excludes it from the returned attendee results.",
+          "anchor": {
+            "startLine": 427,
+            "endLine": 435
+          }
+        },
+        {
+          "inputShape": "attendee update promise rejects",
+          "handled": true,
+          "behavior": "Logs the rejection reason and excludes the failed update without rejecting the overall attendee update operation.",
+          "anchor": {
+            "startLine": 437,
+            "endLine": 444
+          }
+        },
+        {
+          "inputShape": "userId is absent when attendee changes are requested",
+          "handled": true,
+          "behavior": "Throws an internal 401 HttpError, which the outer handler converts to a generic 500 HttpError.",
+          "anchor": {
+            "startLine": 266,
+            "endLine": 268
+          }
+        },
+        {
+          "inputShape": "user lacks booking access",
+          "handled": true,
+          "behavior": "Throws an internal 403 HttpError, which the outer handler converts to a generic 500 HttpError.",
+          "anchor": {
+            "startLine": 471,
+            "endLine": 472
+          }
+        },
+        {
+          "inputShape": "booking has not started and is not in the past",
+          "handled": true,
+          "behavior": "Rejects marking attendees as no-show with an internal 403 HttpError, then returns the generic 500 error from the outer handler.",
+          "anchor": {
+            "startLine": 474,
+            "endLine": 481
+          }
+        },
+        {
+          "inputShape": "noShowHost is undefined",
+          "handled": true,
+          "behavior": "Leaves the host no-show status unchanged and does not update the response host flag or message.",
+          "anchor": {
+            "startLine": 394,
+            "endLine": 398
+          }
+        },
+        {
+          "inputShape": "workflow scheduling fails",
+          "handled": true,
+          "behavior": "Logs the workflow error and continues returning the no-show response.",
+          "anchor": {
+            "startLine": 382,
+            "endLine": 385
+          }
+        },
+        {
+          "inputShape": "booking metadata fails bookingMetadataSchema.safeParse",
+          "handled": true,
+          "behavior": "Omits metadata from the calendar event unless parsing succeeds and provides a videoCallUrl.",
+          "anchor": {
+            "startLine": 317,
+            "endLine": 321
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "HttpError({ statusCode: 404, message: \"Booking not found\" })",
+          "caught": "outer catch in handleMarkNoShow",
+          "action": "Logs the error message when it is an Error and throws a generic 500 HttpError.",
+          "fallback": "HttpError({ statusCode: 500, message: \"Failed to update no-show status\" })",
+          "anchor": {
+            "startLine": 252,
+            "endLine": 254
+          }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 401 })",
+          "caught": "outer catch in handleMarkNoShow",
+          "action": "Logs the error message when it is an Error and throws a generic 500 HttpError.",
+          "fallback": "HttpError({ statusCode: 500, message: \"Failed to update no-show status\" })",
+          "anchor": {
+            "startLine": 460,
+            "endLine": 462
+          }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 403, message: \"You are not allowed to access this booking\" })",
+          "caught": "outer catch in handleMarkNoShow",
+          "action": "Logs the error message when it is an Error and throws a generic 500 HttpError.",
+          "fallback": "HttpError({ statusCode: 500, message: \"Failed to update no-show status\" })",
+          "anchor": {
+            "startLine": 471,
+            "endLine": 472
+          }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 403, message: \"Cannot mark no-show before the meeting has started.\" })",
+          "caught": "outer catch in handleMarkNoShow",
+          "action": "Logs the error message when it is an Error and throws a generic 500 HttpError.",
+          "fallback": "HttpError({ statusCode: 500, message: \"Failed to update no-show status\" })",
+          "anchor": {
+            "startLine": 477,
+            "endLine": 481
+          }
+        },
+        {
+          "thrown": "workflow scheduling or calendar-event construction error",
+          "caught": "inner workflow try/catch",
+          "action": "Logs the error and continues without failing the no-show operation.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 315,
+            "endLine": 385
+          }
+        },
+        {
+          "thrown": "any other error from handleMarkNoShow",
+          "caught": "outer catch in handleMarkNoShow",
+          "action": "Logs the error message when the value is an Error and throws a generic 500 HttpError.",
+          "fallback": "HttpError({ statusCode: 500, message: \"Failed to update no-show status\" })",
+          "anchor": {
+            "startLine": 412,
+            "endLine": 417
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Attendee changes require a truthy userId and an actor appropriate for the calling endpoint.",
+          "anchor": {
+            "startLine": 48,
+            "endLine": 76
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Booking, event type, attendee, user, and calendar fields returned by repositories satisfy the shapes consumed by this handler.",
+          "anchor": {
+            "startLine": 247,
+            "endLine": 250
+          }
+        },
+        {
+          "kind": "platform",
+          "description": "Date values support comparison and conversion through Date and toISOString.",
+          "anchor": {
+            "startLine": 336,
+            "endLine": 340
+          }
+        },
+        {
+          "kind": "config",
+          "description": "The supplied locale and platform client parameters are valid inputs for translation and webhook services.",
+          "anchor": {
+            "startLine": 242,
+            "endLine": 242
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What external side effects are performed by the repository, webhook, workflow, audit, and app-integration services?",
+          "affects": "side_effects",
+          "anchor": {
+            "startLine": 220,
+            "endLine": 227
+          },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-missing-booking",
+          "scenario": "A no-show update is requested for a booking UID that does not exist.",
+          "given": ["bookingRepository.findByUidIncludeEventTypeAttendeesAndUser({ bookingUid }) returns null"],
+          "when": "handleMarkNoShow({ bookingUid, actionSource, actor })",
+          "then": "throws new HttpError({ statusCode: 500, message: \"Failed to update no-show status\" })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Missing bookings must not be updated or leak repository details."
+        },
+        {
+          "testId": "updates-attendee-no-show",
+          "scenario": "A known attendee is marked as a no-show.",
+          "given": [
+            "attendees = [{ email: \"attendee@example.com\", noShow: true }]",
+            "emailToAttendeeMap[\"attendee@example.com\"] = { id: 1, email: \"attendee@example.com\", noShow: false }"
+          ],
+          "when": "handleMarkNoShow({ bookingUid, attendees, actionSource, actor })",
+          "then": "returns a payload whose attendees equals [{ email: \"attendee@example.com\", noShow: true }]",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins persistence, response reporting, and attendee-level no-show semantics."
+        },
+        {
+          "testId": "requires-access-for-attendee-update",
+          "scenario": "An unauthenticated caller attempts to update attendee no-show status.",
+          "given": ["attendees = [{ email: \"attendee@example.com\", noShow: true }]", "userId = undefined"],
+          "when": "handleMarkNoShow({ bookingUid, attendees, userId, actionSource, actor })",
+          "then": "throws new HttpError({ statusCode: 500, message: \"Failed to update no-show status\" })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Attendee updates require authenticated booking access."
+        },
+        {
+          "testId": "updates-host-no-show",
+          "scenario": "The host no-show flag is explicitly changed.",
+          "given": ["noShowHost = true"],
+          "when": "handleMarkHostNoShow({ bookingUid, noShowHost, actionSource })",
+          "then": "returns a payload whose noShowHost is true and message is t(\"booking_no_show_updated\")",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins host-specific behavior and the response contract."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "NoShowAttendees",
+        "GetWebhooksServiceArgs",
+        "HandleMarkHostNoShowArgs",
+        "HandleMarkAttendeesAndHostNoShowArgs",
+        "HandleMarkNoShowArgs",
+        "buildResultPayload",
+        "logFailedResults",
+        "ResponsePayloadResult",
+        "ResponsePayload",
+        "EmailToAttendeeMap",
+        "getBookingAttendeesFromEmails",
+        "fireNoShowUpdated",
+        "handleMarkNoShow",
+        "updateAttendees",
+        "getWebhooksService",
+        "assertCanAccessBooking",
+        "handleMarkHostNoShow",
+        "handleMarkAttendeesAndHostNoShow"
+      ],
+      "moduleLevelCode": "import process from \"node:process\";\nimport type { Actor } from \"@calcom/features/booking-audit/lib/dto/types\";\nimport {\n  buildActorEmail,\n  getUniqueIdentifier,\n  makeGuestActor,\n  makeUserActor,\n} from \"@calcom/features/booking-audit/lib/makeActor\";\nimport type { ValidActionSource } from \"@calcom/features/booking-audit/lib/types/actionSource\";\nimport { getBookingEventHandlerService } from \"@calcom/features/bookings/di/BookingEventHandlerService.container\";\nimport { getFeaturesRepository } from \"@calcom/features/di/containers/FeaturesRepository\";\nimport { AttendeeRepository } from \"@calcom/features/bookings/repositories/AttendeeRepository\";\nimport { BookingRepository } from \"@calcom/features/bookings/repositories/BookingRepository\";\nimport { BookingAccessService } from \"@calcom/features/bookings/services/BookingAccessService\";\nimport { CreditService } from \"@calcom/features/ee/billing/credit-service\";\nimport { getBookerBaseUrl } from \"@calcom/features/ee/organizations/lib/getBookerUrlServer\";\nimport { getAllWorkflowsFromEventType } from \"@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType\";\nimport type { ExtendedCalendarEvent } from \"@calcom/features/ee/workflows/lib/reminders/reminderScheduler\";\nimport { WorkflowService } from \"@calcom/features/ee/workflows/lib/service/WorkflowService\";\nimport { WebhookService } from \"@calcom/features/webhooks/lib/WebhookService\";\nimport getOrgIdFromMemberOrTeamId from \"@calcom/lib/getOrgIdFromMemberOrTeamId\";\nimport { HttpError } from \"@calcom/lib/http-error\";\nimport logger from \"@calcom/lib/logger\";\nimport { getTranslation } from \"@calcom/lib/server/i18n\";\nimport { getTimeFormatStringFromUserTimeFormat } from \"@calcom/lib/timeFormat\";\nimport { prisma } from \"@calcom/prisma\";\nimport { WebhookTriggerEvents, WorkflowTriggerEvents } from \"@calcom/prisma/enums\";\nimport { bookingMetadataSchema, type PlatformClientParams } from \"@calcom/prisma/zod-utils\";\nimport type { TNoShowInputSchema } from \"@calcom/trpc/server/routers/loggedInViewer/markNoShow.schema\";\nimport type { TFunction } from \"i18next\";\nimport handleSendingAttendeeNoShowDataToApps from \"./noShow/handleSendingAttendeeNoShowDataToApps\";",
+      "exports": [
+        {
+          "name": "NoShowAttendees",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "handleMarkHostNoShow",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "handleMarkAttendeesAndHostNoShow",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "handleMarkNoShow",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": "default"
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "process",
+          "module": "node:process",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Actor",
+          "module": "@calcom/features/booking-audit/lib/dto/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "buildActorEmail",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getUniqueIdentifier",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "makeGuestActor",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "makeUserActor",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ValidActionSource",
+          "module": "@calcom/features/booking-audit/lib/types/actionSource",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBookingEventHandlerService",
+          "module": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getFeaturesRepository",
+          "module": "@calcom/features/di/containers/FeaturesRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "AttendeeRepository",
+          "module": "@calcom/features/bookings/repositories/AttendeeRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingRepository",
+          "module": "@calcom/features/bookings/repositories/BookingRepository",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingAccessService",
+          "module": "@calcom/features/bookings/services/BookingAccessService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "CreditService",
+          "module": "@calcom/features/ee/billing/credit-service",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBookerBaseUrl",
+          "module": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getAllWorkflowsFromEventType",
+          "module": "@calcom/features/ee/workflows/lib/getAllWorkflowsFromEventType",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ExtendedCalendarEvent",
+          "module": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WebhookService",
+          "module": "@calcom/features/webhooks/lib/WebhookService",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getOrgIdFromMemberOrTeamId",
+          "module": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "HttpError",
+          "module": "@calcom/lib/http-error",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getTranslation",
+          "module": "@calcom/lib/server/i18n",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getTimeFormatStringFromUserTimeFormat",
+          "module": "@calcom/lib/timeFormat",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WebhookTriggerEvents",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkflowTriggerEvents",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "bookingMetadataSchema",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "PlatformClientParams",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "TNoShowInputSchema",
+          "module": "@calcom/trpc/server/routers/loggedInViewer/markNoShow.schema",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "TFunction",
+          "module": "i18next",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "handleSendingAttendeeNoShowDataToApps",
+          "module": "./noShow/handleSendingAttendeeNoShowDataToApps",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__NoShowAttendees_1#type_alias:NoShowAttendees",
+        "unitKind": "type_alias",
+        "name": "NoShowAttendees",
+        "qualifiedName": "NoShowAttendees",
+        "parentUnitId": null,
+        "startLine": 33,
+        "endLine": 33,
+        "isBehavioral": false,
+        "source": "export type NoShowAttendees = { email: string; noShow: boolean }[];"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__GetWebhooksServiceArgs_2#type_alias:GetWebhooksServiceArgs",
+        "unitKind": "type_alias",
+        "name": "GetWebhooksServiceArgs",
+        "qualifiedName": "GetWebhooksServiceArgs",
+        "parentUnitId": null,
+        "startLine": 35,
+        "endLine": 46,
+        "isBehavioral": false,
+        "source": "type GetWebhooksServiceArgs = {\n  platformClientId?: string;\n  orgId: number | undefined;\n  booking: {\n    id: number;\n    eventType: {\n      id: number;\n      teamId: number | null;\n      userId: number | null;\n    } | null;\n  } | null;\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__HandleMarkHostNoShowArgs_3#type_alias:HandleMarkHostNoShowArgs",
+        "unitKind": "type_alias",
+        "name": "HandleMarkHostNoShowArgs",
+        "qualifiedName": "HandleMarkHostNoShowArgs",
+        "parentUnitId": null,
+        "startLine": 48,
+        "endLine": 54,
+        "isBehavioral": false,
+        "source": "type HandleMarkHostNoShowArgs = {\n  bookingUid: string;\n  noShowHost: boolean;\n  actionSource: ValidActionSource;\n  locale?: string;\n  platformClientParams?: PlatformClientParams;\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__HandleMarkAttendeesAndHostNoShowArgs_4#type_alias:HandleMarkAttendeesAndHostNoShowArgs",
+        "unitKind": "type_alias",
+        "name": "HandleMarkAttendeesAndHostNoShowArgs",
+        "qualifiedName": "HandleMarkAttendeesAndHostNoShowArgs",
+        "parentUnitId": null,
+        "startLine": 56,
+        "endLine": 65,
+        "isBehavioral": false,
+        "source": "type HandleMarkAttendeesAndHostNoShowArgs = {\n  bookingUid: string;\n  attendees?: { email: string; noShow: boolean }[];\n  noShowHost?: boolean;\n  userId: number;\n  userUuid: string;\n  actionSource: ValidActionSource;\n  locale?: string;\n  platformClientParams?: PlatformClientParams;\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__HandleMarkNoShowArgs_5#type_alias:HandleMarkNoShowArgs",
+        "unitKind": "type_alias",
+        "name": "HandleMarkNoShowArgs",
+        "qualifiedName": "HandleMarkNoShowArgs",
+        "parentUnitId": null,
+        "startLine": 67,
+        "endLine": 77,
+        "isBehavioral": false,
+        "source": "type HandleMarkNoShowArgs = {\n  bookingUid: string;\n  attendees?: { email: string; noShow: boolean }[];\n  noShowHost?: boolean;\n  userId?: number;\n  userUuid?: string;\n  actionSource: ValidActionSource;\n  locale?: string;\n  platformClientParams?: PlatformClientParams;\n  actor: Actor;\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__buildResultPayload_6#function:buildResultPayload",
+        "unitKind": "function",
+        "name": "buildResultPayload",
+        "qualifiedName": "buildResultPayload",
+        "parentUnitId": null,
+        "startLine": 79,
+        "endLine": 103,
+        "isBehavioral": true,
+        "source": "const buildResultPayload = async ({\n  attendees,\n  t,\n  emailToAttendeeMap,\n}: {\n  attendees: NonNullable<TNoShowInputSchema[\"attendees\"]>;\n  t: TFunction;\n  emailToAttendeeMap: EmailToAttendeeMap;\n}): Promise<{message: string; attendees: NoShowAttendees}> => {\n  const updatedAttendees = await updateAttendees({ attendees, emailToAttendeeMap });\n\n  if (updatedAttendees.length === 1) {\n    const [attendee] = updatedAttendees;\n    return {\n      message: t(attendee.noShow ? \"x_marked_as_no_show\" : \"x_unmarked_as_no_show\", {\n        x: attendee.email ?? \"User\",\n      }),\n      attendees: [attendee],\n    };\n  }\n  return {\n    message: t(\"no_show_updated\"),\n    attendees: updatedAttendees,\n  };\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__logFailedResults_7#function:logFailedResults",
+        "unitKind": "function",
+        "name": "logFailedResults",
+        "qualifiedName": "logFailedResults",
+        "parentUnitId": null,
+        "startLine": 105,
+        "endLine": 110,
+        "isBehavioral": true,
+        "source": "const logFailedResults = (results: PromiseSettledResult<unknown>[]) => {\n  const failed = results.filter((x) => x.status === \"rejected\") as PromiseRejectedResult[];\n  if (failed.length < 1) return;\n  const failedMessage = failed.map((r) => r.reason);\n  console.error(\"Failed to update no-show status\", failedMessage.join(\",\"));\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__ResponsePayloadResult_8#type_alias:ResponsePayloadResult",
+        "unitKind": "type_alias",
+        "name": "ResponsePayloadResult",
+        "qualifiedName": "ResponsePayloadResult",
+        "parentUnitId": null,
+        "startLine": 112,
+        "endLine": 116,
+        "isBehavioral": false,
+        "source": "type ResponsePayloadResult = {\n  attendees: NoShowAttendees;\n  noShowHost: boolean;\n  message: string;\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__ResponsePayload_9#class:ResponsePayload",
+        "unitKind": "class",
+        "name": "ResponsePayload",
+        "qualifiedName": "ResponsePayload",
+        "parentUnitId": null,
+        "startLine": 118,
+        "endLine": 148,
+        "isBehavioral": false,
+        "source": "class ResponsePayload {\n  attendees: NoShowAttendees;\n  noShowHost: boolean;\n  message: string;\n\n  constructor() {\n    this.attendees = [];\n    this.noShowHost = false;\n    this.message = \"\";\n  }\n\n  setAttendees(attendees: { email: string; noShow: boolean }[]) {\n    this.attendees = attendees;\n  }\n\n  setNoShowHost(noShowHost: boolean) {\n    this.noShowHost = noShowHost;\n  }\n\n  setMessage(message: string) {\n    this.message = message;\n  }\n\n  getPayload(): ResponsePayloadResult {\n    return {\n      attendees: this.attendees,\n      noShowHost: this.noShowHost,\n      message: this.message,\n    };\n  }\n}"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__ResponsePayload.constructor_10#method:ResponsePayload.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "ResponsePayload.constructor",
+        "parentUnitId": "packages/features/handleMarkNoShow.ts__ResponsePayload_9#class:ResponsePayload",
+        "startLine": 123,
+        "endLine": 127,
+        "isBehavioral": true,
+        "source": "  constructor() {\n    this.attendees = [];\n    this.noShowHost = false;\n    this.message = \"\";\n  }"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__ResponsePayload.setAttendees_11#method:ResponsePayload.setAttendees",
+        "unitKind": "method",
+        "name": "setAttendees",
+        "qualifiedName": "ResponsePayload.setAttendees",
+        "parentUnitId": "packages/features/handleMarkNoShow.ts__ResponsePayload_9#class:ResponsePayload",
+        "startLine": 129,
+        "endLine": 131,
+        "isBehavioral": true,
+        "source": "  setAttendees(attendees: { email: string; noShow: boolean }[]) {\n    this.attendees = attendees;\n  }"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__ResponsePayload.setNoShowHost_12#method:ResponsePayload.setNoShowHost",
+        "unitKind": "method",
+        "name": "setNoShowHost",
+        "qualifiedName": "ResponsePayload.setNoShowHost",
+        "parentUnitId": "packages/features/handleMarkNoShow.ts__ResponsePayload_9#class:ResponsePayload",
+        "startLine": 133,
+        "endLine": 135,
+        "isBehavioral": true,
+        "source": "  setNoShowHost(noShowHost: boolean) {\n    this.noShowHost = noShowHost;\n  }"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__ResponsePayload.setMessage_13#method:ResponsePayload.setMessage",
+        "unitKind": "method",
+        "name": "setMessage",
+        "qualifiedName": "ResponsePayload.setMessage",
+        "parentUnitId": "packages/features/handleMarkNoShow.ts__ResponsePayload_9#class:ResponsePayload",
+        "startLine": 137,
+        "endLine": 139,
+        "isBehavioral": true,
+        "source": "  setMessage(message: string) {\n    this.message = message;\n  }"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__ResponsePayload.getPayload_14#method:ResponsePayload.getPayload",
+        "unitKind": "method",
+        "name": "getPayload",
+        "qualifiedName": "ResponsePayload.getPayload",
+        "parentUnitId": "packages/features/handleMarkNoShow.ts__ResponsePayload_9#class:ResponsePayload",
+        "startLine": 141,
+        "endLine": 147,
+        "isBehavioral": true,
+        "source": "  getPayload(): ResponsePayloadResult {\n    return {\n      attendees: this.attendees,\n      noShowHost: this.noShowHost,\n      message: this.message,\n    };\n  }"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__EmailToAttendeeMap_15#type_alias:EmailToAttendeeMap",
+        "unitKind": "type_alias",
+        "name": "EmailToAttendeeMap",
+        "qualifiedName": "EmailToAttendeeMap",
+        "parentUnitId": null,
+        "startLine": 150,
+        "endLine": 150,
+        "isBehavioral": false,
+        "source": "type EmailToAttendeeMap = Record<string, { id: number; email: string; noShow: boolean | null }>;"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__getBookingAttendeesFromEmails_16#function:getBookingAttendeesFromEmails",
+        "unitKind": "function",
+        "name": "getBookingAttendeesFromEmails",
+        "qualifiedName": "getBookingAttendeesFromEmails",
+        "parentUnitId": null,
+        "startLine": 152,
+        "endLine": 154,
+        "isBehavioral": true,
+        "source": "const getBookingAttendeesFromEmails = async (\n  bookingUid: string,\n  emails: string[]"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__fireNoShowUpdated_17#function:fireNoShowUpdated",
+        "unitKind": "function",
+        "name": "fireNoShowUpdated",
+        "qualifiedName": "fireNoShowUpdated",
+        "parentUnitId": null,
+        "startLine": 165,
+        "endLine": 229,
+        "isBehavioral": true,
+        "source": "async function fireNoShowUpdated({\n  updatedNoShowHost,\n  hostUserUuid,\n  booking,\n  updatedAttendees,\n  emailToAttendeeMap,\n  actor,\n  orgId,\n  actionSource,\n}: {\n  updatedNoShowHost?: boolean;\n  hostUserUuid?: string;\n  booking: {\n    uid: string;\n    noShowHost: boolean | null;\n  };\n  updatedAttendees?: NoShowAttendees;\n  emailToAttendeeMap: EmailToAttendeeMap;\n  actor: Actor;\n  orgId: number | null;\n  actionSource: ValidActionSource;\n}): Promise<void> {\n  const auditData: {\n    host?: { userUuid: string; noShow: { old: boolean | null; new: boolean } };\n    attendeesNoShow?: Array<{ attendeeEmail: string; noShow: { old: boolean | null; new: boolean } }>;\n  } = {};\n\n  if (updatedNoShowHost !== undefined && hostUserUuid) {\n    auditData.host = {\n      userUuid: hostUserUuid,\n      noShow: { old: booking.noShowHost, new: updatedNoShowHost },\n    };\n  }\n\n  if (updatedAttendees) {\n    auditData.attendeesNoShow = [];\n    for (const attendee of updatedAttendees) {\n      const dbAttendee = emailToAttendeeMap[attendee.email];\n      if (dbAttendee) {\n        auditData.attendeesNoShow.push({\n          attendeeEmail: attendee.email,\n          noShow: { old: dbAttendee.noShow ?? null, new: attendee.noShow },\n        });\n      }\n    }\n  }\n\n  const bookingEventHandlerService = getBookingEventHandlerService();\n  const featuresRepository = getFeaturesRepository();\n  const isBookingAuditEnabled = orgId\n    ? await featuresRepository.checkIfTeamHasFeature(orgId, \"booking-audit\")\n    : false;\n\n  const isSomethingChanged = auditData.host || (auditData.attendeesNoShow && auditData.attendeesNoShow.length > 0);\n  if (isSomethingChanged) {\n    await bookingEventHandlerService.onNoShowUpdated({\n      bookingUid: booking.uid,\n      actor,\n      organizationId: orgId ?? null,\n      source: actionSource,\n      auditData,\n      isBookingAuditEnabled,\n    });\n  }\n}"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__handleMarkNoShow_18#function:handleMarkNoShow",
+        "unitKind": "function",
+        "name": "handleMarkNoShow",
+        "qualifiedName": "handleMarkNoShow",
+        "parentUnitId": null,
+        "startLine": 231,
+        "endLine": 418,
+        "isBehavioral": true,
+        "source": "const handleMarkNoShow = async ({\n  bookingUid,\n  attendees,\n  noShowHost,\n  userId,\n  actor,\n  locale,\n  platformClientParams,\n  actionSource,\n}: HandleMarkNoShowArgs): Promise<ResponsePayloadResult> => {\n  const responsePayload = new ResponsePayload();\n  const t = await getTranslation(locale ?? \"en\", \"common\");\n\n  try {\n    const attendeeEmails = attendees?.map((attendee) => attendee.email) || [];\n\n    const bookingRepository = new BookingRepository(prisma);\n    const booking = await bookingRepository.findByUidIncludeEventTypeAttendeesAndUser({\n      bookingUid,\n    });\n\n    if (!booking) {\n      throw new HttpError({ statusCode: 404, message: \"Booking not found\" });\n    }\n\n    const [orgId, emailToAttendeeMap] = await Promise.all([\n      getOrgIdFromMemberOrTeamId({\n        memberId: booking.eventType?.userId,\n        teamId: booking.eventType?.teamId || booking.eventType?.parent?.teamId,\n      }),\n      getBookingAttendeesFromEmails(bookingUid, attendeeEmails),\n    ]);\n\n    let successfullyUpdatedAttendees: NoShowAttendees | undefined;\n\n    if (attendees && attendeeEmails.length > 0) {\n      await assertCanAccessBooking(bookingUid, userId);\n\n      const payload = await buildResultPayload({\n        attendees,\n        t,\n        emailToAttendeeMap,\n      });\n      successfullyUpdatedAttendees = payload.attendees;\n      const { webhooks, bookingId } = await getWebhooksService({\n        platformClientId: platformClientParams?.platformClientId,\n        orgId,\n        booking,\n      });\n\n      await webhooks.sendPayload({\n        ...payload,\n        /** We send webhook message pre-translated, on client we already handle this */\n        bookingUid,\n        bookingId,\n        ...(platformClientParams ? platformClientParams : {}),\n      });\n\n      if (booking.eventType) {\n        const workflows = await getAllWorkflowsFromEventType(booking.eventType, userId);\n\n        if (workflows.length > 0) {\n          const tOrganizer = await getTranslation(booking.user?.locale ?? \"en\", \"common\");\n          // Cache translations to avoid requesting multiple times.\n          const translations = new Map();\n          const attendeesListPromises = booking.attendees.map(async (attendee) => {\n            const locale = attendee.locale ?? \"en\";\n            let translate = translations.get(locale);\n            if (!translate) {\n              translate = await getTranslation(locale, \"common\");\n              translations.set(locale, translate);\n            }\n            return {\n              name: attendee.name,\n              email: attendee.email,\n              timeZone: attendee.timeZone,\n              phoneNumber: attendee.phoneNumber,\n              language: {\n                translate,\n                locale,\n              },\n            };\n          });\n          const attendeesList = await Promise.all(attendeesListPromises);\n          try {\n            const organizer = booking.user || booking.eventType.owner;\n            const parsedMetadata = bookingMetadataSchema.safeParse(booking.metadata);\n            const metadata =\n              parsedMetadata.success && parsedMetadata.data?.videoCallUrl\n                ? { videoCallUrl: parsedMetadata.data.videoCallUrl }\n                : undefined;\n            const bookerUrl = await getBookerBaseUrl(booking.eventType?.team?.parentId ?? null);\n            const destinationCalendar = booking.destinationCalendar\n              ? [booking.destinationCalendar]\n              : booking.user?.destinationCalendar\n                ? [booking.user?.destinationCalendar]\n                : [];\n            const team = booking.eventType?.team\n              ? {\n                  name: booking.eventType.team.name,\n                  id: booking.eventType.team.id,\n                  members: [],\n                }\n              : undefined;\n\n            const calendarEvent: ExtendedCalendarEvent = {\n              type: booking.eventType.slug,\n              title: booking.title,\n              startTime: booking.startTime.toISOString(),\n              endTime: booking.endTime.toISOString(),\n              organizer: {\n                id: booking.user?.id,\n                email: booking.userPrimaryEmail || booking.user?.email || \"Email-less\",\n                name: booking.user?.name || \"Nameless\",\n                username: booking.user?.username || undefined,\n                timeZone: organizer?.timeZone || \"UTC\",\n                timeFormat: getTimeFormatStringFromUserTimeFormat(booking.user?.timeFormat),\n                language: {\n                  translate: tOrganizer,\n                  locale: booking.user?.locale ?? \"en\",\n                },\n              },\n              attendees: attendeesList,\n              uid: booking.uid,\n              location: booking.location || \"\",\n              eventType: {\n                slug: booking.eventType.slug,\n                schedulingType: booking.eventType.schedulingType,\n                hosts: booking.eventType.hosts,\n              },\n              destinationCalendar,\n              bookerUrl,\n              metadata,\n              rescheduleReason: null,\n              cancellationReason: null,\n              hideOrganizerEmail: booking.eventType?.hideOrganizerEmail,\n              eventTypeId: booking.eventType?.id,\n              customReplyToEmail: booking.eventType?.customReplyToEmail,\n              team,\n            };\n\n            const creditService = new CreditService();\n\n            await WorkflowService.scheduleWorkflowsFilteredByTriggerEvent({\n              workflows,\n              smsReminderNumber: booking.smsReminderNumber,\n              hideBranding: booking.eventType.owner?.hideBranding,\n              calendarEvent,\n              triggers: [WorkflowTriggerEvents.BOOKING_NO_SHOW_UPDATED],\n              creditCheckFn: creditService.hasAvailableCredits.bind(creditService),\n            });\n          } catch (error) {\n            logger.error(\"Error while scheduling workflow reminders for booking no-show updated\", error);\n          }\n        }\n      }\n\n      responsePayload.setAttendees(payload.attendees);\n      responsePayload.setMessage(payload.message);\n\n      await handleSendingAttendeeNoShowDataToApps(bookingUid, attendees);\n    }\n\n    if (noShowHost !== undefined) {\n      await bookingRepository.updateNoShowHost({ bookingUid, noShowHost });\n      responsePayload.setNoShowHost(noShowHost);\n      responsePayload.setMessage(t(\"booking_no_show_updated\"));\n    }\n\n    await fireNoShowUpdated({\n      booking,\n      updatedNoShowHost: noShowHost,\n      hostUserUuid: booking.user?.uuid,\n      updatedAttendees: successfullyUpdatedAttendees,\n      emailToAttendeeMap,\n      actor,\n      orgId: orgId ?? null,\n      actionSource,\n    });\n\n    return responsePayload.getPayload();\n  } catch (error) {\n    if (error instanceof Error) {\n      logger.error(error.message);\n    }\n    throw new HttpError({ statusCode: 500, message: \"Failed to update no-show status\" });\n  }\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__updateAttendees_19#function:updateAttendees",
+        "unitKind": "function",
+        "name": "updateAttendees",
+        "qualifiedName": "updateAttendees",
+        "parentUnitId": null,
+        "startLine": 420,
+        "endLine": 445,
+        "isBehavioral": true,
+        "source": "const updateAttendees = async ({\n  attendees,\n  emailToAttendeeMap,\n}: {\n  attendees: NonNullable<TNoShowInputSchema[\"attendees\"]>;\n  emailToAttendeeMap: EmailToAttendeeMap; \n}): Promise<NoShowAttendees> => {\n  const attendeeRepository = new AttendeeRepository(prisma);\n  const updatePromises = attendees.map((attendee) => {\n    const attendeeToUpdate = emailToAttendeeMap[attendee.email];\n    if (!attendeeToUpdate) return null;\n    return attendeeRepository.updateNoShow({\n      where: { attendeeId: attendeeToUpdate.id },\n      data: { noShow: attendee.noShow },\n    });\n  });\n\n  const results = await Promise.allSettled(updatePromises);\n  logFailedResults(results);\n\n  return results\n    .filter((x) => x.status === \"fulfilled\")\n    .map((x) => (x as PromiseFulfilledResult<{ noShow: boolean; email: string } | null>).value)\n    .filter((x): x is { noShow: boolean; email: string } => x !== null)\n    .map((x) => ({ email: x.email, noShow: x.noShow }));\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__getWebhooksService_20#function:getWebhooksService",
+        "unitKind": "function",
+        "name": "getWebhooksService",
+        "qualifiedName": "getWebhooksService",
+        "parentUnitId": null,
+        "startLine": 447,
+        "endLine": 458,
+        "isBehavioral": true,
+        "source": "const getWebhooksService = async ({ platformClientId, orgId, booking }: GetWebhooksServiceArgs) => {\n  const webhooks = await WebhookService.init({\n    teamId: booking?.eventType?.teamId,\n    userId: booking?.eventType?.userId,\n    eventTypeId: booking?.eventType?.id,\n    orgId,\n    triggerEvent: WebhookTriggerEvents.BOOKING_NO_SHOW_UPDATED,\n    oAuthClientId: platformClientId,\n  });\n\n  return { webhooks, bookingId: booking?.id };\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__assertCanAccessBooking_21#function:assertCanAccessBooking",
+        "unitKind": "function",
+        "name": "assertCanAccessBooking",
+        "qualifiedName": "assertCanAccessBooking",
+        "parentUnitId": null,
+        "startLine": 460,
+        "endLine": 483,
+        "isBehavioral": true,
+        "source": "const assertCanAccessBooking = async (bookingUid: string, userId?: number) => {\n  if (!userId) throw new HttpError({ statusCode: 401 });\n\n  const bookingRepo = new BookingRepository(prisma);\n  const booking = await bookingRepo.findByUidIncludeEventTypeAndReferences({ bookingUid });\n  const bookingAccessService = new BookingAccessService(prisma);\n  const isAuthorized = await bookingAccessService.doesUserIdHaveAccessToBooking({\n    userId,\n    bookingUid,\n  });\n\n  if (!isAuthorized)\n    throw new HttpError({ statusCode: 403, message: \"You are not allowed to access this booking\" });\n\n  const isUpcoming = new Date(booking.endTime) >= new Date();\n  const isOngoing = isUpcoming && new Date() >= new Date(booking.startTime);\n  const isBookingInPast = new Date(booking.endTime) < new Date();\n  if (!isBookingInPast && !isOngoing) {\n    throw new HttpError({\n      statusCode: 403,\n      message: \"Cannot mark no-show before the meeting has started.\",\n    });\n  }\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__handleMarkHostNoShow_22#function:handleMarkHostNoShow",
+        "unitKind": "function",
+        "name": "handleMarkHostNoShow",
+        "qualifiedName": "handleMarkHostNoShow",
+        "parentUnitId": null,
+        "startLine": 485,
+        "endLine": 508,
+        "isBehavioral": true,
+        "source": "export const handleMarkHostNoShow = async ({\n  bookingUid,\n  noShowHost,\n  actionSource,\n  locale,\n  platformClientParams,\n}: HandleMarkHostNoShowArgs): Promise<ResponsePayloadResult> => {\n  const actorEmail = buildActorEmail({\n    identifier: getUniqueIdentifier({ prefix: \"attendee\" }),\n    actorType: \"guest\",\n  });\n\n  // TODO: Accept attendee email/name from the caller to track which attendee triggered this action\n  const actor = makeGuestActor({ email: actorEmail, name: null });\n\n  return handleMarkNoShow({\n    bookingUid,\n    noShowHost,\n    actor,\n    actionSource,\n    locale,\n    platformClientParams,\n  });\n};"
+      },
+      {
+        "unitId": "packages/features/handleMarkNoShow.ts__handleMarkAttendeesAndHostNoShow_23#function:handleMarkAttendeesAndHostNoShow",
+        "unitKind": "function",
+        "name": "handleMarkAttendeesAndHostNoShow",
+        "qualifiedName": "handleMarkAttendeesAndHostNoShow",
+        "parentUnitId": null,
+        "startLine": 515,
+        "endLine": 537,
+        "isBehavioral": true,
+        "source": "export const handleMarkAttendeesAndHostNoShow = async ({\n  bookingUid,\n  attendees,\n  noShowHost,\n  userId,\n  userUuid,\n  actionSource,\n  locale,\n  platformClientParams,\n}: HandleMarkAttendeesAndHostNoShowArgs): Promise<ResponsePayloadResult> => {\n  const actor = makeUserActor(userUuid);\n\n  return handleMarkNoShow({\n    bookingUid,\n    attendees,\n    noShowHost,\n    userId,\n    actor,\n    actionSource,\n    locale,\n    platformClientParams,\n  });\n};"
+      }
+    ],
+    "extractedUnitCount": 23,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 31434,
+    "outputTokens": 17009,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

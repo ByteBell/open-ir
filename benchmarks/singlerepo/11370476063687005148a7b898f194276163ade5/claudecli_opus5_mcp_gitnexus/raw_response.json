@@ -1,0 +1,84 @@
+{
+  "duration_api_ms": 170421,
+  "stop_reason": "end_turn",
+  "session_id": "c3c9b105-90de-4ee1-805d-c8e21feeecb3",
+  "total_cost_usd": 6.106891000000001,
+  "usage": {
+    "input_tokens": 1155563,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 13073,
+    "output_tokens_details": { "thinking_tokens": 6178 },
+    "server_tool_use": { "web_search_requests": 0, "web_fetch_requests": 0 },
+    "service_tier": "standard",
+    "cache_creation": { "ephemeral_1h_input_tokens": 0, "ephemeral_5m_input_tokens": 0 },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 86086,
+        "output_tokens": 3478,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_creation": { "ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0 },
+        "type": "message"
+      }
+    ],
+    "speed": "standard"
+  },
+  "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 2191,
+      "outputTokens": 12,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.002251,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000,
+      "canonicalModel": "claude-haiku-4-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    },
+    "claude-opus-5": {
+      "inputTokens": 1155563,
+      "outputTokens": 13073,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 6.104640000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000,
+      "canonicalModel": "claude-opus-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "extra_usage_disabled",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": { "background": 0, "foreground": 0, "unset": 0 },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": { "parent": 0, "user": 0, "system": 0 },
+    "refused": { "depth_limit": 0, "concurrency_limit": 0, "budget": 0 },
+    "by_type": {}
+  },
+  "is_error": false,
+  "num_turns": 28,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "{\n  \"contract\": \"Every settings route whose entry is conditionally rendered in the settings navigation for organisation admins/owners must independently enforce that same role check on the server before it renders — the route segment (a page or an enclosing layout) must resolve the session, derive the caller's organisation membership role, and redirect or deny anyone who is not an org admin/owner. Navigation-level filtering is a presentation concern and is not an access-control boundary, so a route that relies on the sidebar omitting its link, or on downstream tRPC procedures returning empty data, violates the contract even when no privileged data leaks; authorisation must be enforced at the same layer that decides whether the screen is served.\",\n  \"defect_location\": {\n    \"repo\": \"calcom/cal.com\",\n    \"summary\": \"The settings sidebar is the only thing gating the org-admin \\\"Other Teams\\\" screens: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/SettingsLayoutAppDirClient.tsx:271 drops the `other_teams` tab with `if (tab.name === \\\"other_teams\\\" && !isOrgAdminOrOwner) return false;`, and SettingsLayoutAppDirClient.tsx:175-182 (`organizationAdminKeys`) plus the filter at lines ~215-218 hide the other admin-only children. That is a menu filter only — no route in the `organizations/teams/other` group carries a server-side role guard. The repository has exactly the guard that is missing: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/(org-admin-only)/layout.tsx:9-23 defines `OrgAdminOnlyLayout`, which reads the session via `getServerSession`/`buildLegacyRequest`, derives `orgRole` from `session.user.org.role` (falling back to the profile membership lookup), calls `checkAdminOrOwner` (packages/features/auth/lib/checkAdminOrOwner.ts) and `redirect(\\\"/settings/organizations/profile\\\")` when the caller is not an admin/owner. That layout only covers privacy, billing, sso, dsync, delegation-credential and attributes; a graph enumeration of every file under `organizations/teams/other` returns only page/loading/skeleton files and no layout.tsx, so nothing wraps the group. Each of the four screens in the group renders unconditionally: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/page.tsx:20-40 checks only `if (!session?.user?.id) redirect(\\\"/auth/login\\\")` — a signed-in plain member passes and gets the `org_admin_other_teams` shell; and apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/members/page.tsx:16-27, .../[id]/profile/page.tsx:14-22 and .../[id]/appearance/page.tsx:14-25 resolve no session at all, going straight to `SettingsHeader` + the legacy view. This is why every screen in the group behaves identically. The enclosing layouts do not help: apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/layout.tsx:8-18 (`SettingsOrganizationsLayout`) only asserts that an organisation exists and redirects otherwise, with no role test. The contrast inside the same tree confirms the omission is local to this group — apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/general/page.tsx:22-51 does call `getResourcePermissions` with MEMBER/ADMIN/OWNER fallback roles before rendering. The tRPC layer is already correct (packages/trpc/server/routers/viewer/organizations/listOtherTeams.handler.ts returns `[]` unless `user.organization.isOrgAdmin`, and getOtherTeam.handler.ts notes it is served by `authedOrgAdminProcedure`), which is precisely why the symptom is \\\"the screen renders\\\" rather than a data leak — the defect is at the route segment, not the data layer. The same class of defect exists at apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/admin-api/page.tsx:14-25, which renders `AdminAPIView` with no session or role check even though SettingsLayoutAppDirClient.tsx:246-251 hides the `admin_api` link from non-org-admins.\",\n  \"answer\": [\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/page.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/members/page.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/profile/page.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/[id]/appearance/page.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/loading.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/teams/other/(main-page)/skeleton.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/(org-admin-only)/layout.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/SettingsLayoutAppDirClient.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/admin-api/page.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/layout.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/organizations/(org-admin-only)/layout.tsx\",\n    \"packages/features/auth/lib/checkAdminOrOwner.ts\",\n    \"packages/features/ee/organizations/pages/settings/other-team-members-view.tsx\",\n    \"packages/features/ee/organizations/pages/settings/other-team-profile-view.tsx\",\n    \"packages/features/ee/organizations/pages/components/OtherTeamsListing.tsx\",\n    \"packages/features/ee/teams/pages/team-appearance-view.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/organizations/(org-user-only)/layout.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/roles/page.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/profile/page.tsx\",\n    \"apps/web/app/(use-page-wrapper)/settings/(settings-layout)/organizations/general/page.tsx\",\n    \"packages/features/ee/organizations/pages/components/OtherTeamList.tsx\",\n    \"packages/features/ee/organizations/pages/components/OtherTeamListItem.tsx\",\n    \"packages/trpc/server/routers/viewer/organizations/listOtherTeams.handler.ts\",\n    \"packages/features/auth/lib/getServerSession.ts\",\n    \"apps/web/lib/buildLegacyCtx.ts\"\n  ]\n}",
+  "ttft_ms": 1743,
+  "type": "result",
+  "duration_ms": 170562,
+  "uuid": "65e74aa5-b75d-431e-9a2e-11b5c1a38edc",
+  "ttft_stream_ms": 1105,
+  "time_to_request_ms": 17,
+  "queued_turn_count": 0
+}

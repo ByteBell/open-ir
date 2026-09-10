@@ -1,0 +1,816 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "apps/dotcom/sync-worker/src/utils/publishSnapshots.ts",
+    "language": "typescript",
+    "sizeBytes": 2640,
+    "tokenCount": 660,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:27:47.102Z",
+    "module": {
+      "purpose": "Publishes and removes room snapshots associated with human-readable slugs, including snapshot history and published Open Graph thumbnails.",
+      "summary": "This utility coordinates durable-object persistence, object storage, slug mapping, snapshot publication, history retention, and thumbnail rendering for published rooms. Publication exits when no slug exists, ensures the latest room state is persisted, requires a source snapshot, writes both current and timestamped copies, and reports thumbnail-rendering failures without making them invalidate publication. Unpublication removes the slug mapping, all matching current and historical snapshot objects, and only the published thumbnail.",
+      "businessContext": "Supports sharing and unfurling published collaborative rooms through stable slugs and preview images. Failures can expose stale, missing, or undeletable published content and impair link previews.",
+      "classes": [],
+      "functions": [
+        "publishSnapshot (~L8-42): Persists and publishes the current room snapshot and thumbnail.",
+        "unpublishSnapshot (~L44-60): Removes published snapshot objects, slug mapping, and thumbnail."
+      ],
+      "keywords": [
+        "room snapshots",
+        "published slugs",
+        "Durable Objects",
+        "R2 object storage",
+        "thumbnail rendering",
+        "Open Graph images",
+        "snapshot history",
+        "outbox retry"
+      ],
+      "ontologyConcepts": [
+        "publication lifecycle",
+        "snapshot persistence",
+        "content versioning",
+        "object storage",
+        "retryable failure",
+        "cache warming",
+        "resource cleanup"
+      ],
+      "businessEntities": ["room", "snapshot", "published slug", "thumbnail", "Open Graph image", "file"],
+      "systemCapabilities": [
+        "Publish room snapshots",
+        "Maintain published slug mappings",
+        "Store timestamped snapshot history",
+        "Warm published thumbnail caches",
+        "Unpublish room content",
+        "Report thumbnail failures"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../r2",
+          "symbols": ["getR2KeyForRoom", "listAllObjectKeys"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/r2.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/r2.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/r2"
+        },
+        {
+          "spec": "../routes/tla/ogImageQueue",
+          "symbols": ["deleteOgImage", "enqueuePublishThumbnailRender"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue"
+        },
+        {
+          "spec": "../types",
+          "symbols": ["Environment"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/types"
+        },
+        {
+          "spec": "./durableObjects",
+          "symbols": ["getRoomDurableObject"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/durableObjects.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/durableObjects.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/utils/durableObjects"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/dotcom-shared",
+          "symbols": ["TlaFile"],
+          "package": "@tldraw/dotcom-shared",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads the current room snapshot from env.ROOMS.",
+          "Writes the published slug mapping to env.SNAPSHOT_SLUG_TO_PARENT_SLUG.",
+          "Writes current and timestamped published snapshots to env.ROOM_SNAPSHOTS.",
+          "Deletes the published slug mapping and matching snapshot objects during unpublication.",
+          "Invokes thumbnail rendering and deletion helpers."
+        ],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        { "kind": "blob", "role": "consumes", "address": "ROOMS", "payloadRef": null, "rawKind": null },
+        { "kind": "blob", "role": "consumes", "address": "ROOM_SNAPSHOTS", "payloadRef": null, "rawKind": null },
+        {
+          "kind": "cache",
+          "role": "consumes",
+          "address": "SNAPSHOT_SLUG_TO_PARENT_SLUG",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "publishSnapshot",
+          "shape": "publishSnapshot(env: Environment, file: TlaFile, reportProblem: (error: unknown) => void)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "unpublishSnapshot",
+          "shape": "unpublishSnapshot(env: Environment, file: TlaFile)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "TlaFile", "shape": "TlaFile", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "Environment",
+          "shape": "Environment",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "name": "getR2KeyForRoom",
+          "shape": "getR2KeyForRoom({ slug: string, isApp: boolean })",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/r2.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/r2.ts"
+        },
+        {
+          "name": "listAllObjectKeys",
+          "shape": "listAllObjectKeys(env.ROOM_SNAPSHOTS, prefix)",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/r2.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/r2.ts"
+        },
+        {
+          "name": "getRoomDurableObject",
+          "shape": "getRoomDurableObject(env, file.id).awaitPersist({ throwOnFailure: true })",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/durableObjects.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/durableObjects.ts"
+        },
+        {
+          "name": "enqueuePublishThumbnailRender",
+          "shape": "enqueuePublishThumbnailRender(env, file.publishedSlug, reportProblem)",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts"
+        },
+        {
+          "name": "deleteOgImage",
+          "shape": "deleteOgImage(env, { kind: 'published', slug: file.publishedSlug })",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "publish slug guard",
+          "intent": "Skips publication when the file has no published slug.",
+          "structureKind": "branch",
+          "predicate": "!file.publishedSlug",
+          "branchOutcomes": ["no slug: return", "slug present: continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 13, "endLine": 14 }
+        },
+        {
+          "name": "durable snapshot persistence",
+          "intent": "Ensures the room durable object has persisted its latest snapshot.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 15, "endLine": 16 }
+        },
+        {
+          "name": "source snapshot retrieval",
+          "intent": "Loads the room snapshot and rejects publication when it is absent.",
+          "structureKind": "branch",
+          "predicate": "!snapshot",
+          "branchOutcomes": ["snapshot absent: throw Error", "snapshot present: read blob"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 18, "endLine": 23 }
+        },
+        {
+          "name": "published snapshot writes",
+          "intent": "Maps the slug and stores current plus timestamped snapshot copies.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 25, "endLine": 37 }
+        },
+        {
+          "name": "thumbnail publication",
+          "intent": "Queues immediate rendering of the published room thumbnail.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 38, "endLine": 42 }
+        },
+        {
+          "name": "unpublish slug guard",
+          "intent": "Skips cleanup for partially-created files without a published slug.",
+          "structureKind": "branch",
+          "predicate": "!file.publishedSlug",
+          "branchOutcomes": ["no slug: return", "slug present: continue cleanup"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 46, "endLine": 47 }
+        },
+        {
+          "name": "published object cleanup",
+          "intent": "Deletes the slug mapping, snapshot history, and published thumbnail.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 48, "endLine": 60 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "publishSnapshot",
+          "signature": "export async function publishSnapshot(\n\tenv: Environment,\n\tfile: TlaFile,\n\treportProblem: (error: unknown) => void\n)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 8, "endLine": 12 }
+        },
+        {
+          "kind": "function",
+          "name": "unpublishSnapshot",
+          "signature": "export async function unpublishSnapshot(env: Environment, file: TlaFile)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 44, "endLine": 44 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "File without publishedSlug during publication",
+          "handled": true,
+          "behavior": "Returns immediately without persistence or storage changes.",
+          "anchor": { "startLine": 13, "endLine": 14 }
+        },
+        {
+          "inputShape": "File without publishedSlug during unpublication",
+          "handled": true,
+          "behavior": "Returns immediately without deleting mappings, snapshots, or thumbnails.",
+          "anchor": { "startLine": 46, "endLine": 47 }
+        },
+        {
+          "inputShape": "Missing source snapshot",
+          "handled": true,
+          "behavior": "Throws an Error containing the file identifier.",
+          "anchor": { "startLine": 20, "endLine": 22 }
+        },
+        {
+          "inputShape": "No matching published snapshot objects",
+          "handled": true,
+          "behavior": "Skips object deletion and still deletes the published thumbnail.",
+          "anchor": { "startLine": 54, "endLine": 59 }
+        },
+        {
+          "inputShape": "Thumbnail rendering failure",
+          "handled": true,
+          "behavior": "The rendering helper receives reportProblem so publication can remain successful while the failure is reported.",
+          "anchor": { "startLine": 38, "endLine": 41 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "publishedKeys.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Deletes snapshot objects only when at least one matching key exists.",
+          "anchor": { "startLine": 54, "endLine": 54 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new Error(`Snapshot not found for file ${file.id}`)",
+          "caught": null,
+          "action": "Aborts publication and allows the error to propagate.",
+          "fallback": null,
+          "anchor": { "startLine": 20, "endLine": 22 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Thumbnail-rendering failures are delegated to reportProblem by the rendering helper.",
+          "fallback": "The snapshot publication remains successful; a later getOgImage fetch can repair the image.",
+          "anchor": { "startLine": 38, "endLine": 41 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "Publication requires a truthy file.publishedSlug.",
+          "anchor": { "startLine": 13, "endLine": 14 }
+        },
+        {
+          "kind": "ordering",
+          "description": "The durable object is persisted before the source snapshot is read.",
+          "anchor": { "startLine": 15, "endLine": 18 }
+        },
+        {
+          "kind": "non-null",
+          "description": "Publication proceeds only after a source snapshot has been found.",
+          "anchor": { "startLine": 20, "endLine": 23 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Thumbnail rendering is queued only after both published snapshot writes succeed.",
+          "anchor": { "startLine": 28, "endLine": 41 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Unpublication targets only the published thumbnail scope and preserves the board's own file-keyed image.",
+          "anchor": { "startLine": 57, "endLine": 59 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a file identifier, a TlaFile, and a problem-reporting callback compatible with the storage workflow.",
+          "anchor": { "startLine": 8, "endLine": 12 }
+        },
+        {
+          "kind": "schema",
+          "description": "Environment bindings expose ROOMS, ROOM_SNAPSHOTS, and SNAPSHOT_SLUG_TO_PARENT_SLUG with the required object-storage operations.",
+          "anchor": { "startLine": 18, "endLine": 36 }
+        },
+        {
+          "kind": "init-order",
+          "description": "The durable object can persist the room snapshot before the source object is retrieved.",
+          "anchor": { "startLine": 15, "endLine": 18 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the storage layer provide atomicity or idempotency across slug mapping and the two snapshot writes?",
+          "affects": "publication consistency and retry behavior",
+          "anchor": { "startLine": 25, "endLine": 37 },
+          "resolution": null
+        },
+        {
+          "question": "What guarantees does listAllObjectKeys provide about returning every timestamped history key?",
+          "affects": "completeness of unpublication cleanup",
+          "anchor": { "startLine": 50, "endLine": 53 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Each operation awaits persistence and storage steps sequentially; cross-invocation coordination is delegated to the underlying services."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "publish-skips-file-without-slug",
+          "scenario": "A file without a published slug is passed to publishSnapshot.",
+          "given": ["!file.publishedSlug"],
+          "when": "publishSnapshot(env, file, reportProblem)",
+          "then": "No persistence, storage, or thumbnail-render operations are performed and the call resolves.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Publishing requires a slug and must be a no-op for partially-created rows."
+        },
+        {
+          "testId": "publish-rejects-missing-snapshot",
+          "scenario": "The room snapshot cannot be found after durable-object persistence succeeds.",
+          "given": [
+            "await getRoomDurableObject(env, file.id).awaitPersist({ throwOnFailure: true })",
+            "await env.ROOMS.get(getR2KeyForRoom({ slug: file.id, isApp: true })) === null"
+          ],
+          "when": "publishSnapshot(env, file, reportProblem)",
+          "then": "The call rejects with Error(`Snapshot not found for file ${file.id}`) and does not publish a snapshot.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "A missing source snapshot must prevent publication."
+        },
+        {
+          "testId": "publish-persists-current-and-history-snapshots",
+          "scenario": "A file with a slug has an existing room snapshot.",
+          "given": [
+            "file.publishedSlug",
+            "const snapshot = await env.ROOMS.get(getR2KeyForRoom({ slug: file.id, isApp: true }))",
+            "const blob = await snapshot.blob()"
+          ],
+          "when": "publishSnapshot(env, file, reportProblem)",
+          "then": "env.SNAPSHOT_SLUG_TO_PARENT_SLUG.put(file.publishedSlug, file.id) is called and the blob is written to both `${file.id}/${file.publishedSlug}` and `${file.id}/${file.publishedSlug}|${currentTime}` snapshot keys.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Publication must create both the current snapshot and republish history."
+        },
+        {
+          "testId": "publish-enqueues-thumbnail-render",
+          "scenario": "A published snapshot has been successfully stored.",
+          "given": ["file.publishedSlug", "await env.ROOM_SNAPSHOTS.put(...)"],
+          "when": "publishSnapshot(env, file, reportProblem)",
+          "then": "enqueuePublishThumbnailRender(env, file.publishedSlug, reportProblem) is called.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The published snapshot must be available for unfurl rendering immediately."
+        },
+        {
+          "testId": "unpublish-skips-file-without-slug",
+          "scenario": "A file without a published slug is passed to unpublishSnapshot.",
+          "given": ["!file.publishedSlug"],
+          "when": "unpublishSnapshot(env, file)",
+          "then": "No deletion operations are performed and the call resolves.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Partially-created rows have nothing published to remove."
+        },
+        {
+          "testId": "unpublish-removes-snapshot-history",
+          "scenario": "A published file has current and timestamped snapshot keys.",
+          "given": [
+            "file.publishedSlug",
+            "const publishedKeys = await listAllObjectKeys(env.ROOM_SNAPSHOTS, getR2KeyForRoom({ slug: `${file.id}/${file.publishedSlug}`, isApp: true }))",
+            "publishedKeys.length > 0"
+          ],
+          "when": "unpublishSnapshot(env, file)",
+          "then": "env.SNAPSHOT_SLUG_TO_PARENT_SLUG.delete(file.publishedSlug) and env.ROOM_SNAPSHOTS.delete(publishedKeys) are called.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Unpublishing must remove the slug mapping and every snapshot revision."
+        },
+        {
+          "testId": "unpublish-deletes-published-og-image",
+          "scenario": "A file with a published slug is unpublished.",
+          "given": ["file.publishedSlug"],
+          "when": "unpublishSnapshot(env, file)",
+          "then": "deleteOgImage(env, { kind: 'published', slug: file.publishedSlug }) is called without deleting the board's own file-keyed image.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Only the thumbnail associated with the published snapshot may be removed."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Imports shared file, storage, thumbnail, environment, and durable-object dependencies",
+        "publishSnapshot function",
+        "unpublishSnapshot function"
+      ],
+      "moduleLevelCode": "import { TlaFile } from '@tldraw/dotcom-shared'\nimport { getR2KeyForRoom, listAllObjectKeys } from '../r2'\nimport { deleteOgImage, enqueuePublishThumbnailRender } from '../routes/tla/ogImageQueue'\nimport { Environment } from '../types'\nimport { getRoomDurableObject } from './durableObjects'",
+      "exports": [
+        { "name": "publishSnapshot", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "unpublishSnapshot", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "TlaFile", "module": "@tldraw/dotcom-shared", "alias": null, "kind": "external" },
+        { "symbol": "getR2KeyForRoom", "module": "../r2", "alias": null, "kind": "internal" },
+        { "symbol": "listAllObjectKeys", "module": "../r2", "alias": null, "kind": "internal" },
+        { "symbol": "deleteOgImage", "module": "../routes/tla/ogImageQueue", "alias": null, "kind": "internal" },
+        {
+          "symbol": "enqueuePublishThumbnailRender",
+          "module": "../routes/tla/ogImageQueue",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "Environment", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "getRoomDurableObject", "module": "./durableObjects", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/publishSnapshots.ts__publishSnapshot#function:publishSnapshot",
+        "unitKind": "function",
+        "name": "publishSnapshot",
+        "qualifiedName": "publishSnapshot",
+        "parentUnitId": null,
+        "startLine": 8,
+        "endLine": 42,
+        "isBehavioral": true,
+        "source": "export async function publishSnapshot(\n\tenv: Environment,\n\tfile: TlaFile,\n\treportProblem: (error: unknown) => void\n) {\n\t// Nothing can be published without a slug.\n\tif (!file.publishedSlug) return\n\t// make sure the room's snapshot is up to date; a stale/missing snapshot must not get published\n\tawait getRoomDurableObject(env, file.id).awaitPersist({ throwOnFailure: true })\n\t// and that it exists\n\tconst snapshot = await env.ROOMS.get(getR2KeyForRoom({ slug: file.id, isApp: true }))\n\n\tif (!snapshot) {\n\t\tthrow new Error(`Snapshot not found for file ${file.id}`)\n\t}\n\tconst blob = await snapshot.blob()\n\n\t// Create a new slug for the published room\n\tawait env.SNAPSHOT_SLUG_TO_PARENT_SLUG.put(file.publishedSlug, file.id)\n\n\t// Bang the snapshot into the database\n\tawait env.ROOM_SNAPSHOTS.put(\n\t\tgetR2KeyForRoom({ slug: `${file.id}/${file.publishedSlug}`, isApp: true }),\n\t\tblob\n\t)\n\tconst currentTime = new Date().toISOString()\n\tawait env.ROOM_SNAPSHOTS.put(\n\t\tgetR2KeyForRoom({ slug: `${file.id}/${file.publishedSlug}|${currentTime}`, isApp: true }),\n\t\tblob\n\t)\n\t// The published snapshot is now the content an unfurl would show, so render its OG image\n\t// straight away rather than leaving the first crawler to find a cold cache. Reports failures\n\t// through `reportProblem` instead of throwing: the publish itself succeeded, and getOgImage\n\t// repairs a missing image on the next fetch.\n\tawait enqueuePublishThumbnailRender(env, file.publishedSlug, reportProblem)",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/publishSnapshots.ts__publishSnapshot#function:publishSnapshot",
+          "fileId": "apps/dotcom/sync-worker/src/utils/publishSnapshots.ts__publishSnapshot",
+          "unitKind": "function",
+          "name": "publishSnapshot",
+          "qualifiedName": "publishSnapshot",
+          "parentUnitId": null,
+          "startLine": 8,
+          "endLine": 42,
+          "signature": "export async function publishSnapshot(\n\tenv: Environment,\n\tfile: TlaFile,\n\treportProblem: (error: unknown) => void\n)",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "file", "type": "TlaFile", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "reportProblem",
+              "type": "(error: unknown) => void",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "env provides the required room, snapshot, and slug-mapping storage dependencies.",
+            "file contains an id identifying the room.",
+            "reportProblem is callable if thumbnail rendering reports a failure."
+          ],
+          "postconditions": [
+            "If file.publishedSlug is present, the room's durable object has been successfully persisted before publication continues.",
+            "The published slug maps to the file id.",
+            "The snapshot is stored under both the published snapshot key and a timestamped published snapshot key.",
+            "Thumbnail rendering is enqueued for the published slug."
+          ],
+          "invariants": [
+            "A snapshot is never published when file.publishedSlug is absent.",
+            "A stale or missing durable-object snapshot is not published because persistence is awaited with throwOnFailure set to true.",
+            "Thumbnail rendering failures are reported through reportProblem rather than causing an otherwise successful publication to fail."
+          ],
+          "edgeCases": [
+            "When file.publishedSlug is absent or falsy, the function returns without persisting, reading, writing, or enqueueing anything.",
+            "When the room snapshot cannot be found after persistence, the function throws an Error and does not write publication records.",
+            "When persistence or storage operations fail, their errors propagate and subsequent publication steps are not completed.",
+            "When thumbnail rendering reports a failure, reportProblem receives the failure while the publication writes remain successful."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error with message `Snapshot not found for file ${file.id}` when no current snapshot exists",
+              "Errors propagated from durable-object persistence, snapshot retrieval, blob conversion, storage writes, or slug mapping",
+              "Errors from thumbnail rendering are passed to reportProblem instead of being thrown by this function"
+            ],
+            "reverts": [],
+            "onInvalidInput": "If file.publishedSlug is absent or falsy, return without action.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Writes file.publishedSlug -> file.id to env.SNAPSHOT_SLUG_TO_PARENT_SLUG.",
+            "Writes the current snapshot blob to env.ROOM_SNAPSHOTS under the published snapshot key.",
+            "Writes the same blob to env.ROOM_SNAPSHOTS under a timestamped published snapshot key."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "getRoomDurableObject(env, file.id).awaitPersist",
+              "source": "room durable-object helper",
+              "kind": "external"
+            },
+            { "name": "getR2KeyForRoom", "source": "room key utility", "kind": "internal" },
+            { "name": "env.ROOMS.get", "source": "env.ROOMS", "kind": "external" },
+            { "name": "snapshot.blob", "source": "snapshot response", "kind": "external" },
+            {
+              "name": "env.SNAPSHOT_SLUG_TO_PARENT_SLUG.put",
+              "source": "env.SNAPSHOT_SLUG_TO_PARENT_SLUG",
+              "kind": "external"
+            },
+            { "name": "env.ROOM_SNAPSHOTS.put", "source": "env.ROOM_SNAPSHOTS", "kind": "external" },
+            { "name": "enqueuePublishThumbnailRender", "source": "thumbnail rendering utility", "kind": "external" },
+            { "name": "reportProblem", "source": "caller-provided callback", "kind": "external" }
+          ],
+          "symbolReferences": ["Environment", "TlaFile"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Reads the persisted room snapshot as a storage response, converts it to a Blob, and writes the Blob unchanged to two ROOM_SNAPSHOTS keys: one for the published slug and one with an ISO timestamp suffix.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Publishes the current persisted room snapshot under the file's published slug. It also records the slug mapping, stores both current and timestamped snapshot copies, and requests thumbnail rendering.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Snapshot not found for file ${file.id}",
+              "role": "Error message raised when the persisted room snapshot is absent."
+            },
+            {
+              "kind": "format-string",
+              "value": "${file.id}/${file.publishedSlug}",
+              "role": "Path component used to derive the published snapshot storage key."
+            },
+            {
+              "kind": "format-string",
+              "value": "${file.id}/${file.publishedSlug}|${currentTime}",
+              "role": "Path component used to derive the timestamped published snapshot storage key."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "publishSnapshot is called.",
+              "then": "It resolves without reading or writing storage, persisting the room, or enqueueing thumbnail rendering.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "publishSnapshot is called.",
+              "then": "It throws an Error with message `Snapshot not found for file ${file.id}` and does not create publication records.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "publishSnapshot is called and persistence succeeds.",
+              "then": "The slug mapping is written, the snapshot blob is written to both published and timestamped snapshot keys, and thumbnail rendering is enqueued.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "2753354c2751e5b14e65a06f9b6ecd3d3aff9c9d2c083111f53a5918c5bc3633"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/publishSnapshots.ts__unpublishSnapshot#function:unpublishSnapshot",
+        "unitKind": "function",
+        "name": "unpublishSnapshot",
+        "qualifiedName": "unpublishSnapshot",
+        "parentUnitId": null,
+        "startLine": 44,
+        "endLine": 60,
+        "isBehavioral": true,
+        "source": "\nexport async function unpublishSnapshot(env: Environment, file: TlaFile) {\n\t// Partially-created rows can lack a slug; nothing published to remove.\n\tif (!file.publishedSlug) return\n\tawait env.SNAPSHOT_SLUG_TO_PARENT_SLUG.delete(file.publishedSlug)\n\t// The current snapshot plus every `|timestamp` history entry written by republishes.\n\tconst publishedKeys = await listAllObjectKeys(\n\t\tenv.ROOM_SNAPSHOTS,\n\t\tgetR2KeyForRoom({ slug: `${file.id}/${file.publishedSlug}`, isApp: true })\n\t)\n\tif (publishedKeys.length > 0) {\n\t\tawait env.ROOM_SNAPSHOTS.delete(publishedKeys)\n\t}\n\t// The published thumbnail goes with the published snapshot it depicts. Scoped to\n\t// `kind: 'published'`, so the board's own file-keyed image is untouched. See deleteOgImage.\n\tawait deleteOgImage(env, { kind: 'published', slug: file.publishedSlug })\n}",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/publishSnapshots.ts__unpublishSnapshot#function:unpublishSnapshot",
+          "fileId": "apps/dotcom/sync-worker/src/utils/publishSnapshots.ts__unpublishSnapshot",
+          "unitKind": "function",
+          "name": "unpublishSnapshot",
+          "qualifiedName": "unpublishSnapshot",
+          "parentUnitId": null,
+          "startLine": 44,
+          "endLine": 60,
+          "signature": "export async function unpublishSnapshot(env: Environment, file: TlaFile)",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "file", "type": "TlaFile", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "env provides the snapshot slug mapping, room snapshot object store, and dependencies required for object listing, key construction, and published image deletion.",
+            "file is a TlaFile-compatible object."
+          ],
+          "postconditions": [
+            "If file.publishedSlug is present, its snapshot-to-parent slug mapping is deleted.",
+            "If file.publishedSlug is present, all current and timestamped historical published snapshot objects for that slug are deleted.",
+            "If file.publishedSlug is present, the published thumbnail for that slug is deleted.",
+            "If file.publishedSlug is absent or falsy, no cleanup operations are performed and the promise resolves."
+          ],
+          "invariants": [
+            "Only published snapshot objects and the published thumbnail are targeted; the board's own file-keyed image is not targeted.",
+            "Snapshot object deletion occurs only when at least one matching object key is found.",
+            "All asynchronous cleanup operations are awaited before the function resolves."
+          ],
+          "edgeCases": [
+            "A missing or falsy file.publishedSlug causes an immediate successful return without deleting any mapping, objects, or image.",
+            "A published slug with no matching snapshot object keys still deletes the slug mapping and published thumbnail, but does not issue an object-store deletion for snapshot objects.",
+            "A published slug with current and republish history objects deletes all keys returned by listing, including timestamped history entries."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Propagates errors from the slug mapping deletion, object listing, snapshot object deletion, key construction, or published thumbnail deletion."
+            ],
+            "reverts": [],
+            "onInvalidInput": "No explicit validation or fallback is performed; falsy publishedSlug is treated as an already-unpublished snapshot.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Deletes file.publishedSlug from env.SNAPSHOT_SLUG_TO_PARENT_SLUG when the slug is present.",
+            "Deletes matching published snapshot objects from env.ROOM_SNAPSHOTS when any are found.",
+            "Deletes the published thumbnail associated with file.publishedSlug when the slug is present."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "env.SNAPSHOT_SLUG_TO_PARENT_SLUG.delete",
+              "source": "env.SNAPSHOT_SLUG_TO_PARENT_SLUG",
+              "kind": "external"
+            },
+            { "name": "listAllObjectKeys", "source": null, "kind": "internal" },
+            { "name": "getR2KeyForRoom", "source": null, "kind": "internal" },
+            { "name": "env.ROOM_SNAPSHOTS.delete", "source": "env.ROOM_SNAPSHOTS", "kind": "external" },
+            { "name": "deleteOgImage", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Environment", "TlaFile"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Removes all published artifacts associated with a snapshot, including its slug mapping, current and historical snapshot objects, and published thumbnail. If the snapshot has no published slug, it performs no cleanup.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "published",
+              "role": "Scopes thumbnail deletion to the published thumbnail rather than the board's own file-keyed image."
+            },
+            {
+              "kind": "format-string",
+              "value": "${file.id}/${file.publishedSlug}",
+              "role": "Constructs the room snapshot slug used to locate the published snapshot objects."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "unpublishSnapshot is called.",
+              "then": "The promise resolves without invoking any mapping deletion, object listing, snapshot object deletion, or thumbnail deletion.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "unpublishSnapshot is called.",
+              "then": "The slug mapping is deleted, all listed snapshot keys are deleted, and deleteOgImage is called with { kind: \"published\", slug: \"published-slug\" }.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "97cb64b158a976f561208d4bfd6aa5cf1d4b78834932bbb4ea72376931daf057"
+        }
+      }
+    ]
+  },
+  "out": [
+    "apps/dotcom/sync-worker/src/routes/tla/ogImageQueue.ts",
+    "apps/dotcom/sync-worker/src/r2.ts",
+    "apps/dotcom/sync-worker/src/types.ts",
+    "apps/dotcom/sync-worker/src/utils/durableObjects.ts"
+  ],
+  "in": [
+    "apps/dotcom/sync-worker/src/utils/publishSnapshots.test.ts",
+    "apps/dotcom/sync-worker/src/TLFileEffectProcessor.ts"
+  ],
+  "externals": ["@tldraw/dotcom-shared"],
+  "impact": { "seeds": 2, "callers": 1, "impactedFiles": ["apps/dotcom/sync-worker/src/TLFileEffectProcessor.ts"] }
+}

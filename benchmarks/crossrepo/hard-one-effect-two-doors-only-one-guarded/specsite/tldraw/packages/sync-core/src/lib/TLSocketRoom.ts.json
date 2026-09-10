@@ -1,0 +1,1990 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/sync-core/src/lib/TLSocketRoom.ts",
+    "language": "typescript",
+    "sizeBytes": 36164,
+    "tokenCount": 9039,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:17:27.625Z",
+    "module": {
+      "purpose": "Provides the server-side WebSocket room orchestration layer for synchronizing tldraw document state, presence, sessions, snapshots, and object-lane data across connected clients.",
+      "summary": "This module wraps the lower-level synchronization room with WebSocket lifecycle management, message chunk reassembly, session persistence and resumption, snapshot access, storage transactions, logging, and application callbacks. It supports both directly evented WebSockets and externally dispatched message handlers, while preserving session metadata, presence state, schema compatibility, access permissions, and legacy-client error behavior.",
+      "businessContext": "Supports real-time collaborative tldraw rooms and durable server-side session recovery. Failure can disconnect collaborators, lose synchronization state, or prevent document persistence and recovery.",
+      "classes": [
+        "TLSocketRoom (~169-1013): Server-side collaborative room coordinating sockets, sessions, storage, and synchronization",
+        "StoreUpdateContext (~1100-1166): Transactional compatibility context tracking validated record updates and deletions"
+      ],
+      "functions": [
+        "stripPresenceForSnapshot (~23-32): Removes large ephemeral presence fields before session snapshot persistence",
+        "constructor (~184-236): Validates options, initializes storage, synchronization, callbacks, and session cleanup",
+        "getNumActiveSessions (~239-242): Returns the number of active synchronization sessions",
+        "handleSocketConnect (~275-324): Registers a socket and creates a synchronization session",
+        "clearSnapshotTimer (~326-332): Cancels a pending session snapshot timer",
+        "scheduleDebouncedSnapshot (~334-347): Schedules delayed persistence of inactive session state",
+        "handleSocketMessage (~385-442): Reassembles client messages and forwards complete messages to the room",
+        "handleSocketError (~464-467): Handles socket errors by closing the associated room session",
+        "handleSocketClose (~484-487): Handles socket closure by closing the associated room session",
+        "handleSocketResume (~541-581): Restores a persisted session directly into connected state",
+        "getSessionSnapshot (~608-631): Creates a resumable snapshot of connected session state",
+        "getCurrentDocumentClock (~648-650): Returns the storage document clock",
+        "getRecord (~672-676): Retrieves a deeply cloned document record",
+        "getSessions (~707-721): Lists active sessions and their connection metadata",
+        "getCurrentSnapshot (~746-752): Returns the complete current room snapshot when supported",
+        "getCurrentObjectsSnapshot (~762-768): Returns the object-lane snapshot when supported",
+        "getPresenceRecords (~781-786): Collects all current presence records",
+        "loadSnapshot (~805-809): Replaces stored room data from a supplied snapshot",
+        "updateStore (~847-878): Applies validated atomic compatibility updates to storage",
+        "sendCustomMessage (~900-902): Sends an application-specific message to one session",
+        "closeSession (~922-924): Rejects and removes a selected session",
+        "close (~948-956): Permanently closes the room and disposes resources",
+        "isClosed (~975-977): Reports whether the room has been permanently closed",
+        "put (~1131-1147): Validates and stages a record insertion or update",
+        "delete (~1149-1157): Stages deletion of an existing record",
+        "get (~1159-1168): Reads a staged or snapshot record with clone isolation",
+        "getAll (~1170-1181): Returns all non-deleted records with staged updates applied",
+        "close (~1184-1186): Prevents further operations on the transaction context"
+      ],
+      "keywords": [
+        "WebSocket synchronization",
+        "tldraw",
+        "session resumption",
+        "JSON chunking",
+        "presence records",
+        "object store lane",
+        "document snapshot",
+        "Durable Object hibernation",
+        "record authorizers",
+        "document clock"
+      ],
+      "ontologyConcepts": [
+        "collaborative synchronization",
+        "session lifecycle",
+        "snapshot persistence",
+        "transactional mutation",
+        "access control",
+        "presence tracking",
+        "message reassembly",
+        "resource disposal"
+      ],
+      "businessEntities": ["room", "session", "socket", "document", "record", "presence", "snapshot", "schema"],
+      "systemCapabilities": [
+        "Synchronize collaborative document state",
+        "Manage WebSocket session lifecycle",
+        "Persist and resume session state",
+        "Apply atomic document transactions",
+        "Serve document and object-lane snapshots",
+        "Handle chunked client messages"
+      ],
+      "configDependencies": [
+        "storage",
+        "initialSnapshot",
+        "onDataChange",
+        "schema",
+        "clientTimeout",
+        "objectTypes",
+        "authorizeRecord",
+        "onSessionSnapshot"
+      ],
+      "importsInternal": [
+        {
+          "spec": "./chunk",
+          "symbols": ["JsonChunkAssembler"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/chunk.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/chunk.ts",
+          "resolvedHint": "packages/sync-core/src/lib/chunk.ts"
+        },
+        {
+          "spec": "./InMemorySyncStorage",
+          "symbols": ["DEFAULT_INITIAL_SNAPSHOT", "InMemorySyncStorage"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/InMemorySyncStorage.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/InMemorySyncStorage.ts",
+          "resolvedHint": "packages/sync-core/src/lib/InMemorySyncStorage.ts"
+        },
+        {
+          "spec": "./protocol",
+          "symbols": ["TLObjectStoreAccess", "TLSocketServerSentEvent"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedHint": "packages/sync-core/src/lib/protocol.ts"
+        },
+        {
+          "spec": "./RoomSession",
+          "symbols": ["RoomSessionState"],
+          "anchor": { "startLine": 7, "endLine": 7 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/RoomSession.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/RoomSession.ts",
+          "resolvedHint": "packages/sync-core/src/lib/RoomSession.ts"
+        },
+        {
+          "spec": "./ServerSocketAdapter",
+          "symbols": ["ServerSocketAdapter", "WebSocketMinimal"],
+          "anchor": { "startLine": 8, "endLine": 8 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/ServerSocketAdapter.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/ServerSocketAdapter.ts",
+          "resolvedHint": "packages/sync-core/src/lib/ServerSocketAdapter.ts"
+        },
+        {
+          "spec": "./TLSyncClient",
+          "symbols": ["TLSyncErrorCloseEventReason"],
+          "anchor": { "startLine": 9, "endLine": 9 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncClient.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncClient.ts",
+          "resolvedHint": "packages/sync-core/src/lib/TLSyncClient.ts"
+        },
+        {
+          "spec": "./TLSyncRoom",
+          "symbols": ["RoomSnapshot", "TLRecordAuthorizers", "TLSyncRoom"],
+          "anchor": { "startLine": 10, "endLine": 10 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncRoom.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncRoom.ts",
+          "resolvedHint": "packages/sync-core/src/lib/TLSyncRoom.ts"
+        },
+        {
+          "spec": "./TLSyncStorage",
+          "symbols": [
+            "convertStoreSnapshotToRoomSnapshot",
+            "loadSnapshotIntoStorage",
+            "TLSyncForwardDiff",
+            "TLSyncStorage"
+          ],
+          "anchor": { "startLine": 11, "endLine": 16 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncStorage.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncStorage.ts",
+          "resolvedHint": "packages/sync-core/src/lib/TLSyncStorage.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/store",
+          "symbols": ["SerializedSchema", "StoreSchema", "UnknownRecord"],
+          "package": "@tldraw/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["createTLSchema", "TLInstancePresence", "TLStoreSnapshot"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["getOwnProperty", "hasOwnProperty", "isEqual", "structuredClone"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Invokes configured logging callbacks for warnings and errors.",
+          "Invokes configured session, message, presence, and commit callbacks."
+        ],
+        "network": [
+          "Registers WebSocket listeners and sends synchronization or custom messages through server socket adapters.",
+          "Closes or rejects sessions after socket errors, malformed chunks, or message-processing failures."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates internal session maps, snapshot timer maps, disposables, and synchronization storage.",
+          "Clones records before returning or staging them to prevent caller mutation of stored state."
+        ]
+      },
+      "integrationSurface": [
+        {
+          "kind": "websocket",
+          "role": "provides",
+          "address": "TLSocketRoom.handleSocketConnect",
+          "payloadRef": "TLSocketServerSentEvent",
+          "rawKind": null
+        },
+        {
+          "kind": "websocket",
+          "role": "consumes",
+          "address": "TLSocketRoom.handleSocketMessage",
+          "payloadRef": "TLSocketServerSentEvent",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "TLSyncLog",
+          "shape": "export interface TLSyncLog { warn?(...args: any[]): void; error?(...args: any[]): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SessionStateSnapshot",
+          "shape": "export interface SessionStateSnapshot { serializedSchema: SerializedSchema; isReadonly: boolean; objectAccess?: TLObjectStoreAccess; presenceId: string | null; presenceRecord: UnknownRecord | null; requiresLegacyRejection: boolean; supportsStringAppend: boolean }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketRoom",
+          "shape": "export class TLSocketRoom<R extends UnknownRecord = UnknownRecord, SessionMeta = void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketRoom.handleSocketConnect",
+          "shape": "handleSocketConnect(opts: { sessionId: string; socket: WebSocketMinimal; isReadonly?: boolean; objectAccess?: TLObjectStoreAccess } & (SessionMeta extends void ? object : { meta: SessionMeta })): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketRoom.handleSocketResume",
+          "shape": "handleSocketResume(opts: { sessionId: string; socket: WebSocketMinimal; snapshot: SessionStateSnapshot } & (SessionMeta extends void ? object : { meta: SessionMeta })): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketRoom.handleSocketMessage",
+          "shape": "handleSocketMessage(sessionId: string, message: string | AllowSharedBufferSource): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketRoom.getSessionSnapshot",
+          "shape": "getSessionSnapshot(sessionId: string): SessionStateSnapshot | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketRoom.updateStore",
+          "shape": "async updateStore(updater: (store: RoomStoreMethods<R>) => void | Promise<void>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "RoomStoreMethods",
+          "shape": "export interface RoomStoreMethods<R extends UnknownRecord = UnknownRecord> { put(record: R): void; delete(recordOrId: R | string): void; get(id: string): R | null; getAll(): R[] }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "OmitVoid",
+          "shape": "export type OmitVoid<T, KS extends keyof T = keyof T> = { [K in KS extends any ? (void extends T[KS] ? never : KS) : never]: T[K] }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TLSyncRoom",
+          "shape": "new TLSyncRoom<R, SessionMeta>({ onPresenceChange, onCommittedChanges, objectTypes, authorizeRecord, schema, log, storage, clientTimeout })",
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncRoom.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncRoom.ts"
+        },
+        {
+          "name": "TLSyncStorage",
+          "shape": "TLSyncStorage<R>",
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncStorage.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncStorage.ts"
+        },
+        {
+          "name": "WebSocketMinimal",
+          "shape": "WebSocketMinimal",
+          "resolvedRelativePath": "packages/sync-core/src/lib/ServerSocketAdapter.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/ServerSocketAdapter.ts"
+        },
+        {
+          "name": "SessionStateSnapshot",
+          "shape": "snapshot: SessionStateSnapshot",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLObjectStoreAccess",
+          "shape": "objectAccess?: TLObjectStoreAccess",
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts"
+        },
+        {
+          "name": "TLSocketServerSentEvent",
+          "shape": "message: TLSocketServerSentEvent<R>",
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts"
+        },
+        {
+          "name": "TLRecordAuthorizers",
+          "shape": "authorizeRecord?: TLRecordAuthorizers<R, SessionMeta>",
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncRoom.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncRoom.ts"
+        },
+        {
+          "name": "RoomSnapshot",
+          "shape": "snapshot: RoomSnapshot | TLStoreSnapshot",
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncRoom.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncRoom.ts"
+        },
+        {
+          "name": "SerializedSchema",
+          "shape": "serializedSchema: SerializedSchema",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSchema",
+          "shape": "schema?: StoreSchema<R, any>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "room_initialization",
+          "intent": "Validate options and construct storage, synchronization room, callbacks, and session cleanup.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 184, "endLine": 236 }
+        },
+        {
+          "name": "socket_registration",
+          "intent": "Create session adapters and attach message, close, and error listeners.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 275, "endLine": 324 }
+        },
+        {
+          "name": "message_processing",
+          "intent": "Decode, reassemble, observe, dispatch, and recover from client messages.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 385, "endLine": 442 }
+        },
+        {
+          "name": "snapshot_debounce",
+          "intent": "Delay session snapshot persistence until five seconds after message activity.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 334, "endLine": 347 }
+        },
+        {
+          "name": "snapshot_extraction",
+          "intent": "Capture connected session synchronization metadata and compact presence state.",
+          "structureKind": "branch",
+          "predicate": "if (!session || session.state !== RoomSessionState.Connected)",
+          "branchOutcomes": ["missing or non-connected session returns null", "connected session returns snapshot"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 608, "endLine": 631 }
+        },
+        {
+          "name": "transaction_application",
+          "intent": "Run an updater, close its context, and commit staged puts and deletes.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 847, "endLine": 878 }
+        },
+        {
+          "name": "room_shutdown",
+          "intent": "Close synchronization, cancel timers, and dispose registered storage listeners.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 948, "endLine": 956 }
+        },
+        {
+          "name": "transaction_reads",
+          "intent": "Resolve staged updates and deletions while maintaining cloned read isolation.",
+          "structureKind": "branch",
+          "predicate": "if (hasOwnProperty(this.updates.puts, id))",
+          "branchOutcomes": [
+            "return cloned staged put",
+            "return null for staged deletion",
+            "return cloned snapshot value"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 1159, "endLine": 1168 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "TLSyncLog",
+          "signature": "export interface TLSyncLog {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 47, "endLine": 54 }
+        },
+        {
+          "kind": "interface",
+          "name": "SessionStateSnapshot",
+          "signature": "export interface SessionStateSnapshot {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 66, "endLine": 79 }
+        },
+        {
+          "kind": "interface",
+          "name": "TLSocketRoomOptions",
+          "signature": "export interface TLSocketRoomOptions<R extends UnknownRecord, SessionMeta> {",
+          "generics": "R extends UnknownRecord, SessionMeta",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 84, "endLine": 158 }
+        },
+        {
+          "kind": "class",
+          "name": "TLSocketRoom",
+          "signature": "export class TLSocketRoom<R extends UnknownRecord = UnknownRecord, SessionMeta = void> {",
+          "generics": "R extends UnknownRecord = UnknownRecord, SessionMeta = void",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 169, "endLine": 1013 }
+        },
+        {
+          "kind": "method",
+          "name": "handleSocketConnect",
+          "signature": "handleSocketConnect(\n\t\topts: {\n\t\t\tsessionId: string\n\t\t\tsocket: WebSocketMinimal\n\t\t\tisReadonly?: boolean\n\t\t\tobjectAccess?: TLObjectStoreAccess\n\t\t} & (SessionMeta extends void ? object : { meta: SessionMeta })\n\t) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 275, "endLine": 324 }
+        },
+        {
+          "kind": "method",
+          "name": "handleSocketMessage",
+          "signature": "handleSocketMessage(sessionId: string, message: string | AllowSharedBufferSource) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 385, "endLine": 442 }
+        },
+        {
+          "kind": "method",
+          "name": "handleSocketResume",
+          "signature": "handleSocketResume(\n\t\topts: {\n\t\t\tsessionId: string\n\t\t\tsocket: WebSocketMinimal\n\t\t\tsnapshot: SessionStateSnapshot\n\t\t} & (SessionMeta extends void ? object : { meta: SessionMeta })\n\t) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 541, "endLine": 581 }
+        },
+        {
+          "kind": "method",
+          "name": "getSessionSnapshot",
+          "signature": "getSessionSnapshot(sessionId: string): SessionStateSnapshot | null {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "SessionStateSnapshot | null",
+          "exported": false,
+          "anchor": { "startLine": 608, "endLine": 631 }
+        },
+        {
+          "kind": "method",
+          "name": "updateStore",
+          "signature": "async updateStore(updater: (store: RoomStoreMethods<R>) => void | Promise<void>) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 847, "endLine": 878 }
+        },
+        {
+          "kind": "method",
+          "name": "getSessions",
+          "signature": "getSessions(): Array<{\n\t\tsessionId: string\n\t\tisConnected: boolean\n\t\tisReadonly: boolean\n\t\tobjectAccess: TLObjectStoreAccess\n\t\tmeta: SessionMeta\n\t}> {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Array<{\n\t\tsessionId: string\n\t\tisConnected: boolean\n\t\tisReadonly: boolean\n\t\tobjectAccess: TLObjectStoreAccess\n\t\tmeta: SessionMeta\n\t}>",
+          "exported": false,
+          "anchor": { "startLine": 707, "endLine": 721 }
+        },
+        {
+          "kind": "type_alias",
+          "name": "OmitVoid",
+          "signature": "export type OmitVoid<T, KS extends keyof T = keyof T> = {",
+          "generics": "T, KS extends keyof T = keyof T",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 1023, "endLine": 1025 }
+        },
+        {
+          "kind": "interface",
+          "name": "RoomStoreMethods",
+          "signature": "export interface RoomStoreMethods<R extends UnknownRecord = UnknownRecord> {",
+          "generics": "R extends UnknownRecord = UnknownRecord",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 1050, "endLine": 1080 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "TLSyncLog",
+          "shape": "{\n\twarn?(...args: any[]): void\n\terror?(...args: any[]): void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 47, "endLine": 54 }
+        },
+        {
+          "kind": "interface",
+          "name": "SessionStateSnapshot",
+          "shape": "{\n\tserializedSchema: SerializedSchema\n\tisReadonly: boolean\n\tobjectAccess?: TLObjectStoreAccess\n\tpresenceId: string | null\n\tpresenceRecord: UnknownRecord | null\n\trequiresLegacyRejection: boolean\n\tsupportsStringAppend: boolean\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 66, "endLine": 79 }
+        },
+        {
+          "kind": "type",
+          "name": "OmitVoid",
+          "shape": "{\n\t[K in KS extends any ? (void extends T[KS] ? never : KS) : never]: T[K]\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 1023, "endLine": 1025 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Unknown session identifier during message handling",
+          "handled": true,
+          "behavior": "Logs a warning and returns without dispatching the message.",
+          "anchor": { "startLine": 390, "endLine": 393 }
+        },
+        {
+          "inputShape": "Incomplete chunked message",
+          "handled": true,
+          "behavior": "Returns and waits for additional chunks.",
+          "anchor": { "startLine": 400, "endLine": 403 }
+        },
+        {
+          "inputShape": "Chunk assembly failure",
+          "handled": true,
+          "behavior": "Logs the assembly error and handles the socket as errored.",
+          "anchor": { "startLine": 435, "endLine": 439 }
+        },
+        {
+          "inputShape": "Message decoding or dispatch exception",
+          "handled": true,
+          "behavior": "Logs the exception and rejects the session with UNKNOWN_ERROR.",
+          "anchor": { "startLine": 440, "endLine": 442 }
+        },
+        {
+          "inputShape": "Missing or non-connected session snapshot request",
+          "handled": true,
+          "behavior": "Returns null.",
+          "anchor": { "startLine": 610, "endLine": 612 }
+        },
+        {
+          "inputShape": "Missing presence record during snapshot creation",
+          "handled": true,
+          "behavior": "Leaves presenceRecord null.",
+          "anchor": { "startLine": 615, "endLine": 620 }
+        },
+        {
+          "inputShape": "Unsupported storage snapshot operation",
+          "handled": true,
+          "behavior": "Throws an Error explaining that the storage type does not support the operation.",
+          "anchor": { "startLine": 749, "endLine": 752 }
+        },
+        {
+          "inputShape": "Operation after StoreUpdateContext closure",
+          "handled": true,
+          "behavior": "Throws an Error stating that the context is closed.",
+          "anchor": { "startLine": 1132, "endLine": 1132 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "!=",
+          "left": "record.typeName",
+          "right": "'instance_presence'",
+          "inclusive": false,
+          "intent": "Only instance presence records are compacted.",
+          "anchor": { "startLine": 24, "endLine": 24 }
+        },
+        {
+          "operator": "==",
+          "left": "opts.storage",
+          "right": "opts.initialSnapshot",
+          "inclusive": true,
+          "intent": "Rejects mutually exclusive storage initialization options.",
+          "anchor": { "startLine": 186, "endLine": 186 }
+        },
+        {
+          "operator": "==",
+          "left": "session.state",
+          "right": "RoomSessionState.Connected",
+          "inclusive": true,
+          "intent": "Requires connected state for resumable snapshots.",
+          "anchor": { "startLine": 610, "endLine": 610 }
+        },
+        {
+          "operator": "!=",
+          "left": "assembler",
+          "right": "undefined",
+          "inclusive": false,
+          "intent": "Determines whether a session has a message assembler.",
+          "anchor": { "startLine": 390, "endLine": 390 }
+        },
+        {
+          "operator": "==",
+          "left": "record.id",
+          "right": "record.id",
+          "inclusive": true,
+          "intent": "Removes a staged put when the new record equals the snapshot.",
+          "anchor": { "startLine": 1140, "endLine": 1140 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "Error('Cannot provide both storage and initialSnapshot options')",
+          "caught": null,
+          "action": "Aborts room construction.",
+          "fallback": null,
+          "anchor": { "startLine": 186, "endLine": 188 }
+        },
+        {
+          "thrown": null,
+          "caught": "Error from message decoding, chunk assembly, or synchronous handling",
+          "action": "Logs the error and rejects the session with UNKNOWN_ERROR.",
+          "fallback": null,
+          "anchor": { "startLine": 440, "endLine": 442 }
+        },
+        {
+          "thrown": null,
+          "caught": "Rejected promise from room.handleMessage",
+          "action": "Logs the error and rejects the session with UNKNOWN_ERROR.",
+          "fallback": null,
+          "anchor": { "startLine": 427, "endLine": 430 }
+        },
+        {
+          "thrown": "Error('getCurrentSnapshot is not supported for this storage type')",
+          "caught": null,
+          "action": "Rejects the snapshot request.",
+          "fallback": null,
+          "anchor": { "startLine": 749, "endLine": 752 }
+        },
+        {
+          "thrown": "Error('getCurrentObjectsSnapshot is not supported for this storage type')",
+          "caught": null,
+          "action": "Rejects the object snapshot request.",
+          "fallback": null,
+          "anchor": { "startLine": 765, "endLine": 768 }
+        },
+        {
+          "thrown": "Error('Cannot update store on a closed room')",
+          "caught": null,
+          "action": "Rejects the update operation before creating a transaction context.",
+          "fallback": null,
+          "anchor": { "startLine": 849, "endLine": 851 }
+        },
+        {
+          "thrown": "Error('StoreUpdateContext is closed')",
+          "caught": null,
+          "action": "Rejects operations after the compatibility transaction has closed.",
+          "fallback": null,
+          "anchor": { "startLine": 1132, "endLine": 1132 }
+        },
+        {
+          "thrown": "Error(`Missing definition for record type ${record.typeName}`)",
+          "caught": null,
+          "action": "Rejects staging a record whose type is absent from the schema.",
+          "fallback": null,
+          "anchor": { "startLine": 1136, "endLine": 1137 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "A room cannot be initialized with both storage and initialSnapshot.",
+          "anchor": { "startLine": 186, "endLine": 188 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Only connected sessions produce resumable session snapshots.",
+          "anchor": { "startLine": 610, "endLine": 612 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Complete message observation occurs before asynchronous room message handling.",
+          "anchor": { "startLine": 416, "endLine": 431 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A transaction context is closed in finally before staged changes are committed.",
+          "anchor": { "startLine": 865, "endLine": 878 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Staged puts supersede staged deletes for the same record identifier.",
+          "anchor": { "startLine": 1143, "endLine": 1147 }
+        },
+        {
+          "kind": "non-null",
+          "description": "Records staged through put must have a schema definition for their typeName.",
+          "anchor": { "startLine": 1135, "endLine": 1137 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide unique session identifiers and invoke socket lifecycle methods consistently.",
+          "anchor": { "startLine": 275, "endLine": 324 }
+        },
+        {
+          "kind": "caller",
+          "description": "Hibernation callers persist and restore SessionStateSnapshot values together with the matching session identifier.",
+          "anchor": { "startLine": 541, "endLine": 581 }
+        },
+        {
+          "kind": "schema",
+          "description": "Configured schemas define validation metadata for every record type written through updateStore.",
+          "anchor": { "startLine": 1134, "endLine": 1137 }
+        },
+        {
+          "kind": "config",
+          "description": "Object-lane access semantics are configured consistently through objectTypes and per-session objectAccess.",
+          "anchor": { "startLine": 275, "endLine": 324 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the underlying storage transaction serialize concurrent updateStore calls across asynchronous updaters?",
+          "affects": "concurrency_model and transaction invariants",
+          "anchor": { "startLine": 847, "endLine": 878 },
+          "resolution": null
+        },
+        {
+          "question": "What exact record types and authorization rules are supplied by the configured schema and authorizeRecord callback?",
+          "affects": "schema assumptions and access-control behavior",
+          "anchor": { "startLine": 203, "endLine": 213 },
+          "resolution": null
+        },
+        {
+          "question": "Which WebSocket implementations support the optional event-listener methods used during connection setup?",
+          "affects": "socket lifecycle orchestration",
+          "anchor": { "startLine": 314, "endLine": 324 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Socket events and delayed timers are asynchronous; message handling is delegated without awaiting, while storage transactions and session bookkeeping preserve explicit local ordering."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-storage-and-initial-snapshot",
+          "scenario": "Both storage and initialSnapshot are supplied during room construction.",
+          "given": ["new TLSocketRoom({ storage, initialSnapshot })"],
+          "when": "new TLSocketRoom({ storage, initialSnapshot })",
+          "then": "throws new Error('Cannot provide both storage and initialSnapshot options')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "connects-session-with-default-write-access",
+          "scenario": "A client connects without readonly or object access options.",
+          "given": ["const room = new TLSocketRoom({})", "const opts = { sessionId: 'session', socket }"],
+          "when": "room.handleSocketConnect(opts)",
+          "then": "the session is registered with isReadonly false and objectAccess 'write'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "reassembles-chunked-messages",
+          "scenario": "A complete client message arrives as multiple chunks.",
+          "given": ["room.handleSocketConnect({ sessionId: 'session', socket })"],
+          "when": "room.handleSocketMessage('session', chunk)",
+          "then": "the underlying room receives the message only after all chunks are assembled",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the WebSocket framing contract for large messages."
+        },
+        {
+          "testId": "ignores-unknown-session-message",
+          "scenario": "A message is received for a session that is not registered.",
+          "given": ["const room = new TLSocketRoom({})"],
+          "when": "room.handleSocketMessage('unknown', message)",
+          "then": "the method returns without forwarding the message",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "snapshot-requires-connected-session",
+          "scenario": "A session is missing or is not connected.",
+          "given": ["const room = new TLSocketRoom({})"],
+          "when": "room.getSessionSnapshot('session')",
+          "then": "returns null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "restores-session-from-snapshot",
+          "scenario": "A previously connected session is resumed from a persisted snapshot.",
+          "given": [
+            "const snapshot: SessionStateSnapshot = { serializedSchema, isReadonly, objectAccess, presenceId, presenceRecord, requiresLegacyRejection, supportsStringAppend }"
+          ],
+          "when": "room.handleSocketResume({ sessionId, socket, snapshot })",
+          "then": "the session resumes using the snapshot connection, access, schema, presence, and compatibility state",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins hibernation recovery without requiring a new client handshake."
+        },
+        {
+          "testId": "clones-record-on-read",
+          "scenario": "A stored record exists and is retrieved through the room API.",
+          "given": ["room.updateStore(store => store.put(record))"],
+          "when": "const result = room.getRecord(record.id)",
+          "then": "mutating result does not mutate the stored record",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "rejects-update-after-close",
+          "scenario": "The room has been permanently closed before a store update.",
+          "given": ["room.close()"],
+          "when": "room.updateStore(updater)",
+          "then": "throws new Error('Cannot update store on a closed room')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "validates-record-type-before-put",
+          "scenario": "A transaction attempts to put a record whose type is absent from the schema.",
+          "given": ["const updater = store => store.put(record)"],
+          "when": "room.updateStore(updater)",
+          "then": "throws an error matching `Missing definition for record type ${record.typeName}`",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "deletes-record-through-transaction",
+          "scenario": "An existing record is deleted inside an update transaction.",
+          "given": ["room.updateStore(store => store.delete(record.id))"],
+          "when": "room.getRecord(record.id)",
+          "then": "returns undefined",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": ""
+        },
+        {
+          "testId": "loads-snapshot-and-replaces-state",
+          "scenario": "A room snapshot is loaded into an active room.",
+          "given": ["const snapshot: RoomSnapshot = savedSnapshot"],
+          "when": "room.loadSnapshot(snapshot)",
+          "then": "the room storage reflects the supplied snapshot",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": ""
+        },
+        {
+          "testId": "closed-room-reports-closed",
+          "scenario": "The room has been shut down.",
+          "given": ["room.close()"],
+          "when": "room.isClosed()",
+          "then": "returns true",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": ""
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "type and value imports",
+        "presence snapshot helper",
+        "logging and session snapshot interfaces",
+        "room options interface",
+        "TLSocketRoom class",
+        "OmitVoid utility type",
+        "RoomStoreMethods interface",
+        "StoreUpdateContext compatibility class"
+      ],
+      "moduleLevelCode": "import type { SerializedSchema, StoreSchema, UnknownRecord } from '@tldraw/store'\nimport { createTLSchema, TLInstancePresence, TLStoreSnapshot } from '@tldraw/tlschema'\nimport { getOwnProperty, hasOwnProperty, isEqual, structuredClone } from '@tldraw/utils'\nimport { JsonChunkAssembler } from './chunk'\nimport { DEFAULT_INITIAL_SNAPSHOT, InMemorySyncStorage } from './InMemorySyncStorage'\nimport { TLObjectStoreAccess, TLSocketServerSentEvent } from './protocol'\nimport { RoomSessionState } from './RoomSession'\nimport { ServerSocketAdapter, WebSocketMinimal } from './ServerSocketAdapter'\nimport { TLSyncErrorCloseEventReason } from './TLSyncClient'\nimport { RoomSnapshot, TLRecordAuthorizers, TLSyncRoom } from './TLSyncRoom'\nimport {\n\tconvertStoreSnapshotToRoomSnapshot,\n\tloadSnapshotIntoStorage,\n\tTLSyncForwardDiff,\n\tTLSyncStorage,\n} from './TLSyncStorage'",
+      "exports": [
+        { "name": "TLSyncLog", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "SessionStateSnapshot", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSocketRoom", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "OmitVoid", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "RoomStoreMethods", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "SerializedSchema", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "StoreSchema", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "UnknownRecord", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "createTLSchema", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLInstancePresence", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLStoreSnapshot", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "getOwnProperty", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "hasOwnProperty", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "isEqual", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "structuredClone", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "JsonChunkAssembler", "module": "./chunk", "alias": null, "kind": "internal" },
+        { "symbol": "DEFAULT_INITIAL_SNAPSHOT", "module": "./InMemorySyncStorage", "alias": null, "kind": "internal" },
+        { "symbol": "InMemorySyncStorage", "module": "./InMemorySyncStorage", "alias": null, "kind": "internal" },
+        { "symbol": "TLObjectStoreAccess", "module": "./protocol", "alias": null, "kind": "internal" },
+        { "symbol": "TLSocketServerSentEvent", "module": "./protocol", "alias": null, "kind": "internal" },
+        { "symbol": "RoomSessionState", "module": "./RoomSession", "alias": null, "kind": "internal" },
+        { "symbol": "ServerSocketAdapter", "module": "./ServerSocketAdapter", "alias": null, "kind": "internal" },
+        { "symbol": "WebSocketMinimal", "module": "./ServerSocketAdapter", "alias": null, "kind": "internal" },
+        { "symbol": "TLSyncErrorCloseEventReason", "module": "./TLSyncClient", "alias": null, "kind": "internal" },
+        { "symbol": "RoomSnapshot", "module": "./TLSyncRoom", "alias": null, "kind": "internal" },
+        { "symbol": "TLRecordAuthorizers", "module": "./TLSyncRoom", "alias": null, "kind": "internal" },
+        { "symbol": "TLSyncRoom", "module": "./TLSyncRoom", "alias": null, "kind": "internal" },
+        {
+          "symbol": "convertStoreSnapshotToRoomSnapshot",
+          "module": "./TLSyncStorage",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "loadSnapshotIntoStorage", "module": "./TLSyncStorage", "alias": null, "kind": "internal" },
+        { "symbol": "TLSyncForwardDiff", "module": "./TLSyncStorage", "alias": null, "kind": "internal" },
+        { "symbol": "TLSyncStorage", "module": "./TLSyncStorage", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": null, "value": "5000", "kind": "snapshot debounce delay" },
+        { "name": null, "value": "'write'", "kind": "default object access" },
+        { "name": null, "value": "'read'", "kind": "resumed-session fallback object access" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__stripPresenceForSnapshot#function:stripPresenceForSnapshot",
+        "unitKind": "function",
+        "name": "stripPresenceForSnapshot",
+        "qualifiedName": "stripPresenceForSnapshot",
+        "parentUnitId": null,
+        "startLine": 23,
+        "endLine": 32,
+        "isBehavioral": true,
+        "source": "function stripPresenceForSnapshot(record: UnknownRecord): UnknownRecord {\n\tif (record.typeName !== 'instance_presence') return record\n\tconst stripped = { ...record } as TLInstancePresence\n\tstripped.scribbles = []\n\tstripped.chatMessage = ''\n\tstripped.selectedShapeIds = []\n\tstripped.brush = null\n\n\treturn stripped as unknown as UnknownRecord\n}",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__stripPresenceForSnapshot#function:stripPresenceForSnapshot",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__stripPresenceForSnapshot",
+          "unitKind": "function",
+          "name": "stripPresenceForSnapshot",
+          "qualifiedName": "stripPresenceForSnapshot",
+          "parentUnitId": null,
+          "startLine": 23,
+          "endLine": 32,
+          "signature": "function stripPresenceForSnapshot(record: UnknownRecord): UnknownRecord",
+          "parameters": [
+            {
+              "name": "record",
+              "type": "UnknownRecord",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "UnknownRecord",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The input is an UnknownRecord."],
+          "postconditions": [
+            "If record.typeName is not 'instance_presence', the exact input record is returned unchanged.",
+            "If record.typeName is 'instance_presence', the returned record is a distinct shallow copy of the input.",
+            "For an instance presence record, scribbles is [], chatMessage is '', selectedShapeIds is [], and brush is null.",
+            "All other input properties are preserved on the returned instance presence record."
+          ],
+          "invariants": [
+            "The input record is not mutated.",
+            "Only instance presence records have presence fields stripped."
+          ],
+          "edgeCases": [
+            "A record with a typeName other than 'instance_presence' is returned by identity without modification.",
+            "A record whose typeName is exactly 'instance_presence' has all four presence fields reset, regardless of their original values.",
+            "Additional properties on an instance presence record are retained through the shallow copy."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["UnknownRecord", "TLInstancePresence"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns records unchanged unless they represent instance presence. For instance presence records, returns a shallow copy with user-presence details reset for snapshot serialization.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "instance_presence",
+              "role": "Record discriminator identifying records whose presence fields must be stripped."
+            },
+            {
+              "kind": "enum-value",
+              "value": "[]",
+              "role": "Serialized value assigned to scribbles and selectedShapeIds in stripped presence snapshots."
+            },
+            {
+              "kind": "format-string",
+              "value": "",
+              "role": "Serialized value assigned to chatMessage in stripped presence snapshots."
+            },
+            {
+              "kind": "enum-value",
+              "value": "null",
+              "role": "Serialized value assigned to brush in stripped presence snapshots."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "stripPresenceForSnapshot is called with the record.",
+              "then": "It returns a distinct record retaining the additional property while setting scribbles to [], chatMessage to '', selectedShapeIds to [], and brush to null; the input record remains unchanged.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "stripPresenceForSnapshot is called with the record.",
+              "then": "It returns the same record object without changing any properties.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "12eb3f4b5ed8d9246cb3595cb78f511f99aad2d346be35acbb3a6ab932824b9c"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "unitKind": "class",
+        "name": "TLSocketRoom",
+        "qualifiedName": "TLSocketRoom",
+        "parentUnitId": null,
+        "startLine": 169,
+        "endLine": 1013,
+        "isBehavioral": true,
+        "source": " * - WebSocket connection lifecycle management\n * - Real-time synchronization of document changes\n * - Session management and presence tracking\n * - Message chunking for large payloads\n * - Automatic client timeout and cleanup\n *\n * @example\n * ```ts\n * // Basic room setup\n * const room = new TLSocketRoom({\n *   onSessionRemoved: (room, { sessionId, numSessionsRemaining }) => {\n *     console.log(`Client ${sessionId} disconnected, ${numSessionsRemaining} remaining`)\n *     if (numSessionsRemaining === 0) {\n *       room.close()\n *     }\n *   },\n *   onDataChange: () => {\n *     console.log('Document data changed, consider persisting')\n *   }\n * })\n *\n * // Handle new client connections\n * room.handleSocketConnect({\n *   sessionId: 'user-session-123',\n *   socket: webSocket,\n *   isReadonly: false\n * })\n * ```\n *\n * @example\n * ```ts\n * // Room with initial snapshot and schema\n * const room = new TLSocketRoom({\n *   initialSnapshot: existingSnapshot,\n *   schema: myCustomSchema,\n *   clientTimeout: 30000,\n *   log: {\n *     warn: (...args) => logger.warn('SYNC:', ...args),\n *     error: (...args) => logger.error('SYNC:', ...args)\n *   }\n * })\n *\n * // Update document programmatically\n * await room.updateStore(store => {\n *   const shape = store.get('shape:abc123')\n *   if (shape) {\n *     shape.x = 100\n *     store.put(shape)\n *   }\n * })\n * ```\n *\n * @public\n */\nexport class TLSocketRoom<R extends UnknownRecord = UnknownRecord, SessionMeta = void> {\n\tprivate room: TLSyncRoom<R, SessionMeta>\n\tprivate readonly sessions = new Map<\n\t\tstring,\n\t\t// eslint-disable-next-line tldraw/method-signature-style\n\t\t{ assembler: JsonChunkAssembler; socket: WebSocketMinimal; unlisten: () => void }\n\t>()\n\treadonly log?: TLSyncLog\n\n\tpublic storage: TLSyncStorage<R>\n\n\tprivate disposables = new Set<() => void>()\n\tprivate readonly snapshotTimers = new Map<string, ReturnType<typeof setTimeout>>()\n\n\t/**\n\t * Creates a new TLSocketRoom instance for managing collaborative document synchronization.\n\t *\n\t * opts - Configuration options for the room\n\t *   - initialSnapshot - Optional initial document state to load\n\t *   - schema - Store schema defining record types and validation\n\t *   - clientTimeout - Milliseconds to wait before disconnecting inactive clients\n\t *   - log - Optional logger for warnings and errors\n\t *   - onSessionRemoved - Called when a client session is removed\n\t *   - onBeforeSendMessage - Called before sending messages to clients\n\t *   - onAfterReceiveMessage - Called after receiving messages from clients\n\t *   - onDataChange - Called when document data changes\n\t *   - onPresenceChange - Called when presence data changes\n\t */\n\tconstructor(public readonly opts: TLSocketRoomOptions<R, SessionMeta>) {\n\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\tif (opts.storage && opts.initialSnapshot) {\n\t\t\tthrow new Error('Cannot provide both storage and initialSnapshot options')\n\t\t}\n\t\tconst storage = opts.storage\n\t\t\t? opts.storage\n\t\t\t: new InMemorySyncStorage<R>({\n\t\t\t\t\tsnapshot: convertStoreSnapshotToRoomSnapshot(\n\t\t\t\t\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\t\t\t\t\topts.initialSnapshot ?? DEFAULT_INITIAL_SNAPSHOT\n\t\t\t\t\t),\n\t\t\t\t\t// keep the storage partition in step with the room's object lane\n\t\t\t\t\tobjectTypes: opts.objectTypes,\n\t\t\t\t})\n\n\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\tif ('onDataChange' in opts && opts.onDataChange) {\n\t\t\tthis.disposables.add(\n\t\t\t\tstorage.onChange(() => {\n\t\t\t\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\t\t\t\topts.onDataChange?.()\n\t\t\t\t})\n\t\t\t)\n\t\t}\n\t\tthis.room = new TLSyncRoom<R, SessionMeta>({\n\t\t\tonPresenceChange: opts.onPresenceChange,\n\t\t\tonCommittedChanges: opts.onCommittedChanges,\n\t\t\tobjectTypes: opts.objectTypes,\n\t\t\tauthorizeRecord: opts.authorizeRecord,\n\t\t\tschema: opts.schema ?? (createTLSchema() as any),\n\t\t\tlog: opts.log,\n\t\t\tstorage,\n\t\t\tclientTimeout: opts.clientTimeout,\n\t\t})\n\t\tthis.storage = storage\n\t\tthis.room.events.on('session_removed', (args) => {\n\t\t\tthis.clearSnapshotTimer(args.sessionId)\n\t\t\tthis.sessions.delete(args.sessionId)\n\t\t\tif (this.opts.onSessionRemoved) {\n\t\t\t\tthis.opts.onSessionRemoved(this, {\n\t\t\t\t\tsessionId: args.sessionId,\n\t\t\t\t\tnumSessionsRemaining: this.room.sessions.size,\n\t\t\t\t\tmeta: args.meta,\n\t\t\t\t})\n\t\t\t}\n\t\t})\n\t\tthis.log = 'log' in opts ? opts.log : { error: console.error }\n\t}\n\n\t/**\n\t * Returns the number of active sessions.\n\t * Note that this is not the same as the number of connected sockets!\n\t * Sessions time out a few moments after sockets close, to smooth over network hiccups.\n\t *\n\t * @returns the number of active sessions\n\t */\n\tgetNumActiveSessions() {\n\t\treturn this.room.sessions.size\n\t}\n\n\t/**\n\t * Handles a new client WebSocket connection, creating a session within the room.\n\t * This should be called whenever a client establishes a WebSocket connection to join\n\t * the collaborative document.\n\t *\n\t * @param opts - Connection options\n\t *   - sessionId - Unique identifier for the client session (typically from browser tab)\n\t *   - socket - WebSocket-like object for client communication\n\t *   - isReadonly - Whether the client can modify the document (defaults to false)\n\t *   - objectAccess - Write access for object-store lane record types (defaults to 'write').\n\t *     Independent of isReadonly, so a session can be allowed to write objects (e.g. comments)\n\t *     without being allowed to edit the document.\n\t *   - meta - Additional session metadata (required if SessionMeta is not void)\n\t *\n\t * @example\n\t * ```ts\n\t * // Handle new WebSocket connection\n\t * room.handleSocketConnect({\n\t *   sessionId: 'user-session-abc123',\n\t *   socket: webSocketConnection,\n\t *   isReadonly: !userHasEditPermission\n\t * })\n\t * ```\n\t *\n\t * @example\n\t * ```ts\n\t * // With session metadata\n\t * room.handleSocketConnect({\n\t *   sessionId: 'session-xyz',\n\t *   socket: ws,\n\t *   meta: { userId: 'user-123', name: 'Alice' }\n\t * })\n\t * ```\n\t */\n\thandleSocketConnect(\n\t\topts: {\n\t\t\tsessionId: string\n\t\t\tsocket: WebSocketMinimal\n\t\t\tisReadonly?: boolean\n\t\t\tobjectAccess?: TLObjectStoreAccess\n\t\t} & (SessionMeta extends void ? object : { meta: SessionMeta })\n\t) {\n\t\tconst { sessionId, socket, isReadonly = false, objectAccess = 'write' } = opts\n\t\tconst handleSocketMessage = (event: MessageEvent) =>\n\t\t\tthis.handleSocketMessage(sessionId, event.data)\n\t\tconst handleSocketError = this.handleSocketError.bind(this, sessionId)\n\t\tconst handleSocketClose = this.handleSocketClose.bind(this, sessionId)\n\n\t\tthis.sessions.set(sessionId, {\n\t\t\tassembler: new JsonChunkAssembler(),\n\t\t\tsocket,\n\t\t\tunlisten: () => {\n\t\t\t\tsocket.removeEventListener?.('message', handleSocketMessage)\n\t\t\t\tsocket.removeEventListener?.('close', handleSocketClose)\n\t\t\t\tsocket.removeEventListener?.('error', handleSocketError)\n\t\t\t},\n\t\t})\n\n\t\tthis.room.handleNewSession({\n\t\t\tsessionId,\n\t\t\tisReadonly,\n\t\t\tobjectAccess,\n\t\t\tsocket: new ServerSocketAdapter({\n\t\t\t\tws: socket,\n\t\t\t\tonBeforeSendMessage: this.opts.onBeforeSendMessage\n\t\t\t\t\t? (message, stringified) =>\n\t\t\t\t\t\t\tthis.opts.onBeforeSendMessage!({\n\t\t\t\t\t\t\t\tsessionId,\n\t\t\t\t\t\t\t\tmessage,\n\t\t\t\t\t\t\t\tstringified,\n\t\t\t\t\t\t\t\tmeta: this.room.sessions.get(sessionId)?.meta as SessionMeta,\n\t\t\t\t\t\t\t})\n\t\t\t\t\t: undefined,\n\t\t\t}),\n\t\t\tmeta: 'meta' in opts ? (opts.meta as any) : undefined,\n\t\t})\n\n\t\tsocket.addEventListener?.('message', handleSocketMessage)\n\t\tsocket.addEventListener?.('close', handleSocketClose)\n\t\tsocket.addEventListener?.('error', handleSocketError)\n\t}\n\n\tprivate clearSnapshotTimer(sessionId: string) {\n\t\tconst t = this.snapshotTimers.get(sessionId)\n\t\tif (t) {\n\t\t\tclearTimeout(t)\n\t\t\tthis.snapshotTimers.delete(sessionId)\n\t\t}\n\t}\n\n\tprivate scheduleDebouncedSnapshot(sessionId: string) {\n\t\tif (!this.opts.onSessionSnapshot) return\n\t\tthis.clearSnapshotTimer(sessionId)\n\t\tthis.snapshotTimers.set(\n\t\t\tsessionId,\n\t\t\tsetTimeout(() => {\n\t\t\t\tthis.snapshotTimers.delete(sessionId)\n\t\t\t\tconst snapshot = this.getSessionSnapshot(sessionId)\n\t\t\t\tif (snapshot) this.opts.onSessionSnapshot!(sessionId, snapshot)\n\t\t\t}, 5000)\n\t\t)\n\t}\n\n\t/**\n\t * Processes a message received from a client WebSocket. Use this method in server\n\t * environments where WebSocket event listeners cannot be attached directly to socket\n\t * instances (e.g., Bun.serve, Cloudflare Workers with WebSocket hibernation).\n\t *\n\t * The method handles message chunking/reassembly and forwards complete messages\n\t * to the underlying sync room for processing.\n\t *\n\t * @param sessionId - Session identifier matching the one used in handleSocketConnect\n\t * @param message - Raw message data from the client (string or binary)\n\t *\n\t * @example\n\t * ```ts\n\t * // In a Bun.serve handler\n\t * server.upgrade(req, {\n\t *   data: { sessionId, room },\n\t *   upgrade(res, req) {\n\t *     // Connection established\n\t *   },\n\t *   message(ws, message) {\n\t *     const { sessionId, room } = ws.data\n\t *     room.handleSocketMessage(sessionId, message)\n\t *   }\n\t * })\n\t * ```\n\t */\n\thandleSocketMessage(sessionId: string, message: string | AllowSharedBufferSource) {\n\t\tconst assembler = this.sessions.get(sessionId)?.assembler\n\t\tif (!assembler) {\n\t\t\tthis.log?.warn?.('Received message from unknown session', sessionId)\n\t\t\treturn\n\t\t}\n\n\t\ttry {\n\t\t\tconst messageString =\n\t\t\t\ttypeof message === 'string' ? message : new TextDecoder().decode(message)\n\t\t\tconst res = assembler.handleMessage(messageString)\n\t\t\tif (!res) {\n\t\t\t\t// not enough chunks yet\n\t\t\t\treturn\n\t\t\t}\n\t\t\tif ('data' in res) {\n\t\t\t\t// need to do this first in case the session gets removed as a result of handling the message\n\t\t\t\tif (this.opts.onAfterReceiveMessage) {\n\t\t\t\t\tconst session = this.room.sessions.get(sessionId)\n\t\t\t\t\tif (session) {\n\t\t\t\t\t\tthis.opts.onAfterReceiveMessage({\n\t\t\t\t\t\t\tsessionId,\n\t\t\t\t\t\t\tmessage: res.data as any,\n\t\t\t\t\t\t\tstringified: res.stringified,\n\t\t\t\t\t\t\tmeta: session.meta,\n\t\t\t\t\t\t})\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// handleMessage is async but does not await internally; catch rejections\n\t\t\t\t// so an error thrown while handling the message still rejects the session\n\t\t\t\tthis.room.handleMessage(sessionId, res.data as any).catch((error) => {\n\t\t\t\t\tthis.log?.error?.(error)\n\t\t\t\t\tthis.room.rejectSession(sessionId, TLSyncErrorCloseEventReason.UNKNOWN_ERROR)\n\t\t\t\t})\n\t\t\t\tthis.room.pruneSessions()\n\t\t\t\tthis.scheduleDebouncedSnapshot(sessionId)\n\t\t\t} else {\n\t\t\t\tthis.log?.error?.('Error assembling message', res.error)\n\t\t\t\t// close the socket to reset the connection\n\t\t\t\tthis.handleSocketError(sessionId)\n\t\t\t}\n\t\t} catch (e) {\n\t\t\tthis.log?.error?.(e)\n\t\t\t// here we use rejectSession rather than removeSession to support legacy clients\n\t\t\t// that use the old incompatibility_error close event\n\t\t\tthis.room.rejectSession(sessionId, TLSyncErrorCloseEventReason.UNKNOWN_ERROR)\n\t\t}\n\t}\n\n\t/**\n\t * Handles a WebSocket error for the specified session. Use this in server environments\n\t * where socket event listeners cannot be attached directly. This will initiate cleanup\n\t * and session removal for the affected client.\n\t *\n\t * @param sessionId - Session identifier matching the one used in handleSocketConnect\n\t *\n\t * @example\n\t * ```ts\n\t * // In a custom WebSocket handler\n\t * socket.addEventListener('error', () => {\n\t *   room.handleSocketError(sessionId)\n\t * })\n\t * ```\n\t */\n\thandleSocketError(sessionId: string) {\n\t\tthis.clearSnapshotTimer(sessionId)\n\t\tthis.room.handleClose(sessionId)\n\t}\n\n\t/**\n\t * Handles a WebSocket close event for the specified session. Use this in server\n\t * environments where socket event listeners cannot be attached directly. This will\n\t * initiate cleanup and session removal for the disconnected client.\n\t *\n\t * @param sessionId - Session identifier matching the one used in handleSocketConnect\n\t *\n\t * @example\n\t * ```ts\n\t * // In a custom WebSocket handler\n\t * socket.addEventListener('close', () => {\n\t *   room.handleSocketClose(sessionId)\n\t * })\n\t * ```\n\t */\n\thandleSocketClose(sessionId: string) {\n\t\tthis.clearSnapshotTimer(sessionId)\n\t\tthis.room.handleClose(sessionId)\n\t}\n\n\t/**\n\t * Resumes a previously-connected session directly into `Connected` state, bypassing\n\t * the connect handshake. Use this after server hibernation (e.g., Cloudflare Durable\n\t * Object hibernation) when WebSocket connections survived but all in-memory state was lost.\n\t *\n\t * The session is restored using a {@link SessionStateSnapshot} previously obtained\n\t * via {@link TLSocketRoom.getSessionSnapshot}. The client is unaware the server restarted and\n\t * continues sending messages normally.\n\t *\n\t * Unlike {@link TLSocketRoom.handleSocketConnect}, this method does NOT attach WebSocket event\n\t * listeners. In hibernation environments, events are delivered via class methods\n\t * (e.g., `webSocketMessage`) rather than `addEventListener`.\n\t *\n\t * @param opts - Resume options\n\t *   - sessionId - Unique identifier for the client session\n\t *   - socket - WebSocket-like object for client communication\n\t *   - snapshot - Session state snapshot from {@link TLSocketRoom.getSessionSnapshot}\n\t *   - meta - Additional session metadata (required if SessionMeta is not void)\n\t *\n\t * @example\n\t * ```ts\n\t * // After Cloudflare DO hibernation wake\n\t * for (const ws of ctx.getWebSockets()) {\n\t *   const data = ws.deserializeAttachment()\n\t *   room.handleSocketResume({\n\t *     sessionId: data.sessionId,\n\t *     socket: ws,\n\t *     snapshot: data.snapshot,\n\t *   })\n\t * }\n\t * ```\n\t */\n\thandleSocketResume(\n\t\topts: {\n\t\t\tsessionId: string\n\t\t\tsocket: WebSocketMinimal\n\t\t\tsnapshot: SessionStateSnapshot\n\t\t} & (SessionMeta extends void ? object : { meta: SessionMeta })\n\t) {\n\t\tconst { sessionId, socket, snapshot } = opts\n\n\t\tthis.sessions.set(sessionId, {\n\t\t\tassembler: new JsonChunkAssembler(),\n\t\t\tsocket,\n\t\t\tunlisten: () => {\n\t\t\t\t// no-op: hibernation environments use class methods, not addEventListener\n\t\t\t},\n\t\t})\n\n\t\tthis.room.handleResumedSession({\n\t\t\tsessionId,\n\t\t\tisReadonly: snapshot.isReadonly,\n\t\t\t// snapshots persisted before this field existed fail closed — those sessions predate\n\t\t\t// the record types gated by objectAccess, so they have nothing to write anyway\n\t\t\tobjectAccess: snapshot.objectAccess ?? 'read',\n\t\t\tserializedSchema: snapshot.serializedSchema,\n\t\t\tpresenceId: snapshot.presenceId,\n\t\t\tpresenceRecord: snapshot.presenceRecord,\n\t\t\trequiresLegacyRejection: snapshot.requiresLegacyRejection,\n\t\t\tsupportsStringAppend: snapshot.supportsStringAppend,\n\t\t\tsocket: new ServerSocketAdapter({\n\t\t\t\tws: socket,\n\t\t\t\tonBeforeSendMessage: this.opts.onBeforeSendMessage\n\t\t\t\t\t? (message, stringified) =>\n\t\t\t\t\t\t\tthis.opts.onBeforeSendMessage!({\n\t\t\t\t\t\t\t\tsessionId,\n\t\t\t\t\t\t\t\tmessage,\n\t\t\t\t\t\t\t\tstringified,\n\t\t\t\t\t\t\t\tmeta: this.room.sessions.get(sessionId)?.meta as SessionMeta,\n\t\t\t\t\t\t\t})\n\t\t\t\t\t: undefined,\n\t\t\t}),\n\t\t\tmeta: 'meta' in opts ? (opts.meta as any) : undefined,\n\t\t})\n\t}\n\n\t/**\n\t * Returns a snapshot of a connected session's state that can be persisted and later\n\t * used with {@link TLSocketRoom.handleSocketResume} to restore the session after hibernation.\n\t *\n\t * Returns `null` if the session doesn't exist or isn't in the `Connected` state.\n\t *\n\t * @param sessionId - The session to snapshot\n\t *\n\t * @example\n\t * ```ts\n\t * // Store snapshot in a Cloudflare WebSocket attachment\n\t * const snapshot = room.getSessionSnapshot(sessionId)\n\t * if (snapshot) {\n\t *   ws.serializeAttachment({ sessionId, snapshot })\n\t * }\n\t * ```\n\t */\n\tgetSessionSnapshot(sessionId: string): SessionStateSnapshot | null {\n\t\tconst session = this.room.sessions.get(sessionId)\n\t\tif (!session || session.state !== RoomSessionState.Connected) {\n\t\t\treturn null\n\t\t}\n\n\t\tlet presenceRecord: UnknownRecord | null = null\n\t\tif (session.presenceId) {\n\t\t\tconst record = this.room.presenceStore.get(session.presenceId)\n\t\t\tif (record) {\n\t\t\t\tpresenceRecord = stripPresenceForSnapshot(record as UnknownRecord)\n\t\t\t}\n\t\t}\n\n\t\treturn {\n\t\t\tserializedSchema: session.serializedSchema,\n\t\t\tisReadonly: session.isReadonly,\n\t\t\tobjectAccess: session.objectAccess,\n\t\t\tpresenceId: session.presenceId,\n\t\t\tpresenceRecord,\n\t\t\trequiresLegacyRejection: session.requiresLegacyRejection,\n\t\t\tsupportsStringAppend: session.supportsStringAppend,\n\t\t}\n\t}\n\n\t/**\n\t * Returns the current document clock value. The clock is a monotonically increasing\n\t * integer that increments with each document change, providing a consistent ordering\n\t * of changes across the distributed system.\n\t *\n\t * @returns The current document clock value\n\t *\n\t * @example\n\t * ```ts\n\t * const clock = room.getCurrentDocumentClock()\n\t * console.log(`Document is at version ${clock}`)\n\t * ```\n\t */\n\tgetCurrentDocumentClock() {\n\t\treturn this.storage.getClock()\n\t}\n\n\t/**\n\t * Retrieves a deeply cloned copy of a record from the document store.\n\t * Returns undefined if the record doesn't exist. The returned record is\n\t * safe to mutate without affecting the original store data.\n\t *\n\t * @param id - Unique identifier of the record to retrieve\n\t * @returns Deep clone of the record, or undefined if not found\n\t *\n\t * @example\n\t * ```ts\n\t * const shape = room.getRecord('shape:abc123')\n\t * if (shape) {\n\t *   console.log('Shape position:', shape.x, shape.y)\n\t *   // Safe to modify without affecting store\n\t *   shape.x = 100\n\t * }\n\t * ```\n\t */\n\tgetRecord(id: string) {\n\t\treturn this.storage.transaction((txn) => {\n\t\t\treturn structuredClone(txn.get(id)) as any\n\t\t}).result as R\n\t}\n\n\t/**\n\t * Returns information about all active sessions in the room. Each session\n\t * represents a connected client with their current connection status and metadata.\n\t *\n\t * @returns Array of session information objects containing:\n\t *   - sessionId - Unique session identifier\n\t *   - isConnected - Whether the session has an active WebSocket connection\n\t *   - isReadonly - Whether the session can modify the document\n\t *   - meta - Custom session metadata\n\t *\n\t * @example\n\t * ```ts\n\t * const sessions = room.getSessions()\n\t * console.log(`Room has ${sessions.length} active sessions`)\n\t *\n\t * for (const session of sessions) {\n\t *   console.log(`${session.sessionId}: ${session.isConnected ? 'online' : 'offline'}`)\n\t *   if (session.isReadonly) {\n\t *     console.log('  (read-only access)')\n\t *   }\n\t * }\n\t * ```\n\t */\n\tgetSessions(): Array<{\n\t\tsessionId: string\n\t\tisConnected: boolean\n\t\tisReadonly: boolean\n\t\tobjectAccess: TLObjectStoreAccess\n\t\tmeta: SessionMeta\n\t}> {\n\t\treturn [...this.room.sessions.values()].map((session) => {\n\t\t\treturn {\n\t\t\t\tsessionId: session.sessionId,\n\t\t\t\tisConnected: session.state === RoomSessionState.Connected,\n\t\t\t\tisReadonly: session.isReadonly,\n\t\t\t\tobjectAccess: session.objectAccess,\n\t\t\t\tmeta: session.meta,\n\t\t\t}\n\t\t})\n\t}\n\n\t/**\n\t * Creates a complete snapshot of the current document state, including all records\n\t * and synchronization metadata. This snapshot can be persisted to storage and used\n\t * to restore the room state later or revert to a previous version.\n\t *\n\t * @returns Complete room snapshot including documents, clock values, and tombstones\n\t * @deprecated if you need to do this use\n\t *\n\t * @example\n\t * ```ts\n\t * // Capture current state for persistence\n\t * const snapshot = room.getCurrentSnapshot()\n\t * await saveToDatabase(roomId, JSON.stringify(snapshot))\n\t *\n\t * // Later, restore from snapshot\n\t * const savedSnapshot = JSON.parse(await loadFromDatabase(roomId))\n\t * const newRoom = new TLSocketRoom({ initialSnapshot: savedSnapshot })\n\t * ```\n\t */\n\tgetCurrentSnapshot() {\n\t\tif (this.storage.getSnapshot) {\n\t\t\treturn this.storage.getSnapshot()\n\t\t}\n\t\tthrow new Error('getCurrentSnapshot is not supported for this storage type')\n\t}\n\n\t/**\n\t * Returns a snapshot of the object-store lane (see `objectTypes`), for persisting\n\t * object-lane records separately from the document. Same entry shape as\n\t * {@link RoomSnapshot.documents}.\n\t */\n\tgetCurrentObjectsSnapshot(): RoomSnapshot['documents'] {\n\t\tif (this.storage.getObjectsSnapshot) {\n\t\t\treturn this.storage.getObjectsSnapshot()\n\t\t}\n\t\tthrow new Error('getCurrentObjectsSnapshot is not supported for this storage type')\n\t}\n\n\t/**\n\t * Retrieves all presence records from the document store. Presence records\n\t * contain ephemeral user state like cursor positions and selections.\n\t *\n\t * @returns Object mapping record IDs to presence record data\n\t * @internal\n\t */\n\tgetPresenceRecords() {\n\t\tconst result = {} as Record<string, UnknownRecord>\n\t\tfor (const presence of this.room.presenceStore.values()) {\n\t\t\tresult[presence.id] = presence\n\t\t}\n\t\treturn result\n\t}\n\n\t/**\n\t * Loads a document snapshot, completely replacing the current room state.\n\t * This will disconnect all current clients and update the document to match\n\t * the provided snapshot. Use this for restoring from backups or implementing\n\t * document versioning.\n\t *\n\t * @param snapshot - Room or store snapshot to load\n\t *\n\t * @example\n\t * ```ts\n\t * // Restore from a saved snapshot\n\t * const backup = JSON.parse(await loadBackup(roomId))\n\t * room.loadSnapshot(backup)\n\t *\n\t * // All clients will be disconnected and need to reconnect\n\t * // to see the restored document state\n\t * ```\n\t */\n\tloadSnapshot(snapshot: RoomSnapshot | TLStoreSnapshot) {\n\t\tthis.storage.transaction((txn) => {\n\t\t\tloadSnapshotIntoStorage(txn, this.room.schema, snapshot)\n\t\t})\n\t}\n\n\t/**\n\t * Executes a transaction to modify the document store. Changes made within the\n\t * transaction are atomic and will be synchronized to all connected clients.\n\t * The transaction provides isolation from concurrent changes until it commits.\n\t *\n\t * @param updater - Function that receives store methods to make changes\n\t *   - store.get(id) - Retrieve a record (safe to mutate, but must call put() to commit)\n\t *   - store.put(record) - Save a modified record\n\t *   - store.getAll() - Get all records in the store\n\t *   - store.delete(id) - Remove a record from the store\n\t * @returns Promise that resolves when the transaction completes\n\t *\n\t * @example\n\t * ```ts\n\t * // Update multiple shapes in a single transaction\n\t * await room.updateStore(store => {\n\t *   const shape1 = store.get('shape:abc123')\n\t *   const shape2 = store.get('shape:def456')\n\t *\n\t *   if (shape1) {\n\t *     shape1.x = 100\n\t *     store.put(shape1)\n\t *   }\n\t *\n\t *   if (shape2) {\n\t *     shape2.meta.approved = true\n\t *     store.put(shape2)\n\t *   }\n\t * })\n\t * ```\n\t *\n\t * @example\n\t * ```ts\n\t * // Async transaction with external API call\n\t * await room.updateStore(async store => {\n\t *   const doc = store.get('document:main')\n\t *   if (doc) {\n\t *     doc.lastModified = await getCurrentTimestamp()\n\t *     store.put(doc)\n\t *   }\n\t * })\n\t * ```\n\t * @deprecated use the storage.transaction method instead\n\t */\n\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\tasync updateStore(updater: (store: RoomStoreMethods<R>) => void | Promise<void>) {\n\t\tif (this.isClosed()) {\n\t\t\tthrow new Error('Cannot update store on a closed room')\n\t\t}\n\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\tconst ctx = new StoreUpdateContext<R>(\n\t\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\t\tObject.fromEntries(this.getCurrentSnapshot().documents.map((d) => [d.state.id, d.state])),\n\t\t\tthis.room.schema\n\t\t)\n\t\ttry {\n\t\t\tawait updater(ctx)\n\t\t} finally {\n\t\t\tctx.close()\n\t\t}\n\t\tthis.storage.transaction((txn) => {\n\t\t\tfor (const [id, record] of Object.entries(ctx.updates.puts)) {\n\t\t\t\ttxn.set(id, record as R)\n\t\t\t}\n\t\t\tfor (const id of ctx.updates.deletes) {\n\t\t\t\ttxn.delete(id)\n\t\t\t}\n\t\t})\n\t}\n\n\t/**\n\t * Sends a custom message to a specific client session. This allows sending\n\t * application-specific data that doesn't modify the document state, such as\n\t * notifications, chat messages, or custom commands.\n\t *\n\t * @param sessionId - Target session identifier\n\t * @param data - Custom payload to send (will be JSON serialized)\n\t *\n\t * @example\n\t * ```ts\n\t * // Send a notification to a specific user\n\t * room.sendCustomMessage('session-123', {\n\t *   type: 'notification',\n\t *   message: 'Your changes have been saved'\n\t * })\n\t *\n\t * // Send a chat message\n\t * room.sendCustomMessage('session-456', {\n\t *   type: 'chat',\n\t *   from: 'Alice',\n\t *   text: 'Great work on this design!'\n\t * })\n\t * ```\n\t */\n\tsendCustomMessage(sessionId: string, data: any) {\n\t\tthis.room.sendCustomMessage(sessionId, data)\n\t}\n\n\t/**\n\t * Immediately removes a session from the room and closes its WebSocket connection.\n\t * The client will attempt to reconnect automatically unless a fatal reason is provided.\n\t *\n\t * @param sessionId - Session identifier to remove\n\t * @param fatalReason - Optional fatal error reason that prevents reconnection\n\t *\n\t * @example\n\t * ```ts\n\t * // Kick a user (they can reconnect)\n\t * room.closeSession('session-troublemaker')\n\t *\n\t * // Permanently ban a user\n\t * room.closeSession('session-banned', 'PERMISSION_DENIED')\n\t *\n\t * // Close session due to inactivity\n\t * room.closeSession('session-idle', 'TIMEOUT')\n\t * ```\n\t */\n\tcloseSession(sessionId: string, fatalReason?: TLSyncErrorCloseEventReason | string) {\n\t\tthis.room.rejectSession(sessionId, fatalReason)\n\t}\n\n\t/**\n\t * Closes the room and disconnects all connected clients. This should be called\n\t * when shutting down the room permanently, such as during server shutdown or\n\t * when the room is no longer needed. Once closed, the room cannot be reopened.\n\t *\n\t * @example\n\t * ```ts\n\t * // Clean shutdown when no users remain\n\t * if (room.getNumActiveSessions() === 0) {\n\t *   await persistSnapshot(room.getCurrentSnapshot())\n\t *   room.close()\n\t * }\n\t *\n\t * // Server shutdown\n\t * process.on('SIGTERM', () => {\n\t *   for (const room of activeRooms.values()) {\n\t *     room.close()\n\t *   }\n\t * })\n\t * ```\n\t */\n\tclose() {\n\t\tthis.room.close()\n\t\tfor (const sessionId of this.snapshotTimers.keys()) {\n\t\t\tthis.clearSnapshotTimer(sessionId)\n\t\t}\n\t\tthis.disposables.forEach((d) => d())\n\t\tthis.disposables.clear()\n\t}\n\n\t/**\n\t * Checks whether the room has been permanently closed. Closed rooms cannot\n\t * accept new connections or process further changes.\n\t *\n\t * @returns True if the room is closed, false if still active\n\t *\n\t * @example\n\t * ```ts\n\t * if (room.isClosed()) {\n\t *   console.log('Room has been shut down')\n\t *   // Create a new room or redirect users\n\t * } else {\n\t *   // Room is still accepting connections\n\t *   room.handleSocketConnect({ sessionId, socket })\n\t * }\n\t * ```\n\t */\n\tisClosed() {\n\t\treturn this.room.isClosed()\n\t}\n}\n\n/**\n * Utility type that removes properties with void values from an object type.\n * This is used internally to conditionally require session metadata based on\n * whether SessionMeta extends void.\n *\n * @example\n * ```ts\n * type Example = { a: string, b: void, c: number }\n * type Result = OmitVoid<Example> // { a: string, c: number }\n * ```\n *\n * @public\n */\nexport type OmitVoid<T, KS extends keyof T = keyof T> = {\n\t[K in KS extends any ? (void extends T[KS] ? never : KS) : never]: T[K]\n}\n\n/**\n * Interface for making transactional changes to room store data. Used within\n * updateStore transactions to modify documents atomically.\n *\n * @example\n * ```ts\n * await room.updateStore((store) => {\n *   const shape = store.get('shape:123')\n *   if (shape) {\n *     store.put({ ...shape, x: shape.x + 10 })\n *   }\n *   store.delete('shape:456')\n * })\n * ```\n *\n * @public",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom",
+          "unitKind": "class",
+          "name": "TLSocketRoom",
+          "qualifiedName": "TLSocketRoom",
+          "parentUnitId": null,
+          "startLine": 169,
+          "endLine": 1013,
+          "signature": "export class TLSocketRoom<R extends UnknownRecord = UnknownRecord, SessionMeta = void>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["R extends UnknownRecord = UnknownRecord", "SessionMeta = void"],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "opts",
+              "kind": "property",
+              "type": "TLSocketRoomOptions<R, SessionMeta>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "room",
+              "kind": "property",
+              "type": "TLSyncRoom<R, SessionMeta>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "sessions",
+              "kind": "property",
+              "type": "Map<string, { assembler: JsonChunkAssembler; socket: WebSocketMinimal; unlisten: () => void }>",
+              "default": "new Map()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "log",
+              "kind": "property",
+              "type": "TLSyncLog | undefined",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "storage",
+              "kind": "property",
+              "type": "TLSyncStorage<R>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "disposables",
+              "kind": "property",
+              "type": "Set<() => void>",
+              "default": "new Set()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "snapshotTimers",
+              "kind": "property",
+              "type": "Map<string, ReturnType<typeof setTimeout>>",
+              "default": "new Map()",
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Manages collaborative document synchronization across WebSocket sessions, including session lifecycle, presence, snapshots, and transactional storage access.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e3d046071986a36838a58773e3b12a15b17e33de5538ad2067947cb38bfd1c9d"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.constructor#method:TLSocketRoom.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "TLSocketRoom.constructor",
+        "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "startLine": 184,
+        "endLine": 236,
+        "isBehavioral": true,
+        "source": " *   },\n *   onDataChange: () => {\n *     console.log('Document data changed, consider persisting')\n *   }\n * })\n *\n * // Handle new client connections\n * room.handleSocketConnect({\n *   sessionId: 'user-session-123',\n *   socket: webSocket,\n *   isReadonly: false\n * })\n * ```\n *\n * @example\n * ```ts\n * // Room with initial snapshot and schema\n * const room = new TLSocketRoom({\n *   initialSnapshot: existingSnapshot,\n *   schema: myCustomSchema,\n *   clientTimeout: 30000,\n *   log: {\n *     warn: (...args) => logger.warn('SYNC:', ...args),\n *     error: (...args) => logger.error('SYNC:', ...args)\n *   }\n * })\n *\n * // Update document programmatically\n * await room.updateStore(store => {\n *   const shape = store.get('shape:abc123')\n *   if (shape) {\n *     shape.x = 100\n *     store.put(shape)\n *   }\n * })\n * ```\n *\n * @public\n */\nexport class TLSocketRoom<R extends UnknownRecord = UnknownRecord, SessionMeta = void> {\n\tprivate room: TLSyncRoom<R, SessionMeta>\n\tprivate readonly sessions = new Map<\n\t\tstring,\n\t\t// eslint-disable-next-line tldraw/method-signature-style\n\t\t{ assembler: JsonChunkAssembler; socket: WebSocketMinimal; unlisten: () => void }\n\t>()\n\treadonly log?: TLSyncLog\n\n\tpublic storage: TLSyncStorage<R>\n\n\tprivate disposables = new Set<() => void>()\n\tprivate readonly snapshotTimers = new Map<string, ReturnType<typeof setTimeout>>()\n",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.constructor#method:TLSocketRoom.constructor",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.constructor",
+          "unitKind": "method",
+          "name": "constructor",
+          "qualifiedName": "TLSocketRoom.constructor",
+          "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "startLine": 184,
+          "endLine": 236,
+          "signature": "constructor(opts: TLSocketRoomOptions<R, SessionMeta>)",
+          "parameters": [
+            {
+              "name": "opts",
+              "type": "TLSocketRoomOptions<R, SessionMeta>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The options object conforms to TLSocketRoomOptions<R, SessionMeta>."],
+          "postconditions": [
+            "The room's synchronization state is initialized.",
+            "The room's storage is initialized from the supplied configuration.",
+            "The configured logger is retained for subsequent room operations."
+          ],
+          "invariants": [
+            "The session collection starts empty.",
+            "The disposable-resource collection starts empty.",
+            "The snapshot-timer collection starts empty."
+          ],
+          "edgeCases": [
+            "If optional configuration such as an initial snapshot, schema, logger, or client timeout is omitted, initialization uses the implementation's corresponding defaults or absence semantics."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Initialization errors from the supplied configuration or dependent synchronization components propagate to the caller.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Initializes the room synchronization state.",
+            "Initializes the public storage property.",
+            "Assigns the optional logger.",
+            "Initializes internal session, disposable, and snapshot-timer collections."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "TLSyncStorage", "source": null, "kind": "internal" },
+            { "name": "TLSyncRoom", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["TLSocketRoomOptions", "TLSyncRoom", "TLSyncStorage", "UnknownRecord"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes a TLSocketRoom from its configuration, including its synchronization storage and room state. The constructed room is ready to accept socket connections and document updates.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "def90834a88b56ff7c0ec52cfa7b8074b7742b550fdc21a5b53a71771a0555e5"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketConnect#method:TLSocketRoom.handleSocketConnect",
+        "unitKind": "method",
+        "name": "handleSocketConnect",
+        "qualifiedName": "TLSocketRoom.handleSocketConnect",
+        "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "startLine": 275,
+        "endLine": 324,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t\tthis.room = new TLSyncRoom<R, SessionMeta>({\n\t\t\tonPresenceChange: opts.onPresenceChange,\n\t\t\tonCommittedChanges: opts.onCommittedChanges,\n\t\t\tobjectTypes: opts.objectTypes,\n\t\t\tauthorizeRecord: opts.authorizeRecord,\n\t\t\tschema: opts.schema ?? (createTLSchema() as any),\n\t\t\tlog: opts.log,\n\t\t\tstorage,\n\t\t\tclientTimeout: opts.clientTimeout,\n\t\t})\n\t\tthis.storage = storage\n\t\tthis.room.events.on('session_removed', (args) => {\n\t\t\tthis.clearSnapshotTimer(args.sessionId)\n\t\t\tthis.sessions.delete(args.sessionId)\n\t\t\tif (this.opts.onSessionRemoved) {\n\t\t\t\tthis.opts.onSessionRemoved(this, {\n\t\t\t\t\tsessionId: args.sessionId,\n\t\t\t\t\tnumSessionsRemaining: this.room.sessions.size,\n\t\t\t\t\tmeta: args.meta,\n\t\t\t\t})\n\t\t\t}\n\t\t})\n\t\tthis.log = 'log' in opts ? opts.log : { error: console.error }\n\t}\n\n\t/**\n\t * Returns the number of active sessions.\n\t * Note that this is not the same as the number of connected sockets!\n\t * Sessions time out a few moments after sockets close, to smooth over network hiccups.\n\t *\n\t * @returns the number of active sessions\n\t */\n\tgetNumActiveSessions() {\n\t\treturn this.room.sessions.size\n\t}\n\n\t/**\n\t * Handles a new client WebSocket connection, creating a session within the room.\n\t * This should be called whenever a client establishes a WebSocket connection to join\n\t * the collaborative document.\n\t *\n\t * @param opts - Connection options\n\t *   - sessionId - Unique identifier for the client session (typically from browser tab)\n\t *   - socket - WebSocket-like object for client communication\n\t *   - isReadonly - Whether the client can modify the document (defaults to false)\n\t *   - objectAccess - Write access for object-store lane record types (defaults to 'write').\n\t *     Independent of isReadonly, so a session can be allowed to write objects (e.g. comments)\n\t *     without being allowed to edit the document.\n\t *   - meta - Additional session metadata (required if SessionMeta is not void)",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketConnect#method:TLSocketRoom.handleSocketConnect",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketConnect",
+          "unitKind": "method",
+          "name": "handleSocketConnect",
+          "qualifiedName": "TLSocketRoom.handleSocketConnect",
+          "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "startLine": 275,
+          "endLine": 324,
+          "signature": null,
+          "parameters": [
+            { "name": "opts", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "opts.sessionId identifies the client session.",
+            "opts.socket is a WebSocket-like object capable of client communication.",
+            "Session metadata is supplied when the room's SessionMeta type requires it."
+          ],
+          "postconditions": ["The client connection is handled as a session within the collaborative room."],
+          "invariants": ["Document edit permission and object-store write permission are independent controls."],
+          "edgeCases": [
+            "When isReadonly is omitted, the connection defaults to being able to modify the document.",
+            "When objectAccess is omitted, object-store access defaults to write.",
+            "A session may be permitted to write object-store records while remaining readonly for document edits."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The collaborative room's session and connection state."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["TLSocketRoom", "SessionMeta"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles a newly established client WebSocket connection by creating or joining the client's session in the collaborative room. The connection options include session identity, socket communication, document mutability, object-store access, and session metadata.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "write",
+              "role": "Default object-store access level for a newly connected session."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "8d68fe5538f8cd176c103215cba52d1a70aca04ab484a32396d68645294769f3"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketMessage#method:TLSocketRoom.handleSocketMessage",
+        "unitKind": "method",
+        "name": "handleSocketMessage",
+        "qualifiedName": "TLSocketRoom.handleSocketMessage",
+        "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "startLine": 385,
+        "endLine": 442,
+        "isBehavioral": true,
+        "source": "\t\t\t}),\n\t\t\tmeta: 'meta' in opts ? (opts.meta as any) : undefined,\n\t\t})\n\n\t\tsocket.addEventListener?.('message', handleSocketMessage)\n\t\tsocket.addEventListener?.('close', handleSocketClose)\n\t\tsocket.addEventListener?.('error', handleSocketError)\n\t}\n\n\tprivate clearSnapshotTimer(sessionId: string) {\n\t\tconst t = this.snapshotTimers.get(sessionId)\n\t\tif (t) {\n\t\t\tclearTimeout(t)\n\t\t\tthis.snapshotTimers.delete(sessionId)\n\t\t}\n\t}\n\n\tprivate scheduleDebouncedSnapshot(sessionId: string) {\n\t\tif (!this.opts.onSessionSnapshot) return\n\t\tthis.clearSnapshotTimer(sessionId)\n\t\tthis.snapshotTimers.set(\n\t\t\tsessionId,\n\t\t\tsetTimeout(() => {\n\t\t\t\tthis.snapshotTimers.delete(sessionId)\n\t\t\t\tconst snapshot = this.getSessionSnapshot(sessionId)\n\t\t\t\tif (snapshot) this.opts.onSessionSnapshot!(sessionId, snapshot)\n\t\t\t}, 5000)\n\t\t)\n\t}\n\n\t/**\n\t * Processes a message received from a client WebSocket. Use this method in server\n\t * environments where WebSocket event listeners cannot be attached directly to socket\n\t * instances (e.g., Bun.serve, Cloudflare Workers with WebSocket hibernation).\n\t *\n\t * The method handles message chunking/reassembly and forwards complete messages\n\t * to the underlying sync room for processing.\n\t *\n\t * @param sessionId - Session identifier matching the one used in handleSocketConnect\n\t * @param message - Raw message data from the client (string or binary)\n\t *\n\t * @example\n\t * ```ts\n\t * // In a Bun.serve handler\n\t * server.upgrade(req, {\n\t *   data: { sessionId, room },\n\t *   upgrade(res, req) {\n\t *     // Connection established\n\t *   },\n\t *   message(ws, message) {\n\t *     const { sessionId, room } = ws.data\n\t *     room.handleSocketMessage(sessionId, message)\n\t *   }\n\t * })\n\t * ```\n\t */\n\thandleSocketMessage(sessionId: string, message: string | AllowSharedBufferSource) {\n\t\tconst assembler = this.sessions.get(sessionId)?.assembler",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketMessage#method:TLSocketRoom.handleSocketMessage",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketMessage",
+          "unitKind": "method",
+          "name": "handleSocketMessage",
+          "qualifiedName": "TLSocketRoom.handleSocketMessage",
+          "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "startLine": 385,
+          "endLine": 442,
+          "signature": "handleSocketMessage(sessionId: string, message: string | AllowSharedBufferSource)",
+          "parameters": [
+            {
+              "name": "sessionId",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "message",
+              "type": "string | AllowSharedBufferSource",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "sessionId identifies the session whose connection was established through the room.",
+            "message is a string or an AllowSharedBufferSource value."
+          ],
+          "postconditions": [
+            "The message is passed to the matching session's message assembler for reassembly and subsequent processing when that session exists.",
+            "No processing occurs when sessionId has no associated session assembler."
+          ],
+          "invariants": [
+            "Message handling is scoped to the session identified by sessionId.",
+            "Incomplete chunks are retained for later reassembly rather than forwarded as complete messages."
+          ],
+          "edgeCases": [
+            "A string message is accepted as raw WebSocket input.",
+            "A binary AllowSharedBufferSource message is accepted as raw WebSocket input.",
+            "A message for an unknown or already-removed session has no associated assembler and is not processed.",
+            "A chunked message is not forwarded to sync processing until the assembler has reconstructed a complete message."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "The matching session assembler's chunk/reassembly state.",
+            "Underlying room synchronization state when a complete message is forwarded."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "sessions.get", "source": "TLSocketRoom session registry", "kind": "internal" },
+            {
+              "name": "session assembler message processing",
+              "source": "session assembler associated with the session",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["AllowSharedBufferSource"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Accepts a WebSocket message payload as string | AllowSharedBufferSource and processes it through per-session chunk reassembly; complete payloads are forwarded to the underlying sync room.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes a raw client WebSocket message for an existing session, including chunk reassembly before forwarding complete messages to the room's sync processing. If no matching session assembler exists, no message is processed.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleSocketMessage is called with that session ID and message.",
+              "then": "The message is processed through that session's assembler and forwarded for sync processing.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleSocketMessage is called for each chunk in order.",
+              "then": "No incomplete chunk is forwarded as a complete message; processing occurs after reassembly.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleSocketMessage is called with that ID.",
+              "then": "The call performs no message processing.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7113e59356b90a3333fc3c4d877a22da869459bc9f593eeeef60a15928f7ab60"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketResume#method:TLSocketRoom.handleSocketResume",
+        "unitKind": "method",
+        "name": "handleSocketResume",
+        "qualifiedName": "TLSocketRoom.handleSocketResume",
+        "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "startLine": 541,
+        "endLine": 581,
+        "isBehavioral": true,
+        "source": "\t * listeners. In hibernation environments, events are delivered via class methods\n\t * (e.g., `webSocketMessage`) rather than `addEventListener`.\n\t *\n\t * @param opts - Resume options\n\t *   - sessionId - Unique identifier for the client session\n\t *   - socket - WebSocket-like object for client communication\n\t *   - snapshot - Session state snapshot from {@link TLSocketRoom.getSessionSnapshot}\n\t *   - meta - Additional session metadata (required if SessionMeta is not void)\n\t *\n\t * @example\n\t * ```ts\n\t * // After Cloudflare DO hibernation wake\n\t * for (const ws of ctx.getWebSockets()) {\n\t *   const data = ws.deserializeAttachment()\n\t *   room.handleSocketResume({\n\t *     sessionId: data.sessionId,\n\t *     socket: ws,\n\t *     snapshot: data.snapshot,\n\t *   })\n\t * }\n\t * ```\n\t */\n\thandleSocketResume(\n\t\topts: {\n\t\t\tsessionId: string\n\t\t\tsocket: WebSocketMinimal\n\t\t\tsnapshot: SessionStateSnapshot\n\t\t} & (SessionMeta extends void ? object : { meta: SessionMeta })\n\t) {\n\t\tconst { sessionId, socket, snapshot } = opts\n\n\t\tthis.sessions.set(sessionId, {\n\t\t\tassembler: new JsonChunkAssembler(),\n\t\t\tsocket,\n\t\t\tunlisten: () => {\n\t\t\t\t// no-op: hibernation environments use class methods, not addEventListener\n\t\t\t},\n\t\t})\n\n\t\tthis.room.handleResumedSession({\n\t\t\tsessionId,",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketResume#method:TLSocketRoom.handleSocketResume",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.handleSocketResume",
+          "unitKind": "method",
+          "name": "handleSocketResume",
+          "qualifiedName": "TLSocketRoom.handleSocketResume",
+          "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "startLine": 541,
+          "endLine": 581,
+          "signature": "handleSocketResume(\n\t\topts: {\n\t\t\tsessionId: string\n\t\t\tsocket: WebSocketMinimal\n\t\t\tsnapshot: SessionStateSnapshot\n\t\t} & (SessionMeta extends void ? object : { meta: SessionMeta })\n\t\t)",
+          "parameters": [
+            {
+              "name": "opts",
+              "type": "{ sessionId: string; socket: WebSocketMinimal; snapshot: SessionStateSnapshot } & (SessionMeta extends void ? object : { meta: SessionMeta })",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "opts.sessionId is the identifier of the session being resumed.",
+            "opts.socket implements WebSocketMinimal.",
+            "opts.snapshot is a SessionStateSnapshot.",
+            "opts.meta is supplied when SessionMeta is not void."
+          ],
+          "postconditions": [
+            "The session map contains an entry for opts.sessionId.",
+            "The registered session uses opts.socket and a new JsonChunkAssembler.",
+            "The registered session has a no-op unlisten callback suitable for hibernation environments.",
+            "The room is notified that the session has resumed."
+          ],
+          "invariants": [
+            "The resumed session is registered under the exact supplied sessionId.",
+            "Resumption does not install an addEventListener-based listener; its unlisten callback is a no-op."
+          ],
+          "edgeCases": [
+            "If opts.sessionId already exists, its session-map entry is replaced by the newly constructed resumed-session entry.",
+            "In hibernation environments, the registered session does not depend on socket event-listener registration."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "this.sessions is updated at opts.sessionId.",
+            "The room's resumed-session state is updated through handleResumedSession."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "JsonChunkAssembler", "source": null, "kind": "internal" },
+            { "name": "this.room.handleResumedSession", "source": "TLSocketRoom room instance", "kind": "internal" }
+          ],
+          "symbolReferences": ["WebSocketMinimal", "SessionStateSnapshot", "SessionMeta", "JsonChunkAssembler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Restores a client session after socket reattachment by registering the supplied socket and session state with the room.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleSocketResume is called with those values.",
+              "then": "The session is registered under the supplied identifier with the supplied socket, a fresh chunk assembler, and a no-op unlisten callback, and the room is notified of the resumed session.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "31e14b12306fc2062ca9e7a1d1857745f63c96ead3dba1acaef350b0311dd829"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.getSessionSnapshot#method:TLSocketRoom.getSessionSnapshot",
+        "unitKind": "method",
+        "name": "getSessionSnapshot",
+        "qualifiedName": "TLSocketRoom.getSessionSnapshot",
+        "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "startLine": 608,
+        "endLine": 631,
+        "isBehavioral": true,
+        "source": "\t * Returns a snapshot of a connected session's state that can be persisted and later\n\t * used with {@link TLSocketRoom.handleSocketResume} to restore the session after hibernation.\n\t *\n\t * Returns `null` if the session doesn't exist or isn't in the `Connected` state.\n\t *\n\t * @param sessionId - The session to snapshot\n\t *\n\t * @example\n\t * ```ts\n\t * // Store snapshot in a Cloudflare WebSocket attachment\n\t * const snapshot = room.getSessionSnapshot(sessionId)\n\t * if (snapshot) {\n\t *   ws.serializeAttachment({ sessionId, snapshot })\n\t * }\n\t * ```\n\t */\n\tgetSessionSnapshot(sessionId: string): SessionStateSnapshot | null {\n\t\tconst session = this.room.sessions.get(sessionId)\n\t\tif (!session || session.state !== RoomSessionState.Connected) {\n\t\t\treturn null\n\t\t}\n\n\t\tlet presenceRecord: UnknownRecord | null = null\n\t\tif (session.presenceId) {",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.getSessionSnapshot#method:TLSocketRoom.getSessionSnapshot",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.getSessionSnapshot",
+          "unitKind": "method",
+          "name": "getSessionSnapshot",
+          "qualifiedName": "TLSocketRoom.getSessionSnapshot",
+          "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "startLine": 608,
+          "endLine": 631,
+          "signature": "getSessionSnapshot(sessionId: string): SessionStateSnapshot | null",
+          "parameters": [
+            { "name": "sessionId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "SessionStateSnapshot | null",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["sessionId is a string identifying a session."],
+          "postconditions": [
+            "If the identified session exists and is in the Connected state, returns a SessionStateSnapshot.",
+            "If the session is absent or not in the Connected state, returns null.",
+            "Does not mutate the session or room state."
+          ],
+          "invariants": ["Only sessions whose state is RoomSessionState.Connected can produce a non-null snapshot."],
+          "edgeCases": [
+            "An unknown sessionId returns null.",
+            "A known session that is not in the Connected state returns null.",
+            "A connected session produces a snapshot rather than null; presence data is handled for snapshot persistence."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "Returns null when no matching connected session is available."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "this.room.sessions.get(sessionId)",
+              "source": "TLSocketRoom room session store",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["SessionStateSnapshot", "RoomSessionState.Connected", "UnknownRecord"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns either null or a SessionStateSnapshot suitable for serialization as a WebSocket attachment and subsequent session resumption.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns a persistable snapshot for a connected session so it can later be restored through the room's resume flow. Returns null when the requested session does not exist or is not connected.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "Connected", "role": "Session state required for a non-null snapshot." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getSessionSnapshot(sessionId) is called.",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getSessionSnapshot(sessionId) is called.",
+              "then": "The result is null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getSessionSnapshot(sessionId) is called.",
+              "then": "The result is a non-null SessionStateSnapshot for that session.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "30e22b406c52f17437c3144fbd8cc413b668b5a3c03b23abfa5e5215fe399ba0"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.updateStore#method:TLSocketRoom.updateStore",
+        "unitKind": "method",
+        "name": "updateStore",
+        "qualifiedName": "TLSocketRoom.updateStore",
+        "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "startLine": 847,
+        "endLine": 878,
+        "isBehavioral": true,
+        "source": "\t *   }\n\t * })\n\t * ```\n\t * @deprecated use the storage.transaction method instead\n\t */\n\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\tasync updateStore(updater: (store: RoomStoreMethods<R>) => void | Promise<void>) {\n\t\tif (this.isClosed()) {\n\t\t\tthrow new Error('Cannot update store on a closed room')\n\t\t}\n\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\tconst ctx = new StoreUpdateContext<R>(\n\t\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\t\tObject.fromEntries(this.getCurrentSnapshot().documents.map((d) => [d.state.id, d.state])),\n\t\t\tthis.room.schema\n\t\t)\n\t\ttry {\n\t\t\tawait updater(ctx)\n\t\t} finally {\n\t\t\tctx.close()\n\t\t}\n\t\tthis.storage.transaction((txn) => {\n\t\t\tfor (const [id, record] of Object.entries(ctx.updates.puts)) {\n\t\t\t\ttxn.set(id, record as R)\n\t\t\t}\n\t\t\tfor (const id of ctx.updates.deletes) {\n\t\t\t\ttxn.delete(id)\n\t\t\t}\n\t\t})\n\t}\n\n\t/**",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.updateStore#method:TLSocketRoom.updateStore",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.updateStore",
+          "unitKind": "method",
+          "name": "updateStore",
+          "qualifiedName": "TLSocketRoom.updateStore",
+          "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "startLine": 847,
+          "endLine": 878,
+          "signature": "async updateStore(updater: (store: RoomStoreMethods<R>) => void | Promise<void>)",
+          "parameters": [
+            {
+              "name": "updater",
+              "type": "(store: RoomStoreMethods<R>) => void | Promise<void>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The room must not be closed.",
+            "updater must be callable with a RoomStoreMethods<R> context."
+          ],
+          "postconditions": [
+            "On successful completion, every recorded put is applied to storage and every recorded delete is applied in the same storage transaction.",
+            "The temporary store update context is closed after the updater finishes, whether the updater succeeds or fails.",
+            "The returned promise resolves to void after the storage transaction completes."
+          ],
+          "invariants": [
+            "The update context is initialized from the current snapshot's document states keyed by each state's id.",
+            "The storage transaction applies recorded puts before recorded deletes.",
+            "No storage transaction is started when the updater throws or rejects."
+          ],
+          "edgeCases": [
+            "If the room is already closed, the method throws before creating an update context or invoking the updater.",
+            "If the updater returns a promise, the method waits for it to settle before committing updates.",
+            "If the updater throws synchronously or its promise rejects, the context is closed, the error propagates, and recorded updates are not committed.",
+            "If the updater records no puts or deletes, a storage transaction is still invoked with no operations."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "A closed room causes an Error with message 'Cannot update store on a closed room'; updater exceptions and rejections are propagated unchanged.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Persists updater-recorded puts and deletes through this.storage.transaction.",
+            "Closes the temporary StoreUpdateContext after updater completion."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isClosed", "source": "TLSocketRoom", "kind": "internal" },
+            { "name": "getCurrentSnapshot", "source": "TLSocketRoom", "kind": "internal" },
+            { "name": "StoreUpdateContext", "source": "sync-core storage/update context", "kind": "external" },
+            { "name": "updater", "source": "caller", "kind": "external" },
+            { "name": "storage.transaction", "source": "this.storage", "kind": "external" },
+            { "name": "txn.set", "source": "storage transaction callback", "kind": "external" },
+            { "name": "txn.delete", "source": "storage transaction callback", "kind": "external" }
+          ],
+          "symbolReferences": ["RoomStoreMethods<R>", "StoreUpdateContext<R>", "R"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Applies an updater to a temporary store context initialized from the room's current document snapshot, then commits the recorded puts and deletes in a storage transaction. Updates are rejected when the room is closed, and updater failures are propagated without committing.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Cannot update store on a closed room",
+              "role": "Error message raised when updateStore is called after the room has closed."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateStore is called with an updater that records a put for id 'a' and a delete for id 'b'.",
+              "then": "The updater receives a context initialized from the current snapshot, and storage.transaction applies txn.set('a', record) before txn.delete('b'); the promise resolves to void.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateStore is called with an updater that throws an error.",
+              "then": "The updater error is propagated, the temporary context is closed, and storage.transaction is not invoked.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateStore is called with any updater.",
+              "then": "It throws an Error whose message is exactly 'Cannot update store on a closed room', without invoking the updater.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "529e3adfd41ffef5599f2321501965da0655f7a860f7d64c1e7555cf1b9ba049"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.close#method:TLSocketRoom.close",
+        "unitKind": "method",
+        "name": "close",
+        "qualifiedName": "TLSocketRoom.close",
+        "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+        "startLine": 948,
+        "endLine": 956,
+        "isBehavioral": true,
+        "source": "\t * ```\n\t */\n\tclose() {\n\t\tthis.room.close()\n\t\tfor (const sessionId of this.snapshotTimers.keys()) {\n\t\t\tthis.clearSnapshotTimer(sessionId)\n\t\t}\n\t\tthis.disposables.forEach((d) => d())\n\t\tthis.disposables.clear()",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.close#method:TLSocketRoom.close",
+          "fileId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom.close",
+          "unitKind": "method",
+          "name": "close",
+          "qualifiedName": "TLSocketRoom.close",
+          "parentUnitId": "packages/sync-core/src/lib/TLSocketRoom.ts__TLSocketRoom#class:TLSocketRoom",
+          "startLine": 948,
+          "endLine": 956,
+          "signature": "close()",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "The underlying room has been closed.",
+            "Every snapshot timer present at the start of the call has been cleared.",
+            "Every registered disposable has been invoked.",
+            "The disposables collection has been cleared."
+          ],
+          "invariants": [
+            "Each snapshot timer is cleared through the room's snapshot-timer cleanup path.",
+            "Each registered disposable is invoked at most once during a successful close call."
+          ],
+          "edgeCases": [
+            "When there are no snapshot timers or disposables, the room is still closed and the method completes without additional cleanup.",
+            "When multiple snapshot timers are present, all timer entries are traversed and cleared.",
+            "When a disposable callback throws, the exception propagates and subsequent cleanup operations are not guaranteed to run."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Any exception thrown by the underlying room close operation, snapshot-timer cleanup, or a disposable callback is propagated."
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Closes the underlying room.",
+            "Clears all snapshot timer state through clearSnapshotTimer.",
+            "Invokes and then clears the disposables collection."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "room.close", "source": "TLSocketRoom.room", "kind": "external" },
+            { "name": "clearSnapshotTimer", "source": "TLSocketRoom", "kind": "internal" },
+            { "name": "disposable callback", "source": "TLSocketRoom.disposables", "kind": "internal" },
+            { "name": "disposables.clear", "source": "TLSocketRoom.disposables", "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Closes the underlying room, cancels all active snapshot timers, and disposes every registered disposable resource. The disposable registry is empty after successful completion.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "close() is called.",
+              "then": "The room is closed, every snapshot timer is cleared, every disposable is invoked, and the disposables collection is empty.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "144ba014d1451c8ac9ad52c6388a862488153465c2cd6f146683de47e5c38e25"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/sync-core/src/lib/TLSyncRoom.ts",
+    "packages/sync-core/src/lib/RoomSession.ts",
+    "packages/sync-core/src/lib/InMemorySyncStorage.ts",
+    "packages/sync-core/src/lib/TLSyncClient.ts",
+    "packages/sync-core/src/lib/TLSyncStorage.ts",
+    "packages/sync-core/src/lib/protocol.ts",
+    "packages/sync-core/src/lib/ServerSocketAdapter.ts",
+    "packages/sync-core/src/lib/chunk.ts"
+  ],
+  "in": [
+    "packages/sync-core/src/test/TLSocketRoom.test.ts",
+    "packages/sync-core/src/lib/TLSyncRoom.ts",
+    "packages/sync-core/src/index.ts"
+  ],
+  "externals": ["@tldraw/store", "@tldraw/tlschema", "@tldraw/utils"],
+  "impact": { "seeds": 9, "callers": 1, "impactedFiles": ["packages/sync-core/src/test/TLSocketRoom.test.ts"] }
+}

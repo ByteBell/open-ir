@@ -1,0 +1,1369 @@
+{
+  "relativePath": "packages/features/ee/round-robin/roundRobinManualReassignment.ts",
+  "language": "typescript",
+  "sha256": "51c5b5ed176edb3ee8afc3dcce6073475f437075f3115fb79fc1d19086842f67",
+  "sizeBytes": 22380,
+  "tokenCount": 5595,
+  "lineCount": 677,
+  "analysedAt": "2026-09-04T07:29:43.089Z",
+  "analysis": {
+    "module": {
+      "purpose": "This file implements manual reassignment of round-robin bookings, coordinating host validation, booking updates, calendar synchronization, audit recording, participant notifications, and workflow migration.",
+      "summary": "The module handles reassignment from one eligible round-robin host to another while preserving booking details and enforcing fixed-host and multi-group constraints. It determines organizer changes, resolves locations and credentials, updates persisted booking or attendee data, records audit information, removes events from the former host, reschedules the event for the replacement host, and sends localized email and SMS notifications. It also migrates scheduled and newly applicable host workflows, including credit-aware reminder scheduling.",
+      "businessContext": "Supports scheduling teams that distribute appointments among rotating hosts. Failure can leave bookings assigned to the wrong person, create calendar conflicts, and prevent attendees or hosts from receiving accurate updates.",
+      "classes": ["ErrorCode (~L48-51): Enumerates validation failures for invalid or fixed round-robin hosts."],
+      "functions": [
+        "roundRobinManualReassignment (~L53-514): Reassigns a scheduled booking host, updates calendars, audits changes, and notifies participants.",
+        "handleWorkflowsUpdate (~L516-674): Rebuilds organizer email reminders and schedules applicable new-event workflows after reassignment."
+      ],
+      "keywords": [
+        "round-robin scheduling",
+        "manual booking reassignment",
+        "calendar event synchronization",
+        "booking audit",
+        "workflow reminders",
+        "conference credentials",
+        "destination calendar",
+        "organizer migration",
+        "idempotency keys",
+        "host attendee"
+      ],
+      "ontologyConcepts": [
+        "Assignment",
+        "Reassignment",
+        "Booking",
+        "Organizer",
+        "Notification",
+        "Workflow",
+        "Audit",
+        "Calendar synchronization"
+      ],
+      "businessEntities": ["Booking", "User", "Event type", "Attendee", "Host", "Workflow", "Calendar", "Organization"],
+      "systemCapabilities": [
+        "Validate eligible replacement hosts",
+        "Update booking ownership",
+        "Synchronize external calendar events",
+        "Record reassignment audit data",
+        "Notify hosts and attendees",
+        "Migrate organizer workflows"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "@calcom/app-store/delegationCredential",
+          "symbols": ["enrichUserWithDelegationCredentialsIncludeServiceAccountKey"],
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          },
+          "resolvedRelativePath": "packages/app-store/delegationCredential.ts",
+          "resolvedFileId": "packages/app-store/delegationCredential.ts",
+          "resolvedHint": "packages/app-store/delegationCredential.ts"
+        },
+        {
+          "spec": "@calcom/app-store/zod-utils",
+          "symbols": ["eventTypeAppMetadataOptionalSchema"],
+          "anchor": {
+            "startLine": 2,
+            "endLine": 2
+          },
+          "resolvedRelativePath": "packages/app-store/zod-utils.ts",
+          "resolvedFileId": "packages/app-store/zod-utils.ts",
+          "resolvedHint": "packages/app-store/zod-utils.ts"
+        },
+        {
+          "spec": "@calcom/emails/email-manager",
+          "symbols": [
+            "sendReassignedEmailsAndSMS",
+            "sendReassignedScheduledEmailsAndSMS",
+            "sendReassignedUpdatedEmailsAndSMS"
+          ],
+          "anchor": {
+            "startLine": 4,
+            "endLine": 6
+          },
+          "resolvedRelativePath": "packages/emails/email-manager.ts",
+          "resolvedFileId": "packages/emails/email-manager.ts",
+          "resolvedHint": "packages/emails/email-manager.ts"
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/makeActor",
+          "symbols": ["makeUserActor"],
+          "anchor": {
+            "startLine": 7,
+            "endLine": 7
+          },
+          "resolvedRelativePath": "packages/features/booking-audit/lib/makeActor.ts",
+          "resolvedFileId": "packages/features/booking-audit/lib/makeActor.ts",
+          "resolvedHint": "packages/features/booking-audit/lib/makeActor.ts"
+        },
+        {
+          "spec": "@calcom/features/booking-audit/lib/types/actionSource",
+          "symbols": ["ValidActionSource"],
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          },
+          "resolvedRelativePath": "packages/features/booking-audit/lib/types/actionSource.ts",
+          "resolvedFileId": "packages/features/booking-audit/lib/types/actionSource.ts",
+          "resolvedHint": "packages/features/booking-audit/lib/types/actionSource.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "symbols": ["getBookingEventHandlerService"],
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          },
+          "resolvedRelativePath": "packages/features/bookings/di/BookingEventHandlerService.container.ts",
+          "resolvedFileId": "packages/features/bookings/di/BookingEventHandlerService.container.ts",
+          "resolvedHint": "packages/features/bookings/di/BookingEventHandlerService.container.ts"
+        },
+        {
+          "spec": "@calcom/features/di/containers/FeaturesRepository",
+          "symbols": ["getFeaturesRepository"],
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          },
+          "resolvedRelativePath": "packages/features/di/containers/FeaturesRepository.ts",
+          "resolvedFileId": "packages/features/di/containers/FeaturesRepository.ts",
+          "resolvedHint": "packages/features/di/containers/FeaturesRepository.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/EventManager",
+          "symbols": ["EventManager"],
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/EventManager.ts",
+          "resolvedFileId": "packages/features/bookings/lib/EventManager.ts",
+          "resolvedHint": "packages/features/bookings/lib/EventManager.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "symbols": ["getAllCredentialsIncludeServiceAccountKey"],
+          "anchor": {
+            "startLine": 12,
+            "endLine": 12
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials.ts",
+          "resolvedHint": "packages/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getBookingResponsesSchema",
+          "symbols": ["getBookingResponsesPartialSchema"],
+          "anchor": {
+            "startLine": 13,
+            "endLine": 13
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/getBookingResponsesSchema.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getBookingResponsesSchema.ts",
+          "resolvedHint": "packages/features/bookings/lib/getBookingResponsesSchema.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getCalEventResponses",
+          "symbols": ["getCalEventResponses"],
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/getCalEventResponses.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getCalEventResponses.ts",
+          "resolvedHint": "packages/features/bookings/lib/getCalEventResponses.ts"
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/handleNewBooking/getEventTypesFromDB",
+          "symbols": ["getEventTypesFromDB"],
+          "anchor": {
+            "startLine": 15,
+            "endLine": 15
+          },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/billing/credit-service",
+          "symbols": ["CreditService"],
+          "anchor": {
+            "startLine": 16,
+            "endLine": 16
+          },
+          "resolvedRelativePath": "packages/features/ee/billing/credit-service.ts",
+          "resolvedFileId": "packages/features/ee/billing/credit-service.ts",
+          "resolvedHint": "packages/features/ee/billing/credit-service.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "symbols": ["getBookerBaseUrl"],
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          },
+          "resolvedRelativePath": "packages/features/ee/organizations/lib/getBookerUrlServer.ts",
+          "resolvedFileId": "packages/features/ee/organizations/lib/getBookerUrlServer.ts",
+          "resolvedHint": "packages/features/ee/organizations/lib/getBookerUrlServer.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder",
+          "symbols": ["AssignmentReasonRecorder", "RRReassignmentType"],
+          "anchor": {
+            "startLine": 18,
+            "endLine": 19
+          },
+          "resolvedRelativePath": "packages/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder.ts",
+          "resolvedHint": "packages/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/round-robin/lib/bookingLocationService",
+          "symbols": ["BookingLocationService"],
+          "anchor": {
+            "startLine": 20,
+            "endLine": 20
+          },
+          "resolvedRelativePath": "packages/features/ee/round-robin/lib/bookingLocationService.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/lib/bookingLocationService.ts",
+          "resolvedHint": "packages/features/ee/round-robin/lib/bookingLocationService.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/reminders/emailReminderManager",
+          "symbols": ["deleteScheduledEmailReminder", "scheduleEmailReminder"],
+          "anchor": {
+            "startLine": 21,
+            "endLine": 23
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts"
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "symbols": ["scheduleWorkflowReminders"],
+          "anchor": {
+            "startLine": 24,
+            "endLine": 24
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts"
+        },
+        {
+          "spec": "@calcom/features/eventtypes/lib/eventNaming",
+          "symbols": ["getEventName"],
+          "anchor": {
+            "startLine": 25,
+            "endLine": 25
+          },
+          "resolvedRelativePath": "packages/features/eventtypes/lib/eventNaming.ts",
+          "resolvedFileId": "packages/features/eventtypes/lib/eventNaming.ts",
+          "resolvedHint": "packages/features/eventtypes/lib/eventNaming.ts"
+        },
+        {
+          "spec": "@calcom/lib/CalEventParser",
+          "symbols": ["getVideoCallUrlFromCalEvent"],
+          "anchor": {
+            "startLine": 26,
+            "endLine": 26
+          },
+          "resolvedRelativePath": "packages/lib/CalEventParser.ts",
+          "resolvedFileId": "packages/lib/CalEventParser.ts",
+          "resolvedHint": "packages/lib/CalEventParser.ts"
+        },
+        {
+          "spec": "@calcom/lib/constants",
+          "symbols": ["SENDER_NAME"],
+          "anchor": {
+            "startLine": 27,
+            "endLine": 27
+          },
+          "resolvedRelativePath": "packages/lib/constants.ts",
+          "resolvedFileId": "packages/lib/constants.ts",
+          "resolvedHint": "packages/lib/constants.ts"
+        },
+        {
+          "spec": "@calcom/lib/idempotencyKey/idempotencyKeyService",
+          "symbols": ["IdempotencyKeyService"],
+          "anchor": {
+            "startLine": 28,
+            "endLine": 28
+          },
+          "resolvedRelativePath": "packages/lib/idempotencyKey/idempotencyKeyService.ts",
+          "resolvedFileId": "packages/lib/idempotencyKey/idempotencyKeyService.ts",
+          "resolvedHint": "packages/lib/idempotencyKey/idempotencyKeyService.ts"
+        },
+        {
+          "spec": "@calcom/lib/isPrismaObj",
+          "symbols": ["isPrismaObjOrUndefined"],
+          "anchor": {
+            "startLine": 29,
+            "endLine": 29
+          },
+          "resolvedRelativePath": "packages/lib/isPrismaObj.ts",
+          "resolvedFileId": "packages/lib/isPrismaObj.ts",
+          "resolvedHint": "packages/lib/isPrismaObj.ts"
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "anchor": {
+            "startLine": 30,
+            "endLine": 30
+          },
+          "resolvedRelativePath": "packages/lib/logger.ts",
+          "resolvedFileId": "packages/lib/logger.ts",
+          "resolvedHint": "packages/lib/logger.ts"
+        },
+        {
+          "spec": "@calcom/lib/server/i18n",
+          "symbols": ["getTranslation"],
+          "anchor": {
+            "startLine": 31,
+            "endLine": 31
+          },
+          "resolvedRelativePath": "packages/lib/server/i18n.ts",
+          "resolvedFileId": "packages/lib/server/i18n.ts",
+          "resolvedHint": "packages/lib/server/i18n.ts"
+        },
+        {
+          "spec": "@calcom/lib/timeFormat",
+          "symbols": ["getTimeFormatStringFromUserTimeFormat"],
+          "anchor": {
+            "startLine": 32,
+            "endLine": 32
+          },
+          "resolvedRelativePath": "packages/lib/timeFormat.ts",
+          "resolvedFileId": "packages/lib/timeFormat.ts",
+          "resolvedHint": "packages/lib/timeFormat.ts"
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "anchor": {
+            "startLine": 33,
+            "endLine": 33
+          },
+          "resolvedRelativePath": "packages/prisma/index.ts",
+          "resolvedFileId": "packages/prisma/index.ts",
+          "resolvedHint": "packages/prisma/index.ts"
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["WorkflowActions", "WorkflowMethods", "WorkflowTriggerEvents"],
+          "anchor": {
+            "startLine": 34,
+            "endLine": 34
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "packages/prisma/enums.ts"
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["EventTypeMetadata", "PlatformClientParams"],
+          "anchor": {
+            "startLine": 35,
+            "endLine": 35
+          },
+          "resolvedRelativePath": "packages/prisma/zod-utils.ts",
+          "resolvedFileId": "packages/prisma/zod-utils.ts",
+          "resolvedHint": "packages/prisma/zod-utils.ts"
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["CalendarEvent"],
+          "anchor": {
+            "startLine": 36,
+            "endLine": 36
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "packages/types/Calendar.ts"
+        },
+        {
+          "spec": "./handleRescheduleEventManager",
+          "symbols": ["handleRescheduleEventManager"],
+          "anchor": {
+            "startLine": 38,
+            "endLine": 38
+          },
+          "resolvedRelativePath": "packages/features/ee/round-robin/handleRescheduleEventManager.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/handleRescheduleEventManager.ts",
+          "resolvedHint": "packages/features/ee/round-robin/handleRescheduleEventManager.ts"
+        },
+        {
+          "spec": "./utils/bookingSelect",
+          "symbols": ["BookingSelectResult", "bookingSelect"],
+          "anchor": {
+            "startLine": 39,
+            "endLine": 40
+          },
+          "resolvedRelativePath": "packages/features/ee/round-robin/utils/bookingSelect.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/utils/bookingSelect.ts",
+          "resolvedHint": "packages/features/ee/round-robin/utils/bookingSelect.ts"
+        },
+        {
+          "spec": "./utils/getDestinationCalendar",
+          "symbols": ["getDestinationCalendar"],
+          "anchor": {
+            "startLine": 41,
+            "endLine": 41
+          },
+          "resolvedRelativePath": "packages/features/ee/round-robin/utils/getDestinationCalendar.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/utils/getDestinationCalendar.ts",
+          "resolvedHint": "packages/features/ee/round-robin/utils/getDestinationCalendar.ts"
+        },
+        {
+          "spec": "./utils/getTeamMembers",
+          "symbols": ["getTeamMembers"],
+          "anchor": {
+            "startLine": 42,
+            "endLine": 42
+          },
+          "resolvedRelativePath": "packages/features/ee/round-robin/utils/getTeamMembers.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/utils/getTeamMembers.ts",
+          "resolvedHint": "packages/features/ee/round-robin/utils/getTeamMembers.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "dayjs",
+          "symbols": ["dayjs"],
+          "package": "dayjs",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "spec": "lodash",
+          "symbols": ["cloneDeep"],
+          "package": "lodash",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 35,
+            "endLine": 35
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads and updates bookings, attendees, credentials, destination calendars, workflow reminders, and workflows through Prisma.",
+          "Writes reassignment audit data through AssignmentReasonRecorder.roundRobinReassignment.",
+          "Logs reassignment initiation and validation failures."
+        ],
+        "network": [
+          "Deletes and reschedules calendar events and meetings through EventManager and handleRescheduleEventManager.",
+          "Sends reassignment emails and SMS notifications.",
+          "Schedules and deletes workflow email reminders."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "booking",
+          "payloadRef": "BookingSelectResult",
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "attendee",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "credential",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "destinationCalendar",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "workflowReminder",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "workflow",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "roundRobinManualReassignment",
+          "shape": "export const roundRobinManualReassignment = async ({ bookingId, newUserId, orgId, reassignReason, reassignedById, emailsEnabled = true, platformClientParams, actionSource, reassignedByUuid }: { bookingId: number; newUserId: number; orgId: number | null; reassignReason?: string; reassignedById: number; emailsEnabled?: boolean; platformClientParams?: PlatformClientParams; actionSource: ValidActionSource; reassignedByUuid: string })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleWorkflowsUpdate",
+          "shape": "export async function handleWorkflowsUpdate({ booking, newUser, evt, eventType, orgId }: { booking: BookingSelectResult; newUser: { id: number; email: string; locale?: string | null }; evt: CalendarEvent; eventType: Awaited<ReturnType<typeof getEventTypesFromDB>>; orgId: number | null })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "BookingSelectResult",
+          "shape": "type BookingSelectResult",
+          "resolvedRelativePath": "packages/features/ee/round-robin/utils/bookingSelect.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/utils/bookingSelect.ts"
+        },
+        {
+          "name": "CalendarEvent",
+          "shape": "type CalendarEvent",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "PlatformClientParams",
+          "shape": "type PlatformClientParams",
+          "resolvedRelativePath": "packages/prisma/zod-utils.ts",
+          "resolvedFileId": "packages/prisma/zod-utils.ts"
+        },
+        {
+          "name": "ValidActionSource",
+          "shape": "type ValidActionSource",
+          "resolvedRelativePath": "packages/features/booking-audit/lib/types/actionSource.ts",
+          "resolvedFileId": "packages/features/booking-audit/lib/types/actionSource.ts"
+        },
+        {
+          "name": "eventTypeAppMetadataOptionalSchema",
+          "shape": "eventTypeAppMetadataOptionalSchema.parse(eventType?.metadata?.apps)",
+          "resolvedRelativePath": "packages/app-store/zod-utils.ts",
+          "resolvedFileId": "packages/app-store/zod-utils.ts"
+        },
+        {
+          "name": "getBookingResponsesPartialSchema",
+          "shape": "getBookingResponsesPartialSchema({ bookingFields: eventType.bookingFields, view: \"reschedule\" })",
+          "resolvedRelativePath": "packages/features/bookings/lib/getBookingResponsesSchema.ts",
+          "resolvedFileId": "packages/features/bookings/lib/getBookingResponsesSchema.ts"
+        },
+        {
+          "name": "getBookingEventHandlerService",
+          "shape": "getBookingEventHandlerService()",
+          "resolvedRelativePath": "packages/features/bookings/di/BookingEventHandlerService.container.ts",
+          "resolvedFileId": "packages/features/bookings/di/BookingEventHandlerService.container.ts"
+        },
+        {
+          "name": "handleRescheduleEventManager",
+          "shape": "handleRescheduleEventManager({ evt, rescheduleUid: booking.uid, newBookingId: undefined, changedOrganizer: hasOrganizerChanged, previousHostDestinationCalendar: previousHostDestinationCalendar ? [previousHostDestinationCalendar] : [], initParams: { user: newUserWithCredentials, eventType }, bookingId, bookingLocation, bookingICalUID: booking.iCalUID, bookingMetadata: booking.metadata })",
+          "resolvedRelativePath": "packages/features/ee/round-robin/handleRescheduleEventManager.ts",
+          "resolvedFileId": "packages/features/ee/round-robin/handleRescheduleEventManager.ts"
+        },
+        {
+          "name": "sendReassignedScheduledEmailsAndSMS",
+          "shape": "sendReassignedScheduledEmailsAndSMS({ calEvent: evtWithoutCancellationReason, members: [...], reassigned: { name: newUser.name, email: newUser.email, reason: reassignReason, byUser: originalOrganizer.name || undefined } })",
+          "resolvedRelativePath": "packages/emails/email-manager.ts",
+          "resolvedFileId": "packages/emails/email-manager.ts"
+        },
+        {
+          "name": "sendReassignedEmailsAndSMS",
+          "shape": "sendReassignedEmailsAndSMS({ calEvent: cancelledEvt, members: [...], reassignedTo: { name: newUser.name, email: newUser.email }, eventTypeMetadata: eventType?.metadata as EventTypeMetadata })",
+          "resolvedRelativePath": "packages/emails/email-manager.ts",
+          "resolvedFileId": "packages/emails/email-manager.ts"
+        },
+        {
+          "name": "sendReassignedUpdatedEmailsAndSMS",
+          "shape": "sendReassignedUpdatedEmailsAndSMS({ calEvent: evtWithoutCancellationReason, eventTypeMetadata: eventType?.metadata as EventTypeMetadata, showAttendees: !!eventType.seatsShowAttendees })",
+          "resolvedRelativePath": "packages/emails/email-manager.ts",
+          "resolvedFileId": "packages/emails/email-manager.ts"
+        },
+        {
+          "name": "scheduleEmailReminder",
+          "shape": "scheduleEmailReminder({ evt: { ...evt, metadata: workflowEventMetadata, eventType, bookerUrl }, action: WorkflowActions.EMAIL_HOST, triggerEvent: workflow.trigger, timeSpan: { time: workflow.time, timeUnit: workflow.timeUnit }, sendTo: [newUser.email], template: workflowStep.template, emailSubject: workflowStep.emailSubject || undefined, emailBody: workflowStep.reminderBody || undefined, sender: workflowStep.sender || SENDER_NAME, hideBranding: true, includeCalendarEvent: workflowStep.includeCalendarEvent, workflowStepId: workflowStep.id, verifiedAt: workflowStep.verifiedAt })",
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts"
+        },
+        {
+          "name": "scheduleWorkflowReminders",
+          "shape": "scheduleWorkflowReminders({ workflows: newEventWorkflows, smsReminderNumber: null, calendarEvent: { ...evt, metadata: workflowEventMetadata, eventType: { slug: eventType.slug }, bookerUrl }, hideBranding: !!eventType?.owner?.hideBranding, creditCheckFn: creditService.hasAvailableCredits.bind(creditService) })",
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "roundRobinManualReassignment",
+          "intent": "Load booking, validate reassignment, and identify round-robin hosts.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 53,
+            "endLine": 181
+          }
+        },
+        {
+          "name": "organizer and attendee reassignment",
+          "intent": "Update the booking organizer or replace the assigned host attendee.",
+          "structureKind": "branch",
+          "predicate": "if (hasOrganizerChanged)",
+          "branchOutcomes": [
+            "organizer changed",
+            "organizer unchanged and current round-robin attendee exists",
+            "neither condition applies"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 183,
+            "endLine": 257
+          }
+        },
+        {
+          "name": "reassignment audit and destination calendar",
+          "intent": "Record reassignment audit data and determine the destination calendar.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 259,
+            "endLine": 308
+          }
+        },
+        {
+          "name": "calendar event construction",
+          "intent": "Build the calendar event and attendee list for rescheduling.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 310,
+            "endLine": 375
+          }
+        },
+        {
+          "name": "calendar deletion and rescheduling",
+          "intent": "Load credentials, remove the old event, and reschedule the booking.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 377,
+            "endLine": 443
+          }
+        },
+        {
+          "name": "notifications and workflow update",
+          "intent": "Send reassignment notifications and update workflows after organizer changes.",
+          "structureKind": "branch",
+          "predicate": "if (emailsEnabled)",
+          "branchOutcomes": ["emails enabled", "emails disabled"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 445,
+            "endLine": 511
+          }
+        },
+        {
+          "name": "handleWorkflowsUpdate",
+          "intent": "Find scheduled host reminders and prepare replacement workflow scheduling.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 516,
+            "endLine": 580
+          }
+        },
+        {
+          "name": "workflow reminder processing",
+          "intent": "Reschedule existing reminders and schedule new-event workflow reminders.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const workflowReminder of workflowReminders)",
+          "terminationCondition": "for (const workflowReminder of workflowReminders)",
+          "anchor": {
+            "startLine": 581,
+            "endLine": 673
+          }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "enum",
+          "name": "ErrorCode",
+          "signature": "enum ErrorCode {\n  InvalidRoundRobinHost = \"invalid_round_robin_host\",\n  UserIsFixed = \"user_is_round_robin_fixed\",\n}",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 51
+          }
+        },
+        {
+          "kind": "function",
+          "name": "roundRobinManualReassignment",
+          "signature": "export const roundRobinManualReassignment = async ({\n  bookingId,\n  newUserId,\n  orgId,\n  reassignReason,\n  reassignedById,\n  emailsEnabled = true,\n  platformClientParams,\n  actionSource,\n  reassignedByUuid,\n}: {\n  bookingId: number;\n  newUserId: number;\n  orgId: number | null;\n  reassignReason?: string;\n  reassignedById: number;\n  emailsEnabled?: boolean;\n  platformClientParams?: PlatformClientParams;\n  actionSource: ValidActionSource;\n  reassignedByUuid: string;\n}) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 53,
+            "endLine": 73
+          }
+        },
+        {
+          "kind": "function",
+          "name": "handleWorkflowsUpdate",
+          "signature": "export async function handleWorkflowsUpdate({\n  booking,\n  newUser,\n  evt,\n  eventType,\n  orgId,\n}: {\n  booking: BookingSelectResult;\n  newUser: {\n    id: number;\n    email: string;\n    locale?: string | null;\n  };\n  evt: CalendarEvent;\n  eventType: Awaited<ReturnType<typeof getEventTypesFromDB>>;\n  orgId: number | null;\n}) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 516,
+            "endLine": 532
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "enum",
+          "name": "ErrorCode",
+          "shape": "{\n  InvalidRoundRobinHost = \"invalid_round_robin_host\",\n  UserIsFixed = \"user_is_round_robin_fixed\",\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 51
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "booking is missing or has no associated user",
+          "handled": true,
+          "behavior": "Logs an error and throws Error(\"Booking not found or has no associated user\").",
+          "anchor": {
+            "startLine": 85,
+            "endLine": 88
+          }
+        },
+        {
+          "inputShape": "booking has no eventTypeId",
+          "handled": true,
+          "behavior": "Logs an error and throws Error(\"Event type not found\").",
+          "anchor": {
+            "startLine": 90,
+            "endLine": 94
+          }
+        },
+        {
+          "inputShape": "event type cannot be loaded",
+          "handled": true,
+          "behavior": "Logs an error and throws Error(\"Event type not found\").",
+          "anchor": {
+            "startLine": 96,
+            "endLine": 100
+          }
+        },
+        {
+          "inputShape": "event type has more than one round-robin host group",
+          "handled": true,
+          "behavior": "Logs an error and throws Error(\"Reassignment not allowed with more than one round robin group\").",
+          "anchor": {
+            "startLine": 102,
+            "endLine": 107
+          }
+        },
+        {
+          "inputShape": "newUserId is not an event-type host",
+          "handled": true,
+          "behavior": "Throws Error(ErrorCode.InvalidRoundRobinHost).",
+          "anchor": {
+            "startLine": 137,
+            "endLine": 141
+          }
+        },
+        {
+          "inputShape": "newUserId identifies a fixed host",
+          "handled": true,
+          "behavior": "Throws Error(ErrorCode.UserIsFixed).",
+          "anchor": {
+            "startLine": 143,
+            "endLine": 145
+          }
+        },
+        {
+          "inputShape": "booking responses do not satisfy the reschedule response schema",
+          "handled": true,
+          "behavior": "Uses undefined responses and falls back to \"Nameless\" when constructing the new booking title.",
+          "anchor": {
+            "startLine": 184,
+            "endLine": 190
+          }
+        },
+        {
+          "inputShape": "emailsEnabled is false",
+          "handled": true,
+          "behavior": "Skips reassignment, previous-host, and future-attendee email/SMS notifications.",
+          "anchor": {
+            "startLine": 445,
+            "endLine": 501
+          }
+        },
+        {
+          "inputShape": "organizer changed and event start is not after the current time",
+          "handled": true,
+          "behavior": "Skips updated attendee email/SMS notifications but still updates workflows.",
+          "anchor": {
+            "startLine": 493,
+            "endLine": 511
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "Error(\"Booking not found or has no associated user\")",
+          "caught": null,
+          "action": "Logs the missing booking or user and aborts reassignment.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 85,
+            "endLine": 88
+          }
+        },
+        {
+          "thrown": "Error(\"Event type not found\")",
+          "caught": null,
+          "action": "Logs the missing event type identifier and aborts reassignment.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 90,
+            "endLine": 94
+          }
+        },
+        {
+          "thrown": "Error(\"Event type not found\")",
+          "caught": null,
+          "action": "Logs the unavailable event type and aborts reassignment.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 96,
+            "endLine": 100
+          }
+        },
+        {
+          "thrown": "Error(\"Reassignment not allowed with more than one round robin group\")",
+          "caught": null,
+          "action": "Logs the unsupported event-type configuration and aborts reassignment.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 102,
+            "endLine": 107
+          }
+        },
+        {
+          "thrown": "Error(ErrorCode.InvalidRoundRobinHost)",
+          "caught": null,
+          "action": "Aborts reassignment because the target user is not a configured host.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 137,
+            "endLine": 141
+          }
+        },
+        {
+          "thrown": "Error(ErrorCode.UserIsFixed)",
+          "caught": null,
+          "action": "Aborts reassignment because the target user is fixed.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 143,
+            "endLine": 145
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "eventType.metadata.apps is parseable by eventTypeAppMetadataOptionalSchema.",
+          "anchor": {
+            "startLine": 392,
+            "endLine": 392
+          }
+        },
+        {
+          "kind": "caller",
+          "description": "The caller supplies a valid reassignedByUuid and actionSource for audit recording.",
+          "anchor": {
+            "startLine": 265,
+            "endLine": 289
+          }
+        },
+        {
+          "kind": "config",
+          "description": "The target user is expected to be represented in eventType.hosts or eventType.users.",
+          "anchor": {
+            "startLine": 109,
+            "endLine": 120
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Booking attendees contain email values used to identify the current round-robin host.",
+          "anchor": {
+            "startLine": 127,
+            "endLine": 136
+          }
+        },
+        {
+          "kind": "env",
+          "description": "Translation lookup falls back to the \"en\" locale when a user locale is absent.",
+          "anchor": {
+            "startLine": 150,
+            "endLine": 151
+          }
+        }
+      ],
+      "ambiguities": [],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-missing-booking",
+          "scenario": "A reassignment is requested for a booking that does not exist or has no associated user.",
+          "given": ["prisma.booking.findUnique({ where: { id: bookingId }, select: bookingSelect }) returns null"],
+          "when": "roundRobinManualReassignment({ bookingId, newUserId, orgId, reassignedById, actionSource, reassignedByUuid })",
+          "then": "the call rejects with Error(\"Booking not found or has no associated user\")",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the required booking precondition."
+        },
+        {
+          "testId": "rejects-fixed-round-robin-host",
+          "scenario": "A reassignment targets a host marked as fixed in the event type.",
+          "given": ["newUserHost.isFixed === true"],
+          "when": "roundRobinManualReassignment({ bookingId, newUserId, orgId, reassignedById, actionSource, reassignedByUuid })",
+          "then": "the call rejects with Error(\"user_is_round_robin_fixed\")",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents reassignment to hosts explicitly excluded from round-robin rotation."
+        },
+        {
+          "testId": "updates-organizer-on-host-change",
+          "scenario": "A valid reassignment changes the booking organizer.",
+          "given": ["hasOrganizerChanged === true", "emailsEnabled === false"],
+          "when": "roundRobinManualReassignment({ bookingId, newUserId, orgId, reassignedById, actionSource, reassignedByUuid, emailsEnabled: false })",
+          "then": "the booking is updated with userId: newUserId and the reassignment audit handler is called with reassignmentType: \"manual\"",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the core organizer-change and audit behavior."
+        },
+        {
+          "testId": "reschedules-host-workflows",
+          "scenario": "A reassigned booking has scheduled host workflow reminders and matching new-event workflows.",
+          "given": [
+            "workflowReminders contains scheduled EMAIL_HOST reminders",
+            "newEventWorkflows contains workflows with trigger: WorkflowTriggerEvents.NEW_EVENT"
+          ],
+          "when": "handleWorkflowsUpdate({ booking, newUser, evt, eventType, orgId })",
+          "then": "existing reminders are rescheduled to newUser.email, deleted, and new-event workflow reminders are scheduled",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures workflow ownership follows the new organizer."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "enum ErrorCode",
+        "const roundRobinManualReassignment",
+        "function handleWorkflowsUpdate",
+        "default export roundRobinManualReassignment"
+      ],
+      "moduleLevelCode": "import { enrichUserWithDelegationCredentialsIncludeServiceAccountKey } from \"@calcom/app-store/delegationCredential\";\nimport { eventTypeAppMetadataOptionalSchema } from \"@calcom/app-store/zod-utils\";\nimport dayjs from \"@calcom/dayjs\";\nimport {\n  sendReassignedEmailsAndSMS,\n  sendReassignedScheduledEmailsAndSMS,\n  sendReassignedUpdatedEmailsAndSMS,\n} from \"@calcom/emails/email-manager\";\nimport { makeUserActor } from \"@calcom/features/booking-audit/lib/makeActor\";\nimport type { ValidActionSource } from \"@calcom/features/booking-audit/lib/types/actionSource\";\nimport { getBookingEventHandlerService } from \"@calcom/features/bookings/di/BookingEventHandlerService.container\";\nimport { getFeaturesRepository } from \"@calcom/features/di/containers/FeaturesRepository\";\nimport EventManager from \"@calcom/features/bookings/lib/EventManager\";\nimport { getAllCredentialsIncludeServiceAccountKey } from \"@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials\";\nimport { getBookingResponsesPartialSchema } from \"@calcom/features/bookings/lib/getBookingResponsesSchema\";\nimport { getCalEventResponses } from \"@calcom/features/bookings/lib/getCalEventResponses\";\nimport { getEventTypesFromDB } from \"@calcom/features/bookings/lib/handleNewBooking/getEventTypesFromDB\";\nimport { CreditService } from \"@calcom/features/ee/billing/credit-service\";\nimport { getBookerBaseUrl } from \"@calcom/features/ee/organizations/lib/getBookerUrlServer\";\nimport AssignmentReasonRecorder, {\n  RRReassignmentType,\n} from \"@calcom/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder\";\nimport { BookingLocationService } from \"@calcom/features/ee/round-robin/lib/bookingLocationService\";\nimport {\n  deleteScheduledEmailReminder,\n  scheduleEmailReminder,\n} from \"@calcom/features/ee/workflows/lib/reminders/emailReminderManager\";\nimport { scheduleWorkflowReminders } from \"@calcom/features/ee/workflows/lib/reminders/reminderScheduler\";\nimport { getEventName } from \"@calcom/features/eventtypes/lib/eventNaming\";\nimport { getVideoCallUrlFromCalEvent } from \"@calcom/lib/CalEventParser\";\nimport { SENDER_NAME } from \"@calcom/lib/constants\";\nimport { IdempotencyKeyService } from \"@calcom/lib/idempotencyKey/idempotencyKeyService\";\nimport { isPrismaObjOrUndefined } from \"@calcom/lib/isPrismaObj\";\nimport logger from \"@calcom/lib/logger\";\nimport { getTranslation } from \"@calcom/lib/server/i18n\";\nimport { getTimeFormatStringFromUserTimeFormat } from \"@calcom/lib/timeFormat\";\nimport { prisma } from \"@calcom/prisma\";\nimport { WorkflowActions, WorkflowMethods, WorkflowTriggerEvents } from \"@calcom/prisma/enums\";\nimport type { EventTypeMetadata, PlatformClientParams } from \"@calcom/prisma/zod-utils\";\nimport type { CalendarEvent } from \"@calcom/types/Calendar\";\nimport { cloneDeep } from \"lodash\";\nimport { handleRescheduleEventManager } from \"./handleRescheduleEventManager\";\nimport type { BookingSelectResult } from \"./utils/bookingSelect\";\nimport { bookingSelect } from \"./utils/bookingSelect\";\nimport { getDestinationCalendar } from \"./utils/getDestinationCalendar\";\nimport { getTeamMembers } from \"./utils/getTeamMembers\";",
+      "exports": [
+        {
+          "name": "roundRobinManualReassignment",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "handleWorkflowsUpdate",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "roundRobinManualReassignment",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": "default"
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "enrichUserWithDelegationCredentialsIncludeServiceAccountKey",
+          "module": "@calcom/app-store/delegationCredential",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "eventTypeAppMetadataOptionalSchema",
+          "module": "@calcom/app-store/zod-utils",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "dayjs",
+          "module": "dayjs",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "sendReassignedEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "sendReassignedScheduledEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "sendReassignedUpdatedEmailsAndSMS",
+          "module": "@calcom/emails/email-manager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "makeUserActor",
+          "module": "@calcom/features/booking-audit/lib/makeActor",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "ValidActionSource",
+          "module": "@calcom/features/booking-audit/lib/types/actionSource",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBookingEventHandlerService",
+          "module": "@calcom/features/bookings/di/BookingEventHandlerService.container",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getFeaturesRepository",
+          "module": "@calcom/features/di/containers/FeaturesRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventManager",
+          "module": "@calcom/features/bookings/lib/EventManager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getAllCredentialsIncludeServiceAccountKey",
+          "module": "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBookingResponsesPartialSchema",
+          "module": "@calcom/features/bookings/lib/getBookingResponsesSchema",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getCalEventResponses",
+          "module": "@calcom/features/bookings/lib/getCalEventResponses",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getEventTypesFromDB",
+          "module": "@calcom/features/bookings/lib/handleNewBooking/getEventTypesFromDB",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "CreditService",
+          "module": "@calcom/features/ee/billing/credit-service",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBookerBaseUrl",
+          "module": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "AssignmentReasonRecorder",
+          "module": "@calcom/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "RRReassignmentType",
+          "module": "@calcom/features/ee/round-robin/assignmentReason/AssignmentReasonRecorder",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "BookingLocationService",
+          "module": "@calcom/features/ee/round-robin/lib/bookingLocationService",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "deleteScheduledEmailReminder",
+          "module": "@calcom/features/ee/workflows/lib/reminders/emailReminderManager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "scheduleEmailReminder",
+          "module": "@calcom/features/ee/workflows/lib/reminders/emailReminderManager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "scheduleWorkflowReminders",
+          "module": "@calcom/features/ee/workflows/lib/reminders/reminderScheduler",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getEventName",
+          "module": "@calcom/features/eventtypes/lib/eventNaming",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getVideoCallUrlFromCalEvent",
+          "module": "@calcom/lib/CalEventParser",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "SENDER_NAME",
+          "module": "@calcom/lib/constants",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "IdempotencyKeyService",
+          "module": "@calcom/lib/idempotencyKey/idempotencyKeyService",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "isPrismaObjOrUndefined",
+          "module": "@calcom/lib/isPrismaObj",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTranslation",
+          "module": "@calcom/lib/server/i18n",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTimeFormatStringFromUserTimeFormat",
+          "module": "@calcom/lib/timeFormat",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowActions",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowMethods",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowTriggerEvents",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EventTypeMetadata",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "PlatformClientParams",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "CalendarEvent",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "cloneDeep",
+          "module": "lodash",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "handleRescheduleEventManager",
+          "module": "./handleRescheduleEventManager",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "BookingSelectResult",
+          "module": "./utils/bookingSelect",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "bookingSelect",
+          "module": "./utils/bookingSelect",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getDestinationCalendar",
+          "module": "./utils/getDestinationCalendar",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTeamMembers",
+          "module": "./utils/getTeamMembers",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/ee/round-robin/roundRobinManualReassignment.ts__ErrorCode_1#enum:ErrorCode",
+        "unitKind": "enum",
+        "name": "ErrorCode",
+        "qualifiedName": "ErrorCode",
+        "parentUnitId": null,
+        "startLine": 48,
+        "endLine": 51,
+        "isBehavioral": false,
+        "source": "enum ErrorCode {\n  InvalidRoundRobinHost = \"invalid_round_robin_host\",\n  UserIsFixed = \"user_is_round_robin_fixed\",\n}"
+      },
+      {
+        "unitId": "packages/features/ee/round-robin/roundRobinManualReassignment.ts__roundRobinManualReassignment_2#function:roundRobinManualReassignment",
+        "unitKind": "function",
+        "name": "roundRobinManualReassignment",
+        "qualifiedName": "roundRobinManualReassignment",
+        "parentUnitId": null,
+        "startLine": 53,
+        "endLine": 514,
+        "isBehavioral": true,
+        "source": "export const roundRobinManualReassignment = async ({\n  bookingId,\n  newUserId,\n  orgId,\n  reassignReason,\n  reassignedById,\n  emailsEnabled = true,\n  platformClientParams,\n  actionSource,\n  reassignedByUuid,\n}: {\n  bookingId: number;\n  newUserId: number;\n  orgId: number | null;\n  reassignReason?: string;\n  reassignedById: number;\n  emailsEnabled?: boolean;\n  platformClientParams?: PlatformClientParams;\n  actionSource: ValidActionSource;\n  reassignedByUuid: string;\n}) => {\n  const roundRobinReassignLogger = logger.getSubLogger({\n    prefix: [\"roundRobinManualReassign\", `${bookingId}`],\n  });\n\n  roundRobinReassignLogger.info(`User ${reassignedById} initiating manual reassignment to user ${newUserId}`);\n\n  let booking = await prisma.booking.findUnique({\n    where: { id: bookingId },\n    select: bookingSelect,\n  });\n\n  if (!booking || !booking.user) {\n    roundRobinReassignLogger.error(`Booking ${bookingId} not found or has no associated user`);\n    throw new Error(\"Booking not found or has no associated user\");\n  }\n\n  const eventTypeId = booking.eventTypeId;\n  if (!eventTypeId) {\n    roundRobinReassignLogger.error(`Booking ${bookingId} does not have an event type id`);\n    throw new Error(\"Event type not found\");\n  }\n\n  const eventType = await getEventTypesFromDB(eventTypeId);\n  if (!eventType) {\n    roundRobinReassignLogger.error(`Event type ${eventTypeId} not found`);\n    throw new Error(\"Event type not found\");\n  }\n\n  if (eventType.hostGroups && eventType.hostGroups.length > 1) {\n    roundRobinReassignLogger.error(\n      `Event type ${eventTypeId} has more than one round robin group, reassignment is not allowed`\n    );\n    throw new Error(\"Reassignment not allowed with more than one round robin group\");\n  }\n\n  const eventTypeHosts = eventType.hosts.length\n    ? eventType.hosts\n    : eventType.users.map((user) => ({\n        user,\n        isFixed: false,\n        priority: 2,\n        weight: 100,\n        schedule: null,\n        createdAt: new Date(0), // use earliest possible date as fallback\n        groupId: null,\n        location: null,\n      }));\n\n  const fixedHost = eventTypeHosts.find((host) => host.isFixed);\n\n  let currentRRHostUserUuid = null;\n  let attendeeUpdatedId = null;\n\n  const currentRRHostAttendee = booking.attendees.find((attendee) => {\n    const matchingEventTypeHost = eventTypeHosts.find(\n      (host) => !host.isFixed && host.user.email === attendee.email\n    );\n    if (matchingEventTypeHost) {\n      currentRRHostUserUuid = matchingEventTypeHost.user.uuid;\n      return true;\n    }\n    return false;\n  });\n  const newUserHost = eventTypeHosts.find((host) => host.user.id === newUserId);\n\n  if (!newUserHost) {\n    throw new Error(ErrorCode.InvalidRoundRobinHost);\n  }\n\n  if (newUserHost.isFixed) {\n    throw new Error(ErrorCode.UserIsFixed);\n  }\n\n  const originalOrganizer = booking.user;\n  const hasOrganizerChanged = !fixedHost && booking.userId !== newUserId;\n  const newUser = newUserHost.user;\n  const newUserT = await getTranslation(newUser.locale || \"en\", \"common\");\n  const originalOrganizerT = await getTranslation(originalOrganizer.locale || \"en\", \"common\");\n\n  const roundRobinHosts = eventType.hosts.filter((host) => !host.isFixed);\n\n  const attendeeEmailsSet = new Set(booking.attendees.map((attendee) => attendee.email));\n\n  // Find the current round robin host assigned\n  const previousRRHost = (() => {\n    for (const host of roundRobinHosts) {\n      if (host.user.id === booking.userId) {\n        return host.user;\n      }\n      if (attendeeEmailsSet.has(host.user.email)) {\n        return host.user;\n      }\n    }\n  })();\n\n  const previousRRHostT = await getTranslation(previousRRHost?.locale || \"en\", \"common\");\n  let bookingLocation = booking.location;\n  let conferenceCredentialId: number | null = null;\n\n  const organizer = hasOrganizerChanged ? newUser : (booking.user ?? newUser);\n\n  const teamMembers = await getTeamMembers({\n    eventTypeHosts,\n    attendees: booking.attendees,\n    organizer,\n    previousHost: previousRRHost || null,\n    reassignedHost: newUser,\n  });\n\n  if (hasOrganizerChanged) {\n    const bookingResponses = booking.responses;\n    const responseSchema = getBookingResponsesPartialSchema({\n      bookingFields: eventType.bookingFields,\n      view: \"reschedule\",\n    });\n    const responseSafeParse = await responseSchema.safeParseAsync(bookingResponses);\n    const responses = responseSafeParse.success ? responseSafeParse.data : undefined;\n\n    // Determine the location for the new host\n    const isManagedEventType = !!eventType.parentId;\n    const isTeamEventType = !!eventType.teamId;\n\n    const locationResult = BookingLocationService.getLocationForHost({\n      hostMetadata: newUser.metadata,\n      eventTypeLocations: eventType.locations,\n      isManagedEventType,\n      isTeamEventType,\n    });\n\n    bookingLocation = locationResult.bookingLocation;\n    if (locationResult.requiresActualLink) {\n      conferenceCredentialId = locationResult.conferenceCredentialId;\n    }\n\n    const newBookingTitle = getEventName({\n      attendeeName: responses?.name || \"Nameless\",\n      eventType: eventType.title,\n      eventName: eventType.eventName,\n      // we send on behalf of team if >1 round robin attendee | collective\n      teamName: teamMembers.length > 1 ? eventType.team?.name : null,\n      host: newUser.name || \"Nameless\",\n      location: bookingLocation || \"integrations:daily\",\n      bookingFields: { ...responses },\n      eventDuration: dayjs(booking.endTime).diff(booking.startTime, \"minutes\"),\n      t: newUserT,\n    });\n\n    booking = await prisma.booking.update({\n      where: { id: bookingId },\n      data: {\n        userId: newUserId,\n        title: newBookingTitle,\n        userPrimaryEmail: newUser.email,\n        reassignReason,\n        reassignById: reassignedById,\n        idempotencyKey: IdempotencyKeyService.generate({\n          startTime: booking.startTime,\n          endTime: booking.endTime,\n          userId: newUser.id,\n          reassignedById,\n        }),\n      },\n      select: bookingSelect,\n    });\n\n    await AssignmentReasonRecorder.roundRobinReassignment({\n      bookingId,\n      reassignReason,\n      reassignById: reassignedById,\n      reassignmentType: RRReassignmentType.MANUAL,\n    });\n  } else if (currentRRHostAttendee) {\n    // Update the round-robin host attendee\n    await prisma.attendee.update({\n      where: { id: currentRRHostAttendee.id },\n      data: {\n        name: newUser.name || \"\",\n        email: newUser.email,\n        timeZone: newUser.timeZone,\n        locale: newUser.locale,\n      },\n    });\n    attendeeUpdatedId = currentRRHostAttendee.id;\n  }\n\n  const bookingEventHandlerService = getBookingEventHandlerService();\n  const featuresRepository = getFeaturesRepository();\n  const isBookingAuditEnabled = orgId\n    ? await featuresRepository.checkIfTeamHasFeature(orgId, \"booking-audit\")\n    : false;\n\n  await bookingEventHandlerService.onReassignment({\n    bookingUid: booking.uid,\n    actor: makeUserActor(reassignedByUuid),\n    organizationId: orgId,\n    source: actionSource,\n    auditData: {\n      ...(hasOrganizerChanged\n        ? { organizerUuid: { old: originalOrganizer.uuid, new: newUser.uuid } }\n        : null),\n      ...(attendeeUpdatedId\n        ? {\n            hostAttendeeUpdated: {\n              id: attendeeUpdatedId,\n              withUserUuid: {\n                old: currentRRHostUserUuid,\n                new: newUser.uuid,\n              },\n            },\n          }\n        : null),\n      reassignmentReason: reassignReason ?? null,\n      reassignmentType: \"manual\",\n    },\n    isBookingAuditEnabled,\n  });\n\n  // When organizer hasn't changed, still extract conferenceCredentialId from event type locations\n  if (!hasOrganizerChanged && bookingLocation) {\n    const { conferenceCredentialId: extractedCredentialId } =\n      BookingLocationService.getLocationDetailsFromType({\n        locationType: bookingLocation,\n        eventTypeLocations: eventType.locations || [],\n      });\n    if (extractedCredentialId) {\n      conferenceCredentialId = extractedCredentialId;\n    }\n  }\n\n  const destinationCalendar = await getDestinationCalendar({\n    eventType,\n    booking,\n    newUserId,\n    hasOrganizerChanged,\n  });\n\n  const organizerT = await getTranslation(organizer?.locale || \"en\", \"common\");\n  const attendeePromises = [];\n  for (const attendee of booking.attendees) {\n    if (\n      attendee.email === newUser.email ||\n      attendee.email === previousRRHost?.email ||\n      teamMembers.some((member) => member.email === attendee.email)\n    ) {\n      continue;\n    }\n\n    attendeePromises.push(\n      getTranslation(attendee.locale ?? \"en\", \"common\").then((tAttendee) => ({\n        email: attendee.email,\n        name: attendee.name,\n        timeZone: attendee.timeZone,\n        language: { translate: tAttendee, locale: attendee.locale ?? \"en\" },\n        phoneNumber: attendee.phoneNumber || undefined,\n      }))\n    );\n  }\n\n  const attendeeList = await Promise.all(attendeePromises);\n\n  const evt: CalendarEvent = {\n    type: eventType.slug,\n    title: booking.title,\n    description: eventType.description,\n    startTime: dayjs(booking.startTime).utc().format(),\n    endTime: dayjs(booking.endTime).utc().format(),\n    organizer: {\n      email: organizer.email,\n      name: organizer.name || \"\",\n      timeZone: organizer.timeZone,\n      language: { translate: organizerT, locale: organizer.locale || \"en\" },\n    },\n    attendees: attendeeList,\n    uid: booking.uid,\n    iCalUID: booking.iCalUID,\n    destinationCalendar,\n    team: {\n      members: teamMembers,\n      name: eventType.team?.name || \"\",\n      id: eventType.team?.id || 0,\n    },\n    schedulingType: eventType.schedulingType,\n    hideOrganizerEmail: eventType.hideOrganizerEmail,\n    customInputs: isPrismaObjOrUndefined(booking.customInputs),\n    ...getCalEventResponses({\n      bookingFields: eventType.bookingFields ?? null,\n      booking,\n    }),\n    customReplyToEmail: eventType?.customReplyToEmail,\n    location: bookingLocation,\n    ...(platformClientParams ? platformClientParams : {}),\n    conferenceCredentialId: conferenceCredentialId ?? undefined,\n    organizationId: orgId,\n    seatsPerTimeSlot: eventType.seatsPerTimeSlot,\n  };\n\n  if (hasOrganizerChanged) {\n    // location might changed and will be new created in eventManager.create (organizer default location)\n    evt.videoCallData = undefined;\n    // To prevent \"The requested identifier already exists\" error while updating event, we need to remove iCalUID\n    evt.iCalUID = undefined;\n  }\n\n  const credentials = await prisma.credential.findMany({\n    where: { userId: newUser.id },\n    include: { user: { select: { email: true } } },\n  });\n\n  const newUserWithCredentials = await enrichUserWithDelegationCredentialsIncludeServiceAccountKey({\n    user: { ...newUser, credentials },\n  });\n\n  const previousHostDestinationCalendar = hasOrganizerChanged\n    ? await prisma.destinationCalendar.findFirst({\n        where: { userId: originalOrganizer.id },\n      })\n    : null;\n\n  const apps = eventTypeAppMetadataOptionalSchema.parse(eventType?.metadata?.apps);\n\n  // remove the event and meeting using the old host's credentials\n  if (hasOrganizerChanged && originalOrganizer.id !== newUser.id) {\n    const previousHostCredentials = await getAllCredentialsIncludeServiceAccountKey(\n      originalOrganizer,\n      eventType\n    );\n\n    const originalHostEventManager = new EventManager(\n      { ...originalOrganizer, credentials: previousHostCredentials },\n      apps\n    );\n\n    const deletionEvent: CalendarEvent = {\n      ...evt,\n      organizer: {\n        id: originalOrganizer.id,\n        name: originalOrganizer.name || \"\",\n        email: originalOrganizer.email,\n        username: originalOrganizer.username || undefined,\n        timeZone: originalOrganizer.timeZone,\n        language: { translate: originalOrganizerT, locale: originalOrganizer.locale ?? \"en\" },\n        timeFormat: getTimeFormatStringFromUserTimeFormat(originalOrganizer.timeFormat),\n      },\n      destinationCalendar: previousHostDestinationCalendar ? [previousHostDestinationCalendar] : [],\n      title: booking.title,\n    };\n\n    await originalHostEventManager.deleteEventsAndMeetings({\n      event: deletionEvent,\n      bookingReferences: booking.references,\n    });\n  }\n\n  const { evtWithAdditionalInfo } = await handleRescheduleEventManager({\n    evt,\n    rescheduleUid: booking.uid,\n    newBookingId: undefined,\n    changedOrganizer: hasOrganizerChanged,\n    previousHostDestinationCalendar: previousHostDestinationCalendar ? [previousHostDestinationCalendar] : [],\n    initParams: {\n      user: newUserWithCredentials,\n      eventType,\n    },\n    bookingId,\n    bookingLocation,\n    bookingICalUID: booking.iCalUID,\n    bookingMetadata: booking.metadata,\n  });\n\n  const { cancellationReason: _cancellationReason, ...evtWithoutCancellationReason } = evtWithAdditionalInfo;\n\n  // Send emails\n  if (emailsEnabled) {\n    await sendReassignedScheduledEmailsAndSMS({\n      calEvent: evtWithoutCancellationReason,\n      members: [\n        {\n          ...newUser,\n          name: newUser.name || \"\",\n          username: newUser.username || \"\",\n          timeFormat: getTimeFormatStringFromUserTimeFormat(newUser.timeFormat),\n          language: { translate: newUserT, locale: newUser.locale || \"en\" },\n        },\n      ],\n      reassigned: {\n        name: newUser.name,\n        email: newUser.email,\n        reason: reassignReason,\n        byUser: originalOrganizer.name || undefined,\n      },\n    });\n  }\n\n  // Send cancellation email to previous RR host\n  const cancelledEvt = cloneDeep(evtWithAdditionalInfo);\n  cancelledEvt.organizer = {\n    email: originalOrganizer.email,\n    name: originalOrganizer.name || \"\",\n    timeZone: originalOrganizer.timeZone,\n    language: { translate: originalOrganizerT, locale: originalOrganizer.locale || \"en\" },\n  };\n\n  if (previousRRHost && emailsEnabled) {\n    await sendReassignedEmailsAndSMS({\n      calEvent: cancelledEvt,\n      members: [\n        {\n          ...previousRRHost,\n          name: previousRRHost.name || \"\",\n          username: previousRRHost.username || \"\",\n          timeFormat: getTimeFormatStringFromUserTimeFormat(previousRRHost.timeFormat),\n          language: { translate: previousRRHostT, locale: previousRRHost.locale || \"en\" },\n        },\n      ],\n      reassignedTo: { name: newUser.name, email: newUser.email },\n      eventTypeMetadata: eventType?.metadata as EventTypeMetadata,\n    });\n  }\n\n  if (hasOrganizerChanged) {\n    if (emailsEnabled && dayjs(evt.startTime).isAfter(dayjs())) {\n      // send email with event updates to attendees\n      await sendReassignedUpdatedEmailsAndSMS({\n        calEvent: evtWithoutCancellationReason,\n        eventTypeMetadata: eventType?.metadata as EventTypeMetadata,\n        showAttendees: !!eventType.seatsShowAttendees,\n      });\n    }\n\n    // Handle changing workflows with organizer\n    await handleWorkflowsUpdate({\n      booking,\n      newUser,\n      evt: evtWithAdditionalInfo,\n      eventType,\n      orgId,\n    });\n  }\n\n  return booking;\n};"
+      },
+      {
+        "unitId": "packages/features/ee/round-robin/roundRobinManualReassignment.ts__handleWorkflowsUpdate_3#function:handleWorkflowsUpdate",
+        "unitKind": "function",
+        "name": "handleWorkflowsUpdate",
+        "qualifiedName": "handleWorkflowsUpdate",
+        "parentUnitId": null,
+        "startLine": 516,
+        "endLine": 674,
+        "isBehavioral": true,
+        "source": "export async function handleWorkflowsUpdate({\n  booking,\n  newUser,\n  evt,\n  eventType,\n  orgId,\n}: {\n  booking: BookingSelectResult;\n  newUser: {\n    id: number;\n    email: string;\n    locale?: string | null;\n  };\n  evt: CalendarEvent;\n  eventType: Awaited<ReturnType<typeof getEventTypesFromDB>>;\n  orgId: number | null;\n}) {\n  const workflowReminders = await prisma.workflowReminder.findMany({\n    where: {\n      bookingUid: booking.uid,\n      method: WorkflowMethods.EMAIL,\n      scheduled: true,\n      OR: [{ cancelled: false }, { cancelled: null }],\n      workflowStep: {\n        action: WorkflowActions.EMAIL_HOST,\n        workflow: {\n          trigger: {\n            in: [\n              WorkflowTriggerEvents.BEFORE_EVENT,\n              WorkflowTriggerEvents.NEW_EVENT,\n              WorkflowTriggerEvents.AFTER_EVENT,\n            ],\n          },\n        },\n      },\n    },\n    select: {\n      id: true,\n      referenceId: true,\n      workflowStep: {\n        select: {\n          id: true,\n          template: true,\n          workflow: {\n            select: {\n              userId: true,\n              teamId: true,\n              trigger: true,\n              time: true,\n              timeUnit: true,\n            },\n          },\n          emailSubject: true,\n          reminderBody: true,\n          sender: true,\n          includeCalendarEvent: true,\n          verifiedAt: true,\n        },\n      },\n    },\n  });\n\n  const workflowEventMetadata = { videoCallUrl: getVideoCallUrlFromCalEvent(evt) };\n  const bookerUrl = await getBookerBaseUrl(orgId);\n\n  for (const workflowReminder of workflowReminders) {\n    const workflowStep = workflowReminder.workflowStep;\n\n    if (workflowStep) {\n      const workflow = workflowStep.workflow;\n      await scheduleEmailReminder({\n        evt: {\n          ...evt,\n          metadata: workflowEventMetadata,\n          eventType,\n          bookerUrl,\n        },\n        action: WorkflowActions.EMAIL_HOST,\n        triggerEvent: workflow.trigger,\n        timeSpan: {\n          time: workflow.time,\n          timeUnit: workflow.timeUnit,\n        },\n        sendTo: [newUser.email],\n        template: workflowStep.template,\n        emailSubject: workflowStep.emailSubject || undefined,\n        emailBody: workflowStep.reminderBody || undefined,\n        sender: workflowStep.sender || SENDER_NAME,\n        hideBranding: true,\n        includeCalendarEvent: workflowStep.includeCalendarEvent,\n        workflowStepId: workflowStep.id,\n        verifiedAt: workflowStep.verifiedAt,\n      });\n    }\n\n    await deleteScheduledEmailReminder(workflowReminder.id);\n  }\n\n  // Send new event workflows to new organizer\n  const newEventWorkflows = await prisma.workflow.findMany({\n    where: {\n      trigger: WorkflowTriggerEvents.NEW_EVENT,\n      OR: [\n        {\n          isActiveOnAll: true,\n          teamId: eventType?.teamId,\n        },\n        {\n          activeOn: {\n            some: {\n              eventTypeId: eventType.id,\n            },\n          },\n        },\n        ...(eventType?.teamId\n          ? [\n              {\n                activeOnTeams: {\n                  some: {\n                    teamId: eventType.teamId,\n                  },\n                },\n              },\n            ]\n          : []),\n        ...(eventType?.team?.parentId\n          ? [\n              {\n                isActiveOnAll: true,\n                teamId: eventType.team.parentId,\n              },\n            ]\n          : []),\n      ],\n    },\n    include: {\n      steps: {\n        where: {\n          action: WorkflowActions.EMAIL_HOST,\n        },\n      },\n    },\n  });\n\n  const creditService = new CreditService();\n\n  await scheduleWorkflowReminders({\n    workflows: newEventWorkflows,\n    smsReminderNumber: null,\n    calendarEvent: {\n      ...evt,\n      metadata: workflowEventMetadata,\n      eventType: { slug: eventType.slug },\n      bookerUrl,\n    },\n    hideBranding: !!eventType?.owner?.hideBranding,\n    creditCheckFn: creditService.hasAvailableCredits.bind(creditService),\n  });\n}"
+      }
+    ],
+    "extractedUnitCount": 3,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 37013,
+    "outputTokens": 14129,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

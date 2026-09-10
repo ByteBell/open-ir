@@ -1,0 +1,999 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts",
+    "language": "typescript",
+    "sizeBytes": 5299,
+    "tokenCount": 1325,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-27T17:26:51.329Z",
+    "module": {
+      "purpose": "Provides the tRPC handler that lists round-robin team hosts eligible for reassignment of a booking, including pagination, delegation enrichment, and availability status.",
+      "summary": "This module retrieves non-fixed hosts associated with a booking's event type, applies optional search and cursor pagination, enriches user calendar and delegation data, and evaluates availability for the booking's time window. It excludes the current booking host, marks each returned host as available or unavailable, tolerates the no-available-users condition, and logs other availability failures.",
+      "businessContext": "Supports Cal.com team scheduling and round-robin host reassignment. If it fails, users cannot reliably select an eligible replacement host for an existing booking.",
+      "classes": [
+        "GetRoundRobinHostsToReassignOptions (~L15-21): Defines authenticated context and input requirements for reassignment queries"
+      ],
+      "functions": [
+        "getTeamHostsFromDB (~L23-96): Queries, paginates, enriches, and returns event-type team hosts",
+        "getEventTypeFromDB (~L98-101): Loads the complete event type required for availability evaluation",
+        "getRoundRobinHostsToReassign (~L103-173): Builds reassignment host results with availability statuses"
+      ],
+      "keywords": [
+        "round-robin reassignment",
+        "event type hosts",
+        "booking availability",
+        "cursor pagination",
+        "delegation credentials",
+        "selected calendars",
+        "fixed hosts",
+        "Prisma",
+        "tRPC",
+        "team scheduling"
+      ],
+      "ontologyConcepts": [
+        "host reassignment",
+        "availability evaluation",
+        "cursor pagination",
+        "delegated authorization",
+        "calendar enrichment",
+        "fault-tolerant lookup"
+      ],
+      "businessEntities": ["Booking", "EventType", "Host", "User", "Organization", "Credential"],
+      "systemCapabilities": [
+        "List eligible round-robin hosts",
+        "Filter hosts by search term",
+        "Paginate host results",
+        "Evaluate booking-time availability",
+        "Enrich delegated calendar credentials",
+        "Report host availability status"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./getRoundRobinHostsToReasign.schema",
+          "symbols": ["TGetRoundRobinHostsToReassignInputSchema"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.schema.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.schema.ts",
+          "resolvedHint": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.schema.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs"],
+          "package": "@calcom/dayjs",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/handleNewBooking/ensureAvailableUsers",
+          "symbols": ["ensureAvailableUsers"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/handleNewBooking/ensureAvailableUsers",
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/handleNewBooking/types",
+          "symbols": ["IsFixedAwareUser"],
+          "package": "@calcom/features",
+          "subpath": "bookings/lib/handleNewBooking/types",
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        },
+        {
+          "spec": "@calcom/lib/delegationCredential/server",
+          "symbols": ["enrichUsersWithDelegationCredentials"],
+          "package": "@calcom/lib",
+          "subpath": "delegationCredential/server",
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        },
+        {
+          "spec": "@calcom/lib/errorCodes",
+          "symbols": ["ErrorCode"],
+          "package": "@calcom/lib",
+          "subpath": "errorCodes",
+          "isBuiltin": false,
+          "anchor": { "startLine": 5, "endLine": 5 }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": { "startLine": 6, "endLine": 6 }
+        },
+        {
+          "spec": "@calcom/lib/server/repository/user",
+          "symbols": ["withSelectedCalendars"],
+          "package": "@calcom/lib",
+          "subpath": "server/repository/user",
+          "isBuiltin": false,
+          "anchor": { "startLine": 7, "endLine": 7 }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["PrismaClient", "userSelect"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 8, "endLine": 9 }
+        },
+        {
+          "spec": "@calcom/prisma/selects/credential",
+          "symbols": ["credentialForCalendarServiceSelect"],
+          "package": "@calcom/prisma",
+          "subpath": "selects/credential",
+          "isBuiltin": false,
+          "anchor": { "startLine": 10, "endLine": 10 }
+        },
+        {
+          "spec": "@calcom/trpc/server/types",
+          "symbols": ["TrpcSessionUser"],
+          "package": "@calcom/trpc",
+          "subpath": "server/types",
+          "isBuiltin": false,
+          "anchor": { "startLine": 11, "endLine": 11 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads booking, host, and event type records through Prisma.",
+          "Logs unexpected availability evaluation errors through the sublogger."
+        ],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        { "kind": "table", "role": "consumes", "address": "booking", "payloadRef": null, "rawKind": null },
+        { "kind": "table", "role": "consumes", "address": "host", "payloadRef": null, "rawKind": null },
+        { "kind": "table", "role": "consumes", "address": "eventType", "payloadRef": null, "rawKind": null }
+      ],
+      "contractsProvided": [
+        {
+          "name": "getRoundRobinHostsToReassign",
+          "shape": "export const getRoundRobinHostsToReassign = async ({ ctx, input }: GetRoundRobinHostsToReassignOptions) =>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "RoundRobinHostReassignmentResult",
+          "shape": "{ items: Array<{ id: number; name: string | null; email: string | null; status: \"available\" | \"unavailable\" }>; nextCursor: number | null; totalCount: number }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TGetRoundRobinHostsToReassignInputSchema",
+          "shape": "TGetRoundRobinHostsToReassignInputSchema",
+          "resolvedRelativePath": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.schema.ts",
+          "resolvedFileId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.schema.ts"
+        },
+        {
+          "name": "ensureAvailableUsers",
+          "shape": "ensureAvailableUsers({ users: hosts as IsFixedAwareUser[], ...eventType }, { dateFrom, dateTo, timeZone }, gettingRoundRobinHostsToReassignLogger)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "PrismaClient",
+          "shape": "prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, select: { userId: true, startTime: true, endTime: true, eventTypeId: true } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "PrismaClient",
+          "shape": "prisma.host.findMany({ where: queryWhere, select: { isFixed: true, priority: true, user: { select: { ...userSelect.select, credentials: { select: credentialForCalendarServiceSelect } } } }, take: limit + 1, orderBy: [{ user: { name: \"asc\" } }, { priority: \"desc\" }] })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "host-query",
+          "intent": "Builds and executes the filtered, paginated host database query.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 40, "endLine": 72 }
+        },
+        {
+          "name": "host-pagination",
+          "intent": "Removes the lookahead record and computes the next cursor.",
+          "structureKind": "branch",
+          "predicate": "hosts.length > limit",
+          "branchOutcomes": ["has next page", "no next page"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 79, "endLine": 95 }
+        },
+        {
+          "name": "booking-lookup",
+          "intent": "Loads the booking fields needed to identify hosts and time window.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 111, "endLine": 119 }
+        },
+        {
+          "name": "event-type-validation",
+          "intent": "Rejects bookings that do not reference an event type.",
+          "structureKind": "branch",
+          "predicate": "!booking.eventTypeId",
+          "branchOutcomes": ["missing event type", "event type present"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 121, "endLine": 123 }
+        },
+        {
+          "name": "availability-evaluation",
+          "intent": "Evaluates host availability for the booking interval and handles failures.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 135, "endLine": 157 }
+        },
+        {
+          "name": "status-mapping",
+          "intent": "Maps each host to a compact available or unavailable result.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 159, "endLine": 166 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "getTeamHostsFromDB",
+          "signature": "async function getTeamHostsFromDB({\n  eventTypeId,\n  organizationId,\n  prisma,\n  searchTerm,\n  cursor,\n  limit = 20,\n  excludeUserId,\n}: {\n  eventTypeId: number;\n  organizationId: number | null;\n  prisma: PrismaClient;\n  searchTerm?: string;\n  cursor?: number;\n  limit?: number;\n  excludeUserId?: number;\n}) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 23, "endLine": 39 }
+        },
+        {
+          "kind": "function",
+          "name": "getEventTypeFromDB",
+          "signature": "async function getEventTypeFromDB(eventTypeId: number, prisma: PrismaClient) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 98, "endLine": 98 }
+        },
+        {
+          "kind": "function",
+          "name": "getRoundRobinHostsToReassign",
+          "signature": "export const getRoundRobinHostsToReassign = async ({ ctx, input }: GetRoundRobinHostsToReassignOptions) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 103, "endLine": 103 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "GetRoundRobinHostsToReassignOptions",
+          "shape": "{\n  ctx: {\n    user: NonNullable<TrpcSessionUser>;\n    prisma: PrismaClient;\n  };\n  input: TGetRoundRobinHostsToReassignInputSchema;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 15, "endLine": 21 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "A booking without an event type identifier",
+          "handled": true,
+          "behavior": "Throws an error and stops reassignment processing.",
+          "anchor": { "startLine": 121, "endLine": 123 }
+        },
+        {
+          "inputShape": "A host search with no matching records",
+          "handled": true,
+          "behavior": "Returns an empty item list with the database count and no next cursor.",
+          "anchor": { "startLine": 79, "endLine": 95 }
+        },
+        {
+          "inputShape": "A page containing more records than the requested limit",
+          "handled": true,
+          "behavior": "Uses the extra record as a lookahead, removes it, and returns its predecessor as nextCursor.",
+          "anchor": { "startLine": 67, "endLine": 70 }
+        },
+        {
+          "inputShape": "No users available during the booking interval",
+          "handled": true,
+          "behavior": "Treats all queried hosts as unavailable and returns an empty available-user set.",
+          "anchor": { "startLine": 151, "endLine": 154 }
+        },
+        {
+          "inputShape": "Unexpected availability evaluation failure",
+          "handled": true,
+          "behavior": "Logs the error and treats all queried hosts as unavailable.",
+          "anchor": { "startLine": 154, "endLine": 156 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "hosts.length",
+          "right": "limit",
+          "inclusive": false,
+          "intent": "Detects whether the lookahead record indicates another page.",
+          "anchor": { "startLine": 79, "endLine": 79 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "new Error(\"Booking requires a event type to reassign hosts\")",
+          "caught": null,
+          "action": "Stops processing when the booking has no event type.",
+          "fallback": null,
+          "anchor": { "startLine": 122, "endLine": 122 }
+        },
+        {
+          "thrown": null,
+          "caught": "error instanceof Error && error.message === ErrorCode.NoAvailableUsersFound",
+          "action": "Suppresses the expected no-available-users condition.",
+          "fallback": "availableUsers = []",
+          "anchor": { "startLine": 151, "endLine": 153 }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs unexpected availability errors.",
+          "fallback": "availableUsers remains []",
+          "anchor": { "startLine": 154, "endLine": 156 }
+        },
+        {
+          "thrown": "Prisma findUniqueOrThrow errors",
+          "caught": null,
+          "action": "Propagates booking or event-type lookup failures to the caller.",
+          "fallback": null,
+          "anchor": { "startLine": 111, "endLine": 119 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "The request context contains a non-null authenticated user and Prisma client.",
+          "anchor": { "startLine": 15, "endLine": 21 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Hosts queried for reassignment are non-fixed event-type hosts.",
+          "anchor": { "startLine": 40, "endLine": 43 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Hosts are ordered by user name ascending and priority descending.",
+          "anchor": { "startLine": 68, "endLine": 70 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Returned items preserve host identity and expose a computed availability status.",
+          "anchor": { "startLine": 161, "endLine": 166 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a valid reassignment input and authenticated user context.",
+          "anchor": { "startLine": 15, "endLine": 21 }
+        },
+        {
+          "kind": "schema",
+          "description": "The booking and event type relations provide the fields expected by availability evaluation.",
+          "anchor": { "startLine": 137, "endLine": 150 }
+        },
+        {
+          "kind": "schema",
+          "description": "The host cursor uses the userId_eventTypeId composite Prisma cursor.",
+          "anchor": { "startLine": 68, "endLine": 68 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the caller require database lookup failures to be translated into a tRPC-specific error?",
+          "affects": "error_handling",
+          "anchor": { "startLine": 111, "endLine": 119 },
+          "resolution": null
+        },
+        {
+          "question": "Does availability evaluation intentionally use UTC regardless of the booking's stored timezone?",
+          "affects": "availability evaluation",
+          "anchor": { "startLine": 144, "endLine": 148 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Database count and host retrieval execute concurrently with Promise.all; each request otherwise follows sequential asynchronous steps."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "excludes-booking-owner",
+          "scenario": "A booking has an assigned user and candidate hosts are queried.",
+          "given": ["booking.userId !== null"],
+          "when": "getRoundRobinHostsToReassign({ ctx, input })",
+          "then": "The returned items do not contain an item whose id equals booking.userId.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Reassignment must not offer the booking's current host."
+        },
+        {
+          "testId": "returns-availability-status",
+          "scenario": "Some queried hosts are available for the booking time and others are not.",
+          "given": ["availableUsers.map((u) => u.id) contains a subset of hosts.map((host) => host.id)"],
+          "when": "getRoundRobinHostsToReassign({ ctx, input })",
+          "then": "Each item has status \"available\" exactly when its host id is in the available user id set, otherwise \"unavailable\".",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The response status is the handler's primary availability contract."
+        },
+        {
+          "testId": "handles-no-available-users",
+          "scenario": "Availability evaluation reports that no users are available.",
+          "given": ["ensureAvailableUsers(...) throws an Error whose message equals ErrorCode.NoAvailableUsersFound"],
+          "when": "getRoundRobinHostsToReassign({ ctx, input })",
+          "then": "The handler returns all queried hosts with status \"unavailable\" and preserves nextCursor and totalCount.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "No-availability is a valid empty result rather than a failed request."
+        },
+        {
+          "testId": "paginates-host-results",
+          "scenario": "The database returns more hosts than the requested limit.",
+          "given": ["hosts.length > limit"],
+          "when": "getRoundRobinHostsToReassign({ ctx, input })",
+          "then": "The returned items contain at most limit hosts and nextCursor is the id of the last returned host.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Cursor pagination must expose a stable continuation point."
+        },
+        {
+          "testId": "rejects-booking-without-event-type",
+          "scenario": "The selected booking does not have an event type.",
+          "given": ["booking.eventTypeId === null"],
+          "when": "getRoundRobinHostsToReassign({ ctx, input })",
+          "then": "The call throws Error(\"Booking requires a event type to reassign hosts\").",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Availability and host selection require an event type context."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Import runtime dependencies and type dependencies",
+        "Declare GetRoundRobinHostsToReassignOptions type",
+        "Declare getTeamHostsFromDB helper",
+        "Declare getEventTypeFromDB helper",
+        "Export getRoundRobinHostsToReassign handler",
+        "Export handler as default"
+      ],
+      "moduleLevelCode": "import dayjs from \"@calcom/dayjs\";\nimport { ensureAvailableUsers } from \"@calcom/features/bookings/lib/handleNewBooking/ensureAvailableUsers\";\nimport type { IsFixedAwareUser } from \"@calcom/features/bookings/lib/handleNewBooking/types\";\nimport { enrichUsersWithDelegationCredentials } from \"@calcom/lib/delegationCredential/server\";\nimport { ErrorCode } from \"@calcom/lib/errorCodes\";\nimport logger from \"@calcom/lib/logger\";\nimport { withSelectedCalendars } from \"@calcom/lib/server/repository/user\";\nimport type { PrismaClient } from \"@calcom/prisma\";\nimport { userSelect } from \"@calcom/prisma\";\nimport { credentialForCalendarServiceSelect } from \"@calcom/prisma/selects/credential\";\nimport type { TrpcSessionUser } from \"@calcom/trpc/server/types\";\n\nimport type { TGetRoundRobinHostsToReassignInputSchema } from \"./getRoundRobinHostsToReasign.schema\";",
+      "exports": [
+        { "name": "getRoundRobinHostsToReassign", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getRoundRobinHostsToReassign", "kind": "own", "fromSpec": null, "exportedAs": "default" }
+      ],
+      "importSymbolMap": [
+        { "symbol": "dayjs", "module": "@calcom/dayjs", "alias": null, "kind": "external" },
+        {
+          "symbol": "ensureAvailableUsers",
+          "module": "@calcom/features/bookings/lib/handleNewBooking/ensureAvailableUsers",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "IsFixedAwareUser",
+          "module": "@calcom/features/bookings/lib/handleNewBooking/types",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "enrichUsersWithDelegationCredentials",
+          "module": "@calcom/lib/delegationCredential/server",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "ErrorCode", "module": "@calcom/lib/errorCodes", "alias": null, "kind": "external" },
+        { "symbol": "logger", "module": "@calcom/lib/logger", "alias": null, "kind": "external" },
+        {
+          "symbol": "withSelectedCalendars",
+          "module": "@calcom/lib/server/repository/user",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "PrismaClient", "module": "@calcom/prisma", "alias": null, "kind": "external" },
+        { "symbol": "userSelect", "module": "@calcom/prisma", "alias": null, "kind": "external" },
+        {
+          "symbol": "credentialForCalendarServiceSelect",
+          "module": "@calcom/prisma/selects/credential",
+          "alias": null,
+          "kind": "external"
+        },
+        { "symbol": "TrpcSessionUser", "module": "@calcom/trpc/server/types", "alias": null, "kind": "external" },
+        {
+          "symbol": "TGetRoundRobinHostsToReassignInputSchema",
+          "module": "./getRoundRobinHostsToReasign.schema",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getTeamHostsFromDB#function:getTeamHostsFromDB",
+        "unitKind": "function",
+        "name": "getTeamHostsFromDB",
+        "qualifiedName": "getTeamHostsFromDB",
+        "parentUnitId": null,
+        "startLine": 23,
+        "endLine": 96,
+        "isBehavioral": true,
+        "source": "async function getTeamHostsFromDB({\n  eventTypeId,\n  organizationId,\n  prisma,\n  searchTerm,\n  cursor,\n  limit = 20,\n  excludeUserId,\n}: {\n  eventTypeId: number;\n  organizationId: number | null;\n  prisma: PrismaClient;\n  searchTerm?: string;\n  cursor?: number;\n  limit?: number;\n  excludeUserId?: number;\n}) {\n  const queryWhere = {\n    eventTypeId,\n    isFixed: false,\n    ...(excludeUserId && { userId: { not: excludeUserId } }),\n    ...(searchTerm && {\n      user: {\n        OR: [\n          { name: { contains: searchTerm, mode: \"insensitive\" as const } },\n          { email: { contains: searchTerm, mode: \"insensitive\" as const } },\n        ],\n      },\n    }),\n  };\n\n  const [totalCount, _hosts] = await Promise.all([\n    prisma.host.count({ where: queryWhere }),\n    prisma.host.findMany({\n      where: queryWhere,\n      select: {\n        isFixed: true,\n        priority: true,\n        user: {\n          select: {\n            ...userSelect.select,\n            credentials: {\n              select: credentialForCalendarServiceSelect,\n            },\n          },\n        },\n      },\n      take: limit + 1, // Take one more to determine if there's a next page\n      ...(cursor && { skip: 1, cursor: { userId_eventTypeId: { userId: cursor, eventTypeId } } }),\n      orderBy: [{ user: { name: \"asc\" } }, { priority: \"desc\" }],\n    }),\n  ]);\n\n  const hosts = _hosts.map((host) => ({\n    ...host,\n    user: withSelectedCalendars(host.user),\n  }));\n\n  const hasNextPage = hosts.length > limit;\n  const hosts_subset = hasNextPage ? hosts.slice(0, -1) : hosts;\n  const hostsMergedWithUser = hosts_subset.map((host) => ({\n    ...host.user,\n    isFixed: host.isFixed,\n    priority: host.priority ?? 2,\n  }));\n\n  return {\n    hosts: await enrichUsersWithDelegationCredentials({\n      orgId: organizationId,\n      users: hostsMergedWithUser,\n    }),\n    totalCount,\n    hasNextPage,\n    nextCursor: hasNextPage ? hosts_subset[hosts_subset.length - 1].user.id : null,",
+        "detail": {
+          "unitId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getTeamHostsFromDB#function:getTeamHostsFromDB",
+          "fileId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getTeamHostsFromDB",
+          "unitKind": "function",
+          "name": "getTeamHostsFromDB",
+          "qualifiedName": "getTeamHostsFromDB",
+          "parentUnitId": null,
+          "startLine": 23,
+          "endLine": 96,
+          "signature": "async function getTeamHostsFromDB({ eventTypeId, organizationId, prisma, searchTerm, cursor, limit = 20, excludeUserId, }: { eventTypeId: number; organizationId: number | null; prisma: PrismaClient; searchTerm?: string; cursor?: number; limit?: number; excludeUserId?: number; })",
+          "parameters": [
+            {
+              "name": "eventTypeId",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "organizationId",
+              "type": "number | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "prisma",
+              "type": "PrismaClient",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "searchTerm",
+              "type": "string",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 3
+            },
+            { "name": "cursor", "type": "number", "default": null, "optional": true, "variadic": false, "order": 4 },
+            { "name": "limit", "type": "number", "default": "20", "optional": true, "variadic": false, "order": 5 },
+            {
+              "name": "excludeUserId",
+              "type": "number",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 6
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "eventTypeId identifies the event type to query.",
+            "prisma provides host count and host retrieval operations.",
+            "limit, when provided, is used as the page size."
+          ],
+          "postconditions": [
+            "The result contains hosts, totalCount, hasNextPage, and nextCursor.",
+            "Only hosts with the requested eventTypeId and isFixed equal to false are included.",
+            "When a next page exists, the returned hosts contain at most limit entries and nextCursor is the last returned user's id.",
+            "When no next page exists, nextCursor is null.",
+            "Returned users are passed through withSelectedCalendars and enrichUsersWithDelegationCredentials."
+          ],
+          "invariants": [
+            "Hosts are ordered by user name ascending and then priority descending.",
+            "The totalCount is the count of records matching the filtering criteria, independent of page size.",
+            "Returned host objects expose the host isFixed value and priority, with nullish priority represented as 2."
+          ],
+          "edgeCases": [
+            "If searchTerm is absent or falsy, no user name or email search filter is applied.",
+            "If excludeUserId is absent or falsy, no user exclusion filter is applied.",
+            "If cursor is absent or falsy, the query starts from the beginning without cursor skip.",
+            "If cursor is truthy, the query uses the userId_eventTypeId cursor and skips the cursor record.",
+            "If more than limit records are fetched, the extra record is removed from the returned hosts and its presence sets hasNextPage to true.",
+            "If the fetched result count is at most limit, all fetched hosts are returned and nextCursor is null.",
+            "A host with null priority is returned with priority 2."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Errors rejected by prisma.host.count or prisma.host.findMany",
+              "Errors rejected by enrichUsersWithDelegationCredentials",
+              "Errors thrown by withSelectedCalendars"
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "prisma.host.count", "source": "PrismaClient", "kind": "external" },
+            { "name": "prisma.host.findMany", "source": "PrismaClient", "kind": "external" },
+            { "name": "withSelectedCalendars", "source": null, "kind": "internal" },
+            { "name": "enrichUsersWithDelegationCredentials", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["PrismaClient", "userSelect", "credentialForCalendarServiceSelect"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns an object shaped as { hosts, totalCount, hasNextPage, nextCursor }, where hosts is the delegation-credential-enriched user list with isFixed and priority fields, totalCount is numeric, hasNextPage is boolean, and nextCursor is a user id or null.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Retrieves non-fixed hosts for an event type with optional search, exclusion, and cursor pagination. It returns selected user data enriched with calendar and delegation credentials together with count and pagination metadata.",
+          "specLiterals": [
+            { "kind": "magic-number", "value": "20", "role": "Default page size when limit is omitted." },
+            {
+              "kind": "format-string",
+              "value": "insensitive",
+              "role": "Case-insensitive mode for name and email search."
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "Cursor pagination skip count so the cursor record is excluded."
+            },
+            { "kind": "magic-number", "value": "2", "role": "Fallback priority when a host priority is null." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getTeamHostsFromDB is called with that limit.",
+              "then": "The extra record is omitted from hosts, hasNextPage is true, and nextCursor equals the id of the last retained user's record.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The query result is transformed.",
+              "then": "The returned host has isFixed false and priority 2.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The database query is issued.",
+              "then": "The host filter requires the associated user's name or email to contain the term using insensitive mode.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "496047f8e0669b1819f86e3c2e29a1dd483e2035d820ba47c194ae277833ff2b"
+        }
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getEventTypeFromDB#function:getEventTypeFromDB",
+        "unitKind": "function",
+        "name": "getEventTypeFromDB",
+        "qualifiedName": "getEventTypeFromDB",
+        "parentUnitId": null,
+        "startLine": 98,
+        "endLine": 101,
+        "isBehavioral": true,
+        "source": "}\n\nasync function getEventTypeFromDB(eventTypeId: number, prisma: PrismaClient) {\n  return prisma.eventType.findUniqueOrThrow({",
+        "detail": {
+          "unitId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getEventTypeFromDB#function:getEventTypeFromDB",
+          "fileId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getEventTypeFromDB",
+          "unitKind": "function",
+          "name": "getEventTypeFromDB",
+          "qualifiedName": "getEventTypeFromDB",
+          "parentUnitId": null,
+          "startLine": 98,
+          "endLine": 101,
+          "signature": "async function getEventTypeFromDB(eventTypeId: number, prisma: PrismaClient)",
+          "parameters": [
+            {
+              "name": "eventTypeId",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "prisma",
+              "type": "PrismaClient",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "prisma provides an eventType data access model with findUniqueOrThrow.",
+            "eventTypeId is a numeric event type identifier."
+          ],
+          "postconditions": [
+            "On success, resolves to the uniquely identified event type record.",
+            "If no matching event type exists, the lookup does not resolve normally."
+          ],
+          "invariants": [
+            "The event type lookup is performed through the supplied Prisma client.",
+            "The requested identifier is used to select the event type."
+          ],
+          "edgeCases": [
+            "When eventTypeId does not identify an existing event type, findUniqueOrThrow raises its not-found error.",
+            "When a matching event type exists, the returned promise resolves with that record."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["The error raised by Prisma findUniqueOrThrow when no matching event type exists"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "prisma.eventType.findUniqueOrThrow", "source": "PrismaClient", "kind": "external" }],
+          "symbolReferences": ["PrismaClient"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Asynchronously retrieves the event type identified by eventTypeId through the supplied Prisma client. The lookup requires a matching event type to exist.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "95933c4567257abfc23eb16e5d6198e024757ec3e2efdceb52dc8ec612e93e2e"
+        }
+      },
+      {
+        "unitId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getRoundRobinHostsToReassign#function:getRoundRobinHostsToReassign",
+        "unitKind": "function",
+        "name": "getRoundRobinHostsToReassign",
+        "qualifiedName": "getRoundRobinHostsToReassign",
+        "parentUnitId": null,
+        "startLine": 103,
+        "endLine": 173,
+        "isBehavioral": true,
+        "source": "  });\n}\n\nexport const getRoundRobinHostsToReassign = async ({ ctx, input }: GetRoundRobinHostsToReassignOptions) => {\n  const { prisma, user } = ctx;\n  const { bookingId, limit, cursor, searchTerm } = input;\n  const organizationId = user.organizationId;\n  const gettingRoundRobinHostsToReassignLogger = logger.getSubLogger({\n    prefix: [\"gettingRoundRobinHostsToReassign\", `${bookingId}`],\n  });\n\n  const booking = await prisma.booking.findUniqueOrThrow({\n    where: { id: bookingId },\n    select: {\n      userId: true,\n      startTime: true,\n      endTime: true,\n      eventTypeId: true,\n    },\n  });\n\n  if (!booking.eventTypeId) {\n    throw new Error(\"Booking requires a event type to reassign hosts\");\n  }\n\n  const { hosts, totalCount, nextCursor } = await getTeamHostsFromDB({\n    eventTypeId: booking.eventTypeId,\n    organizationId,\n    prisma,\n    searchTerm,\n    cursor,\n    limit,\n    excludeUserId: booking.userId ?? undefined,\n  });\n\n  let availableUsers: IsFixedAwareUser[] = [];\n  try {\n    const eventType = await getEventTypeFromDB(booking.eventTypeId, prisma);\n    availableUsers = await ensureAvailableUsers(\n      // @ts-expect-error - TODO: We need to make sure nothing in the app needs the return type of getEventTypeFromDB as it fetches everything under the sun\n      {\n        users: hosts as IsFixedAwareUser[],\n        ...eventType,\n      },\n      {\n        dateFrom: dayjs(booking.startTime).format(),\n        dateTo: dayjs(booking.endTime).format(),\n        timeZone: \"UTC\",\n      },\n      gettingRoundRobinHostsToReassignLogger\n    );\n  } catch (error) {\n    if (error instanceof Error && error.message === ErrorCode.NoAvailableUsersFound) {\n      availableUsers = [];\n    } else {\n      gettingRoundRobinHostsToReassignLogger.error(error);\n    }\n  }\n\n  const availableUserIds = new Set(availableUsers.map((u) => u.id));\n\n  const items = hosts.map((host) => ({\n    id: host.id,\n    name: host.name,\n    email: host.email,\n    status: availableUserIds.has(host.id) ? \"available\" : \"unavailable\",\n  }));\n\n  return {\n    items,\n    nextCursor,",
+        "detail": {
+          "unitId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getRoundRobinHostsToReassign#function:getRoundRobinHostsToReassign",
+          "fileId": "packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.handler.ts__getRoundRobinHostsToReassign",
+          "unitKind": "function",
+          "name": "getRoundRobinHostsToReassign",
+          "qualifiedName": "getRoundRobinHostsToReassign",
+          "parentUnitId": null,
+          "startLine": 103,
+          "endLine": 173,
+          "signature": "export const getRoundRobinHostsToReassign = async ({ ctx, input }: GetRoundRobinHostsToReassignOptions) =>",
+          "parameters": [
+            {
+              "name": "{ ctx, input }",
+              "type": "GetRoundRobinHostsToReassignOptions",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "ctx must provide a Prisma client and a user with an organizationId.",
+            "input must provide a bookingId and the host query parameters expected by GetRoundRobinHostsToReassignOptions."
+          ],
+          "postconditions": [
+            "The returned items contain the selected host id, name, email, and either an available or unavailable status.",
+            "The returned pagination information includes nextCursor from the host query.",
+            "Hosts unavailable according to ensureAvailableUsers are still returned with status unavailable."
+          ],
+          "invariants": [
+            "The booking lookup is restricted to the requested bookingId and selects userId, startTime, endTime, and eventTypeId.",
+            "The booking's userId is excluded from the team-host query when present.",
+            "A host is marked available only when its id is present among the users returned by ensureAvailableUsers."
+          ],
+          "edgeCases": [
+            "If the booking does not exist, prisma.booking.findUniqueOrThrow propagates its lookup error.",
+            "If the booking has no eventTypeId, the function throws an Error with message \"Booking requires a event type to reassign hosts\".",
+            "If ensureAvailableUsers reports ErrorCode.NoAvailableUsersFound, all queried hosts are returned with status unavailable.",
+            "If another error occurs while loading the event type or checking availability, the error is logged and all queried hosts are treated as unavailable.",
+            "If the host query returns no hosts, items is empty and nextCursor is returned from that query."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "The error propagated by prisma.booking.findUniqueOrThrow when the booking cannot be found.",
+              "Error when the booking has no eventTypeId, with message \"Booking requires a event type to reassign hosts\"."
+            ],
+            "reverts": [],
+            "onInvalidInput": "Booking lookup errors and the missing-event-type condition are propagated; availability-check errors other than ErrorCode.NoAvailableUsersFound are logged and converted to unavailable hosts.",
+            "returnsOnError": "Returns the host list with every host marked unavailable when availability resolution fails after the booking and host queries succeed."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "prisma.booking.findUniqueOrThrow", "source": "ctx.prisma", "kind": "external" },
+            { "name": "getTeamHostsFromDB", "source": "local sibling function", "kind": "internal" },
+            { "name": "getEventTypeFromDB", "source": "local sibling function", "kind": "internal" },
+            { "name": "ensureAvailableUsers", "source": "imported dependency", "kind": "external" },
+            { "name": "logger.getSubLogger", "source": "imported logger dependency", "kind": "external" },
+            { "name": "gettingRoundRobinHostsToReassignLogger.error", "source": "sub-logger", "kind": "internal" },
+            { "name": "dayjs", "source": "imported date-time dependency", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "GetRoundRobinHostsToReassignOptions",
+            "IsFixedAwareUser",
+            "ErrorCode.NoAvailableUsersFound"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns an object containing items: an array of { id, name, email, status }, where status is \"available\" or \"unavailable\", and nextCursor from the host pagination query.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Retrieves round-robin team hosts eligible for reassignment of a booking, returning each host with an availability status and pagination information.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Booking requires a event type to reassign hosts",
+              "role": "Error message raised when the booking has no associated event type."
+            },
+            {
+              "kind": "enum-value",
+              "value": "available",
+              "role": "Status value returned for hosts accepted by ensureAvailableUsers."
+            },
+            {
+              "kind": "enum-value",
+              "value": "unavailable",
+              "role": "Status value returned for hosts not accepted by ensureAvailableUsers or when availability resolution fails."
+            },
+            { "kind": "enum-value", "value": "UTC", "role": "Time zone supplied to availability checking." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRoundRobinHostsToReassign is called for that booking.",
+              "then": "The call throws an Error whose message is \"Booking requires a event type to reassign hosts\".",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRoundRobinHostsToReassign performs the availability check.",
+              "then": "The call succeeds and returns every queried host with status \"unavailable\".",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getRoundRobinHostsToReassign builds its result.",
+              "then": "Hosts whose ids are in the available-user subset have status \"available\" and all other hosts have status \"unavailable\".",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "3465be92f0f6c30b39bf860a0b7c11ab8acf2a15d3d29f9676e738cd951960a5"
+        }
+      }
+    ]
+  },
+  "out": ["packages/trpc/server/routers/viewer/teams/roundRobin/getRoundRobinHostsToReasign.schema.ts"],
+  "in": [],
+  "externals": [
+    "@calcom/dayjs",
+    "@calcom/features/bookings/lib/handleNewBooking/ensureAvailableUsers",
+    "@calcom/features/bookings/lib/handleNewBooking/types",
+    "@calcom/lib/delegationCredential/server",
+    "@calcom/lib/errorCodes",
+    "@calcom/lib/logger",
+    "@calcom/lib/server/repository/user",
+    "@calcom/prisma",
+    "@calcom/prisma/selects/credential",
+    "@calcom/trpc/server/types"
+  ],
+  "impact": { "seeds": 3, "callers": 1, "impactedFiles": [] }
+}

@@ -1,0 +1,808 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "cal.diy",
+  "file": {
+    "relativePath": "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts",
+    "language": "typescript",
+    "sizeBytes": 7480,
+    "tokenCount": 1870,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-27T17:29:41.002Z",
+    "module": {
+      "purpose": "Loads booking users, validates booking eligibility and watchlist status, resolves qualified and fallback hosts, and enriches returned users with calendar delegation credentials.",
+      "summary": "This module orchestrates user loading for new bookings. It validates dynamic-booking permissions, supports legacy event types with a direct event owner, rejects blocked users, marks fixed users, intersects loaded users with qualified, fallback, and fixed host selections, and supplies delegation credentials. When no qualified or fixed hosts remain, it enriches the loaded users as a fallback path and returns them as fixed users.",
+      "businessContext": "Supports booking assignment across round-robin, fixed-host, routing, and delegation-credential workflows. Failure can reject valid bookings, expose blocked users to scheduling, or leave bookings without eligible calendar hosts.",
+      "classes": [],
+      "functions": [
+        "_loadAndValidateUsers (~L72-222): Loads, validates, filters, and enriches users for booking assignment.",
+        "loadAndValidateUsers (~L224-224): Wraps user loading with reporting instrumentation."
+      ],
+      "keywords": [
+        "round-robin scheduling",
+        "delegation credentials",
+        "dynamic booking",
+        "blocked users",
+        "qualified hosts",
+        "fallback hosts",
+        "fixed hosts",
+        "routing forms",
+        "calendar credentials"
+      ],
+      "ontologyConcepts": [
+        "eligibility validation",
+        "host assignment",
+        "fallback resolution",
+        "credential enrichment",
+        "watchlist enforcement",
+        "legacy migration compatibility"
+      ],
+      "businessEntities": [
+        "User",
+        "EventType",
+        "Host",
+        "Booking",
+        "Credential",
+        "Team",
+        "Organization",
+        "RoutingFormResponse"
+      ],
+      "systemCapabilities": [
+        "Load booking participants",
+        "Validate dynamic-booking eligibility",
+        "Reject blocked scheduling users",
+        "Resolve qualified and fallback hosts",
+        "Attach delegation credentials",
+        "Report booking-loading failures"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "@calcom/features/watchlist/operations/check-if-users-are-blocked.controller",
+          "symbols": ["checkIfUsersAreBlocked"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials",
+          "symbols": ["findQualifiedHostsWithDelegationCredentials"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/delegationCredential/server",
+          "symbols": ["enrichUsersWithDelegationCredentials"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "symbols": ["getOrgIdFromMemberOrTeamId"],
+          "anchor": { "startLine": 7, "endLine": 7 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/http-error",
+          "symbols": ["HttpError"],
+          "anchor": { "startLine": 8, "endLine": 8 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/piiFreeData",
+          "symbols": ["getPiiFreeUser"],
+          "anchor": { "startLine": 9, "endLine": 9 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "anchor": { "startLine": 10, "endLine": 10 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/sentryWrapper",
+          "symbols": ["withReporting"],
+          "anchor": { "startLine": 11, "endLine": 11 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/getLuckyUser",
+          "symbols": ["RoutingFormResponse"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/repository/user",
+          "symbols": ["withSelectedCalendars"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["userSelect"],
+          "anchor": { "startLine": 14, "endLine": 14 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "anchor": { "startLine": 15, "endLine": 15 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["SchedulingType"],
+          "anchor": { "startLine": 16, "endLine": 16 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/selects/credential",
+          "symbols": ["credentialForCalendarServiceSelect"],
+          "anchor": { "startLine": 17, "endLine": 17 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/types/Credential",
+          "symbols": ["CredentialForCalendarService"],
+          "anchor": { "startLine": 18, "endLine": 18 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "./getEventTypesFromDB",
+          "symbols": ["NewBookingEventType"],
+          "anchor": { "startLine": 20, "endLine": 20 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+        },
+        {
+          "spec": "./loadUsers",
+          "symbols": ["loadUsers"],
+          "anchor": { "startLine": 21, "endLine": 21 },
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts",
+          "resolvedHint": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@prisma/client",
+          "symbols": ["Prisma"],
+          "package": "@prisma/client",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "tslog",
+          "symbols": ["Logger"],
+          "package": "tslog",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes warning and debug messages through the supplied logger."],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "UsersWithDelegationCredentials",
+          "shape": "export type UsersWithDelegationCredentials = (Omit<Awaited<ReturnType<typeof loadUsers>>[number], \"credentials\"> & { isFixed?: boolean; metadata?: Prisma.JsonValue; createdAt?: Date; credentials: CredentialForCalendarService[]; })[];",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "loadAndValidateUsers",
+          "shape": "export const loadAndValidateUsers = withReporting(_loadAndValidateUsers, \"loadAndValidateUsers\");",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "loadUsers",
+          "shape": "Awaited<ReturnType<typeof loadUsers>>[number]",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/loadUsers.ts"
+        },
+        {
+          "name": "NewBookingEventType",
+          "shape": "Pick<NewBookingEventType, \"hosts\" | \"users\" | \"id\" | \"userId\" | \"schedulingType\" | \"maxLeadThreshold\" | \"team\" | \"assignAllTeamMembers\" | \"assignRRMembersUsingSegment\" | \"rrSegmentQueryValue\" | \"isRRWeightsEnabled\" | \"rescheduleWithSameRoundRobinHost\" | \"teamId\" | \"includeNoShowInRRCalculation\">",
+          "resolvedRelativePath": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts",
+          "resolvedFileId": "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+        },
+        {
+          "name": "RoutingFormResponse",
+          "shape": "routingFormResponse: RoutingFormResponse | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "checkIfUsersAreBlocked",
+          "shape": "checkIfUsersAreBlocked(users)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "findQualifiedHostsWithDelegationCredentials",
+          "shape": "findQualifiedHostsWithDelegationCredentials({ eventType, routedTeamMemberIds, rescheduleUid, contactOwnerEmail, routingFormResponse })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "enrichUsersWithDelegationCredentials",
+          "shape": "enrichUsersWithDelegationCredentials({ orgId, users })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getOrgIdFromMemberOrTeamId",
+          "shape": "getOrgIdFromMemberOrTeamId({ memberId, teamId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "withSelectedCalendars",
+          "shape": "withSelectedCalendars(eventTypeUser)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "credentialForCalendarServiceSelect",
+          "shape": "credentials: { select: credentialForCalendarServiceSelect }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "withReporting",
+          "shape": "withReporting(_loadAndValidateUsers, \"loadAndValidateUsers\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "load-users",
+          "intent": "Loads candidate users using event, routing, platform, and contact context.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 88, "endLine": 96 }
+        },
+        {
+          "name": "dynamic-booking-validation",
+          "intent": "Rejects groups containing users who disallow dynamic booking.",
+          "structureKind": "branch",
+          "predicate": "!isDynamicAllowed && !eventTypeId",
+          "branchOutcomes": ["warn and throw HTTP 400", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 98, "endLine": 101 }
+        },
+        {
+          "name": "legacy-owner-fallback",
+          "intent": "Loads the event owner for pre-migration events with no users.",
+          "structureKind": "branch",
+          "predicate": "!users.length && eventType.userId",
+          "branchOutcomes": ["query owner", "continue without owner lookup"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 105, "endLine": 122 }
+        },
+        {
+          "name": "blocked-user-validation",
+          "intent": "Rejects users identified as blocked by watchlist checks.",
+          "structureKind": "branch",
+          "predicate": "containsBlockedUser",
+          "branchOutcomes": ["throw HTTP 404", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 126, "endLine": 129 }
+        },
+        {
+          "name": "host-classification",
+          "intent": "Marks users as fixed or round-robin candidates and resolves hosts.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 131, "endLine": 145 }
+        },
+        {
+          "name": "candidate-intersection",
+          "intent": "Intersects loaded users with qualified, fallback, and fixed hosts.",
+          "structureKind": "branch",
+          "predicate": "qualifiedRRHosts.length",
+          "branchOutcomes": ["build qualified users", "leave qualified users empty"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 162, "endLine": 186 }
+        },
+        {
+          "name": "delegation-fallback",
+          "intent": "Enriches all users when no qualified or fixed hosts remain.",
+          "structureKind": "branch",
+          "predicate": "!qualifiedRRUsers.length && !fixedUsers.length",
+          "branchOutcomes": ["resolve organization and enrich users", "return classified users"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 198, "endLine": 215 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "UsersWithDelegationCredentials",
+          "signature": "export type UsersWithDelegationCredentials = (Omit<\n  Awaited<ReturnType<typeof loadUsers>>[number],\n  \"credentials\"\n> & {\n  isFixed?: boolean;\n  metadata?: Prisma.JsonValue;\n  createdAt?: Date;\n  credentials: CredentialForCalendarService[];\n})[];",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 29, "endLine": 38 }
+        },
+        {
+          "kind": "function",
+          "name": "_loadAndValidateUsers",
+          "signature": "const _loadAndValidateUsers = async ({\n  eventType,\n  eventTypeId,\n  dynamicUserList,\n  logger,\n  routedTeamMemberIds,\n  contactOwnerEmail,\n  rescheduleUid,\n  routingFormResponse,\n  isPlatform,\n  hostname,\n  forcedSlug,\n}: InputProps): Promise<{\n  qualifiedRRUsers: UsersWithDelegationCredentials;\n  additionalFallbackRRUsers: UsersWithDelegationCredentials;\n  fixedUsers: UsersWithDelegationCredentials;\n}> => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<{\n  qualifiedRRUsers: UsersWithDelegationCredentials;\n  additionalFallbackRRUsers: UsersWithDelegationCredentials;\n  fixedUsers: UsersWithDelegationCredentials;\n}>",
+          "exported": false,
+          "anchor": { "startLine": 72, "endLine": 87 }
+        },
+        {
+          "kind": "function",
+          "name": "loadAndValidateUsers",
+          "signature": "export const loadAndValidateUsers = withReporting(_loadAndValidateUsers, \"loadAndValidateUsers\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 224, "endLine": 224 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "Users",
+          "shape": "(Awaited<ReturnType<typeof loadUsers>>[number] & {\n  isFixed?: boolean;\n  metadata?: Prisma.JsonValue;\n  createdAt?: Date;\n})[]",
+          "discriminant": null,
+          "anchor": { "startLine": 23, "endLine": 27 }
+        },
+        {
+          "kind": "type",
+          "name": "UsersWithDelegationCredentials",
+          "shape": "(Omit<\n  Awaited<ReturnType<typeof loadUsers>>[number],\n  \"credentials\"\n> & {\n  isFixed?: boolean;\n  metadata?: Prisma.JsonValue;\n  createdAt?: Date;\n  credentials: CredentialForCalendarService[];\n})[]",
+          "discriminant": null,
+          "anchor": { "startLine": 29, "endLine": 38 }
+        },
+        {
+          "kind": "type",
+          "name": "EventType",
+          "shape": "Pick<\n  NewBookingEventType,\n  | \"hosts\"\n  | \"users\"\n  | \"id\"\n  | \"userId\"\n  | \"schedulingType\"\n  | \"maxLeadThreshold\"\n  | \"team\"\n  | \"assignAllTeamMembers\"\n  | \"assignRRMembersUsingSegment\"\n  | \"rrSegmentQueryValue\"\n  | \"isRRWeightsEnabled\"\n  | \"rescheduleWithSameRoundRobinHost\"\n  | \"teamId\"\n  | \"includeNoShowInRRCalculation\"\n>",
+          "discriminant": null,
+          "anchor": { "startLine": 40, "endLine": 56 }
+        },
+        {
+          "kind": "type",
+          "name": "InputProps",
+          "shape": "{\n  eventType: EventType;\n  eventTypeId: number;\n  dynamicUserList: string[];\n  logger: Logger<unknown>;\n  routedTeamMemberIds: number[] | null;\n  contactOwnerEmail: string | null;\n  rescheduleUid: string | null;\n  routingFormResponse: RoutingFormResponse | null;\n  isPlatform: boolean;\n  hostname: string | undefined;\n  forcedSlug: string | undefined;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 58, "endLine": 70 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Empty loaded user list with eventType.userId present",
+          "handled": true,
+          "behavior": "Loads the legacy event owner from Prisma and appends it after selecting calendar credentials.",
+          "anchor": { "startLine": 105, "endLine": 122 }
+        },
+        {
+          "inputShape": "Empty loaded user list with no eventType.userId",
+          "handled": true,
+          "behavior": "The subsequent fallback branch can dereference users[0].id while resolving the organization.",
+          "anchor": { "startLine": 124, "endLine": 205 }
+        },
+        {
+          "inputShape": "Any user disallows dynamic booking and eventTypeId is absent",
+          "handled": true,
+          "behavior": "Logs a warning and throws HttpError with status 400.",
+          "anchor": { "startLine": 98, "endLine": 101 }
+        },
+        {
+          "inputShape": "One or more users are blocked",
+          "handled": true,
+          "behavior": "Throws HttpError with status 404 and does not classify hosts.",
+          "anchor": { "startLine": 127, "endLine": 129 }
+        },
+        {
+          "inputShape": "No qualified or fixed hosts",
+          "handled": true,
+          "behavior": "Resolves the first user's organization, enriches all loaded users, and returns them as fixed users.",
+          "anchor": { "startLine": 198, "endLine": 215 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "eventTypeId",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Treats a missing or zero event type identifier as requiring dynamic-booking validation.",
+          "anchor": { "startLine": 99, "endLine": 99 }
+        },
+        {
+          "operator": "==",
+          "left": "qualifiedUser.id",
+          "right": "fallbackUser.id",
+          "inclusive": true,
+          "intent": "Identifies fallback users that are already represented among qualified users.",
+          "anchor": { "startLine": 195, "endLine": 195 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "HttpError({ message: \"Some of the users in this group do not allow dynamic booking\", statusCode: 400 })",
+          "caught": null,
+          "action": "Logs a warning before rejecting the request.",
+          "fallback": null,
+          "anchor": { "startLine": 100, "endLine": 101 }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" })",
+          "caught": null,
+          "action": "Logs a warning when the legacy event owner cannot be found.",
+          "fallback": null,
+          "anchor": { "startLine": 117, "endLine": 119 }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" })",
+          "caught": null,
+          "action": "Rejects a falsy users collection.",
+          "fallback": null,
+          "anchor": { "startLine": 124, "endLine": 124 }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" })",
+          "caught": null,
+          "action": "Rejects users reported as blocked.",
+          "fallback": null,
+          "anchor": { "startLine": 129, "endLine": 129 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Users returned in each host category are drawn from the initially loaded users.",
+          "anchor": { "startLine": 162, "endLine": 186 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Each returned classified user includes calendar-service credentials.",
+          "anchor": { "startLine": 165, "endLine": 186 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Fallback users already present among qualified users are excluded from additionalFallbackRRUsers.",
+          "anchor": { "startLine": 194, "endLine": 196 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Blocked users prevent successful completion with an HTTP not-found error.",
+          "anchor": { "startLine": 127, "endLine": 129 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies an event type and context compatible with loadUsers and host qualification.",
+          "anchor": { "startLine": 72, "endLine": 87 }
+        },
+        {
+          "kind": "schema",
+          "description": "Host qualification results contain user identifiers and delegation credentials for every matched loaded user.",
+          "anchor": { "startLine": 146, "endLine": 155 }
+        },
+        {
+          "kind": "schema",
+          "description": "The loaded user list is non-empty when the no-qualified-host fallback accesses users[0].id.",
+          "anchor": { "startLine": 198, "endLine": 205 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Is the `if (!users)` check intentionally defensive even though loadUsers appears to return an array, and can the fallback path receive an empty array?",
+          "affects": "edge_cases and error_handling",
+          "anchor": { "startLine": 124, "endLine": 124 },
+          "resolution": null
+        },
+        {
+          "question": "Is the pre-relationship migration owner lookup still reachable in supported event data?",
+          "affects": "legacy-owner-fallback behaviour",
+          "anchor": { "startLine": 103, "endLine": 105 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "The function performs sequential awaited database and host-resolution operations; it maintains only invocation-local state."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-dynamic-booking-with-disallowed-user",
+          "scenario": "A user does not allow dynamic booking and the event type is not identified.",
+          "given": ["users.some((user) => !user.allowDynamicBooking) === true", "!eventTypeId === true"],
+          "when": "loadAndValidateUsers(input)",
+          "then": "The call rejects with HttpError({ message: \"Some of the users in this group do not allow dynamic booking\", statusCode: 400 }).",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the explicit dynamic-booking eligibility contract."
+        },
+        {
+          "testId": "rejects-missing-event-type-user",
+          "scenario": "No users are loaded and the legacy event type user cannot be found.",
+          "given": ["users.length === 0", "eventType.userId !== null", "prisma.user.findUnique(...) returns null"],
+          "when": "loadAndValidateUsers(input)",
+          "then": "The call rejects with HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" }).",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Preserves the legacy fallback failure behavior."
+        },
+        {
+          "testId": "rejects-blocked-users",
+          "scenario": "The loaded users include a blocked user.",
+          "given": ["checkIfUsersAreBlocked(users) returns true"],
+          "when": "loadAndValidateUsers(input)",
+          "then": "The call rejects with HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" }).",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures locked users cannot enter booking host selection."
+        },
+        {
+          "testId": "partitions-qualified-fallback-and-fixed-users",
+          "scenario": "Qualified, fallback, and fixed hosts overlap with the loaded users.",
+          "given": [
+            "qualifiedRRHosts, allFallbackRRHosts, and fixedHosts contain host user ids",
+            "users contains the corresponding user records"
+          ],
+          "when": "loadAndValidateUsers(input)",
+          "then": "The result contains matching qualifiedRRUsers, additionalFallbackRRUsers excluding qualified users, and fixedUsers with host credentials.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins host partitioning and fallback de-duplication."
+        },
+        {
+          "testId": "enriches-fixed-users-when-no-qualified-hosts-exist",
+          "scenario": "No qualified or fixed hosts are returned.",
+          "given": ["qualifiedRRUsers.length === 0", "fixedUsers.length === 0"],
+          "when": "loadAndValidateUsers(input)",
+          "then": "The result returns fixedUsers from enrichUsersWithDelegationCredentials({ orgId: firstUserOrgId ?? null, users }).",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Preserves delegation-credential enrichment for the fallback path."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Type-only imports and runtime imports",
+        "Local user collection type aliases",
+        "EventType and InputProps type aliases",
+        "Asynchronous user loading and validation implementation",
+        "Reporting-wrapped exported function"
+      ],
+      "moduleLevelCode": "import type { Prisma } from \"@prisma/client\";\nimport type { Logger } from \"tslog\";\n\nimport { checkIfUsersAreBlocked } from \"@calcom/features/watchlist/operations/check-if-users-are-blocked.controller\";\nimport { findQualifiedHostsWithDelegationCredentials } from \"@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials\";\nimport { enrichUsersWithDelegationCredentials } from \"@calcom/lib/delegationCredential/server\";\nimport getOrgIdFromMemberOrTeamId from \"@calcom/lib/getOrgIdFromMemberOrTeamId\";\nimport { HttpError } from \"@calcom/lib/http-error\";\nimport { getPiiFreeUser } from \"@calcom/lib/piiFreeData\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport { withReporting } from \"@calcom/lib/sentryWrapper\";\nimport type { RoutingFormResponse } from \"@calcom/lib/server/getLuckyUser\";\nimport { withSelectedCalendars } from \"@calcom/lib/server/repository/user\";\nimport { userSelect } from \"@calcom/prisma\";\nimport prisma from \"@calcom/prisma\";\nimport { SchedulingType } from \"@calcom/prisma/enums\";\nimport { credentialForCalendarServiceSelect } from \"@calcom/prisma/selects/credential\";\nimport type { CredentialForCalendarService } from \"@calcom/types/Credential\";\n\nimport type { NewBookingEventType } from \"./getEventTypesFromDB\";\nimport { loadUsers } from \"./loadUsers\";",
+      "exports": [
+        { "name": "UsersWithDelegationCredentials", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "loadAndValidateUsers", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Prisma", "module": "@prisma/client", "alias": null, "kind": "external" },
+        { "symbol": "Logger", "module": "tslog", "alias": null, "kind": "external" },
+        {
+          "symbol": "checkIfUsersAreBlocked",
+          "module": "@calcom/features/watchlist/operations/check-if-users-are-blocked.controller",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "findQualifiedHostsWithDelegationCredentials",
+          "module": "@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "enrichUsersWithDelegationCredentials",
+          "module": "@calcom/lib/delegationCredential/server",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getOrgIdFromMemberOrTeamId",
+          "module": "@calcom/lib/getOrgIdFromMemberOrTeamId",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "HttpError", "module": "@calcom/lib/http-error", "alias": null, "kind": "internal" },
+        { "symbol": "getPiiFreeUser", "module": "@calcom/lib/piiFreeData", "alias": null, "kind": "internal" },
+        { "symbol": "safeStringify", "module": "@calcom/lib/safeStringify", "alias": null, "kind": "internal" },
+        { "symbol": "withReporting", "module": "@calcom/lib/sentryWrapper", "alias": null, "kind": "internal" },
+        {
+          "symbol": "RoutingFormResponse",
+          "module": "@calcom/lib/server/getLuckyUser",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "withSelectedCalendars",
+          "module": "@calcom/lib/server/repository/user",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "userSelect", "module": "@calcom/prisma", "alias": null, "kind": "internal" },
+        { "symbol": "prisma", "module": "@calcom/prisma", "alias": null, "kind": "internal" },
+        { "symbol": "SchedulingType", "module": "@calcom/prisma/enums", "alias": null, "kind": "internal" },
+        {
+          "symbol": "credentialForCalendarServiceSelect",
+          "module": "@calcom/prisma/selects/credential",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "CredentialForCalendarService",
+          "module": "@calcom/types/Credential",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "NewBookingEventType", "module": "./getEventTypesFromDB", "alias": null, "kind": "internal" },
+        { "symbol": "loadUsers", "module": "./loadUsers", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts__Users_1#type_alias:Users",
+        "unitKind": "type_alias",
+        "name": "Users",
+        "qualifiedName": "Users",
+        "parentUnitId": null,
+        "startLine": 23,
+        "endLine": 27,
+        "isBehavioral": false,
+        "source": "type Users = (Awaited<ReturnType<typeof loadUsers>>[number] & {\n  isFixed?: boolean;\n  metadata?: Prisma.JsonValue;\n  createdAt?: Date;\n})[];"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts__UsersWithDelegationCredentials_2#type_alias:UsersWithDelegationCredentials",
+        "unitKind": "type_alias",
+        "name": "UsersWithDelegationCredentials",
+        "qualifiedName": "UsersWithDelegationCredentials",
+        "parentUnitId": null,
+        "startLine": 29,
+        "endLine": 31,
+        "isBehavioral": false,
+        "source": "export type UsersWithDelegationCredentials = (Omit<\n  Awaited<ReturnType<typeof loadUsers>>[number],\n  \"credentials\""
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts__EventType_3#type_alias:EventType",
+        "unitKind": "type_alias",
+        "name": "EventType",
+        "qualifiedName": "EventType",
+        "parentUnitId": null,
+        "startLine": 39,
+        "endLine": 54,
+        "isBehavioral": false,
+        "source": "type EventType = Pick<\n  NewBookingEventType,\n  | \"hosts\"\n  | \"users\"\n  | \"id\"\n  | \"userId\"\n  | \"schedulingType\"\n  | \"maxLeadThreshold\"\n  | \"team\"\n  | \"assignAllTeamMembers\"\n  | \"assignRRMembersUsingSegment\"\n  | \"rrSegmentQueryValue\"\n  | \"isRRWeightsEnabled\"\n  | \"rescheduleWithSameRoundRobinHost\"\n  | \"teamId\"\n  | \"includeNoShowInRRCalculation\""
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts__InputProps_4#type_alias:InputProps",
+        "unitKind": "type_alias",
+        "name": "InputProps",
+        "qualifiedName": "InputProps",
+        "parentUnitId": null,
+        "startLine": 57,
+        "endLine": 69,
+        "isBehavioral": false,
+        "source": "type InputProps = {\n  eventType: EventType;\n  eventTypeId: number;\n  dynamicUserList: string[];\n  logger: Logger<unknown>;\n  routedTeamMemberIds: number[] | null;\n  contactOwnerEmail: string | null;\n  rescheduleUid: string | null;\n  routingFormResponse: RoutingFormResponse | null;\n  isPlatform: boolean;\n  hostname: string | undefined;\n  forcedSlug: string | undefined;\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts___loadAndValidateUsers_5#function:_loadAndValidateUsers",
+        "unitKind": "function",
+        "name": "_loadAndValidateUsers",
+        "qualifiedName": "_loadAndValidateUsers",
+        "parentUnitId": null,
+        "startLine": 71,
+        "endLine": 226,
+        "isBehavioral": true,
+        "source": "const _loadAndValidateUsers = async ({\n  eventType,\n  eventTypeId,\n  dynamicUserList,\n  logger,\n  routedTeamMemberIds,\n  contactOwnerEmail,\n  rescheduleUid,\n  routingFormResponse,\n  isPlatform,\n  hostname,\n  forcedSlug,\n}: InputProps): Promise<{\n  qualifiedRRUsers: UsersWithDelegationCredentials;\n  additionalFallbackRRUsers: UsersWithDelegationCredentials;\n  fixedUsers: UsersWithDelegationCredentials;\n}> => {\n  let users: Users = await loadUsers({\n    eventType,\n    dynamicUserList,\n    hostname: hostname || \"\",\n    forcedSlug,\n    isPlatform,\n    routedTeamMemberIds,\n    contactOwnerEmail,\n  });\n\n  const isDynamicAllowed = !users.some((user) => !user.allowDynamicBooking);\n  if (!isDynamicAllowed && !eventTypeId) {\n    logger.warn({\n      message: \"NewBooking: Some of the users in this group do not allow dynamic booking\",\n    });\n    throw new HttpError({\n      message: \"Some of the users in this group do not allow dynamic booking\",\n      statusCode: 400,\n    });\n  }\n\n  // If this event was pre-relationship migration\n  // TODO: Establish whether this is dead code.\n  if (!users.length && eventType.userId) {\n    const eventTypeUser = await prisma.user.findUnique({\n      where: {\n        id: eventType.userId,\n      },\n      select: {\n        credentials: {\n          select: credentialForCalendarServiceSelect,\n        }, // Don't leak to client\n        ...userSelect.select,\n      },\n    });\n    if (!eventTypeUser) {\n      logger.warn({ message: \"NewBooking: eventTypeUser.notFound\" });\n      throw new HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" });\n    }\n    users.push(withSelectedCalendars(eventTypeUser));\n  }\n\n  if (!users) throw new HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" });\n\n  // Determine if users are locked\n  const containsBlockedUser = await checkIfUsersAreBlocked(users);\n\n  if (containsBlockedUser) throw new HttpError({ statusCode: 404, message: \"eventTypeUser.notFound\" });\n\n  // map fixed users\n  users = users.map((user) => ({\n    ...user,\n    isFixed:\n      user.isFixed === false\n        ? false\n        : user.isFixed || eventType.schedulingType !== SchedulingType.ROUND_ROBIN,\n  }));\n  const { qualifiedRRHosts, allFallbackRRHosts, fixedHosts } =\n    await findQualifiedHostsWithDelegationCredentials({\n      eventType,\n      routedTeamMemberIds: routedTeamMemberIds || [],\n      rescheduleUid,\n      contactOwnerEmail,\n      routingFormResponse,\n    });\n  const allQualifiedHostsHashMap = [...qualifiedRRHosts, ...(allFallbackRRHosts ?? []), ...fixedHosts].reduce(\n    (acc, host) => {\n      if (host.user.id) {\n        return { ...acc, [host.user.id]: host };\n      }\n      return acc;\n    },\n    {} as {\n      [key: number]: Awaited<\n        ReturnType<typeof findQualifiedHostsWithDelegationCredentials>\n      >[\"qualifiedRRHosts\"][number];\n    }\n  );\n\n  let qualifiedRRUsers: UsersWithDelegationCredentials = [];\n  let allFallbackRRUsers: UsersWithDelegationCredentials = [];\n  let fixedUsers: UsersWithDelegationCredentials = [];\n\n  if (qualifiedRRHosts.length) {\n    // remove users that are not in the qualified hosts array\n    const qualifiedHostIds = new Set(qualifiedRRHosts.map((qualifiedHost) => qualifiedHost.user.id));\n    qualifiedRRUsers = users\n      .filter((user) => qualifiedHostIds.has(user.id))\n      .map((user) => ({ ...user, credentials: allQualifiedHostsHashMap[user.id].user.credentials }));\n  }\n\n  if (allFallbackRRHosts?.length) {\n    const fallbackHostIds = new Set(allFallbackRRHosts.map((fallbackHost) => fallbackHost.user.id));\n    allFallbackRRUsers = users\n      .filter((user) => fallbackHostIds.has(user.id))\n      .map((user) => ({ ...user, credentials: allQualifiedHostsHashMap[user.id].user.credentials }));\n  }\n\n  if (fixedHosts?.length) {\n    const fixedHostIds = new Set(fixedHosts.map((fixedHost) => fixedHost.user.id));\n    fixedUsers = users\n      .filter((user) => fixedHostIds.has(user.id))\n      .map((user) => ({ ...user, credentials: allQualifiedHostsHashMap[user.id].user.credentials }));\n  }\n\n  logger.debug(\n    \"Concerned users\",\n    safeStringify({\n      users: users.map(getPiiFreeUser),\n    })\n  );\n\n  const additionalFallbackRRUsers = allFallbackRRUsers.filter(\n    (fallbackUser) => !qualifiedRRUsers.find((qualifiedUser) => qualifiedUser.id === fallbackUser.id)\n  );\n\n  if (!qualifiedRRUsers.length && !fixedUsers.length) {\n    const firstUser = users[0];\n    const firstUserOrgId = await getOrgIdFromMemberOrTeamId({\n      memberId: firstUser.id ?? null,\n      teamId: eventType.teamId,\n    });\n    const usersEnrichedWithDelegationCredential = await enrichUsersWithDelegationCredentials({\n      orgId: firstUserOrgId ?? null,\n      users,\n    });\n    return {\n      qualifiedRRUsers,\n      additionalFallbackRRUsers, // without qualified\n      fixedUsers: usersEnrichedWithDelegationCredential,\n    };\n  }\n\n  return {\n    qualifiedRRUsers,\n    additionalFallbackRRUsers, // without qualified\n    fixedUsers,\n  };\n};"
+      },
+      {
+        "unitId": "packages/features/bookings/lib/handleNewBooking/loadAndValidateUsers.ts__loadAndValidateUsers_6#function:loadAndValidateUsers",
+        "unitKind": "function",
+        "name": "loadAndValidateUsers",
+        "qualifiedName": "loadAndValidateUsers",
+        "parentUnitId": null,
+        "startLine": 228,
+        "endLine": 228,
+        "isBehavioral": true,
+        "source": "export const loadAndValidateUsers = withReporting(_loadAndValidateUsers, \"loadAndValidateUsers\");"
+      }
+    ]
+  },
+  "out": [
+    "packages/features/bookings/lib/handleNewBooking/loadUsers.ts",
+    "packages/features/bookings/lib/handleNewBooking/getEventTypesFromDB.ts"
+  ],
+  "in": [],
+  "externals": [
+    "@prisma/client",
+    "tslog",
+    "@calcom/features/watchlist/operations/check-if-users-are-blocked.controller",
+    "@calcom/lib/bookings/findQualifiedHostsWithDelegationCredentials",
+    "@calcom/lib/delegationCredential/server",
+    "@calcom/lib/getOrgIdFromMemberOrTeamId",
+    "@calcom/lib/http-error",
+    "@calcom/lib/piiFreeData",
+    "@calcom/lib/safeStringify",
+    "@calcom/lib/sentryWrapper",
+    "@calcom/lib/server/getLuckyUser",
+    "@calcom/lib/server/repository/user",
+    "@calcom/prisma",
+    "@calcom/prisma/enums",
+    "@calcom/prisma/selects/credential",
+    "@calcom/types/Credential"
+  ],
+  "impact": { "seeds": 6, "callers": 1, "impactedFiles": [] }
+}

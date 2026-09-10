@@ -1,0 +1,26 @@
+{
+  "repo": "calcom/cal.com",
+  "summary": "The slots request is assembled on two parallel client paths and neither carries the booker time zone into the query identity. (1) Web app: apps/web/modules/schedules/hooks/useEvent.ts:L61-L105 defines useScheduleForEvent(), which reads the booker's zone via useBookerTime() (apps/web/modules/schedules/hooks/useEvent.ts:L96, implemented at packages/features/bookings/Booker/hooks/useBookerTime.ts:L6-L9 over useBookerStoreContext/useTimePreferences) and then calls useSchedule() at apps/web/modules/schedules/hooks/useEvent.ts:L105. useSchedule (apps/web/modules/schedules/hooks/useSchedule.ts:L53-L169) builds the request from the month range returned by useTimesForSchedule() (called at apps/web/modules/schedules/hooks/useSchedule.ts:L72; hook at packages/features/schedules/hooks/useTimesForSchedule.ts:L87-L96, whose args type UseScheduleWithCacheArgs is declared at L9 and duplicated at apps/web/modules/schedules/hooks/useSchedule.ts:L15) and dispatches it through useApiV2AvailableSlots() at apps/web/modules/schedules/hooks/useSchedule.ts:L147. useApiV2AvailableSlots (apps/web/modules/schedules/hooks/useApiV2AvailableSlots.ts:L11-L13) is a hand-rolled react-query hook with its own QUERY_KEY constant at L11 rather than a tRPC-derived key, so its cache identity is composed by hand and the booker zone is not part of it; a zone change therefore hits the same cache entry and no refetch is issued. (2) Platform/embeddable Booker: packages/platform/atoms/hooks/useAvailableSlots.ts has the identical shape \u2014 QUERY_KEY at L13 and useAvailableSlots() at L15 building its own queryKey around GetAvailableSlotsInput_2024_04_15 (packages/platform/types/slots/slots-2024-04-15/inputs/index.ts:L43) \u2014 and it is the slots source for packages/platform/atoms/booker/BookerPlatformWrapper.tsx (imported at L36, wrapper component at L50-L594, which itself knows the zone via useTimePreferences imported at L14 and computes the range via useTimesForSchedule imported at L17) and for packages/platform/atoms/calendar-view/EventTypeCalendarViewComponent.tsx (useAvailableSlots at L25, useTimesForSchedule at L15, useTimePreferences at L12). BookerPlatformWrapper is what packages/platform/atoms/booker-embed/BookerEmbed.tsx:L1 re-exports as the drop-in widget, which is why the same stale-slots symptom appears on both the first-party booking page and the embeddable booker. The zone itself is mutated from the booker UI (apps/web/modules/bookings/components/EventMeta.tsx:L101-L103 uses useBookerTime/useTimePreferences/useBookerStoreContext) and stored in packages/features/bookings/lib/timePreferences.ts:L7-L34, so the store update is reactive; what is missing is its propagation into the slots request identity in the hooks listed above.",
+  "answer": [
+    "packages/platform/atoms/hooks/useAvailableSlots.ts",
+    "apps/web/modules/schedules/hooks/useApiV2AvailableSlots.ts",
+    "apps/web/modules/schedules/hooks/useSchedule.ts",
+    "packages/platform/atoms/booker/BookerPlatformWrapper.tsx",
+    "packages/features/schedules/hooks/useTimesForSchedule.ts",
+    "apps/web/modules/schedules/hooks/useEvent.ts",
+    "packages/platform/atoms/calendar-view/EventTypeCalendarViewComponent.tsx",
+    "packages/features/bookings/Booker/hooks/useBookerTime.ts",
+    "packages/features/bookings/lib/timePreferences.ts",
+    "apps/web/modules/bookings/components/EventMeta.tsx",
+    "packages/features/bookings/Booker/store.ts",
+    "packages/features/bookings/Booker/utils/getBookerTimezone.ts",
+    "apps/web/modules/bookings/hooks/useSlots.ts",
+    "packages/platform/atoms/hooks/useSlots.ts",
+    "packages/features/schedules/hooks/useTimesForSchedule.timezone.test.ts",
+    "apps/web/modules/bookings/components/BookerWebWrapper.tsx",
+    "packages/platform/atoms/booker-embed/BookerEmbed.tsx",
+    "packages/trpc/server/routers/viewer/slots/types.ts",
+    "packages/trpc/server/routers/viewer/slots/util.ts",
+    "packages/platform/types/slots/slots-2024-04-15/inputs/index.ts"
+  ]
+}

@@ -1,0 +1,626 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "apps/dotcom/sync-worker/src/routes/tla/uploads.ts",
+    "language": "typescript",
+    "sizeBytes": 1313,
+    "tokenCount": 329,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:28:29.263Z",
+    "module": {
+      "purpose": "Provides the upload route for user assets, validating the requested file against Postgres before storing the object and notifying downstream synchronization through a queue.",
+      "summary": "This route authenticates the request, extracts a file identifier from the URL, verifies that the referenced file exists, and requires an object name parameter. It delegates binary storage to the shared asset-upload handler and emits an asset-upload queue message only after a successful upload, preserving the association between the stored object, file, and authenticated user.",
+      "businessContext": "Supports user asset uploads for the collaborative drawing product. Failure prevents assets from being stored or synchronized with their associated files.",
+      "classes": [],
+      "functions": ["upload (~L7-37): Authenticates, validates, stores, and queues a user asset upload"],
+      "keywords": [
+        "user asset upload",
+        "Postgres file validation",
+        "Cloudflare Worker",
+        "asset-upload queue",
+        "object storage",
+        "TLA synchronization"
+      ],
+      "ontologyConcepts": [
+        "authentication",
+        "authorization",
+        "referential integrity",
+        "object storage",
+        "asynchronous messaging",
+        "request validation"
+      ],
+      "businessEntities": ["User", "File", "Asset", "Object", "Upload"],
+      "systemCapabilities": [
+        "Authenticate upload requests",
+        "Validate referenced files",
+        "Store user assets",
+        "Publish upload synchronization events"
+      ],
+      "configDependencies": ["env.UPLOADS"],
+      "importsInternal": [
+        {
+          "spec": "../../postgres",
+          "symbols": ["createPostgresConnectionPool"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/postgres.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/postgres.ts",
+          "resolvedHint": null
+        },
+        {
+          "spec": "../../types",
+          "symbols": ["Environment"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedHint": null
+        },
+        {
+          "spec": "../../utils/tla/getAuth",
+          "symbols": ["getAuth"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts",
+          "resolvedHint": null
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/worker-shared",
+          "symbols": ["handleUserAssetUpload"],
+          "package": "@tldraw/worker-shared",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "itty-router",
+          "symbols": ["IRequest"],
+          "package": "itty-router",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Queries the Postgres file table to verify that the requested file exists."],
+        "network": [
+          "Delegates object storage to the shared user asset upload handler.",
+          "Sends an asset-upload message to the configured queue after a successful upload."
+        ],
+        "env": [
+          "Passes the worker environment to authentication and database connection setup.",
+          "Reads env.UPLOADS as the destination upload bucket."
+        ],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        { "kind": "table", "role": "consumes", "address": "file", "payloadRef": null, "rawKind": null },
+        { "kind": "queue", "role": "provides", "address": "asset-upload", "payloadRef": null, "rawKind": null }
+      ],
+      "contractsProvided": [
+        {
+          "name": "upload",
+          "shape": "export async function upload(request: IRequest, env: Environment): Promise<Response>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "asset-upload",
+          "shape": "{ type: 'asset-upload', objectName, fileId, userId }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "IRequest", "shape": "IRequest", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "Environment",
+          "shape": "Environment",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "name": "getAuth",
+          "shape": "getAuth(request, env)",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts"
+        },
+        {
+          "name": "createPostgresConnectionPool",
+          "shape": "createPostgresConnectionPool(env, 'sync-worker')",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/postgres.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/postgres.ts"
+        },
+        {
+          "name": "handleUserAssetUpload",
+          "shape": "handleUserAssetUpload({ body, headers, bucket: env.UPLOADS, objectName: request.params.objectName })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "request authentication and parameter extraction",
+          "intent": "Authenticates the request and extracts upload identifiers from request data.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 8, "endLine": 12 }
+        },
+        {
+          "name": "file identifier validation",
+          "intent": "Rejects requests without a file identifier.",
+          "structureKind": "branch",
+          "predicate": "!fileId",
+          "branchOutcomes": ["missing file identifier returns HTTP 400", "file identifier present continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 13, "endLine": 13 }
+        },
+        {
+          "name": "file existence lookup",
+          "intent": "Checks Postgres for the referenced file before accepting the upload.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 15, "endLine": 19 }
+        },
+        {
+          "name": "file existence validation",
+          "intent": "Rejects uploads whose referenced file is absent.",
+          "structureKind": "branch",
+          "predicate": "!fileExists",
+          "branchOutcomes": ["missing file returns HTTP 400", "existing file continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 20, "endLine": 22 }
+        },
+        {
+          "name": "object name validation",
+          "intent": "Requires the route object name before storage.",
+          "structureKind": "branch",
+          "predicate": "!objectName",
+          "branchOutcomes": ["missing object name returns HTTP 400", "object name present continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 24, "endLine": 25 }
+        },
+        {
+          "name": "asset storage",
+          "intent": "Uploads the request body to the configured asset bucket.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 27, "endLine": 32 }
+        },
+        {
+          "name": "successful upload notification",
+          "intent": "Queues synchronization metadata only when storage returns status 200.",
+          "structureKind": "branch",
+          "predicate": "res.status === 200",
+          "branchOutcomes": ["status 200 sends asset-upload message", "other status skips queue notification"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 33, "endLine": 35 }
+        }
+      ],
+      "representationFamily": "binding",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "upload",
+          "signature": "export async function upload(request: IRequest, env: Environment): Promise<Response>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<Response>",
+          "exported": true,
+          "anchor": { "startLine": 7, "endLine": 7 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "URL without fileId",
+          "handled": true,
+          "behavior": "Returns a JSON error response with HTTP status 400 before database access.",
+          "anchor": { "startLine": 12, "endLine": 13 }
+        },
+        {
+          "inputShape": "fileId referencing no database row",
+          "handled": true,
+          "behavior": "Returns a JSON upload failure response with HTTP status 400.",
+          "anchor": { "startLine": 20, "endLine": 22 }
+        },
+        {
+          "inputShape": "Request without objectName route parameter",
+          "handled": true,
+          "behavior": "Returns a JSON error response with HTTP status 400 before storage.",
+          "anchor": { "startLine": 24, "endLine": 25 }
+        },
+        {
+          "inputShape": "Upload handler response with non-200 status",
+          "handled": true,
+          "behavior": "Returns the handler response without sending an asset-upload queue message.",
+          "anchor": { "startLine": 33, "endLine": 36 }
+        },
+        {
+          "inputShape": "Unauthenticated request",
+          "handled": true,
+          "behavior": "Continues with userId set to null rather than rejecting at this route.",
+          "anchor": { "startLine": 9, "endLine": 10 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Rejects a missing file identifier with a JSON validation error.",
+          "fallback": "Response.json({ error: 'File id is required' }, { status: 400 })",
+          "anchor": { "startLine": 13, "endLine": 13 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Rejects a file identifier that does not resolve to a database row.",
+          "fallback": "Response.json({ error: 'Could not upload the file' }, { status: 400 })",
+          "anchor": { "startLine": 20, "endLine": 22 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Rejects a missing object name with a JSON validation error.",
+          "fallback": "Response.json({ error: 'Object name is required' }, { status: 400 })",
+          "anchor": { "startLine": 25, "endLine": 25 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "A file identifier must be present before database lookup and upload processing.",
+          "anchor": { "startLine": 12, "endLine": 13 }
+        },
+        {
+          "kind": "invariant",
+          "description": "The referenced file must exist before the asset upload handler is invoked.",
+          "anchor": { "startLine": 20, "endLine": 27 }
+        },
+        {
+          "kind": "precondition",
+          "description": "An object name must be present before the asset is stored.",
+          "anchor": { "startLine": 24, "endLine": 25 }
+        },
+        {
+          "kind": "ordering",
+          "description": "The queue notification is sent only after the upload handler resolves successfully with status 200.",
+          "anchor": { "startLine": 27, "endLine": 35 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a request whose params.objectName identifies the intended stored object.",
+          "anchor": { "startLine": 24, "endLine": 24 }
+        },
+        {
+          "kind": "schema",
+          "description": "The Postgres schema contains a file table with an id column compatible with fileId.",
+          "anchor": { "startLine": 16, "endLine": 19 }
+        },
+        {
+          "kind": "config",
+          "description": "The worker environment provides a configured UPLOADS bucket and QUEUE binding.",
+          "anchor": { "startLine": 30, "endLine": 34 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does file existence authorize the authenticated user to upload against that file, or is ownership enforced elsewhere?",
+          "affects": "authorization and business invariants",
+          "anchor": { "startLine": 16, "endLine": 22 },
+          "resolution": null
+        },
+        {
+          "question": "What happens when authentication, database access, storage, or queue operations reject?",
+          "affects": "error_handling",
+          "anchor": { "startLine": 9, "endLine": 34 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "unknown",
+        "notes": "Each invocation performs independent authentication, database, storage, and queue operations; queue ordering is not established by this file."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-missing-file-id",
+          "scenario": "A request without a fileId query parameter is rejected before database access or upload.",
+          "given": ["new URL(url).searchParams.get('fileId') === null"],
+          "when": "upload(request, env)",
+          "then": "response.status === 400 && response.json() deepEquals { error: 'File id is required' }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the required file identifier validation."
+        },
+        {
+          "testId": "rejects-unknown-file",
+          "scenario": "A request referencing a file absent from the database is rejected.",
+          "given": [
+            "fileId is truthy",
+            "db.selectFrom('file').where('id', '=', fileId).selectAll().executeTakeFirst() resolves to undefined"
+          ],
+          "when": "upload(request, env)",
+          "then": "response.status === 400 && response.json() deepEquals { error: 'Could not upload the file' }",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures uploads cannot target nonexistent file records."
+        },
+        {
+          "testId": "rejects-missing-object-name",
+          "scenario": "A request for an existing file without an object name is rejected.",
+          "given": ["fileId is truthy", "fileExists is truthy", "request.params.objectName is falsy"],
+          "when": "upload(request, env)",
+          "then": "response.status === 400 && response.json() deepEquals { error: 'Object name is required' }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the object storage key requirement."
+        },
+        {
+          "testId": "uploads-asset-and-publishes-event",
+          "scenario": "A valid request uploads the asset and publishes an asset-upload message after a successful upload.",
+          "given": [
+            "fileId is truthy",
+            "fileExists is truthy",
+            "request.params.objectName is truthy",
+            "handleUserAssetUpload(...) resolves to { status: 200 }"
+          ],
+          "when": "upload(request, env)",
+          "then": "env.QUEUE.send({ type: 'asset-upload', objectName, fileId, userId }) is called and the upload response is returned",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the success ordering and queue payload contract."
+        },
+        {
+          "testId": "does-not-publish-on-upload-failure",
+          "scenario": "A valid request whose asset upload returns a non-200 response does not publish a queue message.",
+          "given": [
+            "fileId is truthy",
+            "fileExists is truthy",
+            "request.params.objectName is truthy",
+            "handleUserAssetUpload(...) resolves to { status: 400 }"
+          ],
+          "when": "upload(request, env)",
+          "then": "env.QUEUE.send was not called and the returned response has status 400",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents failed uploads from generating downstream processing events."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports shared asset upload handler",
+        "imports IRequest type",
+        "imports Postgres connection pool factory",
+        "imports Environment type",
+        "imports authentication helper",
+        "exports upload route handler"
+      ],
+      "moduleLevelCode": "import { handleUserAssetUpload } from '@tldraw/worker-shared'\nimport { IRequest } from 'itty-router'\nimport { createPostgresConnectionPool } from '../../postgres'\nimport { Environment } from '../../types'\nimport { getAuth } from '../../utils/tla/getAuth'",
+      "exports": [{ "name": "upload", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "handleUserAssetUpload", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "IRequest", "module": "itty-router", "alias": null, "kind": "external" },
+        { "symbol": "createPostgresConnectionPool", "module": "../../postgres", "alias": null, "kind": "internal" },
+        { "symbol": "Environment", "module": "../../types", "alias": null, "kind": "internal" },
+        { "symbol": "getAuth", "module": "../../utils/tla/getAuth", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/dotcom/sync-worker/src/routes/tla/uploads.ts__upload#function:upload",
+        "unitKind": "function",
+        "name": "upload",
+        "qualifiedName": "upload",
+        "parentUnitId": null,
+        "startLine": 7,
+        "endLine": 37,
+        "isBehavioral": true,
+        "source": "export async function upload(request: IRequest, env: Environment): Promise<Response> {\n\tconst { body, url, headers } = request\n\tconst auth = await getAuth(request, env)\n\tconst userId = auth?.userId || null\n\tconst searchParams = new URL(url).searchParams\n\tconst fileId = searchParams.get('fileId')\n\tif (!fileId) return Response.json({ error: 'File id is required' }, { status: 400 })\n\n\tconst db = createPostgresConnectionPool(env, 'sync-worker')\n\tconst fileExists = await db\n\t\t.selectFrom('file')\n\t\t.where('id', '=', fileId)\n\t\t.selectAll()\n\t\t.executeTakeFirst()\n\tif (!fileExists) {\n\t\treturn Response.json({ error: 'Could not upload the file' }, { status: 400 })\n\t}\n\n\tconst objectName = request.params.objectName\n\tif (!objectName) return Response.json({ error: 'Object name is required' }, { status: 400 })\n\n\tconst res = await handleUserAssetUpload({\n\t\tbody,\n\t\theaders,\n\t\tbucket: env.UPLOADS,\n\t\tobjectName: request.params.objectName,\n\t})\n\tif (res.status === 200) {\n\t\tawait env.QUEUE.send({ type: 'asset-upload', objectName, fileId, userId })\n\t}\n\treturn res",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/routes/tla/uploads.ts__upload#function:upload",
+          "fileId": "apps/dotcom/sync-worker/src/routes/tla/uploads.ts__upload",
+          "unitKind": "function",
+          "name": "upload",
+          "qualifiedName": "upload",
+          "parentUnitId": null,
+          "startLine": 7,
+          "endLine": 37,
+          "signature": "export async function upload(request: IRequest, env: Environment): Promise<Response>",
+          "parameters": [
+            {
+              "name": "request",
+              "type": "IRequest",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "Promise<Response>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "request.url is parseable as a URL.",
+            "request.params is available on the request.",
+            "env provides the resources required by authentication, database access, asset upload handling, and queue publishing."
+          ],
+          "postconditions": [
+            "Returns a Response.",
+            "A successful asset upload response with status 200 causes an asset-upload message to be sent to env.QUEUE.",
+            "A non-200 upload response is returned without sending the asset-upload queue message."
+          ],
+          "invariants": [
+            "The database file existence check occurs before the asset upload is attempted.",
+            "The queue message uses the validated fileId, the request objectName, and the authenticated userId or null."
+          ],
+          "edgeCases": [
+            "When the URL has no fileId query parameter, returns HTTP 400 with JSON body {\"error\":\"File id is required\"}.",
+            "When the referenced file is absent from the database, returns HTTP 400 with JSON body {\"error\":\"Could not upload the file\"}.",
+            "When request.params.objectName is falsy, returns HTTP 400 with JSON body {\"error\":\"Object name is required\"}.",
+            "When authentication yields no userId, the upload may proceed and a successful queue message uses userId null.",
+            "When the asset upload handler returns a status other than 200, returns that response and does not publish a queue message."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns HTTP 400 JSON responses for a missing fileId, a missing database file, or a falsy objectName.",
+            "returnsOnError": "Response.json({ error: 'File id is required' }, { status: 400 }), Response.json({ error: 'Could not upload the file' }, { status: 400 }), or Response.json({ error: 'Object name is required' }, { status: 400 }) depending on the validation failure."
+          },
+          "stateMutations": [
+            "May cause the external asset storage represented by env.UPLOADS to receive the request body.",
+            "May enqueue a message through env.QUEUE after a successful upload."
+          ],
+          "eventsEmitted": [
+            "Sends { type: 'asset-upload', objectName, fileId, userId } to env.QUEUE when the upload response status is 200."
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "getAuth", "source": null, "kind": "internal" },
+            { "name": "URL", "source": "Web URL API", "kind": "external" },
+            { "name": "createPostgresConnectionPool", "source": null, "kind": "internal" },
+            {
+              "name": "db.selectFrom('file').where('id', '=', fileId).selectAll().executeTakeFirst",
+              "source": "Postgres database",
+              "kind": "external"
+            },
+            { "name": "handleUserAssetUpload", "source": null, "kind": "internal" },
+            { "name": "env.QUEUE.send", "source": "env.QUEUE", "kind": "external" },
+            { "name": "Response.json", "source": "Web Response API", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "IRequest",
+            "Environment",
+            "Response",
+            "getAuth",
+            "createPostgresConnectionPool",
+            "handleUserAssetUpload"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns a web Response. Validation failures are JSON responses with an error string and HTTP status 400. Successful or handler-produced responses are returned unchanged. On handler status 200, the queue payload is the object { type: 'asset-upload', objectName, fileId, userId }.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles an asset upload request for a referenced file. It validates the file identifier and object name, uploads the asset, and queues a notification after a successful upload.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "File id is required",
+              "role": "JSON error body for a missing fileId query parameter."
+            },
+            {
+              "kind": "error-message",
+              "value": "Could not upload the file",
+              "role": "JSON error body when the fileId does not identify an existing database file."
+            },
+            {
+              "kind": "error-message",
+              "value": "Object name is required",
+              "role": "JSON error body for a missing or falsy objectName."
+            },
+            {
+              "kind": "magic-number",
+              "value": "400",
+              "role": "HTTP status used for validation and file-existence failures."
+            },
+            {
+              "kind": "magic-number",
+              "value": "200",
+              "role": "Upload response status required before publishing the asset-upload queue message."
+            },
+            {
+              "kind": "enum-value",
+              "value": "asset-upload",
+              "role": "Queue message type emitted after a successful asset upload."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "upload is called.",
+              "then": "It returns a 400 JSON response with error equal to 'File id is required' and does not perform the file lookup or upload.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "upload is called.",
+              "then": "It returns the handler response and sends { type: 'asset-upload', objectName, fileId, userId } to the queue.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "upload is called.",
+              "then": "It returns that exact handler response and does not send an asset-upload message to the queue.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4d511de168ab4e41dff3615c7df1b26bccf9a6d92f50881d1306bbcabe6f67a9"
+        }
+      }
+    ]
+  },
+  "out": [
+    "apps/dotcom/sync-worker/src/types.ts",
+    "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts",
+    "apps/dotcom/sync-worker/src/postgres.ts"
+  ],
+  "in": ["apps/dotcom/sync-worker/src/worker.ts"],
+  "externals": ["@tldraw/worker-shared", "itty-router"],
+  "impact": { "seeds": 1, "callers": 0, "impactedFiles": [] }
+}

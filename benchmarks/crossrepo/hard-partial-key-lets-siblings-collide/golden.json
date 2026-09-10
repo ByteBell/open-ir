@@ -1,0 +1,58 @@
+{
+  "id": "xrepo-v6-2-partial-key-lets-siblings-collide-hard",
+  "question": "A correlated per-parent computation joins its result back to the parent that asked for it using a key built only from the computed value itself - never from which parent produced it. So when two different parents' correlated computations happen to produce the same value, the join can no longer tell them apart, and a value silently attaches itself to the wrong parent's row - the correlation was real, but the key that was supposed to carry it only captured part of what made the two cases different. The same hazard is handled deliberately elsewhere in the folder: several libraries look up or normalize a piece of state using a key computed from an object, and that key has to capture every dimension that can make two logically different objects collide, not merely the dimension an equality check or a filter clause happens to reference. Which files build the join key that drops the parent's identity, and which own the key-completeness contract it has to be brought in line with?",
+  "anchor": {
+    "repo": "db",
+    "pinned_commit": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+    "fix_pr": "https://github.com/TanStack/db/pull/1761",
+    "pr_number": 1761,
+    "pr_title": "fix(db): preserve correlated include route identity",
+    "fix_merged": "2026-08-24",
+    "fix_merge_commit": "3131de145070",
+    "parent_is_buggy": true
+  },
+  "counts": {
+    "min_repos": 4,
+    "min_files": 9
+  },
+  "repo_commits": {
+    "db": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+    "redux-toolkit": "b1c5130154c454ca8387f55da6122fcb507c560c",
+    "table": "d08af367e11c539bb7e18c2472aa761149ef6db6",
+    "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76"
+  },
+  "expected": [
+    {
+      "repo": "db",
+      "knowledgeId": "659659a1-0515-4ae1-92a9-1961c8c10abe",
+      "files": [
+        "packages/db/src/query/builder/index.ts",
+        "packages/db/src/query/builder/types.ts",
+        "packages/db/src/query/compiler/group-by.ts",
+        "packages/db/src/query/compiler/index.ts",
+        "packages/db/src/query/compiler/joins.ts",
+        "packages/db/src/query/ir.ts"
+      ]
+    },
+    {
+      "repo": "redux-toolkit",
+      "knowledgeId": "5129210f7edc89d624231a57a3b76770",
+      "files": ["packages/toolkit/src/entities/create_adapter.ts"]
+    },
+    {
+      "repo": "table",
+      "knowledgeId": null,
+      "files": ["packages/table-core/src/features/RowSelection.ts"]
+    },
+    {
+      "repo": "query",
+      "knowledgeId": "0c574639-1088-4233-a793-3a4397e6c431",
+      "files": ["packages/query-core/src/mutationCache.ts"]
+    }
+  ],
+  "grader_notes": {
+    "why_cross_repo": "ANCHOR (real bug, TanStack/db PR #1761 'preserve correlated include route identity', merged 2026-08-24 as 3131de145070 - AFTER the pinned commit 7f0fa36ff6d4, 2026-07-16; the fix is NOT reachable from `--all` branch sweeps alone, it is confirmed on origin/main proper via `git merge-base --is-ancestor <pin> 3131de145070`). Verified bug-live-at-pin by DIRECT read of the pin (not the fix's diff pre-image): at the pin, builder/index.ts's buildIncludesSubquery computes `parentProjection` ONLY from PropRefs found in `parentFilters` (WHERE clauses that reference a parent alias) - packages/db/src/query/builder/index.ts:1253-1266 at the pin, read directly. A parent field referenced anywhere else in the child query - its SELECT projection, a GROUP BY, a HAVING, an ORDER BY, a nested join or a UNION branch - is invisible to parentProjection. compiler/joins.ts computes the join key purely as `normalizeValue(compiledExpr(namespacedRow))` (verified live at pin, lines 194/211) - the VALUE the child expression evaluates to, with no admixture of which parent produced it. So two different parent rows whose correlated child computation happens to evaluate to the same value are joined as if they were the same route, and one parent's row can receive a sibling's data. The fix threads a `__correlationKey`/`__parentContext` pair through every join key (new route-metadata.ts/parent-routes.ts) and widens parentProjection to every parent reference reachable from the child plan (compiler/group-by.ts's GROUP BY parent refs, ir.ts's parentProjection field, builder/types.ts's structural types). ECOSYSTEM (reference-correct implementations of the same key-completeness contract, verified by direct source read at each repo's own pin): redux-toolkit's entities/create_adapter.ts keys its normalized `entities` dict purely by the caller-supplied `selectId(entity)` - the ENTIRE adapter's correctness rests on selectId capturing every dimension that distinguishes two entities, exactly the property db's parentProjection was missing; a selectId that omits a discriminant (e.g. keying a multi-tenant entity by its own id without the tenant id) reproduces the identical collision shape as siblings from different parents. table's features/RowSelection.ts keeps ALL selection state as a flat dict keyed by row id alone (toggleAllRowsSelected/getIsRowSelected etc. all index into `state.rowSelection[row.id]`), which makes row id completeness a hard external dependency - table's own docs (docs/guide/row-selection.md at the pin: 'the row selection state will look something like this... keyed by row id') warn that a custom getRowId must be unique, i.e. must capture parent/group context, because RowSelection.ts itself has no way to tell two different rows apart if their ids collide - structurally the same hazard as db's join key losing the parent that produced a value. query's mutationCache.ts (find/findAll) is the 'gets it right' reference on the lookup side: every mutation lookup goes through matchMutation against the caller's FULL filter object - mutationKey, predicate and status together - rather than a hand-picked subset of it, so two structurally-different mutations are never treated as the same lookup target, which is precisely the property db's parentProjection failed to preserve for the parent's contribution to the join key.",
+    "verification_method": "Every db anchor file confirmed bug-live via a THREE-layer check, in order of strength: (1) `git merge-base --is-ancestor <pin> <fix>` on the repo's actual default branch (origin/main) - not `git log --all`, which pulled in a divergent, never-merged branch (tldraw's `deep-sync-study`) during this same design session and had to be discarded; (2) the fix's removed (-) lines matched verbatim against `git show <pin>:<file>` (cross-repo/_tools/verify_anchor.py) for every touched file, all >=71%, most 100%; (3) for this anchor specifically, a fourth manual read of `git show <pin>:builder/index.ts` and `git show <pin>:joins.ts` directly (not the fix's diff context) because two of the fix's NEW files (parent-routes.ts, route-metadata.ts) raised the same 'was the whole feature introduced post-pin' concern that invalidated an earlier query-core candidate - confirmed here that buildIncludesSubquery/parentProjection/the raw normalizeValue join key all predate the pin; only the fix's own helper modules are new.",
+    "rejected_candidates": "TanStack/query 'store cache-key' (f7e8581fd92a) + 'switch to on-demand weakmap cache' (60cd3d108359): the whole valueSerializer/serializeCacheKey-in-getQueryDefaults mechanism these touch was itself introduced by a later commit (0753acefaec2, 'serializer', same day) - bug and fix both postdate query's pin, invalid regardless of file existence. TanStack/db 'settle subset loads after publication' (8c5838ddd5f0) and 'harden incremental subset recovery' (8f432ba226df): both real and bug-live at the pin, but share 5-7 of ~11 touched files with xrepo-v6-1's anchor (#1751, same review cycle) and are the SAME underlying 'initial sync error lifecycle' story split across PRs - using either as a second case's anchor would be redundant with v6-1, not independently hard. tldraw 'harden sync engine against reconnect races' (00701e0a46fb): NOT an ancestor of the pin in either direction - lives only on the unmerged `deep-sync-study` branch, never shipped; this is what surfaced the `--all`-sweep mining defect. Most of redux, react-redux, reselect, react, jotai, zustand and redux-devtools' `pin..origin/<default-branch>` history is either empty or type/tooling-only once ancestry and pre-pin-dated-but-newly-merged commits are excluded - this snapshot's genuinely fresh, non-duplicate anchor material is much thinner than an `--all`-based search suggests."
+  }
+}

@@ -1,0 +1,1862 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts",
+    "language": "typescript",
+    "sizeBytes": 10093,
+    "tokenCount": 2519,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:28:07.656Z",
+    "module": {
+      "purpose": "Provides authentication, authorization, Clerk client construction, and file-access guards for the sync worker.",
+      "summary": "This module centralizes Clerk-based request authentication, including websocket access-token fallback and narrowly scoped verification of zero-cache template tokens. It also implements administrative authorization and database-backed file read/write access checks, including ownership, group roles, sharing state, and editable-link requirements. Database pools are always destroyed after access checks, while authentication failures are represented as null results or HTTP status errors depending on the helper.",
+      "businessContext": "Supports tldraw's sync-worker endpoints and zero-cache connections. Failures can reject valid users, expose unauthorized file operations, or prevent administrative workflows.",
+      "classes": [],
+      "functions": [
+        "requireAuth (~L8-15): Requires an authenticated request and throws on anonymous access.",
+        "getClerkClient (~L17-22): Creates a Clerk client from environment credentials.",
+        "getAuthorizedParties (~L24-37): Builds environment-specific allowed JWT origins.",
+        "getAuth (~L39-63): Authenticates requests using Clerk headers, cookies, or query tokens.",
+        "getZeroAuth (~L91-121): Verifies zero-template tokens before falling back to standard authentication.",
+        "requireWriteAccessToFile (~L127-177): Enforces ownership, group, sharing, and edit access.",
+        "hasReadAccessToFile (~L201-230): Checks readable file access and returns a safe file projection.",
+        "requireAdminAccess (~L232-244): Requires a verified tldraw.com administrator identity.",
+        "requireAdminAccessToRequest (~L246-248): Applies administrative authorization to an authenticated request."
+      ],
+      "keywords": [
+        "Clerk JWT",
+        "authorized parties",
+        "zero token",
+        "websocket authentication",
+        "file access",
+        "group roles",
+        "shared links",
+        "Postgres",
+        "admin authorization"
+      ],
+      "ontologyConcepts": [
+        "authentication",
+        "authorization",
+        "access control",
+        "role-based access",
+        "token validation",
+        "resource ownership",
+        "database resource lifecycle"
+      ],
+      "businessEntities": ["User", "File", "Group", "Role", "JWT token", "Shared link", "Administrator"],
+      "systemCapabilities": [
+        "Authenticate worker requests",
+        "Validate zero-cache credentials",
+        "Authorize file reads and writes",
+        "Authorize administrative operations",
+        "Resolve environment-specific token origins",
+        "Manage authorization database connections"
+      ],
+      "configDependencies": ["CLERK_SECRET_KEY", "CLERK_PUBLISHABLE_KEY", "TLDRAW_ENV", "WORKER_NAME"],
+      "importsInternal": [
+        {
+          "spec": "../../postgres",
+          "symbols": ["createPostgresConnectionPool"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/postgres.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/postgres.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/postgres.ts"
+        },
+        {
+          "spec": "../../types",
+          "symbols": ["Environment"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/types.ts"
+        },
+        {
+          "spec": "./getRole",
+          "symbols": ["getRole"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/tla/getRole.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/tla/getRole.ts",
+          "resolvedHint": "apps/dotcom/sync-worker/src/utils/tla/getRole.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@clerk/backend",
+          "symbols": ["ClerkClient", "createClerkClient", "verifyToken"],
+          "package": "@clerk/backend",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/dotcom-shared",
+          "symbols": ["can"],
+          "package": "@tldraw/dotcom-shared",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "itty-router",
+          "symbols": ["IRequest", "StatusError"],
+          "package": "itty-router",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes rejected zero-template token diagnostics to console.error."],
+        "network": ["Calls Clerk authentication, token verification, and user lookup APIs."],
+        "env": ["Reads Clerk keys, deployment environment, and worker name from Environment."],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": ["Mutates the cloned request headers when copying an access token from the query string."]
+      },
+      "integrationSurface": [
+        { "kind": "table", "role": "consumes", "address": "file", "payloadRef": null, "rawKind": null }
+      ],
+      "contractsProvided": [
+        {
+          "name": "requireAuth",
+          "shape": "export async function requireAuth(request: IRequest, env: Environment): Promise<SignedInAuth>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getClerkClient",
+          "shape": "export function getClerkClient(env: Environment)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getAuth",
+          "shape": "export async function getAuth(request: IRequest, env: Environment): Promise<SignedInAuth | null>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getZeroAuth",
+          "shape": "export async function getZeroAuth(request: IRequest, env: Environment): Promise<{ userId: string } | null>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SignedInAuth",
+          "shape": "export type SignedInAuth = ReturnType<Extract<Awaited<ReturnType<ClerkClient['authenticateRequest']>>, { isSignedIn: true }>['toAuth']> & { userId: string }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "requireWriteAccessToFile",
+          "shape": "export async function requireWriteAccessToFile(request: IRequest, env: Environment, roomId: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ReadAccessToFile",
+          "shape": "export type ReadAccessToFile = | { ok: true; file: { id: string; shared: boolean; isDeleted: boolean } } | { ok: false }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "hasReadAccessToFile",
+          "shape": "export async function hasReadAccessToFile(env: Environment, userId: string, fileId: string): Promise<ReadAccessToFile>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "requireAdminAccess",
+          "shape": "export async function requireAdminAccess(env: Environment, auth: { userId: string } | null)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "requireAdminAccessToRequest",
+          "shape": "export async function requireAdminAccessToRequest(request: IRequest, env: Environment)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "createClerkClient",
+          "shape": "createClerkClient({ secretKey: env.CLERK_SECRET_KEY, publishableKey: env.CLERK_PUBLISHABLE_KEY })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "verifyToken",
+          "shape": "verifyToken(token, { secretKey: env.CLERK_SECRET_KEY, authorizedParties: getAuthorizedParties(env) })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "can", "shape": "can(role, 'accessFiles')", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "createPostgresConnectionPool",
+          "shape": "createPostgresConnectionPool(env, 'sync-worker/hasWriteAccessToFile')",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/postgres.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/postgres.ts"
+        },
+        {
+          "name": "getRole",
+          "shape": "getRole(db, auth.userId, file.owningGroupId)",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/utils/tla/getRole.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/utils/tla/getRole.ts"
+        },
+        { "name": "IRequest", "shape": "request: IRequest", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "StatusError",
+          "shape": "throw new StatusError(401, 'Unauthorized')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Environment",
+          "shape": "env: Environment",
+          "resolvedRelativePath": "apps/dotcom/sync-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/sync-worker/src/types.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "authorized-party construction",
+          "intent": "Builds the origin allowlist according to deployment environment and preview worker naming.",
+          "structureKind": "branch",
+          "predicate": "env.TLDRAW_ENV !== 'production'",
+          "branchOutcomes": ["include localhost", "omit localhost"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 24, "endLine": 37 }
+        },
+        {
+          "name": "standard authentication",
+          "intent": "Authenticates headers or cookies, then retries with a query-string bearer token.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 39, "endLine": 63 }
+        },
+        {
+          "name": "zero-template authentication",
+          "intent": "Verifies a scoped Clerk template token and falls back to session authentication.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 91, "endLine": 121 }
+        },
+        {
+          "name": "write-access authorization",
+          "intent": "Checks ownership, group permissions, sharing, and edit-link requirements.",
+          "structureKind": "branch",
+          "predicate": "file.ownerId === auth.userId",
+          "branchOutcomes": ["owner grants access", "continue checks"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 135, "endLine": 176 }
+        },
+        {
+          "name": "read-access authorization",
+          "intent": "Loads a file and returns a safe success projection for permitted readers.",
+          "structureKind": "branch",
+          "predicate": "file.shared === true",
+          "branchOutcomes": ["shared grants access", "not shared denies access"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 208, "endLine": 229 }
+        },
+        {
+          "name": "administrator authorization",
+          "intent": "Requires a verified tldraw.com primary email address.",
+          "structureKind": "branch",
+          "predicate": "!user.primaryEmailAddress?.emailAddress.endsWith('@tldraw.com') || user.primaryEmailAddress?.verification?.status !== 'verified'",
+          "branchOutcomes": ["reject unauthorized user", "return Clerk user"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 232, "endLine": 244 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "requireAuth",
+          "signature": "export async function requireAuth(request: IRequest, env: Environment): Promise<SignedInAuth>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<SignedInAuth>",
+          "exported": true,
+          "anchor": { "startLine": 8, "endLine": 8 }
+        },
+        {
+          "kind": "function",
+          "name": "getClerkClient",
+          "signature": "export function getClerkClient(env: Environment)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 17, "endLine": 17 }
+        },
+        {
+          "kind": "function",
+          "name": "getAuth",
+          "signature": "export async function getAuth(request: IRequest, env: Environment): Promise<SignedInAuth | null>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<SignedInAuth | null>",
+          "exported": true,
+          "anchor": { "startLine": 39, "endLine": 39 }
+        },
+        {
+          "kind": "function",
+          "name": "getZeroAuth",
+          "signature": "export async function getZeroAuth(\n\trequest: IRequest,\n\tenv: Environment\n): Promise<{ userId: string } | null>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<{ userId: string } | null>",
+          "exported": true,
+          "anchor": { "startLine": 91, "endLine": 94 }
+        },
+        {
+          "kind": "function",
+          "name": "requireWriteAccessToFile",
+          "signature": "export async function requireWriteAccessToFile(\n\trequest: IRequest,\n\tenv: Environment,\n\troomId: string\n)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 127, "endLine": 131 }
+        },
+        {
+          "kind": "function",
+          "name": "hasReadAccessToFile",
+          "signature": "export async function hasReadAccessToFile(\n\tenv: Environment,\n\tuserId: string,\n\tfileId: string\n): Promise<ReadAccessToFile>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<ReadAccessToFile>",
+          "exported": true,
+          "anchor": { "startLine": 201, "endLine": 205 }
+        },
+        {
+          "kind": "function",
+          "name": "requireAdminAccess",
+          "signature": "export async function requireAdminAccess(env: Environment, auth: { userId: string } | null)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 232, "endLine": 232 }
+        },
+        {
+          "kind": "function",
+          "name": "requireAdminAccessToRequest",
+          "signature": "export async function requireAdminAccessToRequest(request: IRequest, env: Environment)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 246, "endLine": 246 }
+        },
+        {
+          "kind": "function",
+          "name": "getAuthorizedParties",
+          "signature": "function getAuthorizedParties(env: Environment): string[]",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string[]",
+          "exported": false,
+          "anchor": { "startLine": 24, "endLine": 24 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "SignedInAuth",
+          "shape": "ReturnType<\n\tExtract<Awaited<ReturnType<ClerkClient['authenticateRequest']>>, { isSignedIn: true }>['toAuth']\n> & { userId: string }",
+          "discriminant": null,
+          "anchor": { "startLine": 123, "endLine": 125 }
+        },
+        {
+          "kind": "union",
+          "name": "ReadAccessToFile",
+          "shape": "| { ok: true; file: { id: string; shared: boolean; isDeleted: boolean } }\n\t| { ok: false }",
+          "discriminant": "ok",
+          "anchor": { "startLine": 197, "endLine": 199 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Unauthenticated request without an accessToken query parameter",
+          "handled": true,
+          "behavior": "Returns null from getAuth; requireAuth converts that result into a 401 StatusError.",
+          "anchor": { "startLine": 51, "endLine": 56 }
+        },
+        {
+          "inputShape": "Websocket-style request carrying accessToken in the query string",
+          "handled": true,
+          "behavior": "Copies the token into a cloned Authorization header and retries Clerk authentication.",
+          "anchor": { "startLine": 46, "endLine": 59 }
+        },
+        {
+          "inputShape": "Rejected or malformed zero-template token",
+          "handled": true,
+          "behavior": "Logs the rejection and falls back to standard getAuth.",
+          "anchor": { "startLine": 97, "endLine": 120 }
+        },
+        {
+          "inputShape": "Missing or deleted file",
+          "handled": true,
+          "behavior": "Returns { ok: false } without revealing whether the file was missing or deleted.",
+          "anchor": { "startLine": 215, "endLine": 215 }
+        },
+        {
+          "inputShape": "Existing shared file with a non-edit link",
+          "handled": true,
+          "behavior": "Write access is denied with a 403 StatusError.",
+          "anchor": { "startLine": 167, "endLine": 168 }
+        },
+        {
+          "inputShape": "Administrator with missing, non-tldraw.com, or unverified primary email",
+          "handled": true,
+          "behavior": "Administrative access is denied with a 403 StatusError.",
+          "anchor": { "startLine": 237, "endLine": 242 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "!=",
+          "left": "env.TLDRAW_ENV",
+          "right": "'production'",
+          "inclusive": false,
+          "intent": "Includes localhost in every environment except production.",
+          "anchor": { "startLine": 27, "endLine": 27 }
+        },
+        {
+          "operator": "==",
+          "left": "env.TLDRAW_ENV",
+          "right": "'preview'",
+          "inclusive": true,
+          "intent": "Adds a preview deployment origin only for preview environments.",
+          "anchor": { "startLine": 32, "endLine": 32 }
+        },
+        {
+          "operator": "!=",
+          "left": "claims.purpose",
+          "right": "ZERO_TOKEN_PURPOSE",
+          "inclusive": false,
+          "intent": "Rejects tokens not minted for the zero template.",
+          "anchor": { "startLine": 110, "endLine": 110 }
+        },
+        {
+          "operator": "==",
+          "left": "file.ownerId",
+          "right": "auth.userId",
+          "inclusive": true,
+          "intent": "Grants write access directly to the file owner.",
+          "anchor": { "startLine": 149, "endLine": 149 }
+        },
+        {
+          "operator": "!=",
+          "left": "file.sharedLinkType",
+          "right": "'edit'",
+          "inclusive": false,
+          "intent": "Rejects shared links that do not permit editing.",
+          "anchor": { "startLine": 167, "endLine": 167 }
+        },
+        {
+          "operator": "==",
+          "left": "file.ownerId",
+          "right": "userId",
+          "inclusive": true,
+          "intent": "Grants read access directly to the file owner.",
+          "anchor": { "startLine": 219, "endLine": 219 }
+        },
+        {
+          "operator": "==",
+          "left": "file.shared",
+          "right": "true",
+          "inclusive": true,
+          "intent": "Grants read access for files shared by link.",
+          "anchor": { "startLine": 226, "endLine": 226 }
+        },
+        {
+          "operator": "!=",
+          "left": "user.primaryEmailAddress?.verification?.status",
+          "right": "'verified'",
+          "inclusive": false,
+          "intent": "Rejects administrators whose primary email is not verified.",
+          "anchor": { "startLine": 239, "endLine": 239 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "StatusError(401, 'Unauthorized')",
+          "caught": null,
+          "action": "Rejects an unauthenticated request.",
+          "fallback": null,
+          "anchor": { "startLine": 10, "endLine": 11 }
+        },
+        {
+          "thrown": "StatusError(404, 'File not found')",
+          "caught": null,
+          "action": "Rejects write authorization when the database query finds no file.",
+          "fallback": null,
+          "anchor": { "startLine": 144, "endLine": 145 }
+        },
+        {
+          "thrown": "StatusError(403, 'File is not shared')",
+          "caught": null,
+          "action": "Rejects write authorization for an unshared non-owner file.",
+          "fallback": null,
+          "anchor": { "startLine": 162, "endLine": 163 }
+        },
+        {
+          "thrown": "StatusError(403, 'File is shared but not for editing')",
+          "caught": null,
+          "action": "Rejects write authorization for a non-editable shared link.",
+          "fallback": null,
+          "anchor": { "startLine": 167, "endLine": 168 }
+        },
+        {
+          "thrown": null,
+          "caught": "Error from verifyToken or zero-token validation",
+          "action": "Logs the rejection message and delegates to getAuth.",
+          "fallback": "getAuth(request, env)",
+          "anchor": { "startLine": 114, "endLine": 117 }
+        },
+        {
+          "thrown": "StatusError(403, 'Unauthorized')",
+          "caught": null,
+          "action": "Rejects missing user identity or an unverified non-tldraw administrator.",
+          "fallback": null,
+          "anchor": { "startLine": 233, "endLine": 241 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "postcondition",
+          "description": "requireAuth returns only a signed-in authentication object.",
+          "anchor": { "startLine": 8, "endLine": 15 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Zero-template authentication accepts only tokens whose purpose claim is zero.",
+          "anchor": { "startLine": 110, "endLine": 113 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Database pools are destroyed after both successful and failed file-access checks.",
+          "anchor": { "startLine": 173, "endLine": 176 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Successful read access returns a non-deleted file projection with id, shared, and isDeleted fields.",
+          "anchor": { "startLine": 216, "endLine": 218 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Administrative access requires both a tldraw.com primary email and verified email status.",
+          "anchor": { "startLine": 237, "endLine": 243 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "config",
+          "description": "Environment provides valid Clerk secret and publishable keys.",
+          "anchor": { "startLine": 17, "endLine": 21 }
+        },
+        {
+          "kind": "schema",
+          "description": "The file table exposes ownership, group, sharing, deletion, and shared-link columns.",
+          "anchor": { "startLine": 136, "endLine": 142 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers supply a request compatible with the Fetch Request and itty-router IRequest interfaces.",
+          "anchor": { "startLine": 8, "endLine": 8 }
+        },
+        {
+          "kind": "schema",
+          "description": "getRole and can interpret group membership roles using the accessFiles capability.",
+          "anchor": { "startLine": 154, "endLine": 157 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What concrete Clerk authentication object shape is produced by toAuth beyond the local intersection type?",
+          "affects": "SignedInAuth surface",
+          "anchor": { "startLine": 123, "endLine": 125 },
+          "resolution": null
+        },
+        {
+          "question": "What database transaction or pool behavior is guaranteed by createPostgresConnectionPool during concurrent access checks?",
+          "affects": "concurrency_model and database side effects",
+          "anchor": { "startLine": 133, "endLine": 135 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "unordered",
+        "notes": "Helpers perform independent asynchronous Clerk and Postgres operations; each invocation owns and destroys its database pool."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-missing-auth",
+          "scenario": "A request without valid authentication is required to authenticate.",
+          "given": ["const auth = await getAuth(request, env)", "auth === null"],
+          "when": "requireAuth(request, env)",
+          "then": "throws a StatusError(401, 'Unauthorized')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Unauthenticated requests must not pass the required-authentication boundary."
+        },
+        {
+          "testId": "accepts-zero-template-token",
+          "scenario": "A valid Clerk bearer token minted for the zero template is supplied.",
+          "given": [
+            "request.headers.get('Authorization') === 'Bearer <token>'",
+            "verifyToken(token, ...) resolves to { purpose: 'zero', sub: 'user_123' }"
+          ],
+          "when": "getZeroAuth(request, env)",
+          "then": "resolves to { userId: 'user_123' } without falling back to getAuth",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The zero endpoint contract requires purpose-gated, subject-bearing template tokens."
+        },
+        {
+          "testId": "falls-back-for-non-zero-token",
+          "scenario": "A bearer token is valid but is not minted for the zero template.",
+          "given": [
+            "verifyToken(token, ...) resolves to { purpose: 'other', sub: 'user_123' }",
+            "getAuth(request, env) resolves to { userId: 'user_123' }"
+          ],
+          "when": "getZeroAuth(request, env)",
+          "then": "resolves to { userId: 'user_123' } from the session-authentication fallback",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Older clients using session tokens must remain compatible after zero-token enforcement."
+        },
+        {
+          "testId": "denies-non-edit-shared-file",
+          "scenario": "An authenticated user requests write access to a shared file whose link is not for editing.",
+          "given": [
+            "file.ownerId !== auth.userId",
+            "file.owningGroupId === null",
+            "file.shared === true",
+            "file.sharedLinkType !== 'edit'"
+          ],
+          "when": "requireWriteAccessToFile(request, env, roomId)",
+          "then": "throws a StatusError(403, 'File is shared but not for editing')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Shared viewing must not imply write permission."
+        },
+        {
+          "testId": "grants-read-access-for-shared-file",
+          "scenario": "A non-owner user accesses an existing, non-deleted file shared by link.",
+          "given": [
+            "file.isDeleted === false",
+            "file.ownerId !== userId",
+            "file.owningGroupId === null",
+            "file.shared === true"
+          ],
+          "when": "hasReadAccessToFile(env, userId, fileId)",
+          "then": "resolves to { ok: true, file: { id: file.id, shared: file.shared, isDeleted: false } }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Read access accepts any shared link regardless of sharedLinkType."
+        },
+        {
+          "testId": "denies-missing-or-deleted-file",
+          "scenario": "The requested file is missing or marked deleted.",
+          "given": ["file === undefined || file.isDeleted === true"],
+          "when": "hasReadAccessToFile(env, userId, fileId)",
+          "then": "resolves to { ok: false }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The read helper deliberately does not expose existence or deletion details."
+        },
+        {
+          "testId": "requires-verified-tldraw-admin",
+          "scenario": "An authenticated user has a primary verified tldraw.com email address.",
+          "given": [
+            "auth?.userId is truthy",
+            "user.primaryEmailAddress.emailAddress.endsWith('@tldraw.com')",
+            "user.primaryEmailAddress.verification.status === 'verified'"
+          ],
+          "when": "requireAdminAccess(env, auth)",
+          "then": "resolves to the Clerk user",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Administrative access is restricted to verified company email identities."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "requireAuth",
+        "getClerkClient",
+        "getAuthorizedParties",
+        "getAuth",
+        "ZERO_TOKEN_PURPOSE",
+        "getZeroAuth",
+        "SignedInAuth",
+        "requireWriteAccessToFile",
+        "ReadAccessToFile",
+        "hasReadAccessToFile",
+        "requireAdminAccess",
+        "requireAdminAccessToRequest"
+      ],
+      "moduleLevelCode": "import { ClerkClient, createClerkClient, verifyToken } from '@clerk/backend'\nimport { can } from '@tldraw/dotcom-shared'\nimport { IRequest, StatusError } from 'itty-router'\nimport { createPostgresConnectionPool } from '../../postgres'\nimport { Environment } from '../../types'\nimport { getRole } from './getRole'",
+      "exports": [
+        { "name": "requireAuth", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getClerkClient", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getAuth", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getZeroAuth", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "SignedInAuth", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "requireWriteAccessToFile", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ReadAccessToFile", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "hasReadAccessToFile", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "requireAdminAccess", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "requireAdminAccessToRequest", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "ClerkClient", "module": "@clerk/backend", "alias": null, "kind": "external" },
+        { "symbol": "createClerkClient", "module": "@clerk/backend", "alias": null, "kind": "external" },
+        { "symbol": "verifyToken", "module": "@clerk/backend", "alias": null, "kind": "external" },
+        { "symbol": "can", "module": "@tldraw/dotcom-shared", "alias": null, "kind": "external" },
+        { "symbol": "IRequest", "module": "itty-router", "alias": null, "kind": "external" },
+        { "symbol": "StatusError", "module": "itty-router", "alias": null, "kind": "external" },
+        { "symbol": "createPostgresConnectionPool", "module": "../../postgres", "alias": null, "kind": "internal" },
+        { "symbol": "Environment", "module": "../../types", "alias": null, "kind": "internal" },
+        { "symbol": "getRole", "module": "./getRole", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "ZERO_TOKEN_PURPOSE", "value": "'zero'", "kind": "string" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAuth#function:requireAuth",
+        "unitKind": "function",
+        "name": "requireAuth",
+        "qualifiedName": "requireAuth",
+        "parentUnitId": null,
+        "startLine": 8,
+        "endLine": 15,
+        "isBehavioral": true,
+        "source": "export async function requireAuth(request: IRequest, env: Environment): Promise<SignedInAuth> {\n\tconst auth = await getAuth(request, env)\n\tif (!auth) {\n\t\tthrow new StatusError(401, 'Unauthorized')\n\t}\n\n\treturn auth\n}",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAuth#function:requireAuth",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAuth",
+          "unitKind": "function",
+          "name": "requireAuth",
+          "qualifiedName": "requireAuth",
+          "parentUnitId": null,
+          "startLine": 8,
+          "endLine": 15,
+          "signature": "export async function requireAuth(request: IRequest, env: Environment): Promise<SignedInAuth>",
+          "parameters": [
+            {
+              "name": "request",
+              "type": "IRequest",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "Promise<SignedInAuth>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["request and env are provided to the authentication lookup."],
+          "postconditions": ["When authentication succeeds, resolves with the returned SignedInAuth value."],
+          "invariants": ["The authentication result is returned unchanged when it is present."],
+          "edgeCases": [
+            "When getAuth returns a falsy authentication result, the function rejects with StatusError status 401 and message 'Unauthorized'."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["StatusError"],
+            "reverts": [],
+            "onInvalidInput": "Rejects when authentication is unavailable.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "getAuth", "source": null, "kind": "internal" }],
+          "symbolReferences": ["IRequest", "Environment", "SignedInAuth", "StatusError"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Authenticates a request using the provided environment and returns signed-in authentication data. If authentication is unavailable, it rejects with an unauthorized status error.",
+          "specLiterals": [
+            { "kind": "magic-number", "value": "401", "role": "HTTP status code used for unauthenticated requests." },
+            {
+              "kind": "error-message",
+              "value": "Unauthorized",
+              "role": "Error message surfaced when authentication is unavailable."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireAuth is invoked.",
+              "then": "The returned promise rejects with a StatusError whose status is 401 and whose message is 'Unauthorized'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireAuth is invoked.",
+              "then": "The returned promise resolves to that same authentication value.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "aba038065136f96c19832f5b570bcfa4e817c92712dd9c2ddbedc1ea8e148e72"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getClerkClient#function:getClerkClient",
+        "unitKind": "function",
+        "name": "getClerkClient",
+        "qualifiedName": "getClerkClient",
+        "parentUnitId": null,
+        "startLine": 17,
+        "endLine": 22,
+        "isBehavioral": true,
+        "source": "export function getClerkClient(env: Environment) {\n\treturn createClerkClient({\n\t\tsecretKey: env.CLERK_SECRET_KEY,\n\t\tpublishableKey: env.CLERK_PUBLISHABLE_KEY,\n\t})\n}",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getClerkClient#function:getClerkClient",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getClerkClient",
+          "unitKind": "function",
+          "name": "getClerkClient",
+          "qualifiedName": "getClerkClient",
+          "parentUnitId": null,
+          "startLine": 17,
+          "endLine": 22,
+          "signature": "export function getClerkClient(env: Environment)",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "env provides CLERK_SECRET_KEY and CLERK_PUBLISHABLE_KEY values accepted by the Clerk client factory."
+          ],
+          "postconditions": [
+            "Returns the Clerk client produced by createClerkClient.",
+            "The client is configured with secretKey equal to env.CLERK_SECRET_KEY and publishableKey equal to env.CLERK_PUBLISHABLE_KEY."
+          ],
+          "invariants": ["The input environment values are forwarded to createClerkClient without transformation."],
+          "edgeCases": [
+            "If either Clerk key is undefined or otherwise invalid, the behavior is delegated to createClerkClient."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Delegates handling of invalid or missing Clerk keys to createClerkClient.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "createClerkClient", "source": null, "kind": "external" }],
+          "symbolReferences": ["Environment", "createClerkClient"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates and returns a Clerk client configured from the environment's Clerk secret and publishable keys.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3b5d49a07a1c7f7c5a8acac34718edcee05645a42d59a078622d9834155f5be0"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getAuthorizedParties#function:getAuthorizedParties",
+        "unitKind": "function",
+        "name": "getAuthorizedParties",
+        "qualifiedName": "getAuthorizedParties",
+        "parentUnitId": null,
+        "startLine": 24,
+        "endLine": 37,
+        "isBehavioral": true,
+        "source": "function getAuthorizedParties(env: Environment): string[] {\n\tconst parties = ['https://tldraw.com', 'https://www.tldraw.com', 'https://staging.tldraw.com']\n\t// Only include localhost in non-production environments\n\tif (env.TLDRAW_ENV !== 'production') {\n\t\tparties.push('http://localhost:3000')\n\t}\n\t// For preview envs, add the preview domain\n\t// WORKER_NAME is like \"pr-7731-tldraw-multiplayer\"\n\tif (env.TLDRAW_ENV === 'preview' && env.WORKER_NAME) {\n\t\tconst previewId = env.WORKER_NAME.replace(/-tldraw-multiplayer$/, '')\n\t\tparties.push(`https://${previewId}-preview-deploy.tldraw.com`)\n\t}\n\treturn parties\n}",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getAuthorizedParties#function:getAuthorizedParties",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getAuthorizedParties",
+          "unitKind": "function",
+          "name": "getAuthorizedParties",
+          "qualifiedName": "getAuthorizedParties",
+          "parentUnitId": null,
+          "startLine": 24,
+          "endLine": 37,
+          "signature": "function getAuthorizedParties(env: Environment): string[]",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "string[]",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "env is an Environment object with a TLDRAW_ENV property and, for preview handling, an optional WORKER_NAME property."
+          ],
+          "postconditions": [
+            "Returns a new string array containing https://tldraw.com, https://www.tldraw.com, and https://staging.tldraw.com.",
+            "Includes http://localhost:3000 when env.TLDRAW_ENV is not exactly production.",
+            "Includes a worker-specific preview origin when env.TLDRAW_ENV is exactly preview and env.WORKER_NAME is truthy."
+          ],
+          "invariants": [
+            "The three standard tldraw origins are always present and retain their defined order.",
+            "The returned array contains only strings.",
+            "The input environment object is not mutated."
+          ],
+          "edgeCases": [
+            "When env.TLDRAW_ENV is exactly production, localhost is omitted.",
+            "When env.TLDRAW_ENV is any value other than production, including preview, localhost is included.",
+            "When env.TLDRAW_ENV is preview but WORKER_NAME is absent or falsy, no preview origin is added.",
+            "When env.TLDRAW_ENV is preview and WORKER_NAME is truthy, the exact -tldraw-multiplayer suffix is removed if present and the result is used to form the preview origin."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Environment"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns an ordered string[] of authorized origin URLs.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Builds the list of authorized web origins from the deployment environment. Production returns the standard tldraw origins, while non-production environments additionally allow localhost and preview deployments may allow a worker-specific preview origin.",
+          "specLiterals": [
+            { "kind": "format-string", "value": "https://tldraw.com", "role": "Always-authorized origin." },
+            { "kind": "format-string", "value": "https://www.tldraw.com", "role": "Always-authorized origin." },
+            { "kind": "format-string", "value": "https://staging.tldraw.com", "role": "Always-authorized origin." },
+            { "kind": "format-string", "value": "http://localhost:3000", "role": "Non-production authorized origin." },
+            {
+              "kind": "regex",
+              "value": "/-tldraw-multiplayer$/",
+              "role": "Suffix removed from preview worker names before constructing the preview origin."
+            },
+            {
+              "kind": "format-string",
+              "value": "https://${previewId}-preview-deploy.tldraw.com",
+              "role": "Template for the authorized preview deployment origin."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuthorizedParties(env) is called",
+              "then": "The result is [\"https://tldraw.com\", \"https://www.tldraw.com\", \"https://staging.tldraw.com\"] and does not contain localhost.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuthorizedParties(env) is called",
+              "then": "The result includes \"http://localhost:3000\" and \"https://pr-7731-preview-deploy.tldraw.com\" after the three standard origins.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuthorizedParties(env) is called",
+              "then": "The result contains the three standard origins followed by \"http://localhost:3000\" and no preview origin.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a549676d105a554d29e7f76808ecc7e64eba250a379c195cbc88c0809194e6fa"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getAuth#function:getAuth",
+        "unitKind": "function",
+        "name": "getAuth",
+        "qualifiedName": "getAuth",
+        "parentUnitId": null,
+        "startLine": 39,
+        "endLine": 63,
+        "isBehavioral": true,
+        "source": "export async function getAuth(request: IRequest, env: Environment): Promise<SignedInAuth | null> {\n\tconst clerk = getClerkClient(env)\n\tconst authorizedParties = getAuthorizedParties(env)\n\n\tconst state = await clerk.authenticateRequest(request, { authorizedParties })\n\tif (state.isSignedIn) return state.toAuth() as SignedInAuth\n\n\t// we can't send headers with websockets, so for those connections we need to pass the token in\n\t// the query string. `authenticateRequest` only works with headers/cookies though, so we need to\n\t// copy the query string into the headers.\n\tconst cloned = new Request(request.url, { headers: request.headers })\n\tconst url = new URL(cloned.url)\n\tif (!cloned.headers.has('Authorization')) {\n\t\tif (url.searchParams.has('accessToken')) {\n\t\t\tcloned.headers.set('Authorization', `Bearer ${url.searchParams.get('accessToken')}`)\n\t\t} else {\n\t\t\treturn null\n\t\t}\n\t}\n\n\tconst res = await clerk.authenticateRequest(cloned, { authorizedParties })\n\tif (!res.isSignedIn) {\n\t\treturn null\n\t}\n",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getAuth#function:getAuth",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getAuth",
+          "unitKind": "function",
+          "name": "getAuth",
+          "qualifiedName": "getAuth",
+          "parentUnitId": null,
+          "startLine": 39,
+          "endLine": 63,
+          "signature": "export async function getAuth(request: IRequest, env: Environment): Promise<SignedInAuth | null>",
+          "parameters": [
+            {
+              "name": "request",
+              "type": "IRequest",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "Promise<SignedInAuth | null>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "request is a request-like value with a URL and headers.",
+            "env provides the configuration required by getClerkClient and getAuthorizedParties."
+          ],
+          "postconditions": [
+            "Returns SignedInAuth when the request is authenticated.",
+            "Returns null when no usable authorization source exists or authentication fails.",
+            "When an accessToken query parameter is used, authentication is attempted on a cloned request rather than by mutating the original request."
+          ],
+          "invariants": [
+            "The authorized parties configuration is supplied to every Clerk authentication attempt.",
+            "An existing Authorization header takes precedence over the accessToken query parameter.",
+            "The original request is not modified."
+          ],
+          "edgeCases": [
+            "If the initial request authenticates successfully, the corresponding Clerk authentication state is converted to SignedInAuth and returned.",
+            "If the initial request is not signed in and has no Authorization header or accessToken query parameter, the function returns null without a fallback authentication attempt.",
+            "If an accessToken query parameter is present, it is copied into a cloned request as a Bearer Authorization header.",
+            "If the fallback authentication attempt is not signed in, the function returns null.",
+            "Errors raised by Clerk authentication or configuration helpers are not caught by this function."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Errors propagated from getClerkClient, getAuthorizedParties, or clerk.authenticateRequest"],
+            "reverts": [],
+            "onInvalidInput": "No explicit validation or recovery is performed; dependency errors propagate.",
+            "returnsOnError": "null for unauthenticated requests; thrown dependency errors are not converted to null."
+          },
+          "stateMutations": [
+            "Mutates only the headers of a locally cloned Request when adding the fallback Authorization header.",
+            "Does not mutate the supplied request or environment."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getClerkClient", "source": "internal", "kind": "internal" },
+            { "name": "getAuthorizedParties", "source": "internal", "kind": "internal" },
+            { "name": "clerk.authenticateRequest", "source": "Clerk client", "kind": "external" },
+            { "name": "Request", "source": "Web platform", "kind": "external" },
+            { "name": "URL", "source": "Web platform", "kind": "external" }
+          ],
+          "symbolReferences": ["IRequest", "Environment", "SignedInAuth", "getClerkClient", "getAuthorizedParties"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Authentication is attempted with Clerk using { authorizedParties }. If needed, the request URL query parameter accessToken is encoded as the HTTP header Authorization: Bearer <token> on a cloned request.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Authenticates a request using the configured Clerk client and authorized parties. It returns signed-in authentication data when authentication succeeds, including access tokens supplied through the query string, and otherwise returns null.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "Bearer ${url.searchParams.get('accessToken')}",
+              "role": "Constructs the Authorization header value from the accessToken query parameter."
+            },
+            {
+              "kind": "enum-value",
+              "value": "Authorization",
+              "role": "HTTP header used to detect or supply bearer authentication."
+            },
+            {
+              "kind": "enum-value",
+              "value": "accessToken",
+              "role": "Query-string parameter used as the WebSocket authentication fallback."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuth(request, env) is called.",
+              "then": "It returns the signed-in state converted with toAuth() and does not require query-string fallback authentication.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuth(request, env) is called.",
+              "then": "It retries authentication using a cloned request containing Authorization: Bearer abc; if that retry is not signed in, it returns null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getAuth(request, env) is called.",
+              "then": "It returns null without retrying authentication.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "40eb813670ad709face65f191dc9b153b23a8aaea054177a9925893b44aa4878"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getZeroAuth#function:getZeroAuth",
+        "unitKind": "function",
+        "name": "getZeroAuth",
+        "qualifiedName": "getZeroAuth",
+        "parentUnitId": null,
+        "startLine": 91,
+        "endLine": 121,
+        "isBehavioral": true,
+        "source": " *\n * Falls back to {@link getAuth} so a client running an older bundle, which still sends a session\n * token, keeps working across the deploy.\n */\nexport async function getZeroAuth(\n\trequest: IRequest,\n\tenv: Environment\n): Promise<{ userId: string } | null> {\n\tconst header = request.headers.get('Authorization')\n\tconst token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : null\n\tif (token) {\n\t\ttry {\n\t\t\t// `verifyToken` accepts anything our Clerk instance signed, which is a wider door than we\n\t\t\t// want: a token minted from some other JWT template — the kind you hand to a third-party\n\t\t\t// integration — would otherwise be a valid credential for these two endpoints, mutate\n\t\t\t// included. The `zero` template mints `purpose: 'zero'`; nothing else does.\n\t\t\tconst claims = await verifyToken(token, {\n\t\t\t\tsecretKey: env.CLERK_SECRET_KEY,\n\t\t\t\t// holds the token to the same origin allowlist as a session token when it carries an\n\t\t\t\t// `azp`; Clerk skips the check entirely on a token without one, so this narrows the\n\t\t\t\t// door rather than closing it — the `purpose` check below is what actually gates.\n\t\t\t\tauthorizedParties: getAuthorizedParties(env),\n\t\t\t})\n\t\t\tif (claims.purpose !== ZERO_TOKEN_PURPOSE) {\n\t\t\t\tthrow new Error(`not a ${ZERO_TOKEN_PURPOSE}-template token`)\n\t\t\t}\n\t\t\tif (claims.sub) return { userId: claims.sub }\n\t\t} catch (e) {\n\t\t\t// getAuth deliberately says nothing about why it rejected a token, which made an outage\n\t\t\t// considerably harder to diagnose than it needed to be. Say it here.\n\t\t\tconsole.error('[zero-auth] template token rejected:', (e as Error).message)",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getZeroAuth#function:getZeroAuth",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__getZeroAuth",
+          "unitKind": "function",
+          "name": "getZeroAuth",
+          "qualifiedName": "getZeroAuth",
+          "parentUnitId": null,
+          "startLine": 91,
+          "endLine": 121,
+          "signature": "export async function getZeroAuth(request: IRequest, env: Environment): Promise<{ userId: string } | null>",
+          "parameters": [
+            {
+              "name": "request",
+              "type": "IRequest",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "Promise<{ userId: string } | null>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "request provides a headers object compatible with the Fetch API",
+            "env provides the Clerk secret key and the configuration required by getAuthorizedParties"
+          ],
+          "postconditions": [
+            "Returns { userId: claims.sub } when a valid bearer token has the required purpose and a subject",
+            "Falls back to getAuth(request, env) when no bearer token is present or zero-token authentication does not produce a user ID"
+          ],
+          "invariants": [
+            "Only tokens whose claims.purpose equals ZERO_TOKEN_PURPOSE are accepted as zero-auth credentials",
+            "The token is verified with env.CLERK_SECRET_KEY and the authorized parties returned by getAuthorizedParties(env)",
+            "A successful result contains a non-empty subject value supplied by the verified token"
+          ],
+          "edgeCases": [
+            "No Authorization header or a header that does not start with 'Bearer ' causes fallback to getAuth(request, env)",
+            "A Bearer header with an empty token causes fallback to getAuth(request, env)",
+            "A verification failure is caught, logged, and followed by fallback to getAuth(request, env)",
+            "A verified token with a purpose other than ZERO_TOKEN_PURPOSE is rejected, logged, and followed by fallback to getAuth(request, env)",
+            "A verified token without claims.sub does not produce zero-auth credentials and falls back to getAuth(request, env)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Invalid, unverifiable, or non-zero-purpose bearer tokens are rejected without propagating the verification or purpose error; the rejection is logged and regular getAuth is used.",
+            "returnsOnError": "The result returned by getAuth(request, env), including null when regular authentication fails."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "verifyToken", "source": null, "kind": "external" },
+            { "name": "getAuthorizedParties", "source": "getAuthorizedParties", "kind": "internal" },
+            { "name": "getAuth", "source": "getAuth", "kind": "internal" },
+            { "name": "console.error", "source": "global console", "kind": "external" }
+          ],
+          "symbolReferences": ["IRequest", "Environment", "ZERO_TOKEN_PURPOSE"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Authenticates requests using a Clerk token minted for the zero-purpose template and returns its subject as a user ID. Requests without a usable zero token fall back to the regular getAuth flow for compatibility with older clients.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "Bearer ",
+              "role": "Defines the required Authorization header prefix used to extract the token."
+            },
+            {
+              "kind": "format-string",
+              "value": "[zero-auth] template token rejected:",
+              "role": "Prefixes diagnostic output when zero-token authentication rejects a token."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getZeroAuth(request, env) is called",
+              "then": "It does not attempt zero-token verification and returns the result of getAuth(request, env).",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getZeroAuth(request, env) is called",
+              "then": "The token is rejected, a diagnostic is logged, and the result comes from getAuth(request, env) rather than the token.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getZeroAuth(request, env) is called",
+              "then": "It resolves to { userId: 'user_123' } without falling back to getAuth.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "d306083bc69eb1b9c9c2b75e383350972d4cf07dbf8a0d88ed5789f1e8b1ee18"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireWriteAccessToFile#function:requireWriteAccessToFile",
+        "unitKind": "function",
+        "name": "requireWriteAccessToFile",
+        "qualifiedName": "requireWriteAccessToFile",
+        "parentUnitId": null,
+        "startLine": 127,
+        "endLine": 177,
+        "isBehavioral": true,
+        "source": "export type SignedInAuth = ReturnType<\n\tExtract<Awaited<ReturnType<ClerkClient['authenticateRequest']>>, { isSignedIn: true }>['toAuth']\n> & { userId: string }\n\nexport async function requireWriteAccessToFile(\n\trequest: IRequest,\n\tenv: Environment,\n\troomId: string\n) {\n\tconst auth = await requireAuth(request, env)\n\n\tconst db = createPostgresConnectionPool(env, 'sync-worker/hasWriteAccessToFile')\n\n\ttry {\n\t\tconst file = await db\n\t\t\t.selectFrom('file')\n\t\t\t.select('ownerId')\n\t\t\t.select('owningGroupId')\n\t\t\t.select('shared')\n\t\t\t.select('sharedLinkType')\n\t\t\t.where('id', '=', roomId)\n\t\t\t.executeTakeFirst()\n\n\t\tif (!file) {\n\t\t\tthrow new StatusError(404, 'File not found')\n\t\t}\n\n\t\t// If the user is the owner of the file, they have write access\n\t\tif (file.ownerId === auth.userId) {\n\t\t\treturn\n\t\t}\n\n\t\t// If the file is owned by a group, check the user can access its files\n\t\tif (file.owningGroupId) {\n\t\t\tconst role = await getRole(db, auth.userId, file.owningGroupId)\n\t\t\tif (can(role, 'accessFiles')) {\n\t\t\t\treturn\n\t\t\t}\n\t\t}\n\n\t\t// If the file is not shared, the user does not have write access\n\t\tif (!file.shared) {\n\t\t\tthrow new StatusError(403, 'File is not shared')\n\t\t}\n\n\t\t// If the file is shared but not for editing, deny access\n\t\tif (file.sharedLinkType !== 'edit') {\n\t\t\tthrow new StatusError(403, 'File is shared but not for editing')\n\t\t}\n\n\t\t// file is shared and for editing, allow access",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireWriteAccessToFile#function:requireWriteAccessToFile",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireWriteAccessToFile",
+          "unitKind": "function",
+          "name": "requireWriteAccessToFile",
+          "qualifiedName": "requireWriteAccessToFile",
+          "parentUnitId": null,
+          "startLine": 127,
+          "endLine": 177,
+          "signature": "export async function requireWriteAccessToFile(\n\trequest: IRequest,\n\tenv: Environment,\n\troomId: string\n)",
+          "parameters": [
+            {
+              "name": "request",
+              "type": "IRequest",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "roomId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "request and env must provide sufficient information for requireAuth to authenticate the caller.",
+            "roomId identifies the file whose write access is being checked."
+          ],
+          "postconditions": [
+            "Resolves successfully without a value when the authenticated user has write access to the file.",
+            "A database connection pool is used to retrieve the file's ownership and sharing information."
+          ],
+          "invariants": [
+            "Only an authenticated user can pass the authorization check.",
+            "File ownership grants write access regardless of sharing settings.",
+            "Owning-group access grants write access only when the user's role can access files.",
+            "A shared file grants write access only when its sharedLinkType is exactly edit."
+          ],
+          "edgeCases": [
+            "If authentication fails, requireAuth's failure is propagated and no access is granted.",
+            "If no file exists for roomId, the function throws StatusError with status 404 and message File not found.",
+            "If the authenticated user is the file owner, the function returns successfully without requiring sharing.",
+            "If the file has an owning group and the user's role can access files, the function returns successfully.",
+            "If the file is not shared, the function throws StatusError with status 403 and message File is not shared.",
+            "If the file is shared with a link type other than edit, the function throws StatusError with status 403 and message File is shared but not for editing."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["StatusError"],
+            "reverts": [],
+            "onInvalidInput": "Authentication failures are propagated; a missing file or insufficient write authorization throws StatusError.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "requireAuth", "source": "local sibling function", "kind": "internal" },
+            { "name": "createPostgresConnectionPool", "source": "imported dependency", "kind": "external" },
+            { "name": "getRole", "source": "imported dependency", "kind": "external" },
+            { "name": "can", "source": "imported dependency", "kind": "external" },
+            {
+              "name": "db.selectFrom('file').select('ownerId').select('owningGroupId').select('shared').select('sharedLinkType').where('id', '=', roomId).executeTakeFirst",
+              "source": "Postgres query builder",
+              "kind": "external"
+            }
+          ],
+          "symbolReferences": ["IRequest", "Environment", "StatusError", "accessFiles", "edit"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Authenticates a request and permits continuation only when the caller has write access to the specified file. Access is granted to the file owner, authorized members of the owning group, or users with an edit-enabled shared link.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "File not found",
+              "role": "Error message returned when no file matches roomId."
+            },
+            {
+              "kind": "error-message",
+              "value": "File is not shared",
+              "role": "Error message returned when the file is not shared and the caller is not otherwise authorized."
+            },
+            {
+              "kind": "error-message",
+              "value": "File is shared but not for editing",
+              "role": "Error message returned when a shared file does not permit editing."
+            },
+            {
+              "kind": "enum-value",
+              "value": "edit",
+              "role": "The exact sharedLinkType that permits write access through sharing."
+            },
+            { "kind": "magic-number", "value": "404", "role": "HTTP status used for a missing file." },
+            {
+              "kind": "magic-number",
+              "value": "403",
+              "role": "HTTP status used for insufficient write authorization."
+            },
+            {
+              "kind": "enum-value",
+              "value": "accessFiles",
+              "role": "Permission checked for users accessing files owned by a group."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireWriteAccessToFile is called with the file's roomId.",
+              "then": "The promise resolves successfully even if the file is not shared.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireWriteAccessToFile is called with the file's roomId.",
+              "then": "The promise resolves successfully.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireWriteAccessToFile is called with the file's roomId.",
+              "then": "The promise rejects with StatusError status 403 and the corresponding sharing authorization message.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "15f973928150fc67f2ee4d14fc20f411c32762bfe80db7253c13db225ce1c827"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__hasReadAccessToFile#function:hasReadAccessToFile",
+        "unitKind": "function",
+        "name": "hasReadAccessToFile",
+        "qualifiedName": "hasReadAccessToFile",
+        "parentUnitId": null,
+        "startLine": 201,
+        "endLine": 230,
+        "isBehavioral": true,
+        "source": " * wants, so the caller does not immediately dial Postgres again for a strict subset of the same\n * columns. Deliberately not a licence to cache it: it is safe only for a caller re-applying the gate\n * microseconds later inside one function, which is exactly where `loadBoardSnapshot` already accepts\n * one and where the render page's own read deliberately does not.\n */\nexport type ReadAccessToFile =\n\t| { ok: true; file: { id: string; shared: boolean; isDeleted: boolean } }\n\t| { ok: false }\n\nexport async function hasReadAccessToFile(\n\tenv: Environment,\n\tuserId: string,\n\tfileId: string\n): Promise<ReadAccessToFile> {\n\tconst db = createPostgresConnectionPool(env, 'sync-worker/hasReadAccessToFile')\n\n\ttry {\n\t\tconst file = await db\n\t\t\t.selectFrom('file')\n\t\t\t.select(['id', 'ownerId', 'owningGroupId', 'shared', 'isDeleted'])\n\t\t\t.where('id', '=', fileId)\n\t\t\t.executeTakeFirst()\n\n\t\tif (!file || file.isDeleted) return { ok: false }\n\t\tconst granted = {\n\t\t\tok: true,\n\t\t\tfile: { id: file.id, shared: file.shared, isDeleted: false },\n\t\t} as const\n\t\tif (file.ownerId === userId) return granted\n\t\tif (file.owningGroupId) {",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__hasReadAccessToFile#function:hasReadAccessToFile",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__hasReadAccessToFile",
+          "unitKind": "function",
+          "name": "hasReadAccessToFile",
+          "qualifiedName": "hasReadAccessToFile",
+          "parentUnitId": null,
+          "startLine": 201,
+          "endLine": 230,
+          "signature": "export async function hasReadAccessToFile(\n\tenv: Environment,\n\tuserId: string,\n\tfileId: string\n): Promise<ReadAccessToFile>",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "userId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "fileId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": "Promise<ReadAccessToFile>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "env supplies the configuration required to create the PostgreSQL connection pool.",
+            "userId and fileId are supplied as strings."
+          ],
+          "postconditions": [
+            "Returns either { ok: true, file: { id, shared, isDeleted: false } } for an authorized non-deleted file or { ok: false } when the file is absent, deleted, or access is not granted.",
+            "A successful result exposes only the file id, shared flag, and a false isDeleted flag."
+          ],
+          "invariants": [
+            "Deleted files are never reported as readable.",
+            "The returned file snapshot does not expose ownerId or owningGroupId.",
+            "The file lookup is restricted to the requested fileId."
+          ],
+          "edgeCases": [
+            "When no matching file is found, returns { ok: false }.",
+            "When the matching file is marked deleted, returns { ok: false }.",
+            "When userId equals the file owner, returns a successful result for a non-deleted file without requiring a separate access result."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "createPostgresConnectionPool", "source": null, "kind": "external" },
+            { "name": "selectFrom", "source": "PostgreSQL query builder", "kind": "external" },
+            { "name": "executeTakeFirst", "source": "PostgreSQL query builder", "kind": "external" }
+          ],
+          "symbolReferences": ["Environment", "ReadAccessToFile"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Resolves to a discriminated result: { ok: false } or { ok: true, file: { id: string, shared: boolean, isDeleted: false } }.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Asynchronously checks whether a user may read a file and returns a minimal file snapshot when access is granted. Missing or deleted files, and users who fail the access checks, produce an unsuccessful result.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "sync-worker/hasReadAccessToFile",
+              "role": "Identifies the PostgreSQL connection pool usage for this access check."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "hasReadAccessToFile is called with that fileId.",
+              "then": "The result is exactly { ok: false }.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "hasReadAccessToFile is called.",
+              "then": "The result is exactly { ok: false }.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "hasReadAccessToFile is called.",
+              "then": "The result is successful and contains the file id and shared value, with isDeleted set to false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6be03163c4afc9bf691fdbd65ba02e7e8189e147ffbbfdce136215ea125ee460"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAdminAccess#function:requireAdminAccess",
+        "unitKind": "function",
+        "name": "requireAdminAccess",
+        "qualifiedName": "requireAdminAccess",
+        "parentUnitId": null,
+        "startLine": 232,
+        "endLine": 244,
+        "isBehavioral": true,
+        "source": "\t\t\tif (can(role, 'accessFiles')) return granted\n\t\t}\n\t\treturn file.shared === true ? granted : { ok: false }\n\t} finally {\n\t\tawait db.destroy()\n\t}\n}\n\nexport async function requireAdminAccess(env: Environment, auth: { userId: string } | null) {\n\tif (!auth?.userId) {\n\t\tthrow new StatusError(403, 'Unauthorized')\n\t}\n\tconst user = await getClerkClient(env).users.getUser(auth.userId)",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAdminAccess#function:requireAdminAccess",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAdminAccess",
+          "unitKind": "function",
+          "name": "requireAdminAccess",
+          "qualifiedName": "requireAdminAccess",
+          "parentUnitId": null,
+          "startLine": 232,
+          "endLine": 244,
+          "signature": "export async function requireAdminAccess(env: Environment, auth: { userId: string } | null)",
+          "parameters": [
+            { "name": "env", "type": "Environment", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "auth",
+              "type": "{ userId: string } | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The environment argument is available for resolving the Clerk client.",
+            "The auth argument is either null or contains a userId string."
+          ],
+          "postconditions": [
+            "If auth is null or has no truthy userId, the function does not return normally and throws a 403 StatusError with reason Unauthorized.",
+            "For valid authentication, the function performs the administrative-access check using the authenticated user identity."
+          ],
+          "invariants": ["An absent or empty authenticated user ID is never treated as authorized."],
+          "edgeCases": [
+            "auth is null: throws StatusError with HTTP status 403 and message Unauthorized.",
+            "auth has a falsy userId: throws StatusError with HTTP status 403 and message Unauthorized.",
+            "auth has a truthy userId: proceeds to retrieve the corresponding Clerk user for the administrative-access check."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["StatusError"],
+            "reverts": [],
+            "onInvalidInput": "Throws StatusError(403, 'Unauthorized') when auth is null or auth.userId is falsy.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getClerkClient", "source": "local module", "kind": "internal" },
+            { "name": "users.getUser", "source": "Clerk client", "kind": "external" }
+          ],
+          "symbolReferences": ["Environment", "StatusError"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Requires a valid authenticated user context before performing the administrative-access check. Missing authentication is rejected with an HTTP 403 Unauthorized error.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Unauthorized",
+              "role": "The HTTP 403 error message surfaced when authentication is absent or invalid."
+            },
+            {
+              "kind": "magic-number",
+              "value": "403",
+              "role": "The HTTP status code used for missing or invalid authentication."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireAdminAccess(env, null) is awaited",
+              "then": "The promise rejects with a StatusError whose status is 403 and whose message is 'Unauthorized'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireAdminAccess(env, auth) is awaited",
+              "then": "The promise rejects with a StatusError whose status is 403 and whose message is 'Unauthorized'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e21dd4f0ecb16aeaa4fff6add3039873acd1522f82c4b9a94f10cd4e6eaff3ec"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAdminAccessToRequest#function:requireAdminAccessToRequest",
+        "unitKind": "function",
+        "name": "requireAdminAccessToRequest",
+        "qualifiedName": "requireAdminAccessToRequest",
+        "parentUnitId": null,
+        "startLine": 246,
+        "endLine": 248,
+        "isBehavioral": true,
+        "source": "\t\t!user.primaryEmailAddress?.emailAddress.endsWith('@tldraw.com') ||\n\t\tuser.primaryEmailAddress?.verification?.status !== 'verified'\n\t) {",
+        "detail": {
+          "unitId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAdminAccessToRequest#function:requireAdminAccessToRequest",
+          "fileId": "apps/dotcom/sync-worker/src/utils/tla/getAuth.ts__requireAdminAccessToRequest",
+          "unitKind": "function",
+          "name": "requireAdminAccessToRequest",
+          "qualifiedName": "requireAdminAccessToRequest",
+          "parentUnitId": null,
+          "startLine": 246,
+          "endLine": 248,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The request and its associated authentication context are available to the function."],
+          "postconditions": ["Normal completion indicates that the request has administrator access."],
+          "invariants": [
+            "An unverified primary email address is not accepted as administrator access.",
+            "A primary email address outside the @tldraw.com domain is not accepted as administrator access."
+          ],
+          "edgeCases": [
+            "If the user has no primary email address, administrator access is rejected.",
+            "If the primary email address does not end with @tldraw.com, administrator access is rejected.",
+            "If the primary email verification status is not verified, administrator access is rejected."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Authorization error for a request whose primary email is missing, outside the tldraw.com domain, or not verified."
+            ],
+            "reverts": [],
+            "onInvalidInput": "Reject the request as unauthorized.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates that the request is associated with an administrator account. Access is permitted only when the user's primary email is a verified address in the tldraw.com domain.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "@tldraw.com",
+              "role": "Required suffix for an administrator's primary email address."
+            },
+            { "kind": "enum-value", "value": "verified", "role": "Required primary email verification status." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireAdminAccessToRequest is invoked.",
+              "then": "The request is accepted and the function completes normally.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requireAdminAccessToRequest is invoked.",
+              "then": "The function rejects the request with an authorization error.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4d2cbacbdf67f19a8d6d3ec179c6051b0258935f1cec578a81a695a1802ad6d5"
+        }
+      }
+    ]
+  },
+  "out": [
+    "apps/dotcom/sync-worker/src/types.ts",
+    "apps/dotcom/sync-worker/src/postgres.ts",
+    "apps/dotcom/sync-worker/src/utils/tla/getRole.ts"
+  ],
+  "in": [
+    "apps/dotcom/sync-worker/src/adminRoutes.ts",
+    "apps/dotcom/sync-worker/src/utils/featureFlags.ts",
+    "apps/dotcom/sync-worker/src/utils/featureFlags.test.ts",
+    "apps/dotcom/sync-worker/src/utils/tla/permissions.ts",
+    "apps/dotcom/sync-worker/src/utils/tla/getAuth.test.ts",
+    "apps/dotcom/sync-worker/src/utils/tla/hasReadAccessToFile.test.ts",
+    "apps/dotcom/sync-worker/src/healthCheckRoutes.ts",
+    "apps/dotcom/sync-worker/src/routes/getRoomHistory.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/initUser.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/uploads.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/sharedBoardScreenshotMcp.ts",
+    "apps/dotcom/sync-worker/src/routes/tla/acceptInvite.ts",
+    "apps/dotcom/sync-worker/src/routes/submitFeedback.ts",
+    "apps/dotcom/sync-worker/src/routes/getRoomHistorySnapshot.ts",
+    "apps/dotcom/sync-worker/src/worker.ts"
+  ],
+  "externals": ["@clerk/backend", "@tldraw/dotcom-shared", "itty-router"],
+  "impact": {
+    "seeds": 9,
+    "callers": 14,
+    "impactedFiles": [
+      "apps/dotcom/sync-worker/src/routes/submitFeedback.ts",
+      "apps/dotcom/sync-worker/src/routes/tla/acceptInvite.ts",
+      "apps/dotcom/sync-worker/src/routes/tla/sharedBoardScreenshotMcp.ts",
+      "apps/dotcom/sync-worker/src/routes/tla/initUser.ts",
+      "apps/dotcom/sync-worker/src/routes/getRoomHistorySnapshot.ts",
+      "apps/dotcom/sync-worker/src/routes/getRoomHistory.ts",
+      "apps/dotcom/sync-worker/src/utils/featureFlags.ts",
+      "apps/dotcom/sync-worker/src/routes/tla/uploads.ts",
+      "apps/dotcom/sync-worker/src/utils/tla/permissions.ts"
+    ]
+  }
+}

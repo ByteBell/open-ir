@@ -1,0 +1,32 @@
+{
+  "contract": "Whether the platform vendor's name and logo are stripped from an outbound message must be decided by exactly one rule, evaluated against the entity that owns the event the booking belongs to - the event type's team, with the parent organization's hideBranding overriding a falsy entity setting, as resolveHideBranding implements at packages/features/profile/lib/hideBranding.ts:35-45. Every producer of the hideBranding value handed to the automation (workflow) pipeline, every query that feeds those producers, and every consumer that renders with it must use that one resolution; a path that instead derives the flag from a different subject - the automation's own owner record, or a raw column read off the booking's user or event type's team - breaks the contract, because the same customer's booking page and the message the attendee receives then disagree.",
+  "defect_location": {
+    "repo": "calcom/cal.com",
+    "summary": "The booking page resolves branding correctly - apps/web/lib/team/[slug]/[type]/getServerSideProps.tsx:199, apps/web/server/lib/[user]/[type]/getServerSideProps.ts:299, apps/web/lib/d/[link]/[slug]/getServerSideProps.tsx:61,103 and apps/web/app/(booking-page-wrapper)/team/[slug]/[type]/pageWithCachedData.tsx:36 all call shouldHideBrandingForTeamEvent / shouldHideBrandingForUserEvent, which route through packages/features/profile/lib/hideBranding.ts:85-110 and resolveHideBranding:35-45 where organizationHideBranding short-circuits to true (:40-42). The automation path never uses that rule. (1) At send time packages/features/ee/workflows/lib/service/EmailWorkflowService.ts:90-93 calls getHideBranding({ userId: workflow.userId ?? undefined, teamId: workflow.teamId ?? undefined }) - the subject is the WORKFLOW's owner (workflow read at :70 from workflowReminder.workflowStep.workflow), not the booking's event; both Workflow.userId and Workflow.teamId are nullable (packages/prisma/schema.prisma:1536-1543), and CalendarEvent.team carries no branding columns (packages/types/Calendar.d.ts:178-182). The value is threaded at :103, :148, :233 and consumed at :486-492 via customTemplate, whose only branding effect is packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts:216 (\"Scheduling by ${APP_NAME}\"). The value scheduled at booking time is discarded because packages/features/tasker/tasks/sendWorkflowEmails.ts:72-75 re-enters the service and it recomputes. (2) packages/features/ee/workflows/lib/service/WorkflowService.ts:133-136 makes the same workflow/form-owner read. (3) The second live path, cron-driven packages/features/ee/workflows/api/scheduleEmailReminders.ts (importer apps/web/app/api/cron/workflows/scheduleEmailReminders/route.ts), reads the raw column three times - :246-248, :274-276, :433-435: brandingDisabled = reminder.booking.eventType?.team ? !!reminder.booking.eventType?.team?.hideBranding : !!reminder.booking.user?.hideBranding - with no organization override at all (it does reach the body: :258-264 and :291). (4) The query behind it cannot even express the correct read: packages/features/ee/workflows/lib/getWorkflowReminders.ts:198-203 selects eventType.team { parentId, hideBranding } and :170 user.hideBranding, never the parent organization's flag. Hence a customer whose branding setting lives on the organization, or on a team while the workflow is user-owned, sees no Cal.com branding on the booking page but still receives \"Scheduling by Cal.com\" in every automation message."
+  },
+  "answer": [
+    "packages/features/ee/workflows/lib/service/EmailWorkflowService.ts",
+    "packages/features/ee/workflows/api/scheduleEmailReminders.ts",
+    "packages/features/profile/lib/hideBranding.ts",
+    "packages/features/ee/workflows/lib/service/WorkflowService.ts",
+    "packages/features/ee/workflows/lib/getWorkflowReminders.ts",
+    "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+    "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+    "packages/features/ee/workflows/lib/reminders/scheduleMandatoryReminder.ts",
+    "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+    "packages/features/ee/workflows/lib/reminders/templates/emailReminderTemplate.ts",
+    "packages/features/ee/teams/repositories/TeamRepository.ts",
+    "packages/features/users/repositories/UserRepository.ts",
+    "packages/features/ee/workflows/lib/types.ts",
+    "packages/features/tasker/tasks/sendWorkflowEmails.ts",
+    "packages/features/ee/workflows/repositories/WorkflowReminderRepository.ts",
+    "packages/features/tasker/tasks/triggerFormSubmittedNoEvent/triggerFormSubmittedNoEventWorkflow.ts",
+    "apps/web/app/api/cron/workflows/scheduleEmailReminders/route.ts",
+    "packages/features/handleMarkNoShow.ts",
+    "packages/features/ee/round-robin/roundRobinManualReassignment.ts",
+    "packages/features/ee/managed-event-types/reassignment/services/ManagedEventManualReassignmentService.ts",
+    "packages/app-store/_utils/payments/handlePaymentSuccess.ts",
+    "packages/features/ee/workflows/lib/actionHelperFunctions.ts",
+    "packages/emails/src/components/EmailBodyLogo.tsx"
+  ]
+}

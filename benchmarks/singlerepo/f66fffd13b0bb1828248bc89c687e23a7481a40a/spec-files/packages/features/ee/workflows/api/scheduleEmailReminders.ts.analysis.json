@@ -1,0 +1,1016 @@
+{
+  "relativePath": "packages/features/ee/workflows/api/scheduleEmailReminders.ts",
+  "language": "typescript",
+  "sha256": "0bee95a55eb376d4ccd7998d7905476256d4bcc39c10075ca1f898e68c0f09e5",
+  "sizeBytes": 20788,
+  "tokenCount": 5197,
+  "lineCount": 519,
+  "analysedAt": "2026-09-04T07:30:03.067Z",
+  "analysis": {
+    "module": {
+      "purpose": "Provides a deprecated cron-oriented API endpoint that authenticates requests, cancels obsolete scheduled reminders, renders booking email content, and schedules workflow reminder messages through configured email providers.",
+      "summary": "This file implements the scheduled email reminder pipeline for booking workflows. It validates a cron API key, removes SendGrid sends associated with deleted reminders, cancels reminders for cancelled or rescheduled bookings, loads unscheduled reminders, resolves recipients including seated-event attendees and collective hosts, renders custom, reminder, or rating templates, optionally generates calendar attachments, and schedules delivery through SendGrid or the workflow email provider. It records scheduling state in the database and logs failures without aborting the entire batch.",
+      "businessContext": "Supports booking communications such as reminders, ratings, cancellations, and rescheduling notices for Cal.com users and attendees.\nFailure can leave customers without timely notifications or leave obsolete messages scheduled.",
+      "classes": [],
+      "functions": [
+        "handler (~L39-518): Authenticates requests, manages reminder cancellation, renders templates, and schedules workflow emails."
+      ],
+      "keywords": [
+        "workflow reminders",
+        "scheduled email delivery",
+        "SendGrid",
+        "booking attendees",
+        "seated events",
+        "calendar attachments",
+        "custom email templates",
+        "rating notifications",
+        "cron authentication",
+        "reminder cancellation"
+      ],
+      "ontologyConcepts": [
+        "workflow automation",
+        "scheduled notification",
+        "recipient resolution",
+        "template rendering",
+        "booking lifecycle",
+        "email delivery",
+        "authentication",
+        "localization"
+      ],
+      "businessEntities": [
+        "Booking",
+        "Attendee",
+        "WorkflowReminder",
+        "WorkflowStep",
+        "EventType",
+        "Organizer",
+        "Email",
+        "BookingSeat"
+      ],
+      "systemCapabilities": [
+        "Authenticate scheduled reminder requests",
+        "Cancel obsolete booking notifications",
+        "Render localized workflow emails",
+        "Generate calendar event attachments",
+        "Schedule provider-backed email delivery",
+        "Persist reminder scheduling state"
+      ],
+      "configDependencies": ["CRON_API_KEY", "SENDGRID_API_KEY", "SENDGRID_EMAIL"],
+      "importsInternal": [
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs"],
+          "anchor": {
+            "startLine": 6,
+            "endLine": 6
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/emails/lib/generateIcsString",
+          "symbols": ["generateIcsString"],
+          "anchor": {
+            "startLine": 7,
+            "endLine": 7
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/bookings/lib/getCalEventResponses",
+          "symbols": ["getCalEventResponses"],
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "symbols": ["BookingSeatRepository"],
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "symbols": ["getBookerBaseUrl"],
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "anchor": {
+            "startLine": 11,
+            "endLine": 11
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "anchor": {
+            "startLine": 12,
+            "endLine": 12
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/server/i18n",
+          "symbols": ["getTranslation"],
+          "anchor": {
+            "startLine": 13,
+            "endLine": 13
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/timeFormat",
+          "symbols": ["getTimeFormatStringFromUserTimeFormat"],
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "anchor": {
+            "startLine": 15,
+            "endLine": 15
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["SchedulingType", "WorkflowActions", "WorkflowTemplates"],
+          "anchor": {
+            "startLine": 16,
+            "endLine": 16
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["bookingMetadataSchema"],
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "../lib/getWorkflowReminders",
+          "symbols": [
+            "getAllRemindersToCancel",
+            "getAllRemindersToDelete",
+            "getAllUnscheduledReminders",
+            "getWorkflowRecipientEmail"
+          ],
+          "anchor": {
+            "startLine": 22,
+            "endLine": 24
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/getWorkflowReminders.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/getWorkflowReminders.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/getWorkflowReminders.ts"
+        },
+        {
+          "spec": "../lib/reminders/providers/emailProvider",
+          "symbols": ["sendOrScheduleWorkflowEmails"],
+          "anchor": {
+            "startLine": 25,
+            "endLine": 25
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts"
+        },
+        {
+          "spec": "../lib/reminders/providers/sendgridProvider",
+          "symbols": ["cancelScheduledEmail", "deleteScheduledSend", "getBatchId", "sendSendgridMail"],
+          "anchor": {
+            "startLine": 26,
+            "endLine": 30
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/providers/sendgridProvider.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/providers/sendgridProvider.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/providers/sendgridProvider.ts"
+        },
+        {
+          "spec": "../lib/reminders/templates/customTemplate",
+          "symbols": ["VariablesType", "customTemplate"],
+          "anchor": {
+            "startLine": 31,
+            "endLine": 32
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts"
+        },
+        {
+          "spec": "../lib/reminders/templates/emailRatingTemplate",
+          "symbols": ["emailRatingTemplate"],
+          "anchor": {
+            "startLine": 33,
+            "endLine": 33
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/templates/emailRatingTemplate.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/templates/emailRatingTemplate.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/templates/emailRatingTemplate.ts"
+        },
+        {
+          "spec": "../lib/reminders/templates/emailReminderTemplate",
+          "symbols": ["emailReminderTemplate"],
+          "anchor": {
+            "startLine": 34,
+            "endLine": 34
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/templates/emailReminderTemplate.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/templates/emailReminderTemplate.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/templates/emailReminderTemplate.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "node:process",
+          "symbols": ["process"],
+          "package": "process",
+          "subpath": null,
+          "isBuiltin": true,
+          "anchor": {
+            "startLine": 5,
+            "endLine": 5
+          }
+        },
+        {
+          "spec": "next/server",
+          "symbols": ["NextRequest", "NextResponse"],
+          "package": "next",
+          "subpath": "server",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 18,
+            "endLine": 19
+          }
+        },
+        {
+          "spec": "uuid",
+          "symbols": ["v4"],
+          "package": "uuid",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 20,
+            "endLine": 20
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Returns HTTP JSON responses for authentication failure, no reminders, and successful scheduling."],
+        "network": [
+          "Retrieves, cancels, deletes, and schedules reminder emails through external providers.",
+          "Retrieves translations, booking URLs, attendee responses, and booking-seat data through imported services."
+        ],
+        "env": ["Reads CRON_API_KEY, SENDGRID_API_KEY, and SENDGRID_EMAIL from process.env."],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "workflowReminder",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "handler",
+          "shape": "export async function handler(req: NextRequest)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "unauthorized response",
+          "shape": "NextResponse.json({ message: \"Not authenticated\" }, { status: 401 })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "empty schedule response",
+          "shape": "NextResponse.json({ message: \"No Emails to schedule\" }, { status: 200 })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "schedule response",
+          "shape": "NextResponse.json({ message: `${unscheduledReminders.length} Emails to schedule` }, { status: 200 })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "authorization header or apiKey query parameter",
+          "shape": "req.headers.get(\"authorization\") || req.nextUrl.searchParams.get(\"apiKey\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "workflow reminder retrieval",
+          "shape": "getAllUnscheduledReminders()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "workflow reminder cancellation retrieval",
+          "shape": "getAllRemindersToCancel()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "workflow reminder deletion retrieval",
+          "shape": "getAllRemindersToDelete()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "workflow reminder persistence",
+          "shape": "prisma.workflowReminder.updateMany(...)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "workflow reminder persistence",
+          "shape": "prisma.workflowReminder.update(...)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "scheduled email provider",
+          "shape": "sendSendgridMail(...)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "workflow email provider",
+          "shape": "sendOrScheduleWorkflowEmails(...)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "booking metadata schema",
+          "shape": "bookingMetadataSchema.parse(reminder.booking.metadata || {})",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "handler authentication",
+          "intent": "Authenticate the request and determine whether SendGrid processing is enabled.",
+          "structureKind": "branch",
+          "predicate": "process.env.CRON_API_KEY !== apiKey",
+          "branchOutcomes": ["unauthorized request returns 401", "authorized request continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 39,
+            "endLine": 46
+          }
+        },
+        {
+          "name": "SendGrid reminder cleanup",
+          "intent": "Delete and cancel previously scheduled reminders when SendGrid is enabled.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 48,
+            "endLine": 107
+          }
+        },
+        {
+          "name": "unscheduled reminder selection",
+          "intent": "Load unscheduled reminders and stop when none are available.",
+          "structureKind": "branch",
+          "predicate": "!unscheduledReminders.length",
+          "branchOutcomes": ["no reminders returns 200", "reminders are processed"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 109,
+            "endLine": 122
+          }
+        },
+        {
+          "name": "reminder iteration",
+          "intent": "Resolve booking attendees and process each unscheduled reminder.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const reminder of unscheduledReminders)",
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 119,
+            "endLine": 508
+          }
+        },
+        {
+          "name": "optional workflow email construction",
+          "intent": "Select recipients, build content, and queue non-mandatory workflow emails.",
+          "structureKind": "branch",
+          "predicate": "!reminder.isMandatoryReminder && reminder.workflowStep",
+          "branchOutcomes": ["workflow email is built and queued", "workflow errors are logged"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 137,
+            "endLine": 418
+          }
+        },
+        {
+          "name": "mandatory reminder construction",
+          "intent": "Build and queue the mandatory attendee reminder email.",
+          "structureKind": "branch",
+          "predicate": "reminder.isMandatoryReminder",
+          "branchOutcomes": ["mandatory email is built and queued", "mandatory-email errors are logged"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 419,
+            "endLine": 507
+          }
+        },
+        {
+          "name": "email dispatch completion",
+          "intent": "Wait for queued email operations, log failures, and return scheduling count.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 510,
+            "endLine": 517
+          }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "handler",
+          "signature": "export async function handler(req: NextRequest)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 39,
+            "endLine": 39
+          }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "authorization header and apiKey query parameter do not match CRON_API_KEY",
+          "handled": true,
+          "behavior": "Returns { message: \"Not authenticated\" } with status 401.",
+          "anchor": {
+            "startLine": 40,
+            "endLine": 44
+          }
+        },
+        {
+          "inputShape": "empty unscheduled reminder list",
+          "handled": true,
+          "behavior": "Returns { message: \"No Emails to schedule\" } with status 200.",
+          "anchor": {
+            "startLine": 113,
+            "endLine": 117
+          }
+        },
+        {
+          "inputShape": "reminder without a booking",
+          "handled": true,
+          "behavior": "Skips the reminder without scheduling or updating it.",
+          "anchor": {
+            "startLine": 119,
+            "endLine": 122
+          }
+        },
+        {
+          "inputShape": "reminder with seatReferenceId but no matching attendee",
+          "handled": true,
+          "behavior": "Retains the booking's first attendee as targetAttendee.",
+          "anchor": {
+            "startLine": 125,
+            "endLine": 135
+          }
+        },
+        {
+          "inputShape": "reminder body absent with an unsupported workflow template",
+          "handled": true,
+          "behavior": "Retains the initial empty/default email content and may skip sending because the subject is empty.",
+          "anchor": {
+            "startLine": 187,
+            "endLine": 194
+          }
+        },
+        {
+          "inputShape": "rendered email subject empty, rendered body empty, or recipient absent",
+          "handled": true,
+          "behavior": "Does not queue the email or mark the reminder scheduled.",
+          "anchor": {
+            "startLine": 321,
+            "endLine": 321
+          }
+        },
+        {
+          "inputShape": "missing optional recipient or attendee/user fields",
+          "handled": true,
+          "behavior": "Uses undefined or empty-string fallbacks while constructing recipients, names, locales, URLs, and template values.",
+          "anchor": {
+            "startLine": 139,
+            "endLine": 185
+          }
+        },
+        {
+          "inputShape": "cancel or delete provider operation rejects",
+          "handled": true,
+          "behavior": "Logs the rejection and continues processing other cleanup operations.",
+          "anchor": {
+            "startLine": 54,
+            "endLine": 63
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "deleteScheduledSend(reminder.referenceId)",
+          "caught": "err",
+          "action": "Logs an error containing the reference ID and continues.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 54,
+            "endLine": 60
+          }
+        },
+        {
+          "thrown": "prisma.workflowReminder.updateMany(...)",
+          "caught": "err",
+          "action": "Logs the database update error.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 65,
+            "endLine": 77
+          }
+        },
+        {
+          "thrown": "cancelScheduledEmail(...) or prisma.workflowReminder.update(...)",
+          "caught": null,
+          "action": "Logs each rejected Promise.allSettled result.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 101,
+            "endLine": 105
+          }
+        },
+        {
+          "thrown": "Any error while processing a non-mandatory reminder",
+          "caught": "error",
+          "action": "Logs scheduling context and safeStringify(error), then continues with the next reminder.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 409,
+            "endLine": 417
+          }
+        },
+        {
+          "thrown": "Any error while processing a mandatory reminder",
+          "caught": "error",
+          "action": "Logs scheduling context and safeStringify(error), then continues with the next reminder.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 497,
+            "endLine": 505
+          }
+        },
+        {
+          "thrown": "Any queued email operation",
+          "caught": null,
+          "action": "Logs \"Email sending failed\" and the rejection reason after Promise.allSettled.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 510,
+            "endLine": 515
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "env",
+          "description": "CRON_API_KEY must match the authorization header or apiKey query parameter for access.",
+          "anchor": {
+            "startLine": 40,
+            "endLine": 43
+          }
+        },
+        {
+          "kind": "env",
+          "description": "SendGrid is enabled only when both SENDGRID_API_KEY and SENDGRID_EMAIL are truthy.",
+          "anchor": {
+            "startLine": 46,
+            "endLine": 48
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Booking metadata is expected to satisfy bookingMetadataSchema when parsed.",
+          "anchor": {
+            "startLine": 232,
+            "endLine": 232
+          }
+        },
+        {
+          "kind": "caller",
+          "description": "Reminder records provide booking, workflow step, attendee, scheduling, and template data in the expected shape.",
+          "anchor": {
+            "startLine": 119,
+            "endLine": 137
+          }
+        },
+        {
+          "kind": "init-order",
+          "description": "Reminder cleanup completes before unscheduled reminders are loaded and queued.",
+          "anchor": {
+            "startLine": 63,
+            "endLine": 113
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact records and time window are returned by getAllUnscheduledReminders?",
+          "affects": "edge_cases and section_map",
+          "anchor": {
+            "startLine": 109,
+            "endLine": 113
+          },
+          "resolution": null
+        },
+        {
+          "question": "What do the imported email providers do when scheduling or sending fails?",
+          "affects": "error_handling and side_effects",
+          "anchor": {
+            "startLine": 380,
+            "endLine": 395
+          },
+          "resolution": null
+        },
+        {
+          "question": "What validation and failure behavior does bookingMetadataSchema.parse apply to malformed metadata?",
+          "affects": "edge_cases and error_handling",
+          "anchor": {
+            "startLine": 288,
+            "endLine": 288
+          },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-invalid-cron-api-key",
+          "scenario": "A request supplies an API key that does not match the configured cron key.",
+          "given": ["process.env.CRON_API_KEY !== apiKey"],
+          "when": "handler(req)",
+          "then": "NextResponse.json({ message: \"Not authenticated\" }, { status: 401 })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Protects the scheduling endpoint from unauthenticated execution."
+        },
+        {
+          "testId": "returns-when-no-reminders-need-scheduling",
+          "scenario": "Authentication succeeds but there are no unscheduled reminders.",
+          "given": ["const unscheduledReminders = await getAllUnscheduledReminders()", "!unscheduledReminders.length"],
+          "when": "handler(req)",
+          "then": "NextResponse.json({ message: \"No Emails to schedule\" }, { status: 200 })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the no-op response and prevents unnecessary provider work."
+        },
+        {
+          "testId": "skips-reminders-without-bookings",
+          "scenario": "An unscheduled reminder has no associated booking.",
+          "given": ["!reminder.booking"],
+          "when": "handler(req)",
+          "then": "The reminder is skipped without scheduling an email.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards against dereferencing incomplete reminder records."
+        },
+        {
+          "testId": "schedules-valid-reminders",
+          "scenario": "Authenticated processing finds at least one valid unscheduled reminder with a non-empty recipient and rendered subject/body.",
+          "given": ["emailContent.emailSubject.length > 0 && !emailBodyEmpty && sendTo"],
+          "when": "handler(req)",
+          "then": "The email provider is invoked and prisma.workflowReminder.update(...) stores scheduled: true.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the core scheduling and persistence handshake."
+        },
+        {
+          "testId": "returns-scheduled-reminder-count",
+          "scenario": "Processing completes after evaluating unscheduled reminders.",
+          "given": ["unscheduledReminders.length > 0"],
+          "when": "handler(req)",
+          "then": "NextResponse.json({ message: `${unscheduledReminders.length} Emails to schedule` }, { status: 200 })",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the endpoint's completion response contract."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": ["handler"],
+      "moduleLevelCode": "import process from \"node:process\";\nimport dayjs from \"@calcom/dayjs\";\nimport generateIcsString from \"@calcom/emails/lib/generateIcsString\";\nimport { getCalEventResponses } from \"@calcom/features/bookings/lib/getCalEventResponses\";\nimport { BookingSeatRepository } from \"@calcom/features/bookings/repositories/BookingSeatRepository\";\nimport { getBookerBaseUrl } from \"@calcom/features/ee/organizations/lib/getBookerUrlServer\";\nimport logger from \"@calcom/lib/logger\";\nimport { safeStringify } from \"@calcom/lib/safeStringify\";\nimport { getTranslation } from \"@calcom/lib/server/i18n\";\nimport { getTimeFormatStringFromUserTimeFormat } from \"@calcom/lib/timeFormat\";\nimport prisma from \"@calcom/prisma\";\nimport { SchedulingType, WorkflowActions, WorkflowTemplates } from \"@calcom/prisma/enums\";\nimport { bookingMetadataSchema } from \"@calcom/prisma/zod-utils\";\nimport type { NextRequest } from \"next/server\";\nimport { NextResponse } from \"next/server\";\nimport { v4 as uuidv4 } from \"uuid\";\nimport {\n  getAllRemindersToCancel,\n  getAllRemindersToDelete,\n  getAllUnscheduledReminders,\n  getWorkflowRecipientEmail,\n} from \"../lib/getWorkflowReminders\";\nimport { sendOrScheduleWorkflowEmails } from \"../lib/reminders/providers/emailProvider\";\nimport {\n  cancelScheduledEmail,\n  deleteScheduledSend,\n  getBatchId,\n  sendSendgridMail,\n} from \"../lib/reminders/providers/sendgridProvider\";\nimport type { VariablesType } from \"../lib/reminders/templates/customTemplate\";\nimport customTemplate from \"../lib/reminders/templates/customTemplate\";\nimport emailRatingTemplate from \"../lib/reminders/templates/emailRatingTemplate\";\nimport emailReminderTemplate from \"../lib/reminders/templates/emailReminderTemplate\";",
+      "exports": [
+        {
+          "name": "handler",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "process",
+          "module": "node:process",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "dayjs",
+          "module": "@calcom/dayjs",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "generateIcsString",
+          "module": "@calcom/emails/lib/generateIcsString",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getCalEventResponses",
+          "module": "@calcom/features/bookings/lib/getCalEventResponses",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "BookingSeatRepository",
+          "module": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBookerBaseUrl",
+          "module": "@calcom/features/ee/organizations/lib/getBookerUrlServer",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "safeStringify",
+          "module": "@calcom/lib/safeStringify",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTranslation",
+          "module": "@calcom/lib/server/i18n",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTimeFormatStringFromUserTimeFormat",
+          "module": "@calcom/lib/timeFormat",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "SchedulingType",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowActions",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowTemplates",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "bookingMetadataSchema",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "NextRequest",
+          "module": "next/server",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "NextResponse",
+          "module": "next/server",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "v4",
+          "module": "uuid",
+          "alias": "uuidv4",
+          "kind": "external"
+        },
+        {
+          "symbol": "getAllRemindersToCancel",
+          "module": "../lib/getWorkflowReminders",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getAllRemindersToDelete",
+          "module": "../lib/getWorkflowReminders",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getAllUnscheduledReminders",
+          "module": "../lib/getWorkflowReminders",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getWorkflowRecipientEmail",
+          "module": "../lib/getWorkflowReminders",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "sendOrScheduleWorkflowEmails",
+          "module": "../lib/reminders/providers/emailProvider",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "cancelScheduledEmail",
+          "module": "../lib/reminders/providers/sendgridProvider",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "deleteScheduledSend",
+          "module": "../lib/reminders/providers/sendgridProvider",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getBatchId",
+          "module": "../lib/reminders/providers/sendgridProvider",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "sendSendgridMail",
+          "module": "../lib/reminders/providers/sendgridProvider",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "VariablesType",
+          "module": "../lib/reminders/templates/customTemplate",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "customTemplate",
+          "module": "../lib/reminders/templates/customTemplate",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "emailRatingTemplate",
+          "module": "../lib/reminders/templates/emailRatingTemplate",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "emailReminderTemplate",
+          "module": "../lib/reminders/templates/emailReminderTemplate",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/ee/workflows/api/scheduleEmailReminders.ts__handler_1#function:handler",
+        "unitKind": "function",
+        "name": "handler",
+        "qualifiedName": "handler",
+        "parentUnitId": null,
+        "startLine": 39,
+        "endLine": 518,
+        "isBehavioral": true,
+        "source": "export async function handler(req: NextRequest) {\n  const apiKey = req.headers.get(\"authorization\") || req.nextUrl.searchParams.get(\"apiKey\");\n\n  if (process.env.CRON_API_KEY !== apiKey) {\n    return NextResponse.json({ message: \"Not authenticated\" }, { status: 401 });\n  }\n\n  const isSendgridEnabled = !!(process.env.SENDGRID_API_KEY && process.env.SENDGRID_EMAIL);\n\n  if (isSendgridEnabled) {\n    const remindersToDelete: { referenceId: string | null; id: number }[] = await getAllRemindersToDelete();\n\n    const reminderIds: number[] = [];\n    const handlePastCancelledReminders = remindersToDelete.map(async (reminder) => {\n      reminderIds.push(reminder.id);\n      try {\n        if (reminder.referenceId) {\n          await deleteScheduledSend(reminder.referenceId);\n        }\n      } catch (err) {\n        logger.error(`Error deleting scheduled send (ref: ${reminder.referenceId}): ${err}`);\n      }\n    });\n\n    await Promise.allSettled(handlePastCancelledReminders);\n\n    if (reminderIds.length > 0) {\n      try {\n        await prisma.workflowReminder.updateMany({\n          where: {\n            id: {\n              in: reminderIds,\n            },\n          },\n          data: { referenceId: null },\n        });\n      } catch (err) {\n        logger.error(`Error updating reminders: ${err}`);\n      }\n    }\n\n    //cancel reminders for cancelled/rescheduled bookings that are scheduled within the next hour\n    const remindersToCancel: { referenceId: string | null; id: number }[] = await getAllRemindersToCancel();\n\n    //eslint-disable-next-line @typescript-eslint/no-explicit-any\n    const cancelUpdatePromises: Promise<any>[] = [];\n\n    for (const reminder of remindersToCancel) {\n      const cancelPromise = cancelScheduledEmail(reminder.referenceId);\n\n      const updatePromise = prisma.workflowReminder.update({\n        where: {\n          id: reminder.id,\n        },\n        data: {\n          scheduled: false, // to know which reminder already got cancelled (to avoid error from cancelling the same reminders again)\n        },\n      });\n\n      cancelUpdatePromises.push(cancelPromise, updatePromise);\n    }\n\n    const results = await Promise.allSettled(cancelUpdatePromises);\n    results.forEach((result) => {\n      if (result.status === \"rejected\") {\n        logger.error(`Error cancelling scheduled_sends: ${result.reason}`);\n      }\n    });\n  }\n\n  // schedule all unscheduled reminders within the next 72 hours\n  //eslint-disable-next-line @typescript-eslint/no-explicit-any\n  const sendEmailPromises: Promise<any>[] = [];\n\n  const unscheduledReminders = await getAllUnscheduledReminders();\n\n  if (!unscheduledReminders.length) {\n    return NextResponse.json({ message: \"No Emails to schedule\" }, { status: 200 });\n  }\n\n  for (const reminder of unscheduledReminders) {\n    if (!reminder.booking) {\n      continue;\n    }\n    const referenceUid = reminder.uuid ?? uuidv4();\n\n    // For seated events, get the correct attendee based on seatReferenceId\n    let targetAttendee = reminder.booking?.attendees[0];\n    if (reminder.seatReferenceId) {\n      const bookingSeatRepository = new BookingSeatRepository(prisma);\n      const seatAttendeeData = await bookingSeatRepository.getByReferenceUidWithAttendeeDetails(\n        reminder.seatReferenceId\n      );\n      if (seatAttendeeData?.attendee) {\n        targetAttendee = seatAttendeeData.attendee;\n      }\n    }\n\n    if (!reminder.isMandatoryReminder && reminder.workflowStep) {\n      try {\n        let sendTo;\n\n        switch (reminder.workflowStep.action) {\n          case WorkflowActions.EMAIL_HOST: {\n            sendTo = reminder.booking?.userPrimaryEmail ?? reminder.booking.user?.email;\n            const hosts = reminder?.booking?.eventType?.hosts\n              ?.filter((host) =>\n                reminder.booking?.attendees.some((attendee) => attendee.email === host.user.email)\n              )\n              .map(({ user }) => user.destinationCalendar?.primaryEmail ?? user.email);\n            const schedulingType = reminder.booking.eventType?.schedulingType;\n\n            if (\n              hosts &&\n              (schedulingType === SchedulingType.COLLECTIVE || schedulingType === SchedulingType.ROUND_ROBIN)\n            ) {\n              sendTo = sendTo ? [sendTo, ...hosts] : hosts;\n            }\n            break;\n          }\n          case WorkflowActions.EMAIL_ATTENDEE:\n            sendTo = targetAttendee?.email;\n            break;\n          case WorkflowActions.EMAIL_ADDRESS:\n            sendTo = reminder.workflowStep.sendTo;\n        }\n\n        const name =\n          reminder.workflowStep.action === WorkflowActions.EMAIL_ATTENDEE\n            ? targetAttendee?.name\n            : reminder.booking.user?.name;\n\n        const attendeeName =\n          reminder.workflowStep.action === WorkflowActions.EMAIL_ATTENDEE\n            ? reminder.booking.user?.name\n            : targetAttendee?.name;\n\n        const timeZone =\n          reminder.workflowStep.action === WorkflowActions.EMAIL_ATTENDEE\n            ? targetAttendee?.timeZone\n            : reminder.booking.user?.timeZone;\n\n        const locale =\n          reminder.workflowStep.action === WorkflowActions.EMAIL_ATTENDEE ||\n          reminder.workflowStep.action === WorkflowActions.SMS_ATTENDEE\n            ? targetAttendee?.locale\n            : reminder.booking.user?.locale;\n\n        let emailContent = {\n          emailSubject: reminder.workflowStep.emailSubject || \"\",\n          emailBody: `<body style=\"white-space: pre-wrap;\">${\n            reminder.workflowStep.reminderBody || \"\"\n          }</body>`,\n        };\n\n        let emailBodyEmpty = false;\n\n        if (reminder.workflowStep.reminderBody) {\n          const { responses } = getCalEventResponses({\n            bookingFields: reminder.booking.eventType?.bookingFields ?? null,\n            booking: reminder.booking,\n          });\n\n          const organizerOrganizationProfile = await prisma.profile.findFirst({\n            where: {\n              userId: reminder.booking.user?.id,\n            },\n          });\n\n          const organizerOrganizationId = organizerOrganizationProfile?.organizationId;\n\n          const bookerUrl = await getBookerBaseUrl(\n            reminder.booking.eventType?.team?.parentId ?? organizerOrganizationId ?? null\n          );\n\n          const recipientEmail = getWorkflowRecipientEmail({\n            action: reminder.workflowStep.action || WorkflowActions.EMAIL_ADDRESS,\n            attendeeEmail: targetAttendee?.email,\n            organizerEmail: reminder.booking.user?.email,\n            sendToEmail: reminder.workflowStep.sendTo,\n          });\n\n          const variables: VariablesType = {\n            eventName: reminder.booking.eventType?.title || \"\",\n            organizerName: reminder.booking.user?.name || \"\",\n            attendeeName: targetAttendee?.name || \"\",\n            attendeeEmail: targetAttendee?.email || \"\",\n            eventDate: dayjs(reminder.booking.startTime).tz(timeZone),\n            eventEndTime: dayjs(reminder.booking?.endTime).tz(timeZone),\n            timeZone: timeZone,\n            location: reminder.booking.location || \"\",\n            additionalNotes: reminder.booking.description,\n            responses: responses,\n            meetingUrl: bookingMetadataSchema.parse(reminder.booking.metadata || {})?.videoCallUrl,\n            cancelLink: `${bookerUrl}/booking/${reminder.booking.uid}?cancel=true${\n              recipientEmail ? `&cancelledBy=${encodeURIComponent(recipientEmail)}` : \"\"\n            }`,\n            rescheduleLink: `${bookerUrl}/reschedule/${reminder.booking.uid}${\n              recipientEmail ? `?rescheduledBy=${encodeURIComponent(recipientEmail)}` : \"\"\n            }`,\n            ratingUrl: `${bookerUrl}/booking/${reminder.booking.uid}?rating`,\n            noShowUrl: `${bookerUrl}/booking/${reminder.booking.uid}?noShow=true`,\n            attendeeTimezone: targetAttendee?.timeZone,\n            eventTimeInAttendeeTimezone: dayjs(reminder.booking.startTime).tz(targetAttendee?.timeZone),\n            eventEndTimeInAttendeeTimezone: dayjs(reminder.booking?.endTime).tz(targetAttendee?.timeZone),\n          };\n          const emailLocale = locale || \"en\";\n          const brandingDisabled = reminder.booking.eventType?.team\n            ? !!reminder.booking.eventType?.team?.hideBranding\n            : !!reminder.booking.user?.hideBranding;\n\n          const emailSubject = customTemplate(\n            reminder.workflowStep.emailSubject || \"\",\n            variables,\n            emailLocale,\n            getTimeFormatStringFromUserTimeFormat(reminder.booking.user?.timeFormat),\n            brandingDisabled\n          ).text;\n          emailContent.emailSubject = emailSubject;\n          emailContent.emailBody = customTemplate(\n            reminder.workflowStep.reminderBody || \"\",\n            variables,\n            emailLocale,\n            getTimeFormatStringFromUserTimeFormat(reminder.booking.user?.timeFormat),\n            brandingDisabled\n          ).html;\n\n          emailBodyEmpty =\n            customTemplate(\n              reminder.workflowStep.reminderBody || \"\",\n              variables,\n              emailLocale,\n              getTimeFormatStringFromUserTimeFormat(reminder.booking.user?.timeFormat)\n            ).text.length === 0;\n        } else if (reminder.workflowStep.template === WorkflowTemplates.REMINDER) {\n          const brandingDisabled = reminder.booking.eventType?.team\n            ? !!reminder.booking.eventType?.team?.hideBranding\n            : !!reminder.booking.user?.hideBranding;\n          emailContent = emailReminderTemplate({\n            isEditingMode: false,\n            locale: reminder.booking.user?.locale || \"en\",\n            t: await getTranslation(reminder.booking.user?.locale ?? \"en\", \"common\"),\n            action: reminder.workflowStep.action,\n            timeFormat: getTimeFormatStringFromUserTimeFormat(reminder.booking.user?.timeFormat),\n            startTime: reminder.booking.startTime.toISOString() || \"\",\n            endTime: reminder.booking.endTime.toISOString() || \"\",\n            eventName: reminder.booking.eventType?.title || \"\",\n            timeZone: timeZone || \"\",\n            location: reminder.booking.location || \"\",\n            meetingUrl: bookingMetadataSchema.parse(reminder.booking.metadata || {})?.videoCallUrl || \"\",\n            otherPerson: attendeeName || \"\",\n            name: name || \"\",\n            isBrandingDisabled: brandingDisabled,\n          });\n        } else if (reminder.workflowStep.template === WorkflowTemplates.RATING) {\n          const organizerOrganizationProfile = await prisma.profile.findFirst({\n            where: {\n              userId: reminder.booking.user?.id,\n            },\n          });\n\n          const organizerOrganizationId = organizerOrganizationProfile?.organizationId;\n          const bookerUrl = await getBookerBaseUrl(\n            reminder.booking.eventType?.team?.parentId ?? organizerOrganizationId ?? null\n          );\n          emailContent = emailRatingTemplate({\n            isEditingMode: true,\n            locale: reminder.booking.user?.locale || \"en\",\n            action: reminder.workflowStep.action || WorkflowActions.EMAIL_ADDRESS,\n            t: await getTranslation(reminder.booking.user?.locale ?? \"en\", \"common\"),\n            timeFormat: getTimeFormatStringFromUserTimeFormat(reminder.booking.user?.timeFormat),\n            startTime: reminder.booking.startTime.toISOString() || \"\",\n            endTime: reminder.booking.endTime.toISOString() || \"\",\n            eventName: reminder.booking.eventType?.title || \"\",\n            timeZone: timeZone || \"\",\n            organizer: reminder.booking.user?.name || \"\",\n            name: name || \"\",\n            ratingUrl: `${bookerUrl}/booking/${reminder.booking.uid}?rating`,\n            noShowUrl: `${bookerUrl}/booking/${reminder.booking.uid}?noShow=true`,\n          });\n        }\n\n        if (emailContent.emailSubject.length > 0 && !emailBodyEmpty && sendTo) {\n          const batchId = isSendgridEnabled ? await getBatchId() : undefined;\n\n          const booking = reminder.booking;\n\n          const t = await getTranslation(booking.user?.locale ?? \"en\", \"common\");\n\n          const attendeePromises = [];\n\n          for (const attendee of booking.attendees) {\n            attendeePromises.push(\n              getTranslation(attendee.locale ?? \"en\", \"common\").then((tAttendee) => ({\n                ...attendee,\n                language: { locale: attendee.locale ?? \"en\", translate: tAttendee },\n              }))\n            );\n          }\n\n          const attendees = await Promise.all(attendeePromises);\n\n          const event = {\n            ...booking,\n            startTime: dayjs(booking.startTime).utc().format(),\n            endTime: dayjs(booking.endTime).utc().format(),\n            type: booking.eventType?.slug ?? \"\",\n            organizer: {\n              name: booking.user?.name ?? \"\",\n              email: booking.user?.email ?? \"\",\n              timeZone: booking.user?.timeZone ?? \"\",\n              language: { translate: t, locale: booking.user?.locale ?? \"en\" },\n            },\n            attendees,\n            location: bookingMetadataSchema.parse(booking.metadata || {})?.videoCallUrl || booking.location,\n            title: booking.title || booking.eventType?.title || \"\",\n          };\n\n          const mailData = {\n            subject: emailContent.emailSubject,\n            to: Array.isArray(sendTo) ? sendTo : [sendTo],\n            html: emailContent.emailBody,\n            attachments: reminder.workflowStep.includeCalendarEvent\n              ? [\n                  {\n                    content: generateIcsString({ event, status: \"CONFIRMED\" }) || \"\",\n                    filename: \"event.ics\",\n                    contentType: \"text/calendar; charset=UTF-8; method=REQUEST\",\n                    disposition: \"attachment\",\n                  },\n                ]\n              : undefined,\n            sender: reminder.workflowStep.sender,\n            ...(!reminder.booking?.eventType?.hideOrganizerEmail && {\n              replyTo:\n                reminder.booking?.eventType?.customReplyToEmail ??\n                reminder.booking?.userPrimaryEmail ??\n                reminder.booking.user?.email,\n            }),\n          };\n\n          if (isSendgridEnabled) {\n            sendEmailPromises.push(\n              sendSendgridMail({\n                ...mailData,\n                batchId,\n                sendAt: dayjs(reminder.scheduledDate).unix(),\n              })\n            );\n          } else {\n            sendEmailPromises.push(\n              sendOrScheduleWorkflowEmails({\n                ...mailData,\n                referenceUid,\n                sendAt: reminder.scheduledDate,\n              })\n            );\n          }\n\n          await prisma.workflowReminder.update({\n            where: {\n              id: reminder.id,\n            },\n            data: {\n              scheduled: true,\n              referenceId: batchId,\n              uuid: referenceUid,\n            },\n          });\n        }\n      } catch (error) {\n        logger.error(`Error scheduling Email with error ${error}`, {\n          reminderId: reminder.id,\n          scheduledDate: reminder.scheduledDate,\n          isMandatoryReminder: reminder.isMandatoryReminder,\n          workflowStepId: reminder?.workflowStep?.id,\n          bookingUid: reminder.booking?.uid,\n          fullError: safeStringify(error),\n        });\n      }\n    } else if (reminder.isMandatoryReminder) {\n      try {\n        const sendTo = targetAttendee?.email;\n        const name = targetAttendee?.name;\n        const attendeeName = reminder.booking.user?.name;\n        const timeZone = targetAttendee?.timeZone;\n\n        let emailContent = {\n          emailSubject: \"\",\n          emailBody: \"\",\n        };\n\n        const emailBodyEmpty = false;\n\n        const brandingDisabled = reminder.booking.eventType?.team\n          ? !!reminder.booking.eventType?.team?.hideBranding\n          : !!reminder.booking.user?.hideBranding;\n\n        emailContent = emailReminderTemplate({\n          isEditingMode: false,\n          locale: reminder.booking.user?.locale || \"en\",\n          t: await getTranslation(reminder.booking.user?.locale ?? \"en\", \"common\"),\n          action: WorkflowActions.EMAIL_ATTENDEE,\n          timeFormat: getTimeFormatStringFromUserTimeFormat(reminder.booking.user?.timeFormat),\n          startTime: reminder.booking.startTime.toISOString() || \"\",\n          endTime: reminder.booking.endTime.toISOString() || \"\",\n          eventName: reminder.booking.eventType?.title || \"\",\n          timeZone: timeZone || \"\",\n          location: reminder.booking.location || \"\",\n          meetingUrl: bookingMetadataSchema.parse(reminder.booking.metadata || {})?.videoCallUrl || \"\",\n          otherPerson: attendeeName || \"\",\n          name: name || \"\",\n          isBrandingDisabled: brandingDisabled,\n        });\n        if (emailContent.emailSubject.length > 0 && !emailBodyEmpty && sendTo) {\n          const batchId = isSendgridEnabled ? await getBatchId() : undefined;\n\n          const mailData = {\n            subject: emailContent.emailSubject,\n            to: [sendTo],\n            html: emailContent.emailBody,\n            sender: reminder.workflowStep?.sender,\n            ...(!reminder.booking?.eventType?.hideOrganizerEmail && {\n              replyTo:\n                reminder.booking?.eventType?.customReplyToEmail ||\n                reminder.booking?.userPrimaryEmail ||\n                reminder.booking.user?.email,\n            }),\n          };\n          if (isSendgridEnabled) {\n            sendEmailPromises.push(\n              sendSendgridMail({\n                ...mailData,\n                batchId,\n                sendAt: dayjs(reminder.scheduledDate).unix(),\n              })\n            );\n          } else {\n            sendEmailPromises.push(\n              sendOrScheduleWorkflowEmails({\n                ...mailData,\n                sendAt: reminder.scheduledDate,\n                referenceUid,\n              })\n            );\n          }\n\n          await prisma.workflowReminder.update({\n            where: {\n              id: reminder.id,\n            },\n            data: {\n              scheduled: true,\n              referenceId: batchId,\n              uuid: referenceUid,\n            },\n          });\n        }\n      } catch (error) {\n        logger.error(`Error scheduling Email with error ${error}`, {\n          reminderId: reminder.id,\n          scheduledDate: reminder.scheduledDate,\n          isMandatoryReminder: reminder.isMandatoryReminder,\n          workflowStepId: reminder?.workflowStep?.id,\n          bookingUid: reminder.booking?.uid,\n          fullError: safeStringify(error),\n        });\n      }\n    }\n  }\n\n  const sendResults = await Promise.allSettled(sendEmailPromises);\n  sendResults.forEach((result) => {\n    if (result.status === \"rejected\") {\n      logger.error(\"Email sending failed\", result.reason);\n    }\n  });\n\n  return NextResponse.json({ message: `${unscheduledReminders.length} Emails to schedule` }, { status: 200 });\n}"
+      }
+    ],
+    "extractedUnitCount": 1,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 31512,
+    "outputTokens": 9941,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

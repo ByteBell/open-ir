@@ -1,0 +1,1671 @@
+{
+  "relativePath": "packages/lib/getUserAvailability.ts",
+  "language": "typescript",
+  "sha256": "dbdf110f1b464bff3a1fc2a6c975b1dfa8bd20e7a49fef15a0be6d19177c4344",
+  "sizeBytes": 22402,
+  "tokenCount": 5601,
+  "lineCount": 730,
+  "analysedAt": "2026-08-27T17:38:59.257Z",
+  "analysis": {
+    "module": {
+      "purpose": "Provides user and team calendar availability by combining schedules, working hours, busy calendar events, booking limits, date overrides, travel schedules, and out-of-office ranges.",
+      "summary": "This module is the availability aggregation layer for scheduling. It validates availability queries, loads users and event types, selects effective schedules and time zones, retrieves calendar busy periods and booking-limit conflicts, computes available date ranges, and optionally returns seat counts and date overrides. It also exposes helpers for period start dates, out-of-office range calculation, and concurrent availability lookup for multiple users, with reporting instrumentation and diagnostic logging around externally observable operations.",
+      "businessContext": "Supports appointment booking and rescheduling by determining when users or teams can accept events. Failures can expose unavailable slots, permit conflicting bookings, or prevent scheduling entirely.",
+      "classes": [],
+      "functions": [
+        "_getEventType (~L58-137): Loads event type scheduling, host, calendar, and limit configuration",
+        "_getUser (~L143-145): Finds users eligible for availability checking",
+        "_getCurrentSeats (~L203-254): Counts accepted booking attendees for event time slots",
+        "_getUserAvailability (~L262-563): Aggregates schedules, busy periods, limits, and available ranges",
+        "_getPeriodStartDatesBetween (~L568-583): Generates period start dates within a date range",
+        "calculateOutOfOfficeRanges (~L610-652): Converts out-of-office entries into availability-aware daily ranges",
+        "_getUsersAvailability (~L663-686): Computes availability concurrently for multiple users"
+      ],
+      "keywords": [
+        "calendar availability",
+        "booking limits",
+        "duration limits",
+        "out-of-office",
+        "working hours",
+        "date overrides",
+        "travel schedules",
+        "seat availability",
+        "selected calendars",
+        "Prisma event types"
+      ],
+      "ontologyConcepts": [
+        "availability aggregation",
+        "schedule resolution",
+        "time-range subtraction",
+        "booking capacity",
+        "calendar conflict detection",
+        "date-range normalization",
+        "team scheduling",
+        "observability instrumentation"
+      ],
+      "businessEntities": [
+        "User",
+        "EventType",
+        "Booking",
+        "Schedule",
+        "OutOfOfficeEntry",
+        "Team",
+        "Calendar",
+        "TravelSchedule"
+      ],
+      "systemCapabilities": [
+        "Resolve effective user schedules",
+        "Calculate bookable time ranges",
+        "Apply booking and duration limits",
+        "Retrieve calendar busy periods",
+        "Calculate seat availability",
+        "Aggregate availability for user groups"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./getBusyTimes",
+          "symbols": ["getBusyTimes"],
+          "anchor": {
+            "startLine": 37,
+            "endLine": 37
+          },
+          "resolvedRelativePath": "packages/lib/getBusyTimes.ts",
+          "resolvedFileId": "packages/lib/getBusyTimes.ts",
+          "resolvedHint": "packages/lib/getBusyTimes.ts"
+        },
+        {
+          "spec": "./sentryWrapper",
+          "symbols": ["withReporting"],
+          "anchor": {
+            "startLine": 38,
+            "endLine": 38
+          },
+          "resolvedRelativePath": "packages/lib/sentryWrapper.ts",
+          "resolvedFileId": "packages/lib/sentryWrapper.ts",
+          "resolvedHint": "packages/lib/sentryWrapper.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@prisma/client",
+          "symbols": [
+            "Booking",
+            "Prisma",
+            "OutOfOfficeEntry",
+            "OutOfOfficeReason",
+            "User",
+            "EventType as PrismaEventType"
+          ],
+          "package": "@prisma/client",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 1,
+            "endLine": 8
+          }
+        },
+        {
+          "spec": "@sentry/nextjs",
+          "symbols": ["* as Sentry"],
+          "package": "@sentry/nextjs",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          }
+        },
+        {
+          "spec": "zod",
+          "symbols": ["z"],
+          "package": "zod",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 10,
+            "endLine": 10
+          }
+        },
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["Dayjs", "dayjs"],
+          "package": "@calcom/dayjs",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 12,
+            "endLine": 13
+          }
+        },
+        {
+          "spec": "@calcom/lib/availability",
+          "symbols": ["getWorkingHours"],
+          "package": "@calcom/lib",
+          "subpath": "availability",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          }
+        },
+        {
+          "spec": "@calcom/lib/date-ranges",
+          "symbols": ["DateOverride", "WorkingHours", "buildDateRanges", "subtract"],
+          "package": "@calcom/lib",
+          "subpath": "date-ranges",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 15,
+            "endLine": 16
+          }
+        },
+        {
+          "spec": "@calcom/lib/dayjs",
+          "symbols": ["stringToDayjsZod"],
+          "package": "@calcom/lib",
+          "subpath": "dayjs",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          }
+        },
+        {
+          "spec": "@calcom/lib/errorCodes",
+          "symbols": ["ErrorCode"],
+          "package": "@calcom/lib",
+          "subpath": "errorCodes",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 18,
+            "endLine": 18
+          }
+        },
+        {
+          "spec": "@calcom/lib/http-error",
+          "symbols": ["HttpError"],
+          "package": "@calcom/lib",
+          "subpath": "http-error",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 19,
+            "endLine": 19
+          }
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/isBookingLimits",
+          "symbols": ["parseBookingLimit"],
+          "package": "@calcom/lib",
+          "subpath": "intervalLimits/isBookingLimits",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 20,
+            "endLine": 20
+          }
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/isDurationLimits",
+          "symbols": ["parseDurationLimit"],
+          "package": "@calcom/lib",
+          "subpath": "intervalLimits/isDurationLimits",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 21,
+            "endLine": 21
+          }
+        },
+        {
+          "spec": "@calcom/lib/intervalLimits/server/getBusyTimesFromLimits",
+          "symbols": ["getBusyTimesFromLimits", "getBusyTimesFromTeamLimits"],
+          "package": "@calcom/lib",
+          "subpath": "intervalLimits/server/getBusyTimesFromLimits",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 22,
+            "endLine": 25
+          }
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "package": "@calcom/lib",
+          "subpath": "logger",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 26,
+            "endLine": 26
+          }
+        },
+        {
+          "spec": "@calcom/lib/safeStringify",
+          "symbols": ["safeStringify"],
+          "package": "@calcom/lib",
+          "subpath": "safeStringify",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 27,
+            "endLine": 27
+          }
+        },
+        {
+          "spec": "@calcom/lib/server/findUsersForAvailabilityCheck",
+          "symbols": ["findUsersForAvailabilityCheck"],
+          "package": "@calcom/lib",
+          "subpath": "server/findUsersForAvailabilityCheck",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 28,
+            "endLine": 28
+          }
+        },
+        {
+          "spec": "@calcom/lib/server/repository/eventType",
+          "symbols": ["EventTypeRepository"],
+          "package": "@calcom/lib",
+          "subpath": "server/repository/eventType",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 29,
+            "endLine": 29
+          }
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "package": "@calcom/prisma",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 30,
+            "endLine": 30
+          }
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["SchedulingType", "BookingStatus"],
+          "package": "@calcom/prisma",
+          "subpath": "enums",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 31,
+            "endLine": 32
+          }
+        },
+        {
+          "spec": "@calcom/prisma/zod-utils",
+          "symbols": ["EventTypeMetaDataSchema"],
+          "package": "@calcom/prisma",
+          "subpath": "zod-utils",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 33,
+            "endLine": 33
+          }
+        },
+        {
+          "spec": "@calcom/types/Calendar",
+          "symbols": ["EventBusyDetails", "IntervalLimitUnit"],
+          "package": "@calcom/types",
+          "subpath": "Calendar",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 34,
+            "endLine": 34
+          }
+        },
+        {
+          "spec": "@calcom/types/schedule",
+          "symbols": ["TimeRange"],
+          "package": "@calcom/types",
+          "subpath": "schedule",
+          "isBuiltin": false,
+          "anchor": {
+            "startLine": 35,
+            "endLine": 35
+          }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes debug and warning messages through the availability logger."],
+        "network": ["Retrieves busy calendar times through the calendar integration helper."],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "eventType",
+          "payloadRef": "EventType",
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "booking",
+          "payloadRef": "Booking",
+          "rawKind": null
+        },
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "outOfOfficeEntry",
+          "payloadRef": "OutOfOfficeEntry",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "getEventType",
+          "shape": "export const getEventType = withReporting(_getEventType, \"getEventType\");",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getCurrentSeats",
+          "shape": "export const getCurrentSeats = withReporting(_getCurrentSeats, \"getCurrentSeats\");",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getUserAvailability",
+          "shape": "export const getUserAvailability = withReporting(_getUserAvailability, \"getUserAvailability\");",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getPeriodStartDatesBetween",
+          "shape": "export const getPeriodStartDatesBetween = withReporting(_getPeriodStartDatesBetween, \"getPeriodStartDatesBetween\");",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getUsersAvailability",
+          "shape": "export const getUsersAvailability = withReporting(_getUsersAvailability, \"getUsersAvailability\");",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "IFromUser",
+          "shape": "export interface IFromUser { id: number; displayName: string | null; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "IToUser",
+          "shape": "export interface IToUser { id: number; username: string | null; displayName: string | null; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "IOutOfOfficeData",
+          "shape": "export interface IOutOfOfficeData { [key: string]: { fromUser: IFromUser | null; toUser?: IToUser | null; reason?: string | null; emoji?: string | null; }; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "getBusyTimes",
+          "shape": "getBusyTimes({ credentials, startTime, endTime, eventTypeId, userId, userEmail, username, beforeEventBuffer, afterEventBuffer, selectedCalendars, seatedEvent, rescheduleUid, duration, currentBookings, bypassBusyCalendarTimes, shouldServeCache })",
+          "resolvedRelativePath": "packages/lib/getBusyTimes.ts",
+          "resolvedFileId": "packages/lib/getBusyTimes.ts"
+        },
+        {
+          "name": "getWorkingHours",
+          "shape": "getWorkingHours({ timeZone }, availability)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "buildDateRanges",
+          "shape": "buildDateRanges({ dateFrom, dateTo, availability, timeZone, travelSchedules, outOfOffice })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "subtract",
+          "shape": "subtract(dateRanges, formattedBusyTimes)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getBusyTimesFromLimits",
+          "shape": "getBusyTimesFromLimits(bookingLimits, durationLimits, dateFrom.tz(timeZone), dateTo.tz(timeZone), duration, eventType, busyTimesFromLimitsBookings, timeZone, rescheduleUid)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getBusyTimesFromTeamLimits",
+          "shape": "getBusyTimesFromTeamLimits(user, teamBookingLimits, dateFrom.tz(timeZone), dateTo.tz(timeZone), teamForBookingLimits.id, teamForBookingLimits.includeManagedEventsInLimits, timeZone, rescheduleUid)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "findUsersForAvailabilityCheck",
+          "shape": "findUsersForAvailabilityCheck({ where })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EventTypeMetaDataSchema",
+          "shape": "EventTypeMetaDataSchema.parse(eventType.metadata)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "availabilitySchema",
+          "shape": "availabilitySchema.parse(query)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "query validation and user resolution",
+          "intent": "Validates the query, resolves the target user, and rejects invalid requests.",
+          "structureKind": "branch",
+          "predicate": "if (!dateFrom.isValid() || !dateTo.isValid())",
+          "branchOutcomes": ["invalid date range throws", "valid date range continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 266,
+            "endLine": 300
+          }
+        },
+        {
+          "name": "event and seat resolution",
+          "intent": "Loads event configuration and accepted bookings when seat tracking is enabled.",
+          "structureKind": "branch",
+          "predicate": "if (!currentSeats && eventType?.seatsPerTimeSlot)",
+          "branchOutcomes": ["reuse initial seat data", "load current seats", "skip seat lookup"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 299,
+            "endLine": 306
+          }
+        },
+        {
+          "name": "booking limit busy times",
+          "intent": "Uses supplied limit conflicts or queries individual and team limit conflicts.",
+          "structureKind": "branch",
+          "predicate": "if (initialData?.busyTimesFromLimits && initialData?.eventTypeForLimits)",
+          "branchOutcomes": [
+            "reuse individual limit conflicts",
+            "query individual limit conflicts",
+            "no individual limit conflicts"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 331,
+            "endLine": 372
+          }
+        },
+        {
+          "name": "calendar busy time aggregation",
+          "intent": "Retrieves calendar conflicts and merges them with booking-limit conflicts.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 374,
+            "endLine": 411
+          }
+        },
+        {
+          "name": "schedule and availability resolution",
+          "intent": "Selects an effective schedule, validates availability, and computes working hours.",
+          "structureKind": "branch",
+          "predicate": "if (!(schedule?.availability || (eventType?.availability.length ? eventType.availability : user.availability)))",
+          "branchOutcomes": ["missing availability throws", "availability is mapped and working hours computed"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 413,
+            "endLine": 432
+          }
+        },
+        {
+          "name": "date override calculation",
+          "intent": "Collects dated availability overrides intersecting the requested range.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "i < availabilityWithDates.length",
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 433,
+            "endLine": 457
+          }
+        },
+        {
+          "name": "out-of-office and date ranges",
+          "intent": "Loads out-of-office records and builds available ranges excluding conflicts.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 459,
+            "endLine": 545
+          }
+        },
+        {
+          "name": "multi-user availability",
+          "intent": "Warns on large requests and computes users concurrently.",
+          "structureKind": "async",
+          "predicate": "if (users.length >= 50)",
+          "branchOutcomes": ["large request logs warning", "request proceeds without warning"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 663,
+            "endLine": 686
+          }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "EventType",
+          "signature": "export type EventType = Awaited<ReturnType<typeof _getEventType>>;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 139,
+            "endLine": 139
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getEventType",
+          "signature": "export const getEventType = withReporting(_getEventType, \"getEventType\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 141,
+            "endLine": 141
+          }
+        },
+        {
+          "kind": "type",
+          "name": "GetUserAvailabilityInitialData",
+          "signature": "export type GetUserAvailabilityInitialData = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 151,
+            "endLine": 184
+          }
+        },
+        {
+          "kind": "type",
+          "name": "GetAvailabilityUser",
+          "signature": "export type GetAvailabilityUser = NonNullable<GetUserAvailabilityInitialData[\"user\"]>;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 186,
+            "endLine": 186
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getCurrentSeats",
+          "signature": "export const getCurrentSeats = withReporting(_getCurrentSeats, \"getCurrentSeats\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 257,
+            "endLine": 257
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getUserAvailability",
+          "signature": "export const getUserAvailability = withReporting(_getUserAvailability, \"getUserAvailability\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 565,
+            "endLine": 565
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getPeriodStartDatesBetween",
+          "signature": "export const getPeriodStartDatesBetween = withReporting(\n  _getPeriodStartDatesBetween,\n  \"getPeriodStartDatesBetween\"\n);",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 585,
+            "endLine": 588
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IFromUser",
+          "signature": "export interface IFromUser {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 591,
+            "endLine": 594
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IToUser",
+          "signature": "export interface IToUser {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 596,
+            "endLine": 600
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IOutOfOfficeData",
+          "signature": "export interface IOutOfOfficeData {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 602,
+            "endLine": 608
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getUsersAvailability",
+          "signature": "export const getUsersAvailability = withReporting(_getUsersAvailability, \"getUsersAvailability\");",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 688,
+            "endLine": 688
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "IFromUser",
+          "shape": "{\n  id: number;\n  displayName: string | null;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 591,
+            "endLine": 594
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IToUser",
+          "shape": "{\n  id: number;\n  username: string | null;\n  displayName: string | null;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 596,
+            "endLine": 600
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IOutOfOfficeData",
+          "shape": "{\n  [key: string]: {\n    fromUser: IFromUser | null;\n    toUser?: IToUser | null;\n    reason?: string | null;\n    emoji?: string | null;\n  };\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 602,
+            "endLine": 608
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "Invalid dateFrom or dateTo",
+          "handled": true,
+          "behavior": "Throws an HTTP 400 error with an invalid time range message.",
+          "anchor": {
+            "startLine": 285,
+            "endLine": 287
+          }
+        },
+        {
+          "inputShape": "No matching user",
+          "handled": true,
+          "behavior": "Throws an HTTP 404 error indicating that no user was found.",
+          "anchor": {
+            "startLine": 293,
+            "endLine": 297
+          }
+        },
+        {
+          "inputShape": "Missing schedule availability",
+          "handled": true,
+          "behavior": "Throws an HTTP 400 error using AvailabilityNotFoundInSchedule.",
+          "anchor": {
+            "startLine": 420,
+            "endLine": 423
+          }
+        },
+        {
+          "inputShape": "Empty out-of-office list",
+          "handled": true,
+          "behavior": "Returns an empty object without processing ranges.",
+          "anchor": {
+            "startLine": 614,
+            "endLine": 616
+          }
+        },
+        {
+          "inputShape": "Out-of-office day not present in availability days",
+          "handled": true,
+          "behavior": "Skips that day and continues iterating through the range.",
+          "anchor": {
+            "startLine": 637,
+            "endLine": 639
+          }
+        },
+        {
+          "inputShape": "At least 50 users",
+          "handled": true,
+          "behavior": "Logs a high-load warning before concurrently fetching availability.",
+          "anchor": {
+            "startLine": 664,
+            "endLine": 668
+          }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<",
+          "left": "i",
+          "right": "availabilityWithDates.length",
+          "inclusive": false,
+          "intent": "Processes each dated availability override exactly once.",
+          "anchor": {
+            "startLine": 443,
+            "endLine": 443
+          }
+        },
+        {
+          "operator": ">=",
+          "left": "users.length",
+          "right": "50",
+          "inclusive": true,
+          "intent": "Logs a warning for availability requests involving fifty or more users.",
+          "anchor": {
+            "startLine": 664,
+            "endLine": 664
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "HttpError({ statusCode: 400, message: \"Invalid time range given.\" })",
+          "caught": null,
+          "action": "Rejects the request before database or calendar lookups.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 285,
+            "endLine": 287
+          }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 404, message: \"No user found in getUserAvailability\" })",
+          "caught": null,
+          "action": "Rejects availability computation when the target user cannot be resolved.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 293,
+            "endLine": 297
+          }
+        },
+        {
+          "thrown": "HttpError({ statusCode: 400, message: ErrorCode.AvailabilityNotFoundInSchedule })",
+          "caught": null,
+          "action": "Rejects availability computation when no schedule or user availability exists.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 420,
+            "endLine": 423
+          }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "The query must contain either a username or a userId.",
+          "anchor": {
+            "startLine": 56,
+            "endLine": 56
+          }
+        },
+        {
+          "kind": "postcondition",
+          "description": "A resolved user is required before availability calculations continue.",
+          "anchor": {
+            "startLine": 293,
+            "endLine": 297
+          }
+        },
+        {
+          "kind": "non-null",
+          "description": "An effective schedule is always available because a fallback schedule is supplied.",
+          "anchor": {
+            "startLine": 328,
+            "endLine": 329
+          }
+        },
+        {
+          "kind": "invariant",
+          "description": "Busy calendar times and booking-limit conflicts are all subtracted from date ranges.",
+          "anchor": {
+            "startLine": 543,
+            "endLine": 544
+          }
+        },
+        {
+          "kind": "ordering",
+          "description": "Multi-user results preserve the input user order through Promise.all mapping.",
+          "anchor": {
+            "startLine": 669,
+            "endLine": 685
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide a query containing username or userId and await the asynchronous availability result.",
+          "anchor": {
+            "startLine": 56,
+            "endLine": 56
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Prisma records and imported availability helpers provide the fields selected and consumed by this module.",
+          "anchor": {
+            "startLine": 59,
+            "endLine": 130
+          }
+        },
+        {
+          "kind": "platform",
+          "description": "Date and time calculations depend on Dayjs timezone and UTC behavior.",
+          "anchor": {
+            "startLine": 445,
+            "endLine": 448
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact calendar providers and cache behavior are represented by getBusyTimes?",
+          "affects": "network side effects and busy-time semantics",
+          "anchor": {
+            "startLine": 382,
+            "endLine": 399
+          },
+          "resolution": null
+        },
+        {
+          "question": "How does withReporting transform errors, return values, or concurrency behavior?",
+          "affects": "public wrapper behavior and error propagation",
+          "anchor": {
+            "startLine": 141,
+            "endLine": 141
+          },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Individual operations are asynchronous database and calendar calls; multi-user availability uses Promise.all and preserves input ordering."
+      },
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-missing-user-identity",
+          "scenario": "The availability query omits both username and userId.",
+          "given": ["query = { dateFrom, dateTo, returnDateOverrides: false, bypassBusyCalendarTimes: false }"],
+          "when": "getUserAvailability(query)",
+          "then": "throws a validation error with \"Either username or userId should be filled in.\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The public query contract requires at least one user selector."
+        },
+        {
+          "testId": "rejects-invalid-time-range",
+          "scenario": "The query contains an invalid dateFrom or dateTo value.",
+          "given": [
+            "query = { username, dateFrom, dateTo, returnDateOverrides: false, bypassBusyCalendarTimes: false }"
+          ],
+          "when": "getUserAvailability(query)",
+          "then": "throws HttpError with statusCode 400 and message \"Invalid time range given.\"",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Invalid temporal bounds must not reach availability or calendar providers."
+        },
+        {
+          "testId": "returns-empty-availability-for-busy-periods",
+          "scenario": "The user's working interval is completely covered by busy times.",
+          "given": ["getBusyTimes returns a busy interval covering the complete working interval"],
+          "when": "getUserAvailability(query)",
+          "then": "result.dateRanges is empty and result.busy contains the busy interval",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Busy intervals must be subtracted from computed working ranges."
+        },
+        {
+          "testId": "uses-default-weekday-schedule",
+          "scenario": "No event-type or host schedule is available for a user with a default schedule.",
+          "given": ["user.schedules contains the default schedule"],
+          "when": "getUserAvailability(query)",
+          "then": "result.timeZone and result.workingHours are derived from the default user schedule",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Schedule precedence and timezone determine the availability contract."
+        },
+        {
+          "testId": "includes-date-overrides-when-requested",
+          "scenario": "The availability contains a dated override inside the requested range.",
+          "given": [
+            "query.returnDateOverrides = true",
+            "availability contains an entry with a date between dateFrom and dateTo"
+          ],
+          "when": "getUserAvailability(query)",
+          "then": "result.dateOverrides contains the override's start and end dates",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Consumers requesting overrides must receive dated availability exceptions."
+        },
+        {
+          "testId": "maps-out-of-office-days",
+          "scenario": "An out-of-office entry overlaps available weekdays in the requested range.",
+          "given": ["outOfOfficeDays contains an entry with user, optional toUser, reason, and emoji"],
+          "when": "getUserAvailability(query)",
+          "then": "result.datesOutOfOffice contains YYYY-MM-DD keys with the corresponding user and reason metadata",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Out-of-office metadata is part of the returned availability payload."
+        },
+        {
+          "testId": "counts-team-event-seats",
+          "scenario": "An event type has seatsPerTimeSlot and accepted bookings with host and attendee emails.",
+          "given": [
+            "eventType.seatsPerTimeSlot is truthy",
+            "BookingStatus.ACCEPTED bookings exist in the requested range"
+          ],
+          "when": "getCurrentSeats(eventType, dateFrom, dateTo)",
+          "then": "returns each booking uid and startTime with attendee counts excluding team hosts",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Seat availability depends on excluding hosts from attendee counts for team events."
+        },
+        {
+          "testId": "returns-period-start-dates",
+          "scenario": "A date range spans multiple units of the requested interval.",
+          "given": ["dateFrom and dateTo span multiple period boundaries"],
+          "when": "getPeriodStartDatesBetween(dateFrom, dateTo, period, timeZone)",
+          "then": "returns period-start Dayjs values strictly before the computed end period",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Limit calculations rely on deterministic period boundary enumeration."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "Prisma, Sentry, Zod, scheduling, availability, and local helper imports",
+        "Logger and availability schema declarations",
+        "Event type and user loading helpers",
+        "Availability input and result type declarations",
+        "Current seat lookup helper",
+        "Single-user availability aggregation",
+        "Period start date helper",
+        "Out-of-office data types and range calculator",
+        "Multi-user availability aggregation"
+      ],
+      "moduleLevelCode": "import type and value declarations, logger initialization, Zod availability schema initialization, and exported reporting wrappers.",
+      "exports": [
+        {
+          "name": "EventType",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getEventType",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "GetUserAvailabilityInitialData",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "GetAvailabilityUser",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "CurrentSeats",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getCurrentSeats",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getUserAvailability",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getPeriodStartDatesBetween",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "IFromUser",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "IToUser",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "IOutOfOfficeData",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "getUsersAvailability",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "Booking",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Prisma",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "OutOfOfficeEntry",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "OutOfOfficeReason",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "User",
+          "module": "@prisma/client",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventType",
+          "module": "@prisma/client",
+          "alias": "PrismaEventType",
+          "kind": "external"
+        },
+        {
+          "symbol": "Sentry",
+          "module": "@sentry/nextjs",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "z",
+          "module": "zod",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "Dayjs",
+          "module": "@calcom/dayjs",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "dayjs",
+          "module": "@calcom/dayjs",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getWorkingHours",
+          "module": "@calcom/lib/availability",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "DateOverride",
+          "module": "@calcom/lib/date-ranges",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "WorkingHours",
+          "module": "@calcom/lib/date-ranges",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "buildDateRanges",
+          "module": "@calcom/lib/date-ranges",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "subtract",
+          "module": "@calcom/lib/date-ranges",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "stringToDayjsZod",
+          "module": "@calcom/lib/dayjs",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "ErrorCode",
+          "module": "@calcom/lib/errorCodes",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "HttpError",
+          "module": "@calcom/lib/http-error",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "parseBookingLimit",
+          "module": "@calcom/lib/intervalLimits/isBookingLimits",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "parseDurationLimit",
+          "module": "@calcom/lib/intervalLimits/isDurationLimits",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBusyTimesFromLimits",
+          "module": "@calcom/lib/intervalLimits/server/getBusyTimesFromLimits",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBusyTimesFromTeamLimits",
+          "module": "@calcom/lib/intervalLimits/server/getBusyTimesFromLimits",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "safeStringify",
+          "module": "@calcom/lib/safeStringify",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "findUsersForAvailabilityCheck",
+          "module": "@calcom/lib/server/findUsersForAvailabilityCheck",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventTypeRepository",
+          "module": "@calcom/lib/server/repository/eventType",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "SchedulingType",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "BookingStatus",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventTypeMetaDataSchema",
+          "module": "@calcom/prisma/zod-utils",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "EventBusyDetails",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "IntervalLimitUnit",
+          "module": "@calcom/types/Calendar",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "TimeRange",
+          "module": "@calcom/types/schedule",
+          "alias": null,
+          "kind": "external"
+        },
+        {
+          "symbol": "getBusyTimes",
+          "module": "./getBusyTimes",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "withReporting",
+          "module": "./sentryWrapper",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        {
+          "name": "log",
+          "value": "logger.getSubLogger({ prefix: [\"getUserAvailability\"] })",
+          "kind": "logger"
+        },
+        {
+          "name": "availabilitySchema",
+          "value": "z\n  .object({\n    dateFrom: stringToDayjsZod,\n    dateTo: stringToDayjsZod,\n    eventTypeId: z.number().optional(),\n    username: z.string().optional(),\n    userId: z.number().optional(),\n    afterEventBuffer: z.number().optional(),\n    beforeEventBuffer: z.number().optional(),\n    duration: z.number().optional(),\n    withSource: z.boolean().optional(),\n    returnDateOverrides: z.boolean(),\n    bypassBusyCalendarTimes: z.boolean().optional(),\n    shouldServeCache: z.boolean().optional(),\n  })\n  .refine((data) => !!data.username || !!data.userId, \"Either username or userId should be filled in.\")",
+          "kind": "schema"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/lib/getUserAvailability.ts___getEventType_1#function:_getEventType",
+        "unitKind": "function",
+        "name": "_getEventType",
+        "qualifiedName": "_getEventType",
+        "parentUnitId": null,
+        "startLine": 58,
+        "endLine": 145,
+        "isBehavioral": true,
+        "source": "const _getEventType = async (id: number) => {\n  const eventType = await prisma.eventType.findUnique({\n    where: { id },\n    select: {\n      id: true,\n      seatsPerTimeSlot: true,\n      bookingLimits: true,\n      useEventLevelSelectedCalendars: true,\n      parent: {\n        select: {\n          team: {\n            select: {\n              id: true,\n              bookingLimits: true,\n              includeManagedEventsInLimits: true,\n            },\n          },\n        },\n      },\n      team: {\n        select: {\n          id: true,\n          bookingLimits: true,\n          includeManagedEventsInLimits: true,\n        },\n      },\n      hosts: {\n        select: {\n          user: {\n            select: {\n              email: true,\n              id: true,\n            },\n          },\n          schedule: {\n            select: {\n              availability: {\n                select: {\n                  date: true,\n                  startTime: true,\n                  endTime: true,\n                  days: true,\n                },\n              },\n              timeZone: true,\n              id: true,\n            },\n          },\n        },\n      },\n      durationLimits: true,\n      assignAllTeamMembers: true,\n      schedulingType: true,\n      timeZone: true,\n      length: true,\n      metadata: true,\n      schedule: {\n        select: {\n          id: true,\n          availability: {\n            select: {\n              days: true,\n              date: true,\n              startTime: true,\n              endTime: true,\n            },\n          },\n          timeZone: true,\n        },\n      },\n      availability: {\n        select: {\n          startTime: true,\n          endTime: true,\n          days: true,\n          date: true,\n        },\n      },\n    },\n  });\n  if (!eventType) {\n    return eventType;\n  }\n  return {\n    ...eventType,\n    metadata: EventTypeMetaDataSchema.parse(eventType.metadata),\n  };\n};"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__EventType_2#type_alias:EventType",
+        "unitKind": "type_alias",
+        "name": "EventType",
+        "qualifiedName": "EventType",
+        "parentUnitId": null,
+        "startLine": 147,
+        "endLine": 147,
+        "isBehavioral": false,
+        "source": "export type EventType = Awaited<ReturnType<typeof _getEventType>>;"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__getEventType_3#function:getEventType",
+        "unitKind": "function",
+        "name": "getEventType",
+        "qualifiedName": "getEventType",
+        "parentUnitId": null,
+        "startLine": 149,
+        "endLine": 149,
+        "isBehavioral": false,
+        "source": "export const getEventType = withReporting(_getEventType, \"getEventType\");"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts___getUser_4#function:_getUser",
+        "unitKind": "function",
+        "name": "_getUser",
+        "qualifiedName": "_getUser",
+        "parentUnitId": null,
+        "startLine": 151,
+        "endLine": 153,
+        "isBehavioral": true,
+        "source": "const _getUser = async (where: Prisma.UserWhereInput) => {\n  return findUsersForAvailabilityCheck({ where });\n};"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__GetUser_5#type_alias:GetUser",
+        "unitKind": "type_alias",
+        "name": "GetUser",
+        "qualifiedName": "GetUser",
+        "parentUnitId": null,
+        "startLine": 155,
+        "endLine": 155,
+        "isBehavioral": false,
+        "source": "type GetUser = Awaited<ReturnType<typeof _getUser>>;"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__getUser_6#function:getUser",
+        "unitKind": "function",
+        "name": "getUser",
+        "qualifiedName": "getUser",
+        "parentUnitId": null,
+        "startLine": 157,
+        "endLine": 157,
+        "isBehavioral": false,
+        "source": "const getUser = withReporting(_getUser, \"getUser\");"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__GetUserAvailabilityInitialData_7#type_alias:GetUserAvailabilityInitialData",
+        "unitKind": "type_alias",
+        "name": "GetUserAvailabilityInitialData",
+        "qualifiedName": "GetUserAvailabilityInitialData",
+        "parentUnitId": null,
+        "startLine": 159,
+        "endLine": 191,
+        "isBehavioral": false,
+        "source": "export type GetUserAvailabilityInitialData = {\n  user?: GetUser;\n  eventType?: EventType;\n  currentSeats?: CurrentSeats;\n  rescheduleUid?: string | null;\n  currentBookings?: (Pick<Booking, \"id\" | \"uid\" | \"userId\" | \"startTime\" | \"endTime\" | \"title\"> & {\n    eventType: Pick<\n      PrismaEventType,\n      \"id\" | \"beforeEventBuffer\" | \"afterEventBuffer\" | \"seatsPerTimeSlot\"\n    > | null;\n    _count?: {\n      seatsReferences: number;\n    };\n  })[];\n  outOfOfficeDays?: (Pick<OutOfOfficeEntry, \"id\" | \"start\" | \"end\"> & {\n    user: Pick<User, \"id\" | \"name\">;\n    toUser: Pick<User, \"id\" | \"username\" | \"name\"> | null;\n    reason: Pick<OutOfOfficeReason, \"id\" | \"emoji\" | \"reason\"> | null;\n  })[];\n  busyTimesFromLimitsBookings: EventBusyDetails[];\n  busyTimesFromLimits?: Map<number, EventBusyDetails[]>;\n  eventTypeForLimits?: {\n    id: number;\n    bookingLimits?: unknown;\n    durationLimits?: unknown;\n  } | null;\n  teamBookingLimits?: Map<number, EventBusyDetails[]>;\n  teamForBookingLimits?: {\n    id: number;\n    bookingLimits?: unknown;\n    includeManagedEventsInLimits: boolean;\n  } | null;\n};"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__GetAvailabilityUser_8#type_alias:GetAvailabilityUser",
+        "unitKind": "type_alias",
+        "name": "GetAvailabilityUser",
+        "qualifiedName": "GetAvailabilityUser",
+        "parentUnitId": null,
+        "startLine": 193,
+        "endLine": 193,
+        "isBehavioral": false,
+        "source": "export type GetAvailabilityUser = NonNullable<GetUserAvailabilityInitialData[\"user\"]>;"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__GetUserAvailabilityQuery_9#type_alias:GetUserAvailabilityQuery",
+        "unitKind": "type_alias",
+        "name": "GetUserAvailabilityQuery",
+        "qualifiedName": "GetUserAvailabilityQuery",
+        "parentUnitId": null,
+        "startLine": 195,
+        "endLine": 208,
+        "isBehavioral": false,
+        "source": "type GetUserAvailabilityQuery = {\n  withSource?: boolean;\n  username?: string;\n  userId?: number;\n  dateFrom: string;\n  dateTo: string;\n  eventTypeId?: number;\n  afterEventBuffer?: number;\n  beforeEventBuffer?: number;\n  duration?: number;\n  returnDateOverrides: boolean;\n  bypassBusyCalendarTimes: boolean;\n  shouldServeCache?: boolean;\n};"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts___getCurrentSeats_10#function:_getCurrentSeats",
+        "unitKind": "function",
+        "name": "_getCurrentSeats",
+        "qualifiedName": "_getCurrentSeats",
+        "parentUnitId": null,
+        "startLine": 210,
+        "endLine": 219,
+        "isBehavioral": true,
+        "source": "const _getCurrentSeats = async (\n  eventType: {\n    id?: number;\n    schedulingType?: SchedulingType | null;\n    hosts?: {\n      user: {\n        email: string;\n      };\n    }[];\n  },"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__CurrentSeats_11#type_alias:CurrentSeats",
+        "unitKind": "type_alias",
+        "name": "CurrentSeats",
+        "qualifiedName": "CurrentSeats",
+        "parentUnitId": null,
+        "startLine": 265,
+        "endLine": 265,
+        "isBehavioral": false,
+        "source": "export type CurrentSeats = Awaited<ReturnType<typeof _getCurrentSeats>>;"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__getCurrentSeats_12#function:getCurrentSeats",
+        "unitKind": "function",
+        "name": "getCurrentSeats",
+        "qualifiedName": "getCurrentSeats",
+        "parentUnitId": null,
+        "startLine": 267,
+        "endLine": 267,
+        "isBehavioral": false,
+        "source": "export const getCurrentSeats = withReporting(_getCurrentSeats, \"getCurrentSeats\");"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__GetUserAvailabilityResult_13#type_alias:GetUserAvailabilityResult",
+        "unitKind": "type_alias",
+        "name": "GetUserAvailabilityResult",
+        "qualifiedName": "GetUserAvailabilityResult",
+        "parentUnitId": null,
+        "startLine": 269,
+        "endLine": 269,
+        "isBehavioral": false,
+        "source": "type GetUserAvailabilityResult = ReturnType<typeof _getUserAvailability>;"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts___getUserAvailability_14#function:_getUserAvailability",
+        "unitKind": "function",
+        "name": "_getUserAvailability",
+        "qualifiedName": "_getUserAvailability",
+        "parentUnitId": null,
+        "startLine": 272,
+        "endLine": 274,
+        "isBehavioral": true,
+        "source": "const _getUserAvailability = async function getUsersWorkingHoursLifeTheUniverseAndEverythingElse(\n  query: GetUserAvailabilityQuery,\n  initialData?: GetUserAvailabilityInitialData"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__getUserAvailability_15#function:getUserAvailability",
+        "unitKind": "function",
+        "name": "getUserAvailability",
+        "qualifiedName": "getUserAvailability",
+        "parentUnitId": null,
+        "startLine": 600,
+        "endLine": 600,
+        "isBehavioral": false,
+        "source": "export const getUserAvailability = withReporting(_getUserAvailability, \"getUserAvailability\");"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts___getPeriodStartDatesBetween_16#function:_getPeriodStartDatesBetween",
+        "unitKind": "function",
+        "name": "_getPeriodStartDatesBetween",
+        "qualifiedName": "_getPeriodStartDatesBetween",
+        "parentUnitId": null,
+        "startLine": 602,
+        "endLine": 606,
+        "isBehavioral": true,
+        "source": "const _getPeriodStartDatesBetween = (\n  dateFrom: Dayjs,\n  dateTo: Dayjs,\n  period: IntervalLimitUnit,\n  timeZone?: string"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__getPeriodStartDatesBetween_17#function:getPeriodStartDatesBetween",
+        "unitKind": "function",
+        "name": "getPeriodStartDatesBetween",
+        "qualifiedName": "getPeriodStartDatesBetween",
+        "parentUnitId": null,
+        "startLine": 619,
+        "endLine": 622,
+        "isBehavioral": false,
+        "source": "export const getPeriodStartDatesBetween = withReporting(\n  _getPeriodStartDatesBetween,\n  \"getPeriodStartDatesBetween\"\n);"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__GetUserAvailabilityParamsDTO_18#interface:GetUserAvailabilityParamsDTO",
+        "unitKind": "interface",
+        "name": "GetUserAvailabilityParamsDTO",
+        "qualifiedName": "GetUserAvailabilityParamsDTO",
+        "parentUnitId": null,
+        "startLine": 624,
+        "endLine": 626,
+        "isBehavioral": false,
+        "source": "interface GetUserAvailabilityParamsDTO {\n  availability: (DateOverride | WorkingHours)[];\n}"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__IFromUser_19#interface:IFromUser",
+        "unitKind": "interface",
+        "name": "IFromUser",
+        "qualifiedName": "IFromUser",
+        "parentUnitId": null,
+        "startLine": 628,
+        "endLine": 631,
+        "isBehavioral": false,
+        "source": "export interface IFromUser {\n  id: number;\n  displayName: string | null;\n}"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__IToUser_20#interface:IToUser",
+        "unitKind": "interface",
+        "name": "IToUser",
+        "qualifiedName": "IToUser",
+        "parentUnitId": null,
+        "startLine": 633,
+        "endLine": 637,
+        "isBehavioral": false,
+        "source": "export interface IToUser {\n  id: number;\n  username: string | null;\n  displayName: string | null;\n}"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__IOutOfOfficeData_21#interface:IOutOfOfficeData",
+        "unitKind": "interface",
+        "name": "IOutOfOfficeData",
+        "qualifiedName": "IOutOfOfficeData",
+        "parentUnitId": null,
+        "startLine": 639,
+        "endLine": 646,
+        "isBehavioral": false,
+        "source": "export interface IOutOfOfficeData {\n  [key: string]: {\n    fromUser: IFromUser | null;\n    toUser?: IToUser | null;\n    reason?: string | null;\n    emoji?: string | null;\n  };\n}"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__calculateOutOfOfficeRanges_22#function:calculateOutOfOfficeRanges",
+        "unitKind": "function",
+        "name": "calculateOutOfOfficeRanges",
+        "qualifiedName": "calculateOutOfOfficeRanges",
+        "parentUnitId": null,
+        "startLine": 648,
+        "endLine": 650,
+        "isBehavioral": true,
+        "source": "const calculateOutOfOfficeRanges = (\n  outOfOfficeDays: GetUserAvailabilityInitialData[\"outOfOfficeDays\"],\n  availability: GetUserAvailabilityParamsDTO[\"availability\"]"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__GetUsersAvailabilityProps_23#type_alias:GetUsersAvailabilityProps",
+        "unitKind": "type_alias",
+        "name": "GetUsersAvailabilityProps",
+        "qualifiedName": "GetUsersAvailabilityProps",
+        "parentUnitId": null,
+        "startLine": 692,
+        "endLine": 699,
+        "isBehavioral": false,
+        "source": "type GetUsersAvailabilityProps = {\n  users: (GetAvailabilityUser & {\n    currentBookings?: GetUserAvailabilityInitialData[\"currentBookings\"];\n    outOfOfficeDays?: GetUserAvailabilityInitialData[\"outOfOfficeDays\"];\n  })[];\n  query: Omit<GetUserAvailabilityQuery, \"userId\" | \"username\">;\n  initialData?: Omit<GetUserAvailabilityInitialData, \"user\">;\n};"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts___getUsersAvailability_24#function:_getUsersAvailability",
+        "unitKind": "function",
+        "name": "_getUsersAvailability",
+        "qualifiedName": "_getUsersAvailability",
+        "parentUnitId": null,
+        "startLine": 701,
+        "endLine": 727,
+        "isBehavioral": true,
+        "source": "const _getUsersAvailability = async ({ users, query, initialData }: GetUsersAvailabilityProps) => {\n  if (users.length >= 50) {\n    const userIds = users.map(({ id }) => id).join(\", \");\n    log.warn(\n      `High-load warning: Attempting to fetch availability for ${users.length} users. User IDs: [${userIds}], EventTypeId: [${query.eventTypeId}]`\n    );\n  }\n  return await Promise.all(\n    users.map((user) =>\n      _getUserAvailability(\n        {\n          ...query,\n          userId: user.id,\n          username: user.username || \"\",\n        },\n        initialData\n          ? {\n              ...initialData,\n              user,\n              currentBookings: user.currentBookings,\n              outOfOfficeDays: user.outOfOfficeDays,\n            }\n          : undefined\n      )\n    )\n  );\n};"
+      },
+      {
+        "unitId": "packages/lib/getUserAvailability.ts__getUsersAvailability_25#function:getUsersAvailability",
+        "unitKind": "function",
+        "name": "getUsersAvailability",
+        "qualifiedName": "getUsersAvailability",
+        "parentUnitId": null,
+        "startLine": 729,
+        "endLine": 729,
+        "isBehavioral": false,
+        "source": "export const getUsersAvailability = withReporting(_getUsersAvailability, \"getUsersAvailability\");"
+      }
+    ],
+    "extractedUnitCount": 25,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 15862,
+    "outputTokens": 14711,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

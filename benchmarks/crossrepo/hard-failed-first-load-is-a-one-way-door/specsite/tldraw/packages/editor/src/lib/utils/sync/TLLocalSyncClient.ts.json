@@ -1,0 +1,1715 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts",
+    "language": "typescript",
+    "sizeBytes": 13083,
+    "tokenCount": 3271,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:19:45.048Z",
+    "module": {
+      "purpose": "Provides local persistence and cross-tab synchronization for a TLStore using IndexedDB and BroadcastChannel messaging.",
+      "summary": "This module coordinates loading, migrating, persisting, and synchronizing editor document and session state. It listens to document and session changes, broadcasts document diffs to other tabs, throttles IndexedDB writes, retries failed writes through full snapshots, and protects newer schema versions from being overwritten by older clients. Browser lifecycle events flush pending changes before page suspension or unload.",
+      "businessContext": "Supports reliable local editing for the tldraw editor across browser tabs. Failures can lose unsaved document or session state, cause schema conflicts, or prevent collaboration between local tabs.",
+      "classes": [
+        "BroadcastChannelMock (~L45-55): No-op BroadcastChannel-compatible fallback for environments without browser support",
+        "TLLocalSyncClient (~L60-411): Coordinates local persistence and cross-tab TLStore synchronization"
+      ],
+      "functions": [
+        "msg (~L42-42): Preserves typed message values for channel publication",
+        "connect (~L170-280): Loads, migrates, initializes, and connects the local store",
+        "close (~L282-289): Disposes listeners, database resources, and global client references",
+        "schedulePersist (~L301-313): Throttles future persistence and schedules retry delays",
+        "persistIfNeeded (~L320-352): Applies persistence guards before starting a database write",
+        "doPersist (~L357-411): Writes snapshots or squashed changes and handles failures"
+      ],
+      "keywords": [
+        "IndexedDB",
+        "BroadcastChannel",
+        "schema migration",
+        "record diffs",
+        "session state snapshot",
+        "cross-tab synchronization",
+        "persistence throttling",
+        "tldraw store",
+        "pagehide flush",
+        "schema version conflict"
+      ],
+      "ontologyConcepts": [
+        "local persistence",
+        "cross-tab synchronization",
+        "schema migration",
+        "event-driven state propagation",
+        "throttled write scheduling",
+        "failure recovery",
+        "lifecycle management"
+      ],
+      "businessEntities": ["document", "session state", "editor store", "browser tab", "schema", "record diff"],
+      "systemCapabilities": [
+        "Persist editor state locally",
+        "Synchronize document changes across tabs",
+        "Migrate stored records across schema versions",
+        "Flush edits during browser lifecycle transitions",
+        "Recover from failed persistence writes",
+        "Reject unsafe writes during schema conflicts"
+      ],
+      "configDependencies": ["PERSIST_THROTTLE_MS", "PERSIST_RETRY_THROTTLE_MS", "persistenceKey", "sessionId"],
+      "importsInternal": [
+        {
+          "spec": "../../config/TLSessionStateSnapshot",
+          "symbols": [
+            "TAB_ID",
+            "TLSessionStateSnapshot",
+            "createSessionStateSnapshotSignal",
+            "extractSessionStateFromLegacySnapshot",
+            "loadSessionStateSnapshotIntoStore"
+          ],
+          "anchor": { "startLine": 5, "endLine": 11 },
+          "resolvedRelativePath": "packages/editor/src/lib/config/TLSessionStateSnapshot.ts",
+          "resolvedFileId": "packages/editor/src/lib/config/TLSessionStateSnapshot.ts",
+          "resolvedHint": "packages/editor/src/lib/config/TLSessionStateSnapshot.ts"
+        },
+        {
+          "spec": "./alerts",
+          "symbols": ["showCantReadFromIndexDbAlert", "showCantWriteToIndexDbAlert"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/editor/src/lib/utils/sync/alerts.ts",
+          "resolvedFileId": "packages/editor/src/lib/utils/sync/alerts.ts",
+          "resolvedHint": "packages/editor/src/lib/utils/sync/alerts.ts"
+        },
+        {
+          "spec": "./LocalIndexedDb",
+          "symbols": ["LocalIndexedDb"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/editor/src/lib/utils/sync/LocalIndexedDb.ts",
+          "resolvedFileId": "packages/editor/src/lib/utils/sync/LocalIndexedDb.ts",
+          "resolvedHint": "packages/editor/src/lib/utils/sync/LocalIndexedDb.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["Signal", "transact"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/store",
+          "symbols": ["RecordsDiff", "SerializedSchema", "UnknownRecord", "squashRecordDiffs"],
+          "package": "@tldraw/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["TLStore"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["assert"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 4 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Reads persisted records and session state from IndexedDB through LocalIndexedDb.",
+          "Writes snapshots or record changes to IndexedDB.",
+          "Displays alerts when IndexedDB reads or writes fail."
+        ],
+        "network": [],
+        "env": ["Checks browser globals such as window, document, BroadcastChannel, and location."],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates the client lifecycle and persistence state while processing store and channel events."
+        ]
+      },
+      "integrationSurface": [
+        {
+          "kind": "other",
+          "role": "provides",
+          "address": "tldraw-tab-sync-${persistenceKey}",
+          "payloadRef": "Message",
+          "rawKind": "other"
+        },
+        {
+          "kind": "other",
+          "role": "consumes",
+          "address": "tldraw-tab-sync-${persistenceKey}",
+          "payloadRef": "Message",
+          "rawKind": "other"
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "BroadcastChannelMock",
+          "shape": "export class BroadcastChannelMock",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLLocalSyncClient",
+          "shape": "export class TLLocalSyncClient",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BroadcastChannelMock.onmessage",
+          "shape": "onmessage?: (e: MessageEvent) => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BroadcastChannelMock.postMessage",
+          "shape": "postMessage(_msg: Message)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BroadcastChannelMock.close",
+          "shape": "close()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "TLLocalSyncClient.close", "shape": "close()", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TLStore",
+          "shape": "public readonly store: TLStore",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "LocalIndexedDb.load",
+          "shape": "this.db.load({ sessionId: this.sessionId })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "LocalIndexedDb.storeSnapshot",
+          "shape": "this.db.storeSnapshot({ schema: this.store.schema, snapshot: this.store.serialize(), sessionId: this.sessionId, sessionStateSnapshot: this.$sessionStateSnapshot.get() })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "LocalIndexedDb.storeChanges",
+          "shape": "this.db.storeChanges({ changes: diffs, schema: this.store.schema, sessionId: this.sessionId, sessionStateSnapshot: this.$sessionStateSnapshot.get() })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSessionStateSnapshot",
+          "shape": "Signal<TLSessionStateSnapshot | null>",
+          "resolvedRelativePath": "packages/editor/src/lib/config/TLSessionStateSnapshot.ts",
+          "resolvedFileId": "packages/editor/src/lib/config/TLSessionStateSnapshot.ts"
+        },
+        {
+          "name": "BroadcastChannel",
+          "shape": "new BC(`tldraw-tab-sync-${persistenceKey}`)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "construction-and-listeners",
+          "intent": "Initializes persistence state and subscribes to document, session, and browser lifecycle changes.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 83, "endLine": 168 }
+        },
+        {
+          "name": "load-and-migrate",
+          "intent": "Loads persisted data, migrates records, and initializes document and session state.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 170, "endLine": 223 }
+        },
+        {
+          "name": "cross-tab-message-handler",
+          "intent": "Validates schema compatibility and applies incoming document diffs.",
+          "structureKind": "branch",
+          "predicate": "!res.ok",
+          "branchOutcomes": [
+            "local client is older and reloads or reports mismatch",
+            "remote client is older and is told to reload",
+            "schemas match and a diff is applied"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 224, "endLine": 266 }
+        },
+        {
+          "name": "persist-scheduling",
+          "intent": "Schedules delayed persistence using normal or retry throttling.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 296, "endLine": 313 }
+        },
+        {
+          "name": "persistence-guards",
+          "intent": "Prevents unsafe or redundant writes before starting persistence.",
+          "structureKind": "branch",
+          "predicate": "this.isPersisting",
+          "branchOutcomes": ["write already running", "continue checking persistence eligibility"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 320, "endLine": 352 }
+        },
+        {
+          "name": "database-persistence",
+          "intent": "Persists a full snapshot or squashed changes and schedules follow-up work.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 357, "endLine": 411 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "class",
+          "name": "BroadcastChannelMock",
+          "signature": "export class BroadcastChannelMock",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 45, "endLine": 45 }
+        },
+        {
+          "kind": "class",
+          "name": "TLLocalSyncClient",
+          "signature": "export class TLLocalSyncClient",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 60, "endLine": 60 }
+        },
+        {
+          "kind": "method",
+          "name": "connect",
+          "signature": "private async connect(onLoad: (client: this) => void, onLoadError: (error: Error) => void)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 170, "endLine": 170 }
+        },
+        {
+          "kind": "method",
+          "name": "close",
+          "signature": "close()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 282, "endLine": 282 }
+        },
+        {
+          "kind": "method",
+          "name": "schedulePersist",
+          "signature": "private schedulePersist()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 301, "endLine": 301 }
+        },
+        {
+          "kind": "method",
+          "name": "persistIfNeeded",
+          "signature": "private persistIfNeeded()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 320, "endLine": 320 }
+        },
+        {
+          "kind": "method",
+          "name": "doPersist",
+          "signature": "private async doPersist()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 357, "endLine": 357 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "SyncMessage",
+          "shape": "{\n\ttype: 'diff'\n\tstoreId: string\n\tchanges: RecordsDiff<UnknownRecord>\n\tschema: SerializedSchema\n}",
+          "discriminant": "type",
+          "anchor": { "startLine": 23, "endLine": 28 }
+        },
+        {
+          "kind": "interface",
+          "name": "AnnounceMessage",
+          "shape": "{\n\ttype: 'announce'\n\tschema: SerializedSchema\n}",
+          "discriminant": "type",
+          "anchor": { "startLine": 33, "endLine": 36 }
+        },
+        {
+          "kind": "union",
+          "name": "Message",
+          "shape": "SyncMessage | AnnounceMessage",
+          "discriminant": "type",
+          "anchor": { "startLine": 38, "endLine": 38 }
+        },
+        {
+          "kind": "alias",
+          "name": "UnpackPromise",
+          "shape": "T extends Promise<infer U> ? U : T",
+          "discriminant": null,
+          "anchor": { "startLine": 40, "endLine": 40 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "BroadcastChannel unavailable",
+          "handled": true,
+          "behavior": "Uses a no-op mock channel so construction remains possible.",
+          "anchor": { "startLine": 45, "endLine": 57 }
+        },
+        {
+          "inputShape": "No persisted IndexedDB data",
+          "handled": true,
+          "behavior": "Skips record restoration and proceeds to channel initialization.",
+          "anchor": { "startLine": 187, "endLine": 187 }
+        },
+        {
+          "inputShape": "Legacy snapshot without sessionStateSnapshot",
+          "handled": true,
+          "behavior": "Extracts session state from the legacy document snapshot.",
+          "anchor": { "startLine": 189, "endLine": 190 }
+        },
+        {
+          "inputShape": "Schema migration failure",
+          "handled": true,
+          "behavior": "Logs the migration result, reports an error, and aborts loading.",
+          "anchor": { "startLine": 198, "endLine": 201 }
+        },
+        {
+          "inputShape": "Client disposed while load is pending",
+          "handled": true,
+          "behavior": "Stops initialization without invoking later setup.",
+          "anchor": { "startLine": 182, "endLine": 184 }
+        },
+        {
+          "inputShape": "Persistence write failure",
+          "handled": true,
+          "behavior": "Marks a full rewrite and retry state, alerts the user, and reloads the browser when available.",
+          "anchor": { "startLine": 392, "endLine": 403 }
+        },
+        {
+          "inputShape": "Pending changes during page hide or pagehide",
+          "handled": true,
+          "behavior": "Flushes persistence only after initial loading has completed.",
+          "anchor": { "startLine": 140, "endLine": 158 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<",
+          "left": "timeSinceInit",
+          "right": "5000",
+          "inclusive": false,
+          "intent": "Reports a schema mismatch instead of reloading during the first five seconds after initialization.",
+          "anchor": { "startLine": 235, "endLine": 242 }
+        },
+        {
+          "operator": ">",
+          "left": "res.value.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Detects when the remote client has an older schema requiring notification and a full write.",
+          "anchor": { "startLine": 248, "endLine": 255 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "IndexedDB load error",
+          "action": "Calls the load error callback and displays a read failure alert.",
+          "fallback": "Returns without initializing the client.",
+          "anchor": { "startLine": 174, "endLine": 180 }
+        },
+        {
+          "thrown": "new Error(`Failed to migrate store: ${migrationResult.reason}`)",
+          "caught": null,
+          "action": "Passes the migration failure to the load error callback.",
+          "fallback": "Returns without loading the store.",
+          "anchor": { "startLine": 198, "endLine": 201 }
+        },
+        {
+          "thrown": "new Error('Schema mismatch, please close other tabs and reload the page')",
+          "caught": null,
+          "action": "Reports the mismatch when initialization is recent.",
+          "fallback": "Returns without applying the message.",
+          "anchor": { "startLine": 235, "endLine": 242 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Reloads the browser when this client is older than another tab.",
+          "fallback": "No further message processing occurs.",
+          "anchor": { "startLine": 244, "endLine": 247 }
+        },
+        {
+          "thrown": null,
+          "caught": "Store loading or initialization error",
+          "action": "Logs the error and invokes the load error callback unless disposed.",
+          "fallback": "Returns without completing initialization.",
+          "anchor": { "startLine": 273, "endLine": 279 }
+        },
+        {
+          "thrown": null,
+          "caught": "IndexedDB write error",
+          "action": "Forces a full write, marks retry state, logs the failure, shows an alert, and reloads when possible.",
+          "fallback": "Schedules another persistence attempt.",
+          "anchor": { "startLine": 392, "endLine": 410 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Document changes are queued and broadcast before persistence is scheduled.",
+          "anchor": { "startLine": 113, "endLine": 125 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Session changes are persisted but are not broadcast as document diffs.",
+          "anchor": { "startLine": 130, "endLine": 138 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Changes arriving during a write remain in a replacement queue for a later persistence.",
+          "anchor": { "startLine": 365, "endLine": 369 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A potentially corrupted store is never persisted.",
+          "anchor": { "startLine": 344, "endLine": 346 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Persistence failures force the next attempt to use a full database snapshot.",
+          "anchor": { "startLine": 392, "endLine": 398 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Successful initialization marks the client loaded before invoking the load callback.",
+          "anchor": { "startLine": 267, "endLine": 272 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The onLoad callback is responsible for continuing application initialization after persisted state is loaded.",
+          "anchor": { "startLine": 88, "endLine": 94 }
+        },
+        {
+          "kind": "platform",
+          "description": "Browser lifecycle flushing and reload behavior depend on window and document being available.",
+          "anchor": { "startLine": 140, "endLine": 158 }
+        },
+        {
+          "kind": "schema",
+          "description": "Incoming channel messages contain a serialized schema compatible with the local store schema migration API.",
+          "anchor": { "startLine": 224, "endLine": 230 }
+        },
+        {
+          "kind": "init-order",
+          "description": "The documentTypes set is initialized after connect is started and before loaded records are filtered.",
+          "anchor": { "startLine": 160, "endLine": 168 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What guarantees that channel messages cannot arrive before documentTypes initialization completes?",
+          "affects": "connect initialization ordering",
+          "anchor": { "startLine": 160, "endLine": 170 },
+          "resolution": null
+        },
+        {
+          "question": "What exact IndexedDB durability and transaction semantics are provided by LocalIndexedDb?",
+          "affects": "side_effects and persistence guarantees",
+          "anchor": { "startLine": 373, "endLine": 389 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Store and channel callbacks are synchronous, while IndexedDB loading and writing are asynchronous. A single persistence operation is allowed at a time; changes arriving during it are queued for a later write."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "loads-and-migrates-persisted-document",
+          "scenario": "A persisted IndexedDB snapshot exists and matches or can be migrated to the current schema.",
+          "given": ["data = await db.load({ sessionId: this.sessionId })", "migrationResult.type !== 'error'"],
+          "when": "new TLLocalSyncClient(store, { persistenceKey, onLoad, onLoadError })",
+          "then": "store contains the migrated document records and onLoad(this) is called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards restoration, schema migration, and successful initialization."
+        },
+        {
+          "testId": "broadcasts-user-document-diffs",
+          "scenario": "A user changes document-scoped records after the client is initialized.",
+          "given": ["store.listen(..., { source: 'user', scope: 'document' })"],
+          "when": "store applies a user document change",
+          "then": "channel.postMessage receives a message with type 'diff', storeId, changes, and schema",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the cross-tab synchronization message contract."
+        },
+        {
+          "testId": "persists-queued-changes",
+          "scenario": "Document or session changes are queued and the store is healthy.",
+          "given": [
+            "this.shouldDoFullDBWrite || this.diffQueue.length > 0",
+            "!this.store.isPossiblyCorrupted()",
+            "!this.isReloading"
+          ],
+          "when": "this.persistIfNeeded()",
+          "then": "the pending state is written through db.storeSnapshot(...) or db.storeChanges(...)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures throttled persistence does not lose queued changes."
+        },
+        {
+          "testId": "rejects-schema-incompatibility",
+          "scenario": "A channel message carries a schema that cannot be migrated to the current schema.",
+          "given": [
+            "this.store.schema.getMigrationsSince(msg.schema).ok === false",
+            "Date.now() - this.initTime < 5000"
+          ],
+          "when": "this.channel.onmessage({ data: msg })",
+          "then": "onLoadError(new Error('Schema mismatch, please close other tabs and reload the page')) is called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents incompatible tabs from silently applying or persisting invalid data."
+        },
+        {
+          "testId": "retries-failed-persistence-with-full-write",
+          "scenario": "An IndexedDB persistence operation fails.",
+          "given": ["await this.db.storeChanges(...) throws", "this.didDispose === false"],
+          "when": "this.doPersist()",
+          "then": "this.shouldDoFullDBWrite is true, this.didLastWriteError is true, and window.location.reload() is requested",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards recovery from partial or failed persistence."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "persistence throttle constants",
+        "instance-state update symbol",
+        "synchronization message interfaces and aliases",
+        "typed message helper",
+        "BroadcastChannelMock class",
+        "BroadcastChannel implementation selection",
+        "TLLocalSyncClient class"
+      ],
+      "moduleLevelCode": "import { Signal, transact } from '@tldraw/state'\nimport { RecordsDiff, SerializedSchema, UnknownRecord, squashRecordDiffs } from '@tldraw/store'\nimport { TLStore } from '@tldraw/tlschema'\nimport { assert } from '@tldraw/utils'\nimport {\n\tTAB_ID,\n\tTLSessionStateSnapshot,\n\tcreateSessionStateSnapshotSignal,\n\textractSessionStateFromLegacySnapshot,\n\tloadSessionStateSnapshotIntoStore,\n} from '../../config/TLSessionStateSnapshot'\nimport { showCantReadFromIndexDbAlert, showCantWriteToIndexDbAlert } from './alerts'\nimport { LocalIndexedDb } from './LocalIndexedDb'",
+      "exports": [
+        { "name": "BroadcastChannelMock", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLLocalSyncClient", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Signal", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "transact", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "RecordsDiff", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "SerializedSchema", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "UnknownRecord", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "squashRecordDiffs", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "TLStore", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "assert", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "TAB_ID", "module": "../../config/TLSessionStateSnapshot", "alias": null, "kind": "internal" },
+        {
+          "symbol": "TLSessionStateSnapshot",
+          "module": "../../config/TLSessionStateSnapshot",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "createSessionStateSnapshotSignal",
+          "module": "../../config/TLSessionStateSnapshot",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "extractSessionStateFromLegacySnapshot",
+          "module": "../../config/TLSessionStateSnapshot",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "loadSessionStateSnapshotIntoStore",
+          "module": "../../config/TLSessionStateSnapshot",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "showCantReadFromIndexDbAlert", "module": "./alerts", "alias": null, "kind": "internal" },
+        { "symbol": "showCantWriteToIndexDbAlert", "module": "./alerts", "alias": null, "kind": "internal" },
+        { "symbol": "LocalIndexedDb", "module": "./LocalIndexedDb", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "PERSIST_THROTTLE_MS", "value": "350", "kind": "number" },
+        { "name": "PERSIST_RETRY_THROTTLE_MS", "value": "10_000", "kind": "number" },
+        { "name": "UPDATE_INSTANCE_STATE", "value": "Symbol('UPDATE_INSTANCE_STATE')", "kind": "symbol" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__BroadcastChannelMock#class:BroadcastChannelMock",
+        "unitKind": "class",
+        "name": "BroadcastChannelMock",
+        "qualifiedName": "BroadcastChannelMock",
+        "parentUnitId": null,
+        "startLine": 45,
+        "endLine": 55,
+        "isBehavioral": true,
+        "source": "\ntype UnpackPromise<T> = T extends Promise<infer U> ? U : T\n\nconst msg = (msg: Message) => msg\n\n/** @internal */\nexport class BroadcastChannelMock {\n\tonmessage?: (e: MessageEvent) => void\n\tconstructor(_name: string) {\n\t\t// noop\n\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__BroadcastChannelMock#class:BroadcastChannelMock",
+          "fileId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__BroadcastChannelMock",
+          "unitKind": "class",
+          "name": "BroadcastChannelMock",
+          "qualifiedName": "BroadcastChannelMock",
+          "parentUnitId": null,
+          "startLine": 45,
+          "endLine": 55,
+          "signature": "export class BroadcastChannelMock",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Message", "MessageEvent"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "onmessage",
+              "kind": "property",
+              "type": "((e: MessageEvent) => void) | undefined",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides a public mock broadcast-channel shape with an optional message handler and a name-accepting constructor that performs no observable setup.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "656f08b4424be39cf98de6cffb4380c098dfd872e5bc1e5571d3eb19c94d7f6c"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+        "unitKind": "class",
+        "name": "TLLocalSyncClient",
+        "qualifiedName": "TLLocalSyncClient",
+        "parentUnitId": null,
+        "startLine": 60,
+        "endLine": 411,
+        "isBehavioral": true,
+        "source": "\t\t// noop\n\t}\n}\n\nconst BC = typeof BroadcastChannel === 'undefined' ? BroadcastChannelMock : BroadcastChannel\n\n/** @internal */\nexport class TLLocalSyncClient {\n\tprivate disposables = new Set<() => void>()\n\tprivate diffQueue: Array<RecordsDiff<UnknownRecord> | typeof UPDATE_INSTANCE_STATE> = []\n\tprivate didDispose = false\n\tprivate didLoad = false\n\tprivate shouldDoFullDBWrite = true\n\tprivate isReloading = false\n\treadonly persistenceKey: string\n\treadonly sessionId: string\n\treadonly serializedSchema: SerializedSchema\n\tprivate isDebugging = false\n\tprivate readonly documentTypes: ReadonlySet<string>\n\tprivate readonly $sessionStateSnapshot: Signal<TLSessionStateSnapshot | null>\n\t/** @internal */\n\treadonly db: LocalIndexedDb\n\n\tinitTime = Date.now()\n\tprivate debug(...args: any[]) {\n\t\tif (this.isDebugging) {\n\t\t\t// eslint-disable-next-line no-console\n\t\t\tconsole.debug(...args)\n\t\t}\n\t}\n\tconstructor(\n\t\tpublic readonly store: TLStore,\n\t\t{\n\t\t\tpersistenceKey,\n\t\t\tsessionId = TAB_ID,\n\t\t\tonLoad,\n\t\t\tonLoadError,\n\t\t}: {\n\t\t\tpersistenceKey: string\n\t\t\tsessionId?: string\n\t\t\tonLoad(self: TLLocalSyncClient): void\n\t\t\tonLoadError(error: Error): void\n\t\t},\n\t\tpublic readonly channel = new BC(`tldraw-tab-sync-${persistenceKey}`)\n\t) {\n\t\tif (typeof window !== 'undefined') {\n\t\t\t;(window as any).tlsync = this\n\t\t}\n\t\tthis.persistenceKey = persistenceKey\n\t\tthis.sessionId = sessionId\n\t\tthis.db = new LocalIndexedDb(persistenceKey)\n\t\tthis.disposables.add(() => this.db.close())\n\n\t\tthis.serializedSchema = this.store.schema.serialize()\n\t\tthis.$sessionStateSnapshot = createSessionStateSnapshotSignal(this.store)\n\n\t\tthis.disposables.add(\n\t\t\t// Set up a subscription to changes from the store: When\n\t\t\t// the store changes (and if the change was made by the user)\n\t\t\t// then immediately send the diff to other tabs via postMessage\n\t\t\t// and schedule a persist.\n\t\t\tstore.listen(\n\t\t\t\t({ changes }) => {\n\t\t\t\t\tthis.diffQueue.push(changes)\n\t\t\t\t\tthis.channel.postMessage(\n\t\t\t\t\t\tmsg({\n\t\t\t\t\t\t\ttype: 'diff',\n\t\t\t\t\t\t\tstoreId: this.store.id,\n\t\t\t\t\t\t\tchanges,\n\t\t\t\t\t\t\tschema: this.serializedSchema,\n\t\t\t\t\t\t})\n\t\t\t\t\t)\n\t\t\t\t\tthis.schedulePersist()\n\t\t\t\t},\n\t\t\t\t{ source: 'user', scope: 'document' }\n\t\t\t)\n\t\t)\n\t\tthis.disposables.add(\n\t\t\tstore.listen(\n\t\t\t\t() => {\n\t\t\t\t\tthis.diffQueue.push(UPDATE_INSTANCE_STATE)\n\t\t\t\t\tthis.schedulePersist()\n\t\t\t\t},\n\t\t\t\t{ scope: 'session' }\n\t\t\t)\n\t\t)\n\n\t\tif (typeof window !== 'undefined') {\n\t\t\t// Persists are throttled, so without this the last PERSIST_THROTTLE_MS of edits are lost\n\t\t\t// whenever the tab is closed or reloaded. `pagehide` is the last reliable event before\n\t\t\t// unload on desktop; on mobile the page can be discarded without it firing, so we also\n\t\t\t// flush when the tab is hidden.\n\t\t\tconst flush = () => {\n\t\t\t\t// Before the initial load completes a full write would overwrite the saved\n\t\t\t\t// document with an empty store.\n\t\t\t\tif (!this.didLoad) return\n\t\t\t\tthis.persistIfNeeded()\n\t\t\t}\n\t\t\tconst onVisibilityChange = () => {\n\t\t\t\tif (document.visibilityState === 'hidden') flush()\n\t\t\t}\n\t\t\twindow.addEventListener('pagehide', flush)\n\t\t\tdocument.addEventListener('visibilitychange', onVisibilityChange)\n\t\t\tthis.disposables.add(() => {\n\t\t\t\twindow.removeEventListener('pagehide', flush)\n\t\t\t\tdocument.removeEventListener('visibilitychange', onVisibilityChange)\n\t\t\t})\n\t\t}\n\n\t\tthis.connect(onLoad, onLoadError)\n\n\t\tthis.documentTypes = new Set(\n\t\t\tObject.values(this.store.schema.types)\n\t\t\t\t.filter((t) => t.scope === 'document')\n\t\t\t\t.map((t) => t.typeName)\n\t\t)\n\t}\n\n\tprivate async connect(onLoad: (client: this) => void, onLoadError: (error: Error) => void) {\n\t\tthis.debug('connecting')\n\t\tlet data: UnpackPromise<ReturnType<LocalIndexedDb['load']>> | undefined\n\n\t\ttry {\n\t\t\tdata = await this.db.load({ sessionId: this.sessionId })\n\t\t} catch (error: any) {\n\t\t\tonLoadError(error)\n\t\t\tshowCantReadFromIndexDbAlert()\n\t\t\treturn\n\t\t}\n\n\t\tthis.debug('loaded data from store', data, 'didDispose', this.didDispose)\n\t\tif (this.didDispose) return\n\n\t\ttry {\n\t\t\tif (data) {\n\t\t\t\tconst documentSnapshot = Object.fromEntries(data.records.map((r) => [r.id, r]))\n\t\t\t\tconst sessionStateSnapshot =\n\t\t\t\t\tdata.sessionStateSnapshot ?? extractSessionStateFromLegacySnapshot(documentSnapshot)\n\t\t\t\tconst migrationResult = this.store.schema.migrateStoreSnapshot({\n\t\t\t\t\tstore: documentSnapshot,\n\t\t\t\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\t\t\t\tschema: data.schema ?? this.store.schema.serializeEarliestVersion(),\n\t\t\t\t})\n\n\t\t\t\tif (migrationResult.type === 'error') {\n\t\t\t\t\tconsole.error('failed to migrate store', migrationResult)\n\t\t\t\t\tonLoadError(new Error(`Failed to migrate store: ${migrationResult.reason}`))\n\t\t\t\t\treturn\n\t\t\t\t}\n\n\t\t\t\tconst records = Object.values(migrationResult.value).filter((r) =>\n\t\t\t\t\tthis.documentTypes.has(r.typeName)\n\t\t\t\t)\n\t\t\t\tif (records.length > 0) {\n\t\t\t\t\t// 3. Merge the changes into the REAL STORE\n\t\t\t\t\tthis.store.mergeRemoteChanges(() => {\n\t\t\t\t\t\t// Calling put will validate the records!\n\t\t\t\t\t\tthis.store.put(records, 'initialize')\n\t\t\t\t\t})\n\t\t\t\t}\n\n\t\t\t\tif (sessionStateSnapshot) {\n\t\t\t\t\tloadSessionStateSnapshotIntoStore(this.store, sessionStateSnapshot, {\n\t\t\t\t\t\tforceOverwrite: true,\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tthis.channel.onmessage = ({ data }) => {\n\t\t\t\tthis.debug('got message', data)\n\t\t\t\tconst msg = data as Message\n\t\t\t\t// if their schema is earlier than ours, we need to tell them so they can refresh\n\t\t\t\t// if their schema is later than ours, we need to refresh\n\t\t\t\tconst res = this.store.schema.getMigrationsSince(msg.schema)\n\n\t\t\t\tif (!res.ok) {\n\t\t\t\t\t// we are older, refresh\n\t\t\t\t\t// but add a safety check to make sure we don't get in an infinite loop\n\t\t\t\t\tconst timeSinceInit = Date.now() - this.initTime\n\t\t\t\t\tif (timeSinceInit < 5000) {\n\t\t\t\t\t\t// This tab was just reloaded, but is out of date compared to other tabs.\n\t\t\t\t\t\t// Not expecting this to ever happen. It should only happen if we roll back a release that incremented\n\t\t\t\t\t\t// the schema version (which we should never do)\n\t\t\t\t\t\t// Or maybe during development if you have multiple local tabs open running the app on prod mode and you\n\t\t\t\t\t\t// check out an older commit. Dev server should be fine.\n\t\t\t\t\t\tonLoadError(new Error('Schema mismatch, please close other tabs and reload the page'))\n\t\t\t\t\t\treturn\n\t\t\t\t\t}\n\t\t\t\t\tthis.debug('reloading')\n\t\t\t\t\tthis.isReloading = true\n\t\t\t\t\twindow?.location?.reload?.()\n\t\t\t\t\treturn\n\t\t\t\t} else if (res.value.length > 0) {\n\t\t\t\t\t// they are older, tell them to refresh and not write any more data\n\t\t\t\t\tthis.debug('telling them to reload')\n\t\t\t\t\tthis.channel.postMessage({ type: 'announce', schema: this.serializedSchema })\n\t\t\t\t\t// schedule a full db write in case they wrote data anyway\n\t\t\t\t\tthis.shouldDoFullDBWrite = true\n\t\t\t\t\tthis.persistIfNeeded()\n\t\t\t\t\treturn\n\t\t\t\t}\n\t\t\t\t// otherwise, all good, same version :)\n\t\t\t\tif (msg.type === 'diff') {\n\t\t\t\t\tthis.debug('applying diff')\n\t\t\t\t\ttransact(() => {\n\t\t\t\t\t\tthis.store.mergeRemoteChanges(() => {\n\t\t\t\t\t\t\tthis.store.applyDiff(msg.changes as any)\n\t\t\t\t\t\t})\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\t\t\tthis.channel.postMessage({ type: 'announce', schema: this.serializedSchema })\n\t\t\tthis.disposables.add(() => {\n\t\t\t\tthis.channel.close()\n\t\t\t})\n\t\t\tthis.didLoad = true\n\t\t\tonLoad(this)\n\t\t} catch (e: any) {\n\t\t\tthis.debug('error loading data from store', e)\n\t\t\tif (this.didDispose) return\n\t\t\tonLoadError(e)\n\t\t\treturn\n\t\t}\n\t}\n\n\tclose() {\n\t\tthis.debug('closing')\n\t\tthis.didDispose = true\n\t\tthis.disposables.forEach((d) => d())\n\t\tif (typeof window !== 'undefined' && (window as any).tlsync === this) {\n\t\t\tdelete (window as any).tlsync\n\t\t}\n\t}\n\n\tprivate isPersisting = false\n\tprivate didLastWriteError = false\n\t// eslint-disable-next-line no-restricted-globals\n\tprivate scheduledPersistTimeout: ReturnType<typeof setTimeout> | null = null\n\n\t/**\n\t * Schedule a persist. Persists don't happen immediately: they are throttled to avoid writing too\n\t * often, and will retry if failed.\n\t *\n\t * @internal\n\t */\n\tprivate schedulePersist() {\n\t\tthis.debug('schedulePersist', this.scheduledPersistTimeout)\n\t\tif (this.scheduledPersistTimeout) return\n\t\t// eslint-disable-next-line no-restricted-globals\n\t\tthis.scheduledPersistTimeout = setTimeout(\n\t\t\t() => {\n\t\t\t\tthis.scheduledPersistTimeout = null\n\t\t\t\tthis.persistIfNeeded()\n\t\t\t},\n\t\t\tthis.didLastWriteError ? PERSIST_RETRY_THROTTLE_MS : PERSIST_THROTTLE_MS\n\t\t)\n\t}\n\n\t/**\n\t * Persist to IndexedDB only under certain circumstances:\n\t *\n\t * - If we're not already persisting\n\t * - If we're not reloading the page\n\t * - And we have something to persist (a full db write scheduled or changes in the diff queue)\n\t *\n\t * @internal\n\t */\n\tprivate persistIfNeeded() {\n\t\tthis.debug('persistIfNeeded', {\n\t\t\tisPersisting: this.isPersisting,\n\t\t\tisReloading: this.isReloading,\n\t\t\tshouldDoFullDBWrite: this.shouldDoFullDBWrite,\n\t\t\tdiffQueueLength: this.diffQueue.length,\n\t\t\tstoreIsPossiblyCorrupt: this.store.isPossiblyCorrupted(),\n\t\t})\n\n\t\t// if we've scheduled a persist for the future, that's no longer needed\n\t\tif (this.scheduledPersistTimeout) {\n\t\t\tclearTimeout(this.scheduledPersistTimeout)\n\t\t\tthis.scheduledPersistTimeout = null\n\t\t}\n\n\t\t// if a persist is already in progress, we don't need to do anything -\n\t\t// if there are still outstanding changes once it's finished, it'll\n\t\t// schedule another persist\n\t\tif (this.isPersisting) return\n\n\t\t// if we're reloading the page, it's because there's a newer client\n\t\t// present so lets not overwrite their changes\n\t\tif (this.isReloading) return\n\n\t\t// if the store is possibly corrupted, we don't want to persist\n\t\tif (this.store.isPossiblyCorrupted()) return\n\n\t\t// if we're scheduled for a full write or if we have changes outstanding, let's persist them!\n\t\tif (this.shouldDoFullDBWrite || this.diffQueue.length > 0) {\n\t\t\tthis.doPersist()\n\t\t}\n\t}\n\n\t/**\n\t * Actually persist to IndexedDB. If the write fails, then we'll retry with a full db write after\n\t * a short delay.\n\t */\n\tprivate async doPersist() {\n\t\tassert(!this.isPersisting, 'persist already in progress')\n\t\tif (this.didDispose) return\n\t\tthis.isPersisting = true\n\n\t\tthis.debug('doPersist start')\n\n\t\t// instantly empty the diff queue, but keep our own copy of it. this way\n\t\t// diffs that come in during the persist will still get tracked\n\t\tconst diffQueue = this.diffQueue\n\t\tthis.diffQueue = []\n\n\t\ttry {\n\t\t\tif (this.shouldDoFullDBWrite) {\n\t\t\t\tthis.shouldDoFullDBWrite = false\n\t\t\t\tawait this.db.storeSnapshot({\n\t\t\t\t\tschema: this.store.schema,\n\t\t\t\t\tsnapshot: this.store.serialize(),\n\t\t\t\t\tsessionId: this.sessionId,\n\t\t\t\t\tsessionStateSnapshot: this.$sessionStateSnapshot.get(),\n\t\t\t\t})\n\t\t\t} else {\n\t\t\t\tconst diffs = squashRecordDiffs(\n\t\t\t\t\tdiffQueue.filter((d): d is RecordsDiff<UnknownRecord> => d !== UPDATE_INSTANCE_STATE)\n\t\t\t\t)\n\t\t\t\tawait this.db.storeChanges({\n\t\t\t\t\tchanges: diffs,\n\t\t\t\t\tschema: this.store.schema,\n\t\t\t\t\tsessionId: this.sessionId,\n\t\t\t\t\tsessionStateSnapshot: this.$sessionStateSnapshot.get(),\n\t\t\t\t})\n\t\t\t}\n\t\t\tthis.didLastWriteError = false\n\t\t} catch (e) {\n\t\t\t// set this.shouldDoFullDBWrite because we clear the diffQueue no matter what,\n\t\t\t// so if this is just a temporary error, we will still persist all changes\n\t\t\tthis.shouldDoFullDBWrite = true\n\t\t\tthis.didLastWriteError = true\n\t\t\tconsole.error('failed to store changes in indexed db', e)\n\n\t\t\tshowCantWriteToIndexDbAlert()\n\t\t\tif (typeof window !== 'undefined') {\n\t\t\t\t// adios\n\t\t\t\twindow.location.reload()\n\t\t\t}\n\t\t}\n\n\t\tthis.isPersisting = false",
+        "detail": {
+          "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+          "fileId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient",
+          "unitKind": "class",
+          "name": "TLLocalSyncClient",
+          "qualifiedName": "TLLocalSyncClient",
+          "parentUnitId": null,
+          "startLine": 60,
+          "endLine": 411,
+          "signature": "export class TLLocalSyncClient",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "disposables",
+              "kind": "property",
+              "type": "Set<() => void>",
+              "default": "new Set<() => void>()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "diffQueue",
+              "kind": "property",
+              "type": "Array<RecordsDiff<UnknownRecord> | typeof UPDATE_INSTANCE_STATE>",
+              "default": "[]",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "didDispose",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "didLoad",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "shouldDoFullDBWrite",
+              "kind": "property",
+              "type": "boolean",
+              "default": "true",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "isReloading",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "persistenceKey",
+              "kind": "property",
+              "type": "string",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "sessionId",
+              "kind": "property",
+              "type": "string",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "serializedSchema",
+              "kind": "property",
+              "type": "SerializedSchema",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "isDebugging",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "documentTypes",
+              "kind": "property",
+              "type": "ReadonlySet<string>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "$sessionStateSnapshot",
+              "kind": "property",
+              "type": "Signal<TLSessionStateSnapshot | null>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "db",
+              "kind": "property",
+              "type": "LocalIndexedDb",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "initTime",
+              "kind": "property",
+              "type": "number",
+              "default": "Date.now()",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "isPersisting",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "didLastWriteError",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "scheduledPersistTimeout",
+              "kind": "property",
+              "type": "ReturnType<typeof setTimeout> | null",
+              "default": "null",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "store",
+              "kind": "constructor_parameter_property",
+              "type": "TLStore",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "channel",
+              "kind": "constructor_parameter_property",
+              "type": "typeof BroadcastChannel",
+              "default": "new BC(`tldraw-tab-sync-${persistenceKey}`)",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "debug",
+              "kind": "method",
+              "type": "(...args: any[]) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": "(store: TLStore, options: { persistenceKey: string; sessionId?: string; onLoad(self: TLLocalSyncClient): void; onLoadError(error: Error): void }, channel?: typeof BroadcastChannel)",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "connect",
+              "kind": "method",
+              "type": "(onLoad: (client: this) => void, onLoadError: (error: Error) => void) => Promise<void>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "close",
+              "kind": "method",
+              "type": "() => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "schedulePersist",
+              "kind": "method",
+              "type": "() => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "persistIfNeeded",
+              "kind": "method",
+              "type": "() => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "doPersist",
+              "kind": "method",
+              "type": "() => Promise<void>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [
+            "TLLocalSyncClient.connect",
+            "TLLocalSyncClient.close",
+            "TLLocalSyncClient.schedulePersist",
+            "TLLocalSyncClient.persistIfNeeded",
+            "TLLocalSyncClient.doPersist"
+          ],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "TLLocalSyncClient coordinates local document and session-state synchronization between a TLStore, IndexedDB persistence, and other browser tabs. It exposes the persistence identity, store, database, and broadcast channel used by its synchronization lifecycle.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "136e2d34a329cccddae57e0a4d5453ec7cb2b1ac75ac12b0f8b9bea294aad9bc"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.connect#method:TLLocalSyncClient.connect",
+        "unitKind": "method",
+        "name": "connect",
+        "qualifiedName": "TLLocalSyncClient.connect",
+        "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+        "startLine": 170,
+        "endLine": 280,
+        "isBehavioral": true,
+        "source": "\n\t\tthis.documentTypes = new Set(\n\t\t\tObject.values(this.store.schema.types)\n\t\t\t\t.filter((t) => t.scope === 'document')\n\t\t\t\t.map((t) => t.typeName)\n\t\t)\n\t}\n\n\tprivate async connect(onLoad: (client: this) => void, onLoadError: (error: Error) => void) {\n\t\tthis.debug('connecting')\n\t\tlet data: UnpackPromise<ReturnType<LocalIndexedDb['load']>> | undefined\n\n\t\ttry {\n\t\t\tdata = await this.db.load({ sessionId: this.sessionId })\n\t\t} catch (error: any) {\n\t\t\tonLoadError(error)\n\t\t\tshowCantReadFromIndexDbAlert()\n\t\t\treturn\n\t\t}\n\n\t\tthis.debug('loaded data from store', data, 'didDispose', this.didDispose)\n\t\tif (this.didDispose) return\n\n\t\ttry {\n\t\t\tif (data) {\n\t\t\t\tconst documentSnapshot = Object.fromEntries(data.records.map((r) => [r.id, r]))\n\t\t\t\tconst sessionStateSnapshot =\n\t\t\t\t\tdata.sessionStateSnapshot ?? extractSessionStateFromLegacySnapshot(documentSnapshot)\n\t\t\t\tconst migrationResult = this.store.schema.migrateStoreSnapshot({\n\t\t\t\t\tstore: documentSnapshot,\n\t\t\t\t\t// eslint-disable-next-line @typescript-eslint/no-deprecated\n\t\t\t\t\tschema: data.schema ?? this.store.schema.serializeEarliestVersion(),\n\t\t\t\t})\n\n\t\t\t\tif (migrationResult.type === 'error') {\n\t\t\t\t\tconsole.error('failed to migrate store', migrationResult)\n\t\t\t\t\tonLoadError(new Error(`Failed to migrate store: ${migrationResult.reason}`))\n\t\t\t\t\treturn\n\t\t\t\t}\n\n\t\t\t\tconst records = Object.values(migrationResult.value).filter((r) =>\n\t\t\t\t\tthis.documentTypes.has(r.typeName)\n\t\t\t\t)\n\t\t\t\tif (records.length > 0) {\n\t\t\t\t\t// 3. Merge the changes into the REAL STORE\n\t\t\t\t\tthis.store.mergeRemoteChanges(() => {\n\t\t\t\t\t\t// Calling put will validate the records!\n\t\t\t\t\t\tthis.store.put(records, 'initialize')\n\t\t\t\t\t})\n\t\t\t\t}\n\n\t\t\t\tif (sessionStateSnapshot) {\n\t\t\t\t\tloadSessionStateSnapshotIntoStore(this.store, sessionStateSnapshot, {\n\t\t\t\t\t\tforceOverwrite: true,\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tthis.channel.onmessage = ({ data }) => {\n\t\t\t\tthis.debug('got message', data)\n\t\t\t\tconst msg = data as Message\n\t\t\t\t// if their schema is earlier than ours, we need to tell them so they can refresh\n\t\t\t\t// if their schema is later than ours, we need to refresh\n\t\t\t\tconst res = this.store.schema.getMigrationsSince(msg.schema)\n\n\t\t\t\tif (!res.ok) {\n\t\t\t\t\t// we are older, refresh\n\t\t\t\t\t// but add a safety check to make sure we don't get in an infinite loop\n\t\t\t\t\tconst timeSinceInit = Date.now() - this.initTime\n\t\t\t\t\tif (timeSinceInit < 5000) {\n\t\t\t\t\t\t// This tab was just reloaded, but is out of date compared to other tabs.\n\t\t\t\t\t\t// Not expecting this to ever happen. It should only happen if we roll back a release that incremented\n\t\t\t\t\t\t// the schema version (which we should never do)\n\t\t\t\t\t\t// Or maybe during development if you have multiple local tabs open running the app on prod mode and you\n\t\t\t\t\t\t// check out an older commit. Dev server should be fine.\n\t\t\t\t\t\tonLoadError(new Error('Schema mismatch, please close other tabs and reload the page'))\n\t\t\t\t\t\treturn\n\t\t\t\t\t}\n\t\t\t\t\tthis.debug('reloading')\n\t\t\t\t\tthis.isReloading = true\n\t\t\t\t\twindow?.location?.reload?.()\n\t\t\t\t\treturn\n\t\t\t\t} else if (res.value.length > 0) {\n\t\t\t\t\t// they are older, tell them to refresh and not write any more data\n\t\t\t\t\tthis.debug('telling them to reload')\n\t\t\t\t\tthis.channel.postMessage({ type: 'announce', schema: this.serializedSchema })\n\t\t\t\t\t// schedule a full db write in case they wrote data anyway\n\t\t\t\t\tthis.shouldDoFullDBWrite = true\n\t\t\t\t\tthis.persistIfNeeded()\n\t\t\t\t\treturn\n\t\t\t\t}\n\t\t\t\t// otherwise, all good, same version :)\n\t\t\t\tif (msg.type === 'diff') {\n\t\t\t\t\tthis.debug('applying diff')\n\t\t\t\t\ttransact(() => {\n\t\t\t\t\t\tthis.store.mergeRemoteChanges(() => {\n\t\t\t\t\t\t\tthis.store.applyDiff(msg.changes as any)\n\t\t\t\t\t\t})\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\t\t\tthis.channel.postMessage({ type: 'announce', schema: this.serializedSchema })\n\t\t\tthis.disposables.add(() => {\n\t\t\t\tthis.channel.close()\n\t\t\t})\n\t\t\tthis.didLoad = true\n\t\t\tonLoad(this)\n\t\t} catch (e: any) {\n\t\t\tthis.debug('error loading data from store', e)\n\t\t\tif (this.didDispose) return\n\t\t\tonLoadError(e)",
+        "detail": {
+          "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.connect#method:TLLocalSyncClient.connect",
+          "fileId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.connect",
+          "unitKind": "method",
+          "name": "connect",
+          "qualifiedName": "TLLocalSyncClient.connect",
+          "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+          "startLine": 170,
+          "endLine": 280,
+          "signature": "private async connect(onLoad: (client: this) => void, onLoadError: (error: Error) => void)",
+          "parameters": [
+            {
+              "name": "onLoad",
+              "type": "(client: this) => void",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "onLoadError",
+              "type": "(error: Error) => void",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The client has initialized its database, store, synchronization channel, session identifier, serialized schema, and document type set.",
+            "onLoad and onLoadError are callable callbacks."
+          ],
+          "postconditions": [
+            "On successful initialization, compatible persisted document records and session state are loaded, the channel message handler is installed, an announce message is posted, channel cleanup is registered, didLoad is set to true, and onLoad is called with this client.",
+            "If the client was disposed after loading completes, initialization stops without invoking onLoad.",
+            "If loading or migration fails, onLoadError is called and normal initialization does not complete."
+          ],
+          "invariants": [
+            "Only records whose typeName is in the document type set are merged into the store.",
+            "Persisted records are migrated using the stored schema when present, otherwise the earliest serialized schema.",
+            "A received message with an incompatible schema is not applied as a diff.",
+            "A received compatible diff is applied inside a transaction and remote-change merge."
+          ],
+          "edgeCases": [
+            "If IndexedDB loading rejects, the error is passed to onLoadError, the inability-to-read alert is shown, and initialization returns.",
+            "If no persisted data is returned, no records or session snapshot are restored, but channel setup and onLoad still occur.",
+            "If a persisted snapshot has no sessionStateSnapshot, session state is extracted from the legacy document snapshot.",
+            "If migration returns an error, onLoadError receives an Error whose message begins with 'Failed to migrate store:' and no loaded callback is invoked.",
+            "If the client has been disposed after the database load resolves, the method returns without installing synchronization or invoking onLoad.",
+            "If this client is newer than a peer, it announces its schema, marks a full database write as required, and triggers persistence instead of applying the peer message.",
+            "If this client is older than a peer within five seconds of initialization, onLoadError receives the schema-mismatch error; after five seconds the client marks itself reloading and requests a window reload.",
+            "Messages with the current schema and type diff are applied to the store; announce messages do not apply changes."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Database load failures and migration failures are reported through onLoadError; incompatible schema messages are either reported through onLoadError during the initial five-second window or cause a page reload afterward.",
+            "returnsOnError": "Promise<void> resolves after handling the error path; initialization callbacks and state changes depend on the specific failure."
+          },
+          "stateMutations": [
+            "Sets channel.onmessage.",
+            "Adds a channel.close cleanup callback to disposables.",
+            "Sets didLoad to true on successful initialization.",
+            "May set isReloading to true when an incompatible newer schema is received after the initial safety window.",
+            "May set shouldDoFullDBWrite to true when a peer has an older schema.",
+            "Merges migrated document records and session state into the store.",
+            "May trigger persistence through persistIfNeeded."
+          ],
+          "eventsEmitted": [
+            "Posts an announce message containing the serialized schema on successful channel setup.",
+            "Posts an announce message containing the serialized schema when a peer has an older schema.",
+            "May trigger a browser window reload for a stale client after the schema safety window."
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "db.load", "source": "LocalIndexedDb", "kind": "external" },
+            { "name": "showCantReadFromIndexDbAlert", "source": null, "kind": "external" },
+            { "name": "schema.migrateStoreSnapshot", "source": "store.schema", "kind": "internal" },
+            { "name": "store.mergeRemoteChanges", "source": "store", "kind": "internal" },
+            { "name": "store.put", "source": "store", "kind": "internal" },
+            { "name": "loadSessionStateSnapshotIntoStore", "source": null, "kind": "external" },
+            { "name": "schema.getMigrationsSince", "source": "store.schema", "kind": "internal" },
+            { "name": "channel.postMessage", "source": "BroadcastChannel", "kind": "external" },
+            { "name": "persistIfNeeded", "source": "TLLocalSyncClient", "kind": "internal" },
+            { "name": "transact", "source": null, "kind": "external" },
+            { "name": "store.applyDiff", "source": "store", "kind": "internal" },
+            { "name": "window.location.reload", "source": "browser window", "kind": "external" },
+            { "name": "onLoad", "source": "caller callback", "kind": "external" },
+            { "name": "onLoadError", "source": "caller callback", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "LocalIndexedDb",
+            "UnpackPromise",
+            "extractSessionStateFromLegacySnapshot",
+            "loadSessionStateSnapshotIntoStore",
+            "transact",
+            "Message",
+            "Error",
+            "window"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Loads with { sessionId: this.sessionId }. Sends synchronization messages shaped as { type: 'announce', schema: this.serializedSchema }; consumes messages with schema, type, and for diff messages a changes payload.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Loads and migrates the client session from IndexedDB, initializes the store and cross-tab synchronization channel, and invokes the appropriate load callback. It applies compatible persisted records and session state while handling storage, migration, and schema incompatibility failures.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Failed to migrate store:",
+              "role": "Prefix of the error reported when persisted snapshot migration fails."
+            },
+            {
+              "kind": "error-message",
+              "value": "Schema mismatch, please close other tabs and reload the page",
+              "role": "Error reported when a newly initialized client is older than a peer schema."
+            },
+            {
+              "kind": "enum-value",
+              "value": "announce",
+              "role": "Synchronization message type used to advertise the local schema."
+            },
+            {
+              "kind": "enum-value",
+              "value": "diff",
+              "role": "Synchronization message type whose changes are applied to the store."
+            },
+            {
+              "kind": "magic-number",
+              "value": "5000",
+              "role": "Safety interval in milliseconds before an incompatible schema causes an automatic reload instead of the callback error."
+            },
+            {
+              "kind": "enum-value",
+              "value": "initialize",
+              "role": "Store put source used when restoring persisted records."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "connect is invoked.",
+              "then": "onLoadError is called with that error, showCantReadFromIndexDbAlert is invoked, and onLoad is not called.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "connect processes the snapshot.",
+              "then": "onLoadError is called with an Error whose message starts with 'Failed to migrate store:', and the client does not complete normal initialization.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "connect completes initialization.",
+              "then": "the channel handler is installed, an announce message containing the serialized schema is posted, didLoad becomes true, and onLoad receives the client.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "8cdcbfb9a7127894b27446a0efbfff1677ed9a68c833befc594af58915d2dfde"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.close#method:TLLocalSyncClient.close",
+        "unitKind": "method",
+        "name": "close",
+        "qualifiedName": "TLLocalSyncClient.close",
+        "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+        "startLine": 282,
+        "endLine": 289,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t}\n\n\tclose() {\n\t\tthis.debug('closing')\n\t\tthis.didDispose = true\n\t\tthis.disposables.forEach((d) => d())\n\t\tif (typeof window !== 'undefined' && (window as any).tlsync === this) {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.close#method:TLLocalSyncClient.close",
+          "fileId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.close",
+          "unitKind": "method",
+          "name": "close",
+          "qualifiedName": "TLLocalSyncClient.close",
+          "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+          "startLine": 282,
+          "endLine": 289,
+          "signature": "close()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The client instance has been constructed with a disposables collection and debug method."],
+          "postconditions": [
+            "didDispose is set to true.",
+            "Each disposer in the disposables collection is invoked in collection order, unless an earlier disposer throws."
+          ],
+          "invariants": ["The client is marked disposed before registered disposal callbacks are invoked."],
+          "edgeCases": [
+            "An empty disposables collection results in no callback invocations while still marking the client disposed.",
+            "If a disposer throws, the exception propagates and later disposal work is not guaranteed to run.",
+            "Calling close more than once sets didDispose to true and invokes the currently registered disposers again."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Exceptions thrown by registered disposer callbacks are propagated."],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": ["this.didDispose is set to true."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "this.debug", "source": "TLLocalSyncClient", "kind": "internal" },
+            { "name": "registered disposer callbacks", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["window"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Closes the local synchronization client by marking it disposed and invoking its registered disposal callbacks.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "close() is called.",
+              "then": "didDispose becomes true and both disposers are invoked in their registered order.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "close() is called.",
+              "then": "didDispose is set to true, the exception is propagated, and disposal iteration may stop at the throwing disposer.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "43750cafa0cac0704cc37ab57835c09684dd496b709e3ddfccb185e1677afe9b"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.schedulePersist#method:TLLocalSyncClient.schedulePersist",
+        "unitKind": "method",
+        "name": "schedulePersist",
+        "qualifiedName": "TLLocalSyncClient.schedulePersist",
+        "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+        "startLine": 301,
+        "endLine": 313,
+        "isBehavioral": true,
+        "source": "\t * often, and will retry if failed.\n\t *\n\t * @internal\n\t */\n\tprivate schedulePersist() {\n\t\tthis.debug('schedulePersist', this.scheduledPersistTimeout)\n\t\tif (this.scheduledPersistTimeout) return\n\t\t// eslint-disable-next-line no-restricted-globals\n\t\tthis.scheduledPersistTimeout = setTimeout(\n\t\t\t() => {\n\t\t\t\tthis.scheduledPersistTimeout = null\n\t\t\t\tthis.persistIfNeeded()\n\t\t\t},",
+        "detail": {
+          "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.schedulePersist#method:TLLocalSyncClient.schedulePersist",
+          "fileId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.schedulePersist",
+          "unitKind": "method",
+          "name": "schedulePersist",
+          "qualifiedName": "TLLocalSyncClient.schedulePersist",
+          "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+          "startLine": 301,
+          "endLine": 313,
+          "signature": "private schedulePersist()",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": ["private"],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "If a persistence timeout is already pending, no new timeout is scheduled.",
+            "If no persistence timeout is pending, a timeout is stored and its callback is registered to clear the timeout marker and invoke persistIfNeeded."
+          ],
+          "invariants": ["At most one persistence timeout is scheduled through this method at a time."],
+          "edgeCases": [
+            "When scheduledPersistTimeout is truthy, the method returns without scheduling another timeout.",
+            "When scheduledPersistTimeout is falsy, the method schedules a timeout and stores its handle.",
+            "When the scheduled callback runs, scheduledPersistTimeout is set to null before persistIfNeeded is invoked."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Reads and conditionally assigns this.scheduledPersistTimeout.",
+            "The deferred callback assigns this.scheduledPersistTimeout to null."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "debug", "source": "TLLocalSyncClient", "kind": "internal" },
+            { "name": "setTimeout", "source": "global runtime", "kind": "external" },
+            { "name": "persistIfNeeded", "source": "TLLocalSyncClient", "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Schedules a deferred persistence attempt only when one is not already scheduled. The scheduled callback clears the pending marker before invoking conditional persistence.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "schedulePersist() is called",
+              "then": "A timeout is scheduled, its handle is assigned to this.scheduledPersistTimeout, and no immediate persistence call occurs.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "schedulePersist() is called",
+              "then": "The existing timeout remains unchanged and no additional timeout is scheduled.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Its callback runs",
+              "then": "this.scheduledPersistTimeout is set to null before persistIfNeeded() is invoked.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "3bf61fd3b1163398ca7dfe1666fd4534998a317e734da6e3fd17047202ce3a48"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.persistIfNeeded#method:TLLocalSyncClient.persistIfNeeded",
+        "unitKind": "method",
+        "name": "persistIfNeeded",
+        "qualifiedName": "TLLocalSyncClient.persistIfNeeded",
+        "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+        "startLine": 320,
+        "endLine": 352,
+        "isBehavioral": true,
+        "source": "\t *\n\t * - If we're not already persisting\n\t * - If we're not reloading the page\n\t * - And we have something to persist (a full db write scheduled or changes in the diff queue)\n\t *\n\t * @internal\n\t */\n\tprivate persistIfNeeded() {\n\t\tthis.debug('persistIfNeeded', {\n\t\t\tisPersisting: this.isPersisting,\n\t\t\tisReloading: this.isReloading,\n\t\t\tshouldDoFullDBWrite: this.shouldDoFullDBWrite,\n\t\t\tdiffQueueLength: this.diffQueue.length,\n\t\t\tstoreIsPossiblyCorrupt: this.store.isPossiblyCorrupted(),\n\t\t})\n\n\t\t// if we've scheduled a persist for the future, that's no longer needed\n\t\tif (this.scheduledPersistTimeout) {\n\t\t\tclearTimeout(this.scheduledPersistTimeout)\n\t\t\tthis.scheduledPersistTimeout = null\n\t\t}\n\n\t\t// if a persist is already in progress, we don't need to do anything -\n\t\t// if there are still outstanding changes once it's finished, it'll\n\t\t// schedule another persist\n\t\tif (this.isPersisting) return\n\n\t\t// if we're reloading the page, it's because there's a newer client\n\t\t// present so lets not overwrite their changes\n\t\tif (this.isReloading) return\n\n\t\t// if the store is possibly corrupted, we don't want to persist\n\t\tif (this.store.isPossiblyCorrupted()) return",
+        "detail": {
+          "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.persistIfNeeded#method:TLLocalSyncClient.persistIfNeeded",
+          "fileId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.persistIfNeeded",
+          "unitKind": "method",
+          "name": "persistIfNeeded",
+          "qualifiedName": "TLLocalSyncClient.persistIfNeeded",
+          "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+          "startLine": 320,
+          "endLine": 352,
+          "signature": "private persistIfNeeded()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The client instance has initialized persistence state, a scheduled persistence timeout field, a store, and a debug facility."
+          ],
+          "postconditions": [
+            "Any existing scheduled persistence timeout is cleared and the scheduled timeout reference is set to null.",
+            "No new persistence operation is started when persistence is already in progress.",
+            "No new persistence operation is started while the client is reloading.",
+            "No new persistence operation is started when the store reports possible corruption."
+          ],
+          "invariants": [
+            "An active persistence operation is never started concurrently by this method.",
+            "A possibly corrupted store is never persisted by this method.",
+            "A newer client's changes are not overwritten while this client is reloading."
+          ],
+          "edgeCases": [
+            "When a scheduled persistence timeout exists, it is cleared before further checks and the field is reset to null.",
+            "When persistence is already in progress, the method returns without starting another persistence operation.",
+            "When the page is reloading, the method returns without persisting.",
+            "When the store reports possible corruption, the method returns without persisting.",
+            "When none of the early-return conditions apply, persistence eligibility is evaluated using the full-write flag and diff-queue state."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Clears scheduledPersistTimeout when present.",
+            "Sets scheduledPersistTimeout to null when a scheduled timeout is cleared."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "debug", "source": "TLLocalSyncClient", "kind": "internal" },
+            { "name": "clearTimeout", "source": "global timer API", "kind": "external" },
+            { "name": "store.isPossiblyCorrupted", "source": "store dependency", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "scheduledPersistTimeout",
+            "isPersisting",
+            "isReloading",
+            "shouldDoFullDBWrite",
+            "diffQueue",
+            "store.isPossiblyCorrupted"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Evaluates whether a local persistence operation should proceed. It cancels any scheduled persistence and avoids starting persistence while another operation is active, the page is reloading, or the store may be corrupted.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "persistIfNeeded() is called.",
+              "then": "The timeout is cleared, scheduledPersistTimeout becomes null, and no additional persistence operation is started.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "persistIfNeeded() is called.",
+              "then": "The method returns without starting persistence.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "493f65eef4f9470e7452d4dea593f6b309a9250c358474ae599bc6083d3e3a2d"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.doPersist#method:TLLocalSyncClient.doPersist",
+        "unitKind": "method",
+        "name": "doPersist",
+        "qualifiedName": "TLLocalSyncClient.doPersist",
+        "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+        "startLine": 357,
+        "endLine": 411,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t}\n\n\t/**\n\t * Actually persist to IndexedDB. If the write fails, then we'll retry with a full db write after\n\t * a short delay.\n\t */\n\tprivate async doPersist() {\n\t\tassert(!this.isPersisting, 'persist already in progress')\n\t\tif (this.didDispose) return\n\t\tthis.isPersisting = true\n\n\t\tthis.debug('doPersist start')\n\n\t\t// instantly empty the diff queue, but keep our own copy of it. this way\n\t\t// diffs that come in during the persist will still get tracked\n\t\tconst diffQueue = this.diffQueue\n\t\tthis.diffQueue = []\n\n\t\ttry {\n\t\t\tif (this.shouldDoFullDBWrite) {\n\t\t\t\tthis.shouldDoFullDBWrite = false\n\t\t\t\tawait this.db.storeSnapshot({\n\t\t\t\t\tschema: this.store.schema,\n\t\t\t\t\tsnapshot: this.store.serialize(),\n\t\t\t\t\tsessionId: this.sessionId,\n\t\t\t\t\tsessionStateSnapshot: this.$sessionStateSnapshot.get(),\n\t\t\t\t})\n\t\t\t} else {\n\t\t\t\tconst diffs = squashRecordDiffs(\n\t\t\t\t\tdiffQueue.filter((d): d is RecordsDiff<UnknownRecord> => d !== UPDATE_INSTANCE_STATE)\n\t\t\t\t)\n\t\t\t\tawait this.db.storeChanges({\n\t\t\t\t\tchanges: diffs,\n\t\t\t\t\tschema: this.store.schema,\n\t\t\t\t\tsessionId: this.sessionId,\n\t\t\t\t\tsessionStateSnapshot: this.$sessionStateSnapshot.get(),\n\t\t\t\t})\n\t\t\t}\n\t\t\tthis.didLastWriteError = false\n\t\t} catch (e) {\n\t\t\t// set this.shouldDoFullDBWrite because we clear the diffQueue no matter what,\n\t\t\t// so if this is just a temporary error, we will still persist all changes\n\t\t\tthis.shouldDoFullDBWrite = true\n\t\t\tthis.didLastWriteError = true\n\t\t\tconsole.error('failed to store changes in indexed db', e)\n\n\t\t\tshowCantWriteToIndexDbAlert()\n\t\t\tif (typeof window !== 'undefined') {\n\t\t\t\t// adios\n\t\t\t\twindow.location.reload()\n\t\t\t}\n\t\t}\n\n\t\tthis.isPersisting = false",
+        "detail": {
+          "unitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.doPersist#method:TLLocalSyncClient.doPersist",
+          "fileId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient.doPersist",
+          "unitKind": "method",
+          "name": "doPersist",
+          "qualifiedName": "TLLocalSyncClient.doPersist",
+          "parentUnitId": "packages/editor/src/lib/utils/sync/TLLocalSyncClient.ts__TLLocalSyncClient#class:TLLocalSyncClient",
+          "startLine": 357,
+          "endLine": 411,
+          "signature": "private async doPersist()",
+          "parameters": [],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "No other persistence operation is currently in progress.",
+            "The client has not been disposed."
+          ],
+          "postconditions": [
+            "The persistence-in-progress flag is cleared after the persistence attempt.",
+            "The current diff queue is replaced with an empty queue before the database write.",
+            "A successful write clears the last-write-error flag.",
+            "A failed write requests a full database write on the next attempt and sets the last-write-error flag."
+          ],
+          "invariants": [
+            "Diffs arriving while the database operation is in progress remain in the newly active diff queue and are not included in the detached queue for the current write.",
+            "Full snapshot writes include the store schema, serialized store snapshot, session ID, and current session-state snapshot.",
+            "Incremental writes exclude UPDATE_INSTANCE_STATE entries and persist the remaining diffs after squashing."
+          ],
+          "edgeCases": [
+            "If the client is already disposed, the method returns without changing persistence state or writing to IndexedDB.",
+            "If a full write is requested, the full-write flag is cleared before the asynchronous database operation; a failure restores the request for a future full write.",
+            "If the diff queue contains only UPDATE_INSTANCE_STATE entries, the incremental write receives the result of squashing an empty filtered list.",
+            "If the IndexedDB write rejects, the error is swallowed after logging, the alert is shown, and the browser is reloaded when window is available.",
+            "If persistence is invoked while another persistence operation is active, the assertion fails before the queue is modified."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Assertion failure with message 'persist already in progress' when persistence is already in progress."
+            ],
+            "reverts": [],
+            "onInvalidInput": "Not applicable; the method has no parameters. Database write failures are caught and converted into retry state, an alert, and an optional browser reload.",
+            "returnsOnError": "Resolves with undefined after handled database-write failures; the concurrency assertion is not handled by this method."
+          },
+          "stateMutations": [
+            "Sets isPersisting to true during the persistence attempt and back to false afterward.",
+            "Replaces diffQueue with an empty array while retaining the detached queue for the current write.",
+            "Clears shouldDoFullDBWrite before a full snapshot attempt and sets it to true when any database write fails.",
+            "Sets didLastWriteError to false after success and true after failure."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "assert", "source": null, "kind": "internal" },
+            { "name": "debug", "source": "TLLocalSyncClient", "kind": "internal" },
+            { "name": "db.storeSnapshot", "source": "IndexedDB persistence dependency", "kind": "external" },
+            { "name": "store.serialize", "source": "local store dependency", "kind": "external" },
+            { "name": "db.storeChanges", "source": "IndexedDB persistence dependency", "kind": "external" },
+            { "name": "squashRecordDiffs", "source": null, "kind": "internal" },
+            { "name": "console.error", "source": "global console", "kind": "external" },
+            { "name": "showCantWriteToIndexDbAlert", "source": null, "kind": "external" },
+            { "name": "window.location.reload", "source": "browser window", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "UPDATE_INSTANCE_STATE",
+            "RecordsDiff<UnknownRecord>",
+            "this.store.schema",
+            "this.store.serialize()",
+            "this.sessionId",
+            "this.$sessionStateSnapshot.get()"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Full writes call storeSnapshot({ schema, snapshot, sessionId, sessionStateSnapshot }). Incremental writes call storeChanges({ changes, schema, sessionId, sessionStateSnapshot }), where changes is the squashed diff queue after removing UPDATE_INSTANCE_STATE entries.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Persists the queued local store changes to IndexedDB, using either a full snapshot or squashed record diffs. Failed writes are marked for a later full rewrite and trigger the user alert and browser reload behavior.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "persist already in progress",
+              "role": "Assertion message for concurrent persistence attempts."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "doPersist is invoked and the snapshot write succeeds",
+              "then": "db.storeSnapshot is called with the current schema, serialized store snapshot, session ID, and current session-state snapshot; shouldDoFullDBWrite becomes false, didLastWriteError becomes false, and isPersisting becomes false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "doPersist is invoked and the changes write succeeds",
+              "then": "db.storeChanges receives the squashed ordinary diffs and current session metadata, while UPDATE_INSTANCE_STATE is excluded and didLastWriteError becomes false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "doPersist is invoked",
+              "then": "The error is handled without propagating from the method, shouldDoFullDBWrite becomes true, didLastWriteError becomes true, the cannot-write alert is shown, and window.location.reload is requested when window exists.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "aa22a4574e0b16e54cc1240c569dd372f22aed156bfa7a486c77315bd807649d"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/editor/src/lib/utils/sync/alerts.ts",
+    "packages/editor/src/lib/config/TLSessionStateSnapshot.ts",
+    "packages/editor/src/lib/utils/sync/LocalIndexedDb.ts"
+  ],
+  "in": [
+    "packages/editor/src/lib/utils/sync/TLLocalSyncClient.test.ts",
+    "packages/editor/src/lib/hooks/useLocalStore.ts"
+  ],
+  "externals": ["@tldraw/state", "@tldraw/store", "@tldraw/tlschema", "@tldraw/utils"],
+  "impact": {
+    "seeds": 7,
+    "callers": 2,
+    "impactedFiles": [
+      "packages/editor/src/lib/utils/sync/TLLocalSyncClient.test.ts",
+      "packages/editor/src/lib/hooks/useLocalStore.ts"
+    ]
+  }
+}

@@ -1,0 +1,1100 @@
+{
+  "relativePath": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts",
+  "language": "typescript",
+  "sha256": "1035fc7a047fd56c2fa9eb2bcf8d73c9c6cb71c5a8f9f2fae15ba0ec3680ce22",
+  "sizeBytes": 7494,
+  "tokenCount": 1874,
+  "lineCount": 282,
+  "analysedAt": "2026-09-04T07:29:56.155Z",
+  "analysis": {
+    "module": {
+      "purpose": "This file coordinates workflow email reminders by generating event- or form-based email content, scheduling or sending messages, persisting reminder records, and cancelling scheduled reminders.",
+      "summary": "The module handles two reminder paths: booking event workflows calculate trigger-relative send times and generate contextual email payloads, while routing form workflows render submitted responses into customizable email templates and send immediately. It persists scheduled reminders through Prisma, delegates email delivery to the workflow email provider, integrates task cancellation for scheduled jobs, and retains a legacy cancellation path for older SendGrid references.",
+      "businessContext": "This supports automated customer and participant communications around bookings and routing-form workflows.\nFailures can prevent confirmations, reminders, or workflow notifications from being delivered or cancelled correctly.",
+      "classes": [
+        "ScheduleReminderArgs (~L21-31): Defines workflow timing, recipients, templates, and contextual reminder data.",
+        "scheduleEmailReminderArgs (~L33-41): Extends reminder inputs with email action and verification settings.",
+        "SendEmailReminderParams (~L43-62): Encapsulates email payload, recipients, scheduling, and workflow identifiers."
+      ],
+      "functions": [
+        "sendOrScheduleWorkflowEmailWithReminder (~L64-87): Persists scheduled reminders and delegates email delivery or scheduling.",
+        "scheduleEmailReminder (~L89-101): Validates workflow verification and routes reminders by input type.",
+        "scheduleEmailReminderForEvt (~L103-166): Generates and sends booking-event emails at calculated workflow times.",
+        "scheduleEmailReminderForForm (~L169-224): Renders routing-form variables into immediate workflow email content.",
+        "deleteScheduledEmailReminder (~L226-281): Cancels tasker jobs and removes or marks reminders cancelled."
+      ],
+      "keywords": [
+        "workflow email reminders",
+        "WorkflowTriggerEvents",
+        "WorkflowReminderRepository",
+        "tasker cancellation",
+        "routing form responses",
+        "custom email templates",
+        "booking seat references",
+        "scheduled workflow emails",
+        "SendGrid legacy cancellation",
+        "calendar event inclusion"
+      ],
+      "ontologyConcepts": [
+        "workflow orchestration",
+        "scheduled notification",
+        "template rendering",
+        "event-triggered communication",
+        "form-driven personalization",
+        "reminder lifecycle",
+        "task cancellation",
+        "email delivery"
+      ],
+      "businessEntities": [
+        "Booking",
+        "Workflow",
+        "WorkflowReminder",
+        "Email",
+        "FormSubmission",
+        "RoutingFormResponse",
+        "User"
+      ],
+      "systemCapabilities": [
+        "Schedule workflow email reminders",
+        "Generate booking-aware notification content",
+        "Personalize emails from form responses",
+        "Persist reminder scheduling metadata",
+        "Cancel pending reminder tasks",
+        "Send immediate workflow notifications"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "@calcom/dayjs",
+          "symbols": ["dayjs"],
+          "anchor": {
+            "startLine": 1,
+            "endLine": 1
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "symbols": ["BookingSeatRepository"],
+          "anchor": {
+            "startLine": 2,
+            "endLine": 2
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/EmailWorkflowService",
+          "symbols": ["EmailWorkflowService"],
+          "anchor": {
+            "startLine": 3,
+            "endLine": 3
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "symbols": ["WorkflowService"],
+          "anchor": {
+            "startLine": 4,
+            "endLine": 4
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+          "symbols": ["WorkflowReminderRepository"],
+          "anchor": {
+            "startLine": 5,
+            "endLine": 5
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/features/tasker",
+          "symbols": ["tasker"],
+          "anchor": {
+            "startLine": 6,
+            "endLine": 6
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/logger",
+          "symbols": ["logger"],
+          "anchor": {
+            "startLine": 7,
+            "endLine": 7
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/lib/timeFormat",
+          "symbols": ["getTimeFormatStringFromUserTimeFormat"],
+          "anchor": {
+            "startLine": 8,
+            "endLine": 8
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma",
+          "symbols": ["prisma"],
+          "anchor": {
+            "startLine": 9,
+            "endLine": 9
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "@calcom/prisma/enums",
+          "symbols": ["TimeUnit", "WorkflowMethods", "WorkflowTemplates", "WorkflowTriggerEvents"],
+          "anchor": {
+            "startLine": 10,
+            "endLine": 11
+          },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "../types",
+          "symbols": ["BookingInfo", "ScheduleEmailReminderAction", "FormSubmissionData"],
+          "anchor": {
+            "startLine": 13,
+            "endLine": 13
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/types.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/types.ts"
+        },
+        {
+          "spec": "./providers/emailProvider",
+          "symbols": ["sendOrScheduleWorkflowEmails"],
+          "anchor": {
+            "startLine": 14,
+            "endLine": 14
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts"
+        },
+        {
+          "spec": "./reminderScheduler",
+          "symbols": ["WorkflowContextData"],
+          "anchor": {
+            "startLine": 15,
+            "endLine": 15
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/reminderScheduler.ts"
+        },
+        {
+          "spec": "./templates/customTemplate",
+          "symbols": ["VariablesType"],
+          "anchor": {
+            "startLine": 16,
+            "endLine": 16
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts"
+        },
+        {
+          "spec": "./templates/customTemplate",
+          "symbols": ["customTemplate", "transformRoutingFormResponsesToVariableFormat"],
+          "anchor": {
+            "startLine": 17,
+            "endLine": 17
+          },
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedHint": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [
+          "Creates workflow reminder records in Prisma when an email is scheduled.",
+          "Reads, deletes, and updates workflow reminder records in Prisma.",
+          "Writes warning, debug, and error messages through the logger.",
+          "Writes a missing-reminder message to stderr via console.error.",
+          "Cancels scheduled tasks through tasker."
+        ],
+        "network": ["Sends or schedules workflow emails through sendOrScheduleWorkflowEmails."],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        {
+          "kind": "table",
+          "role": "consumes",
+          "address": "workflowReminder",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "queue",
+          "role": "consumes",
+          "address": "sendWorkflowEmails",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "ScheduleReminderArgs",
+          "shape": "export type ScheduleReminderArgs = { triggerEvent: WorkflowTriggerEvents; timeSpan: { time: number | null; timeUnit: TimeUnit | null; }; template?: WorkflowTemplates; sender?: string | null; workflowStepId?: number; seatReferenceUid?: string; } & WorkflowContextData;",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "scheduleEmailReminder",
+          "shape": "export const scheduleEmailReminder = async (args: scheduleEmailReminderArgs) =>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "deleteScheduledEmailReminder",
+          "shape": "export const deleteScheduledEmailReminder = async (reminderId: number) =>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "WorkflowService.processWorkflowScheduledDate",
+          "shape": "WorkflowService.processWorkflowScheduledDate({ workflowTriggerEvent: triggerEvent, time: timeSpan.time, timeUnit: timeSpan.timeUnit, evt })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EmailWorkflowService.generateEmailPayloadForEvtWorkflow",
+          "shape": "emailWorkflowService.generateEmailPayloadForEvtWorkflow({ evt, sendTo, seatReferenceUid, hideBranding, emailSubject, emailBody, sender: sender || \"\", action, template, includeCalendarEvent, triggerEvent })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "sendOrScheduleWorkflowEmails",
+          "shape": "sendOrScheduleWorkflowEmails({ ...mailData, to: sendTo, sendAt: scheduledDate, referenceUid: reminderUid ?? undefined })",
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/providers/emailProvider.ts"
+        },
+        {
+          "name": "customTemplate",
+          "shape": "customTemplate(emailSubject, variables, formData.user.locale, timeFormat)",
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts"
+        },
+        {
+          "name": "transformRoutingFormResponsesToVariableFormat",
+          "shape": "transformRoutingFormResponsesToVariableFormat(formData.responses)",
+          "resolvedRelativePath": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts",
+          "resolvedFileId": "packages/features/ee/workflows/lib/reminders/templates/customTemplate.ts"
+        },
+        {
+          "name": "prisma.workflowReminder.create",
+          "shape": "prisma.workflowReminder.create({ data: { bookingUid: uid, workflowStepId, method: WorkflowMethods.EMAIL, scheduledDate, scheduled: true } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.workflowReminder.findUnique",
+          "shape": "prisma.workflowReminder.findUnique({ where: { id: reminderId } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.workflowReminder.delete",
+          "shape": "prisma.workflowReminder.delete({ where: { id: reminderId } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "prisma.workflowReminder.update",
+          "shape": "prisma.workflowReminder.update({ where: { id: reminderId }, data: { cancelled: true } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "tasker.cancelWithReference",
+          "shape": "tasker.cancelWithReference(uuid, \"sendWorkflowEmails\")",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "sendOrScheduleWorkflowEmailWithReminder",
+          "intent": "Creates a reminder record before sending or scheduling an email.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 64,
+            "endLine": 87
+          }
+        },
+        {
+          "name": "scheduleEmailReminder verification gate",
+          "intent": "Skips unverified workflow steps and logs a warning.",
+          "structureKind": "branch",
+          "predicate": "!verifiedAt",
+          "branchOutcomes": ["warn and return", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 89,
+            "endLine": 101
+          }
+        },
+        {
+          "name": "scheduleEmailReminder dispatch",
+          "intent": "Dispatches to event or form reminder generation.",
+          "structureKind": "branch",
+          "predicate": "args.evt",
+          "branchOutcomes": ["schedule event reminder", "schedule form reminder"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 96,
+            "endLine": 100
+          }
+        },
+        {
+          "name": "scheduleEmailReminderForEvt past-date guard",
+          "intent": "Skips past BEFORE_EVENT reminders.",
+          "structureKind": "branch",
+          "predicate": "scheduledDate &&\n    triggerEvent === WorkflowTriggerEvents.BEFORE_EVENT &&\n    dayjs(scheduledDate).isBefore(dayjs())",
+          "branchOutcomes": ["log and return", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 122,
+            "endLine": 138
+          }
+        },
+        {
+          "name": "scheduleEmailReminderForEvt email generation",
+          "intent": "Generates event email content and sends or schedules it.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 140,
+            "endLine": 165
+          }
+        },
+        {
+          "name": "scheduleEmailReminderForForm templating",
+          "intent": "Templates form email content only when a body exists.",
+          "structureKind": "branch",
+          "predicate": "emailBody",
+          "branchOutcomes": ["transform subject and body", "retain raw subject and wrapped body"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 185,
+            "endLine": 205
+          }
+        },
+        {
+          "name": "deleteScheduledEmailReminder missing-record guard",
+          "intent": "Logs and returns when the reminder record does not exist.",
+          "structureKind": "branch",
+          "predicate": "!workflowReminder",
+          "branchOutcomes": ["log and return", "continue"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 226,
+            "endLine": 238
+          }
+        },
+        {
+          "name": "deleteScheduledEmailReminder cancellation fallback",
+          "intent": "Cancels tasker reminders or applies legacy deletion or cancellation.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": {
+            "startLine": 238,
+            "endLine": 281
+          }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "ScheduleReminderArgs",
+          "signature": "export type ScheduleReminderArgs = {\n  triggerEvent: WorkflowTriggerEvents;\n  timeSpan: {\n    time: number | null;\n    timeUnit: TimeUnit | null;\n  };\n  template?: WorkflowTemplates;\n  sender?: string | null;\n  workflowStepId?: number;\n  seatReferenceUid?: string;\n} & WorkflowContextData;",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 21,
+            "endLine": 31
+          }
+        },
+        {
+          "kind": "type",
+          "name": "scheduleEmailReminderArgs",
+          "signature": "type scheduleEmailReminderArgs = ScheduleReminderArgs & {\n  sendTo: string[];\n  action: ScheduleEmailReminderAction;\n  emailSubject?: string;\n  emailBody?: string;\n  hideBranding?: boolean;\n  includeCalendarEvent?: boolean;\n  verifiedAt: Date | null;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 33,
+            "endLine": 41
+          }
+        },
+        {
+          "kind": "type",
+          "name": "SendEmailReminderParams",
+          "signature": "type SendEmailReminderParams = {\n  mailData: {\n    subject: string;\n    html: string;\n    replyTo?: string;\n    attachments?: {\n      content: string;\n      filename: string;\n      contentType: string;\n      disposition: string;\n    }[];\n    sender?: string | null;\n  };\n  sendTo: string[];\n  triggerEvent: WorkflowTriggerEvents;\n  scheduledDate?: Date | null;\n  uid?: string;\n  workflowStepId?: number;\n  seatReferenceUid?: string;\n};",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 43,
+            "endLine": 62
+          }
+        },
+        {
+          "kind": "function",
+          "name": "sendOrScheduleWorkflowEmailWithReminder",
+          "signature": "const sendOrScheduleWorkflowEmailWithReminder = async (params: SendEmailReminderParams) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 64,
+            "endLine": 64
+          }
+        },
+        {
+          "kind": "function",
+          "name": "scheduleEmailReminder",
+          "signature": "export const scheduleEmailReminder = async (args: scheduleEmailReminderArgs) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 89,
+            "endLine": 89
+          }
+        },
+        {
+          "kind": "function",
+          "name": "scheduleEmailReminderForEvt",
+          "signature": "const scheduleEmailReminderForEvt = async (args: scheduleEmailReminderArgs & { evt: BookingInfo }) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 103,
+            "endLine": 103
+          }
+        },
+        {
+          "kind": "function",
+          "name": "scheduleEmailReminderForForm",
+          "signature": "const scheduleEmailReminderForForm = async (\n  args: scheduleEmailReminderArgs & {\n    formData: FormSubmissionData;\n  }\n) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": {
+            "startLine": 169,
+            "endLine": 173
+          }
+        },
+        {
+          "kind": "function",
+          "name": "deleteScheduledEmailReminder",
+          "signature": "export const deleteScheduledEmailReminder = async (reminderId: number) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": {
+            "startLine": 226,
+            "endLine": 226
+          }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "alias",
+          "name": "ScheduleReminderArgs",
+          "shape": "{\n  triggerEvent: WorkflowTriggerEvents;\n  timeSpan: {\n    time: number | null;\n    timeUnit: TimeUnit | null;\n  };\n  template?: WorkflowTemplates;\n  sender?: string | null;\n  workflowStepId?: number;\n  seatReferenceUid?: string;\n} & WorkflowContextData",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 21,
+            "endLine": 31
+          }
+        },
+        {
+          "kind": "alias",
+          "name": "scheduleEmailReminderArgs",
+          "shape": "ScheduleReminderArgs & {\n  sendTo: string[];\n  action: ScheduleEmailReminderAction;\n  emailSubject?: string;\n  emailBody?: string;\n  hideBranding?: boolean;\n  includeCalendarEvent?: boolean;\n  verifiedAt: Date | null;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 33,
+            "endLine": 41
+          }
+        },
+        {
+          "kind": "alias",
+          "name": "SendEmailReminderParams",
+          "shape": "{\n  mailData: {\n    subject: string;\n    html: string;\n    replyTo?: string;\n    attachments?: {\n      content: string;\n      filename: string;\n      contentType: string;\n      disposition: string;\n    }[];\n    sender?: string | null;\n  };\n  sendTo: string[];\n  triggerEvent: WorkflowTriggerEvents;\n  scheduledDate?: Date | null;\n  uid?: string;\n  workflowStepId?: number;\n  seatReferenceUid?: string;\n}",
+          "discriminant": null,
+          "anchor": {
+            "startLine": 43,
+            "endLine": 62
+          }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": {
+        "paragraph": "",
+        "tokenEstimate": 0
+      },
+      "edgeCases": [
+        {
+          "inputShape": "verifiedAt is null or otherwise falsy",
+          "handled": true,
+          "behavior": "Logs that the workflow step is not verified and returns without sending or scheduling.",
+          "anchor": {
+            "startLine": 90,
+            "endLine": 94
+          }
+        },
+        {
+          "inputShape": "args.evt is absent",
+          "handled": true,
+          "behavior": "Uses form submission data and sends immediately with scheduledDate set to null.",
+          "anchor": {
+            "startLine": 96,
+            "endLine": 100
+          }
+        },
+        {
+          "inputShape": "BEFORE_EVENT scheduled date is in the past",
+          "handled": true,
+          "behavior": "Logs that the reminder is being skipped and returns without generating or sending email.",
+          "anchor": {
+            "startLine": 129,
+            "endLine": 138
+          }
+        },
+        {
+          "inputShape": "emailBody is empty or otherwise falsy",
+          "handled": true,
+          "behavior": "Keeps the supplied subject and wraps the untemplated body in a body element.",
+          "anchor": {
+            "startLine": 185,
+            "endLine": 188
+          }
+        },
+        {
+          "inputShape": "emailBody is truthy",
+          "handled": true,
+          "behavior": "Transforms routing responses and applies custom templating using the user's locale and time format.",
+          "anchor": {
+            "startLine": 190,
+            "endLine": 205
+          }
+        },
+        {
+          "inputShape": "reminderId does not identify a workflow reminder",
+          "handled": true,
+          "behavior": "Writes an error to stderr and returns without attempting cancellation.",
+          "anchor": {
+            "startLine": 226,
+            "endLine": 235
+          }
+        },
+        {
+          "inputShape": "workflow reminder has a uuid but tasker cancellation returns no taskId",
+          "handled": true,
+          "behavior": "Falls through to the legacy referenceId-based deletion or cancellation path.",
+          "anchor": {
+            "startLine": 238,
+            "endLine": 267
+          }
+        },
+        {
+          "inputShape": "workflow reminder has no referenceId",
+          "handled": true,
+          "behavior": "Deletes the workflow reminder record and returns.",
+          "anchor": {
+            "startLine": 259,
+            "endLine": 267
+          }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs an error when tasker cancellation or its associated deletion fails, then continues to the legacy fallback.",
+          "fallback": "Attempts legacy deletion or cancellation.",
+          "anchor": {
+            "startLine": 240,
+            "endLine": 253
+          }
+        },
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Logs an error when the legacy reminder deletion or update fails.",
+          "fallback": null,
+          "anchor": {
+            "startLine": 259,
+            "endLine": 280
+          }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Event reminders require args.evt with a usable uid, which is cast to string without validation.",
+          "anchor": {
+            "startLine": 103,
+            "endLine": 120
+          }
+        },
+        {
+          "kind": "schema",
+          "description": "Form reminders require formData.user.timeFormat, formData.user.locale, and formData.responses.",
+          "anchor": {
+            "startLine": 190,
+            "endLine": 197
+          }
+        },
+        {
+          "kind": "caller",
+          "description": "The caller supplies a verifiedAt value before reminder scheduling is allowed.",
+          "anchor": {
+            "startLine": 89,
+            "endLine": 94
+          }
+        },
+        {
+          "kind": "config",
+          "description": "Workflow trigger and time-span values are interpreted by WorkflowService.processWorkflowScheduledDate.",
+          "anchor": {
+            "startLine": 122,
+            "endLine": 127
+          }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact scheduling and email-delivery behavior do the imported services implement for each trigger and time unit?",
+          "affects": "section_map, edge_cases",
+          "anchor": {
+            "startLine": 122,
+            "endLine": 127
+          },
+          "resolution": null
+        },
+        {
+          "question": "What happens inside customTemplate when form variables, locale, or time format values are malformed?",
+          "affects": "edge_cases, error_handling",
+          "anchor": {
+            "startLine": 193,
+            "endLine": 205
+          },
+          "resolution": null
+        },
+        {
+          "question": "Does sendOrScheduleWorkflowEmails perform network delivery synchronously or enqueue delivery for later processing?",
+          "affects": "side_effects.network",
+          "anchor": {
+            "startLine": 81,
+            "endLine": 86
+          },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": {
+        "lineCount": 0,
+        "declarationCount": 0,
+        "maxNestingDepth": 0,
+        "roughCyclomatic": 0
+      },
+      "reconstructionHints": {
+        "namingStyle": "unknown",
+        "returnStyle": "n/a",
+        "commentStyle": "none",
+        "dialect": ""
+      },
+      "moduleContractTests": [
+        {
+          "testId": "unverified-workflow-step-is-skipped",
+          "scenario": "A workflow step has not been verified.",
+          "given": ["verifiedAt = null"],
+          "when": "await scheduleEmailReminder(args)",
+          "then": "No reminder is scheduled and the function returns without sending an email.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Unverified workflow steps must never trigger email delivery."
+        },
+        {
+          "testId": "past-before-event-reminder-is-skipped",
+          "scenario": "A BEFORE_EVENT reminder resolves to a date in the past.",
+          "given": [
+            "args.evt is defined",
+            "triggerEvent === WorkflowTriggerEvents.BEFORE_EVENT",
+            "scheduledDate is before the current time"
+          ],
+          "when": "await scheduleEmailReminder(args)",
+          "then": "No workflow reminder is created and no email is sent.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Past pre-event reminders cannot be delivered at their intended time."
+        },
+        {
+          "testId": "form-reminder-sends-immediately",
+          "scenario": "A verified form submission contains an email body.",
+          "given": ["args.evt is undefined", "verifiedAt is a Date"],
+          "when": "await scheduleEmailReminder(args)",
+          "then": "The generated email is sent immediately without creating a scheduled workflow reminder.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Form-triggered reminders are explicitly documented as immediate."
+        },
+        {
+          "testId": "delete-cancelled-task-deletes-reminder",
+          "scenario": "A reminder has a tasker UUID and tasker cancellation succeeds.",
+          "given": [
+            "workflowReminder.uuid is truthy",
+            "tasker.cancelWithReference(uuid, \"sendWorkflowEmails\") returns a task ID"
+          ],
+          "when": "await deleteScheduledEmailReminder(reminderId)",
+          "then": "The workflow reminder is deleted.",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Successful task cancellation removes the persisted reminder."
+        },
+        {
+          "testId": "delete-legacy-reminder-marks-cancelled",
+          "scenario": "A legacy reminder has no tasker UUID but has a reference ID.",
+          "given": ["workflowReminder.uuid is falsy", "workflowReminder.referenceId is truthy"],
+          "when": "await deleteScheduledEmailReminder(reminderId)",
+          "then": "The workflow reminder is updated with cancelled: true.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Legacy SendGrid reminders use cancellation state instead of task deletion."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "log",
+        "ScheduleReminderArgs",
+        "scheduleEmailReminderArgs",
+        "SendEmailReminderParams",
+        "sendOrScheduleWorkflowEmailWithReminder",
+        "scheduleEmailReminder",
+        "scheduleEmailReminderForEvt",
+        "scheduleEmailReminderForForm",
+        "deleteScheduledEmailReminder"
+      ],
+      "moduleLevelCode": "import dayjs from \"@calcom/dayjs\";\nimport { BookingSeatRepository } from \"@calcom/features/bookings/repositories/BookingSeatRepository\";\nimport { EmailWorkflowService } from \"@calcom/features/ee/workflows/lib/service/EmailWorkflowService\";\nimport { WorkflowService } from \"@calcom/features/ee/workflows/lib/service/WorkflowService\";\nimport { WorkflowReminderRepository } from \"@calcom/features/ee/workflows/repositories/WorkflowReminderRepository\";\nimport tasker from \"@calcom/features/tasker\";\nimport logger from \"@calcom/lib/logger\";\nimport { getTimeFormatStringFromUserTimeFormat } from \"@calcom/lib/timeFormat\";\nimport prisma from \"@calcom/prisma\";\nimport type { TimeUnit } from \"@calcom/prisma/enums\";\nimport { WorkflowMethods, WorkflowTemplates, WorkflowTriggerEvents } from \"@calcom/prisma/enums\";\n\nimport type { BookingInfo, ScheduleEmailReminderAction, FormSubmissionData } from \"../types\";\nimport { sendOrScheduleWorkflowEmails } from \"./providers/emailProvider\";\nimport type { WorkflowContextData } from \"./reminderScheduler\";\nimport type { VariablesType } from \"./templates/customTemplate\";\nimport customTemplate, { transformRoutingFormResponsesToVariableFormat } from \"./templates/customTemplate\";",
+      "exports": [
+        {
+          "name": "ScheduleReminderArgs",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "scheduleEmailReminder",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        },
+        {
+          "name": "deleteScheduledEmailReminder",
+          "kind": "own",
+          "fromSpec": null,
+          "exportedAs": null
+        }
+      ],
+      "importSymbolMap": [
+        {
+          "symbol": "dayjs",
+          "module": "@calcom/dayjs",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "BookingSeatRepository",
+          "module": "@calcom/features/bookings/repositories/BookingSeatRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "EmailWorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/EmailWorkflowService",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowService",
+          "module": "@calcom/features/ee/workflows/lib/service/WorkflowService",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowReminderRepository",
+          "module": "@calcom/features/ee/workflows/repositories/WorkflowReminderRepository",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "tasker",
+          "module": "@calcom/features/tasker",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "logger",
+          "module": "@calcom/lib/logger",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "getTimeFormatStringFromUserTimeFormat",
+          "module": "@calcom/lib/timeFormat",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "prisma",
+          "module": "@calcom/prisma",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "TimeUnit",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowMethods",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowTemplates",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowTriggerEvents",
+          "module": "@calcom/prisma/enums",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "BookingInfo",
+          "module": "../types",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "ScheduleEmailReminderAction",
+          "module": "../types",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "FormSubmissionData",
+          "module": "../types",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "sendOrScheduleWorkflowEmails",
+          "module": "./providers/emailProvider",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "WorkflowContextData",
+          "module": "./reminderScheduler",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "VariablesType",
+          "module": "./templates/customTemplate",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "customTemplate",
+          "module": "./templates/customTemplate",
+          "alias": null,
+          "kind": "internal"
+        },
+        {
+          "symbol": "transformRoutingFormResponsesToVariableFormat",
+          "module": "./templates/customTemplate",
+          "alias": null,
+          "kind": "internal"
+        }
+      ],
+      "fileConstants": [
+        {
+          "name": "log",
+          "value": "logger.getSubLogger({ prefix: [\"[emailReminderManager]\"] })",
+          "kind": "const"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__ScheduleReminderArgs_1#type_alias:ScheduleReminderArgs",
+        "unitKind": "type_alias",
+        "name": "ScheduleReminderArgs",
+        "qualifiedName": "ScheduleReminderArgs",
+        "parentUnitId": null,
+        "startLine": 21,
+        "endLine": 31,
+        "isBehavioral": false,
+        "source": "export type ScheduleReminderArgs = {\n  triggerEvent: WorkflowTriggerEvents;\n  timeSpan: {\n    time: number | null;\n    timeUnit: TimeUnit | null;\n  };\n  template?: WorkflowTemplates;\n  sender?: string | null;\n  workflowStepId?: number;\n  seatReferenceUid?: string;\n} & WorkflowContextData;"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__scheduleEmailReminderArgs_2#type_alias:scheduleEmailReminderArgs",
+        "unitKind": "type_alias",
+        "name": "scheduleEmailReminderArgs",
+        "qualifiedName": "scheduleEmailReminderArgs",
+        "parentUnitId": null,
+        "startLine": 33,
+        "endLine": 41,
+        "isBehavioral": false,
+        "source": "type scheduleEmailReminderArgs = ScheduleReminderArgs & {\n  sendTo: string[];\n  action: ScheduleEmailReminderAction;\n  emailSubject?: string;\n  emailBody?: string;\n  hideBranding?: boolean;\n  includeCalendarEvent?: boolean;\n  verifiedAt: Date | null;\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__SendEmailReminderParams_3#type_alias:SendEmailReminderParams",
+        "unitKind": "type_alias",
+        "name": "SendEmailReminderParams",
+        "qualifiedName": "SendEmailReminderParams",
+        "parentUnitId": null,
+        "startLine": 43,
+        "endLine": 62,
+        "isBehavioral": false,
+        "source": "type SendEmailReminderParams = {\n  mailData: {\n    subject: string;\n    html: string;\n    replyTo?: string;\n    attachments?: {\n      content: string;\n      filename: string;\n      contentType: string;\n      disposition: string;\n    }[];\n    sender?: string | null;\n  };\n  sendTo: string[];\n  triggerEvent: WorkflowTriggerEvents;\n  scheduledDate?: Date | null;\n  uid?: string;\n  workflowStepId?: number;\n  seatReferenceUid?: string;\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__sendOrScheduleWorkflowEmailWithReminder_4#function:sendOrScheduleWorkflowEmailWithReminder",
+        "unitKind": "function",
+        "name": "sendOrScheduleWorkflowEmailWithReminder",
+        "qualifiedName": "sendOrScheduleWorkflowEmailWithReminder",
+        "parentUnitId": null,
+        "startLine": 64,
+        "endLine": 87,
+        "isBehavioral": true,
+        "source": "const sendOrScheduleWorkflowEmailWithReminder = async (params: SendEmailReminderParams) => {\n  const { mailData, sendTo, scheduledDate, uid, workflowStepId } = params;\n\n  let reminderUid;\n  if (scheduledDate) {\n    const reminder = await prisma.workflowReminder.create({\n      data: {\n        bookingUid: uid,\n        workflowStepId,\n        method: WorkflowMethods.EMAIL,\n        scheduledDate,\n        scheduled: true,\n      },\n    });\n    reminderUid = reminder.uuid;\n  }\n\n  await sendOrScheduleWorkflowEmails({\n    ...mailData,\n    to: sendTo,\n    sendAt: scheduledDate,\n    referenceUid: reminderUid ?? undefined,\n  });\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__scheduleEmailReminder_5#function:scheduleEmailReminder",
+        "unitKind": "function",
+        "name": "scheduleEmailReminder",
+        "qualifiedName": "scheduleEmailReminder",
+        "parentUnitId": null,
+        "startLine": 89,
+        "endLine": 101,
+        "isBehavioral": true,
+        "source": "export const scheduleEmailReminder = async (args: scheduleEmailReminderArgs) => {\n  const { verifiedAt, workflowStepId } = args;\n  if (!verifiedAt) {\n    log.warn(`Workflow step ${workflowStepId} not yet verified`);\n    return;\n  }\n\n  if (args.evt) {\n    await scheduleEmailReminderForEvt(args);\n  } else {\n    await scheduleEmailReminderForForm(args);\n  }\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__scheduleEmailReminderForEvt_6#function:scheduleEmailReminderForEvt",
+        "unitKind": "function",
+        "name": "scheduleEmailReminderForEvt",
+        "qualifiedName": "scheduleEmailReminderForEvt",
+        "parentUnitId": null,
+        "startLine": 103,
+        "endLine": 166,
+        "isBehavioral": true,
+        "source": "const scheduleEmailReminderForEvt = async (args: scheduleEmailReminderArgs & { evt: BookingInfo }) => {\n  const {\n    evt,\n    triggerEvent,\n    timeSpan,\n    template,\n    sender,\n    workflowStepId,\n    seatReferenceUid,\n    sendTo,\n    emailSubject = \"\",\n    emailBody = \"\",\n    hideBranding,\n    includeCalendarEvent,\n    action,\n  } = args;\n\n  const uid = evt.uid as string;\n\n  const scheduledDate = WorkflowService.processWorkflowScheduledDate({\n    workflowTriggerEvent: triggerEvent,\n    time: timeSpan.time,\n    timeUnit: timeSpan.timeUnit,\n    evt,\n  });\n\n  if (\n    scheduledDate &&\n    triggerEvent === WorkflowTriggerEvents.BEFORE_EVENT &&\n    dayjs(scheduledDate).isBefore(dayjs())\n  ) {\n    log.debug(\n      `Skipping reminder for workflow step ${workflowStepId} - scheduled date ${scheduledDate} is in the past`\n    );\n    return;\n  }\n\n  const workflowReminderRepository = new WorkflowReminderRepository(prisma);\n  const bookingSeatRepository = new BookingSeatRepository(prisma);\n  const emailWorkflowService = new EmailWorkflowService(workflowReminderRepository, bookingSeatRepository);\n  const mailData = await emailWorkflowService.generateEmailPayloadForEvtWorkflow({\n    evt,\n    sendTo,\n    seatReferenceUid,\n    hideBranding,\n    emailSubject,\n    emailBody,\n    sender: sender || \"\",\n    action,\n    template,\n    includeCalendarEvent,\n    triggerEvent,\n  });\n\n  await sendOrScheduleWorkflowEmailWithReminder({\n    mailData,\n    sendTo,\n    triggerEvent,\n    scheduledDate,\n    uid,\n    workflowStepId,\n    seatReferenceUid,\n  });\n};"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__scheduleEmailReminderForForm_7#function:scheduleEmailReminderForForm",
+        "unitKind": "function",
+        "name": "scheduleEmailReminderForForm",
+        "qualifiedName": "scheduleEmailReminderForForm",
+        "parentUnitId": null,
+        "startLine": 169,
+        "endLine": 172,
+        "isBehavioral": true,
+        "source": "const scheduleEmailReminderForForm = async (\n  args: scheduleEmailReminderArgs & {\n    formData: FormSubmissionData;\n  }"
+      },
+      {
+        "unitId": "packages/features/ee/workflows/lib/reminders/emailReminderManager.ts__deleteScheduledEmailReminder_8#function:deleteScheduledEmailReminder",
+        "unitKind": "function",
+        "name": "deleteScheduledEmailReminder",
+        "qualifiedName": "deleteScheduledEmailReminder",
+        "parentUnitId": null,
+        "startLine": 226,
+        "endLine": 281,
+        "isBehavioral": true,
+        "source": "export const deleteScheduledEmailReminder = async (reminderId: number) => {\n  const workflowReminder = await prisma.workflowReminder.findUnique({\n    where: {\n      id: reminderId,\n    },\n  });\n\n  if (!workflowReminder) {\n    console.error(\"Workflow reminder not found\");\n    return;\n  }\n\n  const { uuid, referenceId } = workflowReminder;\n  if (uuid) {\n    try {\n      const taskId = await tasker.cancelWithReference(uuid, \"sendWorkflowEmails\");\n      if (taskId) {\n        await prisma.workflowReminder.delete({\n          where: {\n            id: reminderId,\n          },\n        });\n\n        return;\n      }\n    } catch (error) {\n      log.error(`Error canceling/deleting reminder with tasker. Error: ${error}`);\n    }\n  }\n\n  /**\n   * @deprecated only needed for SendGrid, use SMTP with tasker instead\n   */\n  try {\n    if (!referenceId) {\n      await prisma.workflowReminder.delete({\n        where: {\n          id: reminderId,\n        },\n      });\n\n      return;\n    }\n\n    await prisma.workflowReminder.update({\n      where: {\n        id: reminderId,\n      },\n      data: {\n        cancelled: true,\n      },\n    });\n  } catch (error) {\n    log.error(`Error canceling reminder with error ${error}`);\n  }\n};"
+      }
+    ],
+    "extractedUnitCount": 8,
+    "unreconciledUnitNames": []
+  },
+  "tokenUsage": {
+    "inputTokens": 17115,
+    "outputTokens": 12630,
+    "costUsd": 0
+  },
+  "model": "us.openai.gpt-5.6-luna"
+}

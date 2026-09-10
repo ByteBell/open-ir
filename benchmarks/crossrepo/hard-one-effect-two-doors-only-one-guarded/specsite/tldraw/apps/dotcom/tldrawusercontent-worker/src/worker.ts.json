@@ -1,0 +1,665 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "apps/dotcom/tldrawusercontent-worker/src/worker.ts",
+    "language": "typescript",
+    "sizeBytes": 2896,
+    "tokenCount": 723,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:27:29.388Z",
+    "module": {
+      "purpose": "Cloudflare Worker entrypoint for serving and uploading user assets, enforcing origin and upload authorization, and coordinating asynchronous document-asset association.",
+      "summary": "This module defines the edge worker that configures a CORS-aware router for user asset retrieval and upload. Requests pass through preflight and origin validation middleware, GET requests read from R2, and POST requests optionally validate document access through the sync worker before uploading. Successful app-file uploads enqueue a database association with retry handling, while association failures are logged without invalidating the completed storage upload.",
+      "businessContext": "Supports tldraw document asset storage and access. Failures can block asset delivery or leave uploaded blobs temporarily unassociated with documents.",
+      "classes": ["Worker (~L20-91): Cloudflare entrypoint routing authorized asset reads, uploads, and API handling"],
+      "functions": ["fetch (~L82-90): Delegates requests through the configured router and applies CORS responses"],
+      "keywords": [
+        "Cloudflare Workers",
+        "R2 asset storage",
+        "CORS",
+        "origin validation",
+        "upload authorization",
+        "sync worker",
+        "asset association",
+        "transient retry"
+      ],
+      "ontologyConcepts": [
+        "authorization",
+        "object storage",
+        "request routing",
+        "origin policy",
+        "asynchronous association",
+        "retry handling"
+      ],
+      "businessEntities": ["user asset", "document", "file", "R2 object", "asset association", "user"],
+      "systemCapabilities": [
+        "Serve user assets",
+        "Validate upload access",
+        "Upload blobs to R2",
+        "Queue document-asset associations",
+        "Enforce allowed origins",
+        "Apply CORS responses"
+      ],
+      "configDependencies": ["UPLOADS", "SYNC_WORKER"],
+      "importsInternal": [
+        {
+          "spec": "./types",
+          "symbols": ["Environment"],
+          "anchor": { "startLine": 18, "endLine": 18 },
+          "resolvedRelativePath": "apps/dotcom/tldrawusercontent-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/tldrawusercontent-worker/src/types.ts",
+          "resolvedHint": "apps/dotcom/tldrawusercontent-worker/src/types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/worker-shared",
+          "symbols": [
+            "blockUnknownOrigins",
+            "createRouter",
+            "handleApiRequest",
+            "handleUserAssetGet",
+            "handleUserAssetUpload",
+            "isAllowedOrigin",
+            "notFound",
+            "retry",
+            "TRANSIENT_RETRY_OPTIONS"
+          ],
+          "package": "@tldraw/worker-shared",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 15 }
+        },
+        {
+          "spec": "cloudflare:workers",
+          "symbols": ["WorkerEntrypoint"],
+          "package": "cloudflare",
+          "subpath": "workers",
+          "isBuiltin": true,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        },
+        {
+          "spec": "itty-router",
+          "symbols": ["cors"],
+          "package": "itty-router",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 17, "endLine": 17 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Logs failed asset-association queueing through console.error."],
+        "network": [
+          "Calls SYNC_WORKER.validateUpload and SYNC_WORKER.confirmUpload with transient retry options.",
+          "Reads from and uploads to the configured R2 bucket through asset handlers."
+        ],
+        "env": ["Reads the UPLOADS and SYNC_WORKER bindings from the worker environment."],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [
+        { "kind": "http", "role": "provides", "address": "GET /:objectName", "payloadRef": null, "rawKind": null },
+        { "kind": "http", "role": "provides", "address": "POST /:objectName", "payloadRef": null, "rawKind": null },
+        { "kind": "blob", "role": "consumes", "address": "UPLOADS", "payloadRef": null, "rawKind": null },
+        {
+          "kind": "ipc",
+          "role": "consumes",
+          "address": "SYNC_WORKER.validateUpload",
+          "payloadRef": null,
+          "rawKind": null
+        },
+        {
+          "kind": "ipc",
+          "role": "consumes",
+          "address": "SYNC_WORKER.confirmUpload",
+          "payloadRef": null,
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "Worker",
+          "shape": "export default class Worker extends WorkerEntrypoint<Environment>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "GET /:objectName",
+          "shape": ".get('/:objectName', async (request) => { ... })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "POST /:objectName",
+          "shape": ".post('/:objectName', async (request) => { ... })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "fetch",
+          "shape": "override async fetch(request: Request)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Environment",
+          "shape": "WorkerEntrypoint<Environment>",
+          "resolvedRelativePath": "apps/dotcom/tldrawusercontent-worker/src/types.ts",
+          "resolvedFileId": "apps/dotcom/tldrawusercontent-worker/src/types.ts"
+        },
+        {
+          "name": "validateUpload",
+          "shape": "this.env.SYNC_WORKER.validateUpload(fileId, authHeader)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "confirmUpload",
+          "shape": "this.env.SYNC_WORKER.confirmUpload(objectName, fileId, userId)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleUserAssetGet",
+          "shape": "handleUserAssetGet({ request, bucket: this.env.UPLOADS, objectName, context: this.ctx })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleUserAssetUpload",
+          "shape": "handleUserAssetUpload({ headers: request.headers, body: request.body, bucket: this.env.UPLOADS, objectName })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleApiRequest",
+          "shape": "handleApiRequest({ router: this.router, request, env: this.env, ctx: this.ctx, after: corsify })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isAllowedOrigin",
+          "shape": "cors({ origin: isAllowedOrigin })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "cors_initialization",
+          "intent": "Creates origin-aware preflight and response-wrapping handlers.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 18, "endLine": 18 }
+        },
+        {
+          "name": "router_configuration",
+          "intent": "Builds ordered middleware and asset routes with a fallback.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 21, "endLine": 80 }
+        },
+        {
+          "name": "asset_get",
+          "intent": "Retrieves an object from user asset storage.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 24, "endLine": 29 }
+        },
+        {
+          "name": "upload_validation",
+          "intent": "Validates optional document access before writing an app asset.",
+          "structureKind": "branch",
+          "predicate": "fileId",
+          "branchOutcomes": ["fileId present", "fileId absent"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 42, "endLine": 55 }
+        },
+        {
+          "name": "validation_failure",
+          "intent": "Maps validation failures to not-found or forbidden responses.",
+          "structureKind": "branch",
+          "predicate": "!validation.ok",
+          "branchOutcomes": ["validation failed", "validation succeeded"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 49, "endLine": 52 }
+        },
+        {
+          "name": "asset_upload",
+          "intent": "Writes the request body to user asset storage.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 56, "endLine": 61 }
+        },
+        {
+          "name": "association_queue",
+          "intent": "Retries asynchronous document-asset association after successful uploads.",
+          "structureKind": "try",
+          "predicate": "res.status === 200 && fileId",
+          "branchOutcomes": ["association succeeds", "association throws"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 67, "endLine": 76 }
+        },
+        {
+          "name": "fetch_dispatch",
+          "intent": "Dispatches requests and applies CORS to the resulting response.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 82, "endLine": 90 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "class",
+          "name": "Worker",
+          "signature": "export default class Worker extends WorkerEntrypoint<Environment> {",
+          "generics": "<Environment>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 20, "endLine": 20 }
+        },
+        {
+          "kind": "method",
+          "name": "fetch",
+          "signature": "override async fetch(request: Request)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 82, "endLine": 82 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "POST request without a fileId query parameter",
+          "handled": true,
+          "behavior": "Skips sync-worker authorization and association, then uploads the asset directly.",
+          "anchor": { "startLine": 38, "endLine": 55 }
+        },
+        {
+          "inputShape": "POST request whose upload validation reports File not found",
+          "handled": true,
+          "behavior": "Returns a 404 JSON error response.",
+          "anchor": { "startLine": 49, "endLine": 51 }
+        },
+        {
+          "inputShape": "POST request whose upload validation fails for another reason",
+          "handled": true,
+          "behavior": "Returns a 403 JSON error response.",
+          "anchor": { "startLine": 49, "endLine": 51 }
+        },
+        {
+          "inputShape": "Successful R2 upload followed by sync-worker association failure",
+          "handled": true,
+          "behavior": "Logs the failure and returns the original upload response.",
+          "anchor": { "startLine": 67, "endLine": 78 }
+        },
+        {
+          "inputShape": "Request not matching the asset routes",
+          "handled": true,
+          "behavior": "Falls through to the notFound handler.",
+          "anchor": { "startLine": 80, "endLine": 80 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Returns a JSON error response based on validation.error.",
+          "fallback": "404 for File not found; otherwise 403.",
+          "anchor": { "startLine": 49, "endLine": 51 }
+        },
+        {
+          "thrown": null,
+          "caught": "e",
+          "action": "Logs the failed association queue operation.",
+          "fallback": "Returns the already completed upload response.",
+          "anchor": { "startLine": 73, "endLine": 74 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "ordering",
+          "description": "Preflight handling and unknown-origin blocking run before asset route handlers.",
+          "anchor": { "startLine": 21, "endLine": 23 }
+        },
+        {
+          "kind": "precondition",
+          "description": "App-file uploads validate file access before writing the asset to R2.",
+          "anchor": { "startLine": 42, "endLine": 56 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "A successful upload with a file identifier attempts asynchronous association.",
+          "anchor": { "startLine": 67, "endLine": 72 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Association queue failure does not replace a successful upload response.",
+          "anchor": { "startLine": 63, "endLine": 78 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "env",
+          "description": "The worker environment provides compatible UPLOADS and SYNC_WORKER bindings.",
+          "anchor": { "startLine": 27, "endLine": 27 }
+        },
+        {
+          "kind": "schema",
+          "description": "SYNC_WORKER.validateUpload returns an object with ok, error, and userId fields matching the expected contract.",
+          "anchor": { "startLine": 45, "endLine": 53 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers provide objectName in the route parameters and may provide fileId for app-file uploads.",
+          "anchor": { "startLine": 24, "endLine": 39 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact authentication and origin policy does the shared middleware enforce?",
+          "affects": "request authorization and origin handling",
+          "anchor": { "startLine": 21, "endLine": 23 },
+          "resolution": null
+        },
+        {
+          "question": "What response and storage semantics do the shared asset handlers provide for malformed bodies or storage failures?",
+          "affects": "asset GET and POST behavior",
+          "anchor": { "startLine": 27, "endLine": 60 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Each request performs asynchronous storage and sync-worker operations; association is awaited after upload, while independent requests may execute concurrently."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "gets-user-asset-by-object-name",
+          "scenario": "A GET request addresses an object name.",
+          "given": ["request.params.objectName"],
+          "when": "fetch(request)",
+          "then": "handleUserAssetGet is called with request, this.env.UPLOADS, objectName, and this.ctx",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the asset retrieval route and its required storage and execution context."
+        },
+        {
+          "testId": "rejects-invalid-upload-access",
+          "scenario": "An upload includes a fileId and validation fails.",
+          "given": ["fileId", "validation.ok === false"],
+          "when": "POST /:objectName",
+          "then": "The response is Response.json({ error: validation.error }, { status: validation.error === 'File not found' ? 404 : 403 }) and R2 upload is not performed",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards authorization before blob writes and preserves the 404 versus 403 distinction."
+        },
+        {
+          "testId": "uploads-and-confirms-file-asset",
+          "scenario": "A file upload passes validation and the asset upload succeeds.",
+          "given": ["fileId", "validation.ok === true", "res.status === 200"],
+          "when": "POST /:objectName",
+          "then": "handleUserAssetUpload is called and this.env.SYNC_WORKER.confirmUpload(objectName, fileId, userId) is retried",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the validation, blob upload, and asynchronous association sequence."
+        },
+        {
+          "testId": "allows-anonymous-asset-upload",
+          "scenario": "An upload has no fileId query parameter.",
+          "given": ["fileId === null"],
+          "when": "POST /:objectName",
+          "then": "handleUserAssetUpload is called without validateUpload or confirmUpload",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the separate anonymous asset-upload path."
+        },
+        {
+          "testId": "preserves-upload-success-on-confirmation-failure",
+          "scenario": "The R2 upload succeeds but confirmation retries ultimately fail.",
+          "given": [
+            "res.status === 200",
+            "fileId",
+            "retry(() => this.env.SYNC_WORKER.confirmUpload(objectName, fileId, userId), TRANSIENT_RETRY_OPTIONS) throws"
+          ],
+          "when": "POST /:objectName",
+          "then": "The original successful upload response is returned",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "Ensures transient association failures do not convert a successful blob upload into a 500 response."
+        },
+        {
+          "testId": "returns-not-found-for-unmatched-route",
+          "scenario": "A request does not match the asset GET or POST route.",
+          "given": [],
+          "when": "fetch(request)",
+          "then": "notFound handles the request",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the router fallback behavior."
+        },
+        {
+          "testId": "applies-cors-after-routing",
+          "scenario": "A request is handled by the worker router.",
+          "given": ["cors({ origin: isAllowedOrigin })"],
+          "when": "fetch(request)",
+          "then": "handleApiRequest receives after: corsify",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the response CORS integration boundary."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "TypeScript and Cloudflare Workers reference directives",
+        "Shared worker utility imports",
+        "Cloudflare WorkerEntrypoint import",
+        "itty-router CORS import",
+        "Environment type import",
+        "CORS handler initialization",
+        "Default Worker class declaration"
+      ],
+      "moduleLevelCode": "/// <reference no-default-lib=\"true\"/>\n/// <reference types=\"@cloudflare/workers-types\" />\n\nimport blockUnknownOrigins and other shared worker handlers\nimport WorkerEntrypoint\nimport cors\nimport Environment\n\nconst { preflight, corsify } = cors({ origin: isAllowedOrigin })",
+      "exports": [{ "name": "Worker", "kind": "own", "fromSpec": null, "exportedAs": "default" }],
+      "importSymbolMap": [
+        { "symbol": "blockUnknownOrigins", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "createRouter", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "handleApiRequest", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "handleUserAssetGet", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "handleUserAssetUpload", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "isAllowedOrigin", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "notFound", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "retry", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "TRANSIENT_RETRY_OPTIONS", "module": "@tldraw/worker-shared", "alias": null, "kind": "external" },
+        { "symbol": "WorkerEntrypoint", "module": "cloudflare:workers", "alias": null, "kind": "external" },
+        { "symbol": "cors", "module": "itty-router", "alias": null, "kind": "external" },
+        { "symbol": "Environment", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker#class:Worker",
+        "unitKind": "class",
+        "name": "Worker",
+        "qualifiedName": "Worker",
+        "parentUnitId": null,
+        "startLine": 20,
+        "endLine": 91,
+        "isBehavioral": true,
+        "source": "\nexport default class Worker extends WorkerEntrypoint<Environment> {\n\treadonly router = createRouter<Environment>()\n\t\t.all('*', preflight)\n\t\t.all('*', blockUnknownOrigins)\n\t\t.get('/:objectName', async (request) => {\n\t\t\tconst objectName = request.params.objectName\n\t\t\treturn handleUserAssetGet({\n\t\t\t\trequest,\n\t\t\t\tbucket: this.env.UPLOADS,\n\t\t\t\tobjectName,\n\t\t\t\tcontext: this.ctx,\n\t\t\t})\n\t\t})\n\t\t// Upload flow for app file assets:\n\t\t// 1. validateUpload — \"file\" = tldraw document record in postgres (not the asset blob).\n\t\t//    Checks the document exists and the user has write access (owner, shared-edit link, or group member).\n\t\t// 2. R2 upload — writes the asset blob to the R2 bucket.\n\t\t// 3. confirmUpload — queues a message to asynchronously insert an `asset` row\n\t\t//    linking the uploaded blob to the document.\n\t\t.post('/:objectName', async (request) => {\n\t\t\tconst objectName = request.params.objectName\n\t\t\tconst fileId = new URL(request.url).searchParams.get('fileId')\n\n\t\t\t// For app file uploads, validate auth + file access before writing to R2.\n\t\t\tlet userId: string | null = null\n\t\t\tif (fileId) {\n\t\t\t\tconst authHeader = request.headers.get('Authorization')\n\t\t\t\tconst validation = await retry(\n\t\t\t\t\t() => this.env.SYNC_WORKER.validateUpload(fileId, authHeader),\n\t\t\t\t\tTRANSIENT_RETRY_OPTIONS\n\t\t\t\t)\n\t\t\t\tif (!validation.ok) {\n\t\t\t\t\tconst status = validation.error === 'File not found' ? 404 : 403\n\t\t\t\t\treturn Response.json({ error: validation.error }, { status })\n\t\t\t\t}\n\t\t\t\tuserId = validation.userId\n\t\t\t}\n\n\t\t\tconst res = await handleUserAssetUpload({\n\t\t\t\theaders: request.headers,\n\t\t\t\tbody: request.body,\n\t\t\t\tbucket: this.env.UPLOADS,\n\t\t\t\tobjectName,\n\t\t\t})\n\n\t\t\t// Queue the DB association after successful upload.\n\t\t\t// Wrapped in try/catch so a transient sync-worker failure doesn't\n\t\t\t// turn a successful R2 upload into a 500. maybeAssociateFileAssets\n\t\t\t// will pick up the association later if this fails.\n\t\t\tif (res.status === 200 && fileId) {\n\t\t\t\ttry {\n\t\t\t\t\tawait retry(\n\t\t\t\t\t\t() => this.env.SYNC_WORKER.confirmUpload(objectName, fileId, userId),\n\t\t\t\t\t\tTRANSIENT_RETRY_OPTIONS\n\t\t\t\t\t)\n\t\t\t\t} catch (e) {\n\t\t\t\t\tconsole.error('Failed to queue asset association', e)\n\t\t\t\t}\n\t\t\t}\n\n\t\t\treturn res\n\t\t})\n\t\t.all('*', notFound)\n\n\toverride async fetch(request: Request) {\n\t\treturn handleApiRequest({\n\t\t\trouter: this.router,\n\t\t\trequest,\n\t\t\tenv: this.env,\n\t\t\tctx: this.ctx,\n\t\t\tafter: corsify,",
+        "detail": {
+          "unitId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker#class:Worker",
+          "fileId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker",
+          "unitKind": "class",
+          "name": "Worker",
+          "qualifiedName": "Worker",
+          "parentUnitId": null,
+          "startLine": 20,
+          "endLine": 91,
+          "signature": "export default class Worker extends WorkerEntrypoint<Environment>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": ["WorkerEntrypoint<Environment>"],
+          "implementsTypes": [],
+          "members": [
+            { "name": "router", "kind": "property", "type": null, "default": null, "visibility": null, "static": false }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Worker is the default Cloudflare worker entrypoint for routing user asset requests and delegating request handling to the configured application services.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "f637ab44e208848345c242cf5a72572b26f7fbb9e2bd094285c67b027bb0f213"
+        }
+      },
+      {
+        "unitId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker.fetch#method:Worker.fetch",
+        "unitKind": "method",
+        "name": "fetch",
+        "qualifiedName": "Worker.fetch",
+        "parentUnitId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker#class:Worker",
+        "startLine": 82,
+        "endLine": 90,
+        "isBehavioral": true,
+        "source": "\t\t})\n\t\t.all('*', notFound)\n\n\toverride async fetch(request: Request) {\n\t\treturn handleApiRequest({\n\t\t\trouter: this.router,\n\t\t\trequest,\n\t\t\tenv: this.env,\n\t\t\tctx: this.ctx,",
+        "detail": {
+          "unitId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker.fetch#method:Worker.fetch",
+          "fileId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker.fetch",
+          "unitKind": "method",
+          "name": "fetch",
+          "qualifiedName": "Worker.fetch",
+          "parentUnitId": "apps/dotcom/tldrawusercontent-worker/src/worker.ts__Worker#class:Worker",
+          "startLine": 82,
+          "endLine": 90,
+          "signature": "override async fetch(request: Request)",
+          "parameters": [
+            { "name": "request", "type": "Request", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["override"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "request is a Request instance.",
+            "The worker instance provides router, env, and ctx values required by handleApiRequest."
+          ],
+          "postconditions": ["The result returned by handleApiRequest is returned to the caller."],
+          "invariants": ["The request, router, env, and ctx are passed to handleApiRequest without transformation."],
+          "edgeCases": [
+            "Any request shape accepted by handleApiRequest is delegated unchanged.",
+            "Errors or rejected results from handleApiRequest are not handled locally and propagate to the caller."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "handleApiRequest", "source": null, "kind": "external" }],
+          "symbolReferences": ["Request"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles an incoming request by delegating it to handleApiRequest with the worker's router, environment, and execution context, and returns the delegated result.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "fetch(request) is invoked.",
+              "then": "handleApiRequest receives an object containing the same router, request, env, and ctx values, and fetch returns the result of that delegation.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "73c2253e894d1b407fe4d2a3eaa1cb31fadf2c913f04eca62c448ceeae815771"
+        }
+      }
+    ]
+  },
+  "out": ["apps/dotcom/tldrawusercontent-worker/src/types.ts"],
+  "in": [],
+  "externals": ["@tldraw/worker-shared", "cloudflare:workers", "itty-router"],
+  "impact": { "seeds": 2, "callers": 0, "impactedFiles": [] }
+}

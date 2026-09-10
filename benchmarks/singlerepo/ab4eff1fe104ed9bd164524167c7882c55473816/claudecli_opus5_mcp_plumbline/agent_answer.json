@@ -1,0 +1,38 @@
+{
+  "contract": "Any client-side query whose server-computed result depends on the booker's selected timezone must carry that timezone in its React Query cache key, and every layer that forwards the timezone toward that query must keep it a reactive input rather than a value fixed at mount. Because an event type with a restriction schedule and `useBookerTimezone` makes the returned slot set a function of the visitor's zone, a cache key or prop chain that omits the timezone lets a stale, differently-zoned slot set be served for a new zone until the query cache is destroyed by a full page reload.",
+  "defect_location": {
+    "repo": "calcom/cal.com",
+    "summary": "The server genuinely makes slots depend on the booker's zone: packages/trpc/server/routers/viewer/slots/util.ts:1271-1321 loads the restriction schedule and at :1281-1283 sets `restrictionTimezone = eventType.useBookerTimezone ? input.timeZone : (restrictionSchedule.timeZone ?? \"UTC\")`, feeds it to buildDateRanges at :1304-1310, and filters the slot list at :1312-1321 \u2014 so the response varies with `input.timeZone`. The two REST-backed slot hooks send that timezone but exclude it from their cache key. packages/platform/atoms/hooks/useAvailableSlots.ts:20-33 builds `queryKey` from an explicit whitelist (startTime, endTime, eventTypeId, eventTypeSlug, isTeamEvent, teamId, usernameList, routedTeamMemberIds, skipContactOwner, teamMemberEmail, rrHostSubsetIds) while the timezone reaches the server only through `params: rest` at :34-38; apps/web/modules/schedules/hooks/useApiV2AvailableSlots.ts:18-31 has the identical whitelist (with embedConnectVersion in place of rrHostSubsetIds) and the same `params: rest` at :32-36. Both callers do pass a live timezone: packages/platform/atoms/booker/BookerPlatformWrapper.tsx:246 reads `useTimePreferences()` and :284-305 passes `timeZone: timezone` plus `Boolean(timezone)` into the enabled flag, and packages/platform/atoms/calendar-view/EventTypeCalendarViewComponent.tsx:71,89-107 does the same. So when the visitor changes zone, the key is byte-identical, React Query returns the cached entry, and no refetch occurs \u2014 matching 'only correct after a full page reload'. By contrast the classic tRPC path is correct, because apps/web/modules/schedules/hooks/useSchedule.ts:94-120 puts `timeZone: timezone ?? \"PLACEHOLDER_TIMEZONE\"` inside the `input` object that is itself the tRPC query key at :156-160; useSchedule reaches the broken hook at :144-154 via `useApiV2AvailableSlots`, which is why the web page is affected too. The timezone that must reach the key originates in packages/features/bookings/lib/timePreferences.ts:27-31 and packages/features/bookings/Booker/store.ts:426-427,562-565, is reconciled by packages/features/bookings/Booker/utils/getBookerTimezone.ts:4-14 and packages/features/bookings/Booker/hooks/useBookerTime.ts:6-20, and is threaded to the web hook by apps/web/modules/schedules/hooks/useEvent.ts:96,105-120. The same booker-zone rule is enforced again at booking time in packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts:132-192, which is what makes the stale on-screen list bookable-then-rejected rather than merely cosmetic.",
+    "repo_note": null
+  },
+  "answer": [
+    "packages/platform/atoms/hooks/useAvailableSlots.ts",
+    "apps/web/modules/schedules/hooks/useApiV2AvailableSlots.ts",
+    "apps/web/modules/schedules/hooks/useSchedule.ts",
+    "packages/platform/atoms/booker/BookerPlatformWrapper.tsx",
+    "packages/platform/atoms/calendar-view/EventTypeCalendarViewComponent.tsx",
+    "packages/trpc/server/routers/viewer/slots/util.ts",
+    "apps/web/modules/schedules/hooks/useEvent.ts",
+    "packages/features/bookings/Booker/hooks/useBookerTime.ts",
+    "packages/features/bookings/lib/timePreferences.ts",
+    "packages/features/bookings/Booker/store.ts",
+    "packages/features/bookings/Booker/utils/getBookerTimezone.ts",
+    "packages/platform/atoms/booker/types.ts",
+    "packages/platform/types/slots/slots-2024-04-15/inputs/index.ts",
+    "packages/features/bookings/lib/handleNewBooking/ensureAvailableUsers.ts",
+    "packages/platform/atoms/booker-embed/BookerEmbed.tsx",
+    "packages/platform/atoms/index.ts",
+    "apps/web/modules/bookings/components/Booker.tsx",
+    "packages/trpc/server/routers/viewer/slots/types.ts",
+    "packages/features/bookings/Booker/hooks/useAvailableTimeSlots.ts",
+    "apps/web/modules/bookings/components/LargeCalendar.tsx",
+    "packages/features/bookings/Booker/utils/isTimeslotAvailable.ts",
+    "packages/features/bookings/Booker/types.ts",
+    "apps/web/modules/schedules/lib/types.ts",
+    "packages/trpc/server/routers/viewer/slots/getSchedule.handler.ts",
+    "packages/platform/types/slots/slots-2024-09-04/inputs/get-slots.input.ts",
+    "apps/api/v2/src/modules/slots/slots-2024-04-15/controllers/slots.controller.ts",
+    "packages/lib/server/eventTypeSelect.ts",
+    "packages/features/eventtypes/lib/types.ts"
+  ]
+}

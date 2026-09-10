@@ -1,0 +1,805 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/sync-core/src/lib/recordDiff.ts",
+    "language": "typescript",
+    "sizeBytes": 2554,
+    "tokenCount": 639,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:17:15.588Z",
+    "module": {
+      "purpose": "Provides record validation and diff orchestration for the synchronization core, converting invalid record states into synchronization errors.",
+      "summary": "This module coordinates record comparison, object-diff application, and schema validation. It supports legacy append behavior, avoids emitting diffs for unchanged states, validates both newly computed and directly supplied records, and translates validation failures into protocol-specific close errors.",
+      "businessContext": "Supports synchronized record updates in a collaborative data system. Failure can admit invalid records or terminate synchronization without a protocol-specific reason.",
+      "classes": [],
+      "functions": [
+        "diffAndValidateRecord (~L17-31): Computes a record diff and validates the resulting new state",
+        "applyAndDiffRecord (~L46-57): Applies an object diff, validates changes, and returns final diff",
+        "validateRecord (~L68-74): Validates a record state and wraps validation failures"
+      ],
+      "keywords": [
+        "record synchronization",
+        "object diff",
+        "record validation",
+        "legacy append mode",
+        "TLSyncError",
+        "invalid record",
+        "RecordType"
+      ],
+      "ontologyConcepts": [
+        "validation",
+        "state transition",
+        "difference computation",
+        "error translation",
+        "change application"
+      ],
+      "businessEntities": ["Record", "RecordType", "ObjectDiff", "Sync Error"],
+      "systemCapabilities": [
+        "Compute record changes",
+        "Apply object diffs",
+        "Validate synchronized records",
+        "Translate validation failures"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./diff",
+          "symbols": ["ObjectDiff", "applyObjectDiff", "diffRecord"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/diff.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/diff.ts",
+          "resolvedHint": "packages/sync-core/src/lib/diff.ts"
+        },
+        {
+          "spec": "./TLSyncClient",
+          "symbols": ["TLSyncError", "TLSyncErrorCloseEventReason"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncClient.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncClient.ts",
+          "resolvedHint": "packages/sync-core/src/lib/TLSyncClient.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/store",
+          "symbols": ["RecordType", "UnknownRecord"],
+          "package": "@tldraw/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "diffAndValidateRecord",
+          "shape": "export function diffAndValidateRecord<R extends UnknownRecord>(\n\tprevState: R,\n\tnewState: R,\n\trecordType: RecordType<R, any>,\n\tlegacyAppendMode = false\n)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "applyAndDiffRecord",
+          "shape": "export function applyAndDiffRecord<R extends UnknownRecord>(\n\tprevState: R,\n\tdiff: ObjectDiff,\n\trecordType: RecordType<R, any>,\n\tlegacyAppendMode = false\n): [ObjectDiff, R] | undefined",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "validateRecord",
+          "shape": "export function validateRecord<R extends UnknownRecord>(state: R, recordType: RecordType<R, any>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "RecordType", "shape": "RecordType<R, any>", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "UnknownRecord", "shape": "UnknownRecord", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "ObjectDiff",
+          "shape": "ObjectDiff",
+          "resolvedRelativePath": "packages/sync-core/src/lib/diff.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/diff.ts"
+        },
+        {
+          "name": "applyObjectDiff",
+          "shape": "applyObjectDiff(prevState, diff)",
+          "resolvedRelativePath": "packages/sync-core/src/lib/diff.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/diff.ts"
+        },
+        {
+          "name": "diffRecord",
+          "shape": "diffRecord(prevState, newState, legacyAppendMode)",
+          "resolvedRelativePath": "packages/sync-core/src/lib/diff.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/diff.ts"
+        },
+        {
+          "name": "TLSyncError",
+          "shape": "new TLSyncError(error.message, TLSyncErrorCloseEventReason.INVALID_RECORD)",
+          "resolvedRelativePath": "packages/sync-core/src/lib/TLSyncClient.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/TLSyncClient.ts"
+        },
+        {
+          "name": "TLSyncErrorCloseEventReason.INVALID_RECORD",
+          "shape": "TLSyncErrorCloseEventReason.INVALID_RECORD",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "diff computation",
+          "intent": "Compute a diff and stop when the two record states are identical",
+          "structureKind": "branch",
+          "predicate": "if (!diff) return",
+          "branchOutcomes": ["no diff: return undefined", "diff exists: validate new state"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 23, "endLine": 24 }
+        },
+        {
+          "name": "record validation",
+          "intent": "Validate the new state and translate validation failures",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 25, "endLine": 29 }
+        },
+        {
+          "name": "diff application",
+          "intent": "Apply an object diff and skip identity-preserving results",
+          "structureKind": "branch",
+          "predicate": "if (newState === prevState) return",
+          "branchOutcomes": ["same state: return undefined", "new state: compute and validate actual diff"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 52, "endLine": 53 }
+        },
+        {
+          "name": "final diff filtering",
+          "intent": "Return only validated changes that produce a non-empty diff",
+          "structureKind": "branch",
+          "predicate": "if (!actualDiff) return",
+          "branchOutcomes": ["no actual diff: return undefined", "actual diff exists: return diff and new state"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 54, "endLine": 56 }
+        },
+        {
+          "name": "standalone validation",
+          "intent": "Validate a supplied record state without computing changes",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 69, "endLine": 73 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "diffAndValidateRecord",
+          "signature": "export function diffAndValidateRecord<R extends UnknownRecord>(\n\tprevState: R,\n\tnewState: R,\n\trecordType: RecordType<R, any>,\n\tlegacyAppendMode = false\n)",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 17, "endLine": 22 }
+        },
+        {
+          "kind": "function",
+          "name": "applyAndDiffRecord",
+          "signature": "export function applyAndDiffRecord<R extends UnknownRecord>(\n\tprevState: R,\n\tdiff: ObjectDiff,\n\trecordType: RecordType<R, any>,\n\tlegacyAppendMode = false\n): [ObjectDiff, R] | undefined",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "[ObjectDiff, R] | undefined",
+          "exported": true,
+          "anchor": { "startLine": 46, "endLine": 51 }
+        },
+        {
+          "kind": "function",
+          "name": "validateRecord",
+          "signature": "export function validateRecord<R extends UnknownRecord>(state: R, recordType: RecordType<R, any>)",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 68, "endLine": 68 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Identical previous and new record states",
+          "handled": true,
+          "behavior": "The computed diff is absent and the function returns undefined.",
+          "anchor": { "startLine": 23, "endLine": 24 }
+        },
+        {
+          "inputShape": "Object diff that produces the same state object",
+          "handled": true,
+          "behavior": "The operation returns undefined before validation.",
+          "anchor": { "startLine": 52, "endLine": 53 }
+        },
+        {
+          "inputShape": "Object diff whose resulting state has no effective changes",
+          "handled": true,
+          "behavior": "The final diff is absent and the function returns undefined.",
+          "anchor": { "startLine": 54, "endLine": 56 }
+        },
+        {
+          "inputShape": "Record state rejected by its record type validator",
+          "handled": true,
+          "behavior": "The validation error is converted into a TLSyncError with INVALID_RECORD reason.",
+          "anchor": { "startLine": 26, "endLine": 29 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": "new TLSyncError(error.message, TLSyncErrorCloseEventReason.INVALID_RECORD)",
+          "caught": "error: any",
+          "action": "Wraps the record type validation message as an invalid-record synchronization error.",
+          "fallback": null,
+          "anchor": { "startLine": 27, "endLine": 29 }
+        },
+        {
+          "thrown": "new TLSyncError(error.message, TLSyncErrorCloseEventReason.INVALID_RECORD)",
+          "caught": "error: any",
+          "action": "Wraps standalone record validation failures as an invalid-record synchronization error.",
+          "fallback": null,
+          "anchor": { "startLine": 71, "endLine": 73 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "postcondition",
+          "description": "A returned diff from the combined operation represents a validated new record state.",
+          "anchor": { "startLine": 26, "endLine": 30 }
+        },
+        {
+          "kind": "invariant",
+          "description": "No result is returned when diff computation produces no changes.",
+          "anchor": { "startLine": 23, "endLine": 24 }
+        },
+        {
+          "kind": "invariant",
+          "description": "No result is returned when applying a diff preserves the previous state identity.",
+          "anchor": { "startLine": 52, "endLine": 53 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "The returned tuple contains the final diff and the resulting record state.",
+          "anchor": { "startLine": 54, "endLine": 57 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "The supplied record type validator defines whether a record state is valid.",
+          "anchor": { "startLine": 26, "endLine": 26 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers interpret undefined as no effective record change.",
+          "anchor": { "startLine": 23, "endLine": 24 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Should validation errors that are not Error-like always provide a usable message property?",
+          "affects": "error_handling",
+          "anchor": { "startLine": 27, "endLine": 28 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "All operations are synchronous and operate only on supplied values and validators."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "returns-no-result-for-identical-diff",
+          "scenario": "Two record states produce no object diff.",
+          "given": ["diffRecord(prevState, newState, legacyAppendMode) === undefined"],
+          "when": "diffAndValidateRecord(prevState, newState, recordType, legacyAppendMode)",
+          "then": "the result is undefined and recordType.validate is not required",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the no-change fast path without validating an unchanged state."
+        },
+        {
+          "testId": "validates-changed-record",
+          "scenario": "The computed record diff produces a valid new record state.",
+          "given": [
+            "diffRecord(prevState, newState, legacyAppendMode) is truthy",
+            "recordType.validate(newState) completes without throwing"
+          ],
+          "when": "diffAndValidateRecord(prevState, newState, recordType, legacyAppendMode)",
+          "then": "the result equals the computed diff",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins that changed records are validated before their diff is returned."
+        },
+        {
+          "testId": "rejects-invalid-record",
+          "scenario": "The new record state fails record type validation.",
+          "given": ["recordType.validate(newState) throws an error with message error.message"],
+          "when": "diffAndValidateRecord(prevState, newState, recordType, legacyAppendMode)",
+          "then": "the call throws TLSyncError with TLSyncErrorCloseEventReason.INVALID_RECORD",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Maps validation failures to the sync protocol's invalid-record close reason."
+        },
+        {
+          "testId": "returns-no-result-when-applied-diff-is-same-reference",
+          "scenario": "Applying the object diff does not produce a new record object.",
+          "given": ["applyObjectDiff(prevState, diff) === prevState"],
+          "when": "applyAndDiffRecord(prevState, diff, recordType, legacyAppendMode)",
+          "then": "the result is undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the identity-based no-op optimization."
+        },
+        {
+          "testId": "returns-final-diff-and-state",
+          "scenario": "Applying a diff creates a changed, valid record state with a non-empty final diff.",
+          "given": [
+            "applyObjectDiff(prevState, diff) !== prevState",
+            "diffAndValidateRecord(prevState, newState, recordType, legacyAppendMode) is truthy"
+          ],
+          "when": "applyAndDiffRecord(prevState, diff, recordType, legacyAppendMode)",
+          "then": "the result is [actualDiff, newState]",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Ensures application, validation, and final diff computation remain composed."
+        },
+        {
+          "testId": "returns-no-result-for-effectively-empty-diff",
+          "scenario": "Applying a diff creates a new object but recomputing its diff yields no changes.",
+          "given": [
+            "applyObjectDiff(prevState, diff) !== prevState",
+            "diffAndValidateRecord(prevState, newState, recordType, legacyAppendMode) === undefined"
+          ],
+          "when": "applyAndDiffRecord(prevState, diff, recordType, legacyAppendMode)",
+          "then": "the result is undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins suppression of diffs that become semantically empty after application."
+        },
+        {
+          "testId": "validates-record-without-diffing",
+          "scenario": "A record is validated independently of any previous state or diff.",
+          "given": ["recordType.validate(state) completes without throwing"],
+          "when": "validateRecord(state, recordType)",
+          "then": "the call completes without returning a value",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the creation-time validation contract."
+        },
+        {
+          "testId": "rejects-invalid-standalone-record",
+          "scenario": "A standalone record fails its record type validation.",
+          "given": ["recordType.validate(state) throws an error with message error.message"],
+          "when": "validateRecord(state, recordType)",
+          "then": "the call throws TLSyncError with TLSyncErrorCloseEventReason.INVALID_RECORD",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures standalone validation uses the same protocol error classification."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import { RecordType, UnknownRecord } from '@tldraw/store'",
+        "import { ObjectDiff, applyObjectDiff, diffRecord } from './diff'",
+        "import { TLSyncError, TLSyncErrorCloseEventReason } from './TLSyncClient'",
+        "diffAndValidateRecord",
+        "applyAndDiffRecord",
+        "validateRecord"
+      ],
+      "moduleLevelCode": "import { RecordType, UnknownRecord } from '@tldraw/store'\nimport { ObjectDiff, applyObjectDiff, diffRecord } from './diff'\nimport { TLSyncError, TLSyncErrorCloseEventReason } from './TLSyncClient'",
+      "exports": [
+        { "name": "diffAndValidateRecord", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "applyAndDiffRecord", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "validateRecord", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "RecordType", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "UnknownRecord", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "ObjectDiff", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "applyObjectDiff", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "diffRecord", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "TLSyncError", "module": "./TLSyncClient", "alias": null, "kind": "internal" },
+        { "symbol": "TLSyncErrorCloseEventReason", "module": "./TLSyncClient", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/sync-core/src/lib/recordDiff.ts__diffAndValidateRecord#function:diffAndValidateRecord",
+        "unitKind": "function",
+        "name": "diffAndValidateRecord",
+        "qualifiedName": "diffAndValidateRecord",
+        "parentUnitId": null,
+        "startLine": 17,
+        "endLine": 31,
+        "isBehavioral": true,
+        "source": "export function diffAndValidateRecord<R extends UnknownRecord>(\n\tprevState: R,\n\tnewState: R,\n\trecordType: RecordType<R, any>,\n\tlegacyAppendMode = false\n) {\n\tconst diff = diffRecord(prevState, newState, legacyAppendMode)\n\tif (!diff) return\n\ttry {\n\t\trecordType.validate(newState)\n\t} catch (error: any) {\n\t\tthrow new TLSyncError(error.message, TLSyncErrorCloseEventReason.INVALID_RECORD)\n\t}\n\treturn diff\n}",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/recordDiff.ts__diffAndValidateRecord#function:diffAndValidateRecord",
+          "fileId": "packages/sync-core/src/lib/recordDiff.ts__diffAndValidateRecord",
+          "unitKind": "function",
+          "name": "diffAndValidateRecord",
+          "qualifiedName": "diffAndValidateRecord",
+          "parentUnitId": null,
+          "startLine": 17,
+          "endLine": 31,
+          "signature": "export function diffAndValidateRecord<R extends UnknownRecord>(prevState: R, newState: R, recordType: RecordType<R, any>, legacyAppendMode = false)",
+          "parameters": [
+            { "name": "prevState", "type": "R", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "newState", "type": "R", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "recordType",
+              "type": "RecordType<R, any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "legacyAppendMode",
+              "type": "boolean",
+              "default": "false",
+              "optional": true,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["R extends UnknownRecord"],
+          "logicOutline": [],
+          "preconditions": [
+            "prevState and newState conform to the generic UnknownRecord constraint.",
+            "recordType provides a validate operation accepting newState."
+          ],
+          "postconditions": [
+            "If no diff is produced, returns undefined and does not validate newState.",
+            "If a diff is produced and validation succeeds, returns that diff.",
+            "If validation fails, throws a TLSyncError with the original validation error message and the invalid-record close-event reason."
+          ],
+          "invariants": [
+            "Validation is performed only after diffRecord produces a truthy diff.",
+            "The diff is returned unchanged after successful validation.",
+            "Validation errors are translated to TLSyncError rather than propagated unchanged."
+          ],
+          "edgeCases": [
+            "When diffRecord returns a falsy value, the function returns undefined without calling recordType.validate.",
+            "When diffRecord returns a truthy diff and recordType.validate succeeds, the truthy diff is returned.",
+            "When recordType.validate throws an error with a message, the function throws TLSyncError using that message and TLSyncErrorCloseEventReason.INVALID_RECORD.",
+            "When legacyAppendMode is omitted, diffRecord is invoked with false."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["TLSyncError when recordType.validate throws"],
+            "reverts": [],
+            "onInvalidInput": "A validation failure for newState is converted into TLSyncError with TLSyncErrorCloseEventReason.INVALID_RECORD.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "diffRecord", "source": "packages/sync-core/src/lib/recordDiff.ts", "kind": "internal" },
+            { "name": "recordType.validate", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": [
+            "UnknownRecord",
+            "RecordType",
+            "TLSyncError",
+            "TLSyncErrorCloseEventReason.INVALID_RECORD"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes the record diff between two states and validates the new state whenever a diff exists. Validation failures are surfaced as TLSyncError instances classified as invalid records.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "INVALID_RECORD",
+              "role": "Classifies validation failures with the invalid-record TLSync close-event reason."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "diffAndValidateRecord is called with any recordType",
+              "then": "It returns undefined and does not invoke recordType.validate.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "diffAndValidateRecord is called",
+              "then": "It returns the same diff produced by diffRecord.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "diffAndValidateRecord is called",
+              "then": "It throws TLSyncError with message M and reason TLSyncErrorCloseEventReason.INVALID_RECORD.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "1250d55a9515f7cb2143190c9611df9cfc14d7d2fef5557f2c5e24dc13403dc9"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/recordDiff.ts__applyAndDiffRecord#function:applyAndDiffRecord",
+        "unitKind": "function",
+        "name": "applyAndDiffRecord",
+        "qualifiedName": "applyAndDiffRecord",
+        "parentUnitId": null,
+        "startLine": 46,
+        "endLine": 57,
+        "isBehavioral": true,
+        "source": "\tprevState: R,\n\tdiff: ObjectDiff,\n\trecordType: RecordType<R, any>,\n\tlegacyAppendMode = false\n): [ObjectDiff, R] | undefined {\n\tconst newState = applyObjectDiff(prevState, diff)\n\tif (newState === prevState) return\n\tconst actualDiff = diffAndValidateRecord(prevState, newState, recordType, legacyAppendMode)\n\tif (!actualDiff) return\n\treturn [actualDiff, newState]\n}\n",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/recordDiff.ts__applyAndDiffRecord#function:applyAndDiffRecord",
+          "fileId": "packages/sync-core/src/lib/recordDiff.ts__applyAndDiffRecord",
+          "unitKind": "function",
+          "name": "applyAndDiffRecord",
+          "qualifiedName": "applyAndDiffRecord",
+          "parentUnitId": null,
+          "startLine": 46,
+          "endLine": 57,
+          "signature": "applyAndDiffRecord<R>(prevState: R, diff: ObjectDiff, recordType: RecordType<R, any>, legacyAppendMode = false): [ObjectDiff, R] | undefined",
+          "parameters": [
+            { "name": "prevState", "type": "R", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "diff", "type": "ObjectDiff", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "recordType",
+              "type": "RecordType<R, any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "legacyAppendMode",
+              "type": "boolean",
+              "default": "false",
+              "optional": true,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "[ObjectDiff, R] | undefined",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["R"],
+          "logicOutline": [],
+          "preconditions": [
+            "prevState is a record state accepted by applyObjectDiff and diffAndValidateRecord.",
+            "diff is an ObjectDiff compatible with prevState.",
+            "recordType describes the record shape used for validation."
+          ],
+          "postconditions": [
+            "If a tuple is returned, its second element is the state produced by applying diff to prevState.",
+            "If a tuple is returned, its first element is the validated effective diff between prevState and the returned state.",
+            "Returns undefined when applying diff preserves object identity or when validation/diffing produces no effective diff."
+          ],
+          "invariants": [
+            "The returned effective diff and returned state correspond to the same applied state transition.",
+            "The original prevState is not mutated by this function itself."
+          ],
+          "edgeCases": [
+            "When applyObjectDiff returns prevState by identity, returns undefined without validating the state.",
+            "When the applied state differs from prevState but diffAndValidateRecord returns a falsy result, returns undefined.",
+            "When the applied state differs and validation returns an ObjectDiff, returns a two-element tuple containing that diff and the applied state.",
+            "The legacyAppendMode value is forwarded unchanged to diffAndValidateRecord."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "Returns undefined when the applied state yields no validated effective diff; exceptions from delegated operations are not handled here."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "applyObjectDiff", "source": null, "kind": "external" },
+            { "name": "diffAndValidateRecord", "source": "same module", "kind": "internal" }
+          ],
+          "symbolReferences": ["ObjectDiff", "RecordType"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Applies an object diff to a previous record state and returns the validated effective diff together with the resulting state. It returns undefined when the application produces no state change or the resulting state does not yield a valid diff.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "applyAndDiffRecord is called with any recordType and legacyAppendMode value.",
+              "then": "The result is undefined and record validation/diff calculation is not required to run.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "applyAndDiffRecord is called.",
+              "then": "The result is [actualDiff, newState], where newState is the exact state returned by applyObjectDiff.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "applyAndDiffRecord is called.",
+              "then": "The result is undefined.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "86741a9e837901cfbbf221b29f1b4cbce59fd5feef3cb07ea9f386b95ceefdc9"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/recordDiff.ts__validateRecord#function:validateRecord",
+        "unitKind": "function",
+        "name": "validateRecord",
+        "qualifiedName": "validateRecord",
+        "parentUnitId": null,
+        "startLine": 68,
+        "endLine": 74,
+        "isBehavioral": true,
+        "source": "\ttry {\n\t\trecordType.validate(state)\n\t} catch (error: any) {\n\t\tthrow new TLSyncError(error.message, TLSyncErrorCloseEventReason.INVALID_RECORD)\n\t}\n}\n",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/recordDiff.ts__validateRecord#function:validateRecord",
+          "fileId": "packages/sync-core/src/lib/recordDiff.ts__validateRecord",
+          "unitKind": "function",
+          "name": "validateRecord",
+          "qualifiedName": "validateRecord",
+          "parentUnitId": null,
+          "startLine": 68,
+          "endLine": 74,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "A recordType object with a validate method is available.",
+            "The state value is supplied in the shape expected by recordType.validate."
+          ],
+          "postconditions": [
+            "If recordType.validate(state) succeeds, validation completes without translating an error.",
+            "If recordType.validate(state) throws, a TLSyncError is thrown with the original error message and the INVALID_RECORD close-event reason."
+          ],
+          "invariants": [
+            "Validation is delegated to recordType.validate(state).",
+            "Any validation exception is surfaced as TLSyncError rather than the original thrown error."
+          ],
+          "edgeCases": [
+            "When recordType.validate(state) succeeds, no validation error is thrown.",
+            "When recordType.validate(state) throws an error, its message is preserved in the TLSyncError.",
+            "When the validator throws a nonstandard value, the implementation accesses its message while translating the failure."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["TLSyncError"],
+            "reverts": [],
+            "onInvalidInput": "Translates the validator failure into TLSyncError using the thrown value's message and the INVALID_RECORD reason.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "recordType.validate(state)", "source": "recordType", "kind": "internal" }],
+          "symbolReferences": ["TLSyncError", "TLSyncErrorCloseEventReason.INVALID_RECORD"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates a record state using the supplied record type validator. Validation failures are translated into a TLSyncError classified as an invalid record.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "INVALID_RECORD",
+              "role": "Close-event reason used when record validation fails."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "validateRecord is called with a state value.",
+              "then": "The call throws TLSyncError carrying message \"bad record\" and the TLSyncErrorCloseEventReason.INVALID_RECORD reason.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "d79a6e45665934819937dea39f2addbbb3c466eaf054e4f3a14a527605eca85f"
+        }
+      }
+    ]
+  },
+  "out": ["packages/sync-core/src/lib/TLSyncClient.ts", "packages/sync-core/src/lib/diff.ts"],
+  "in": ["packages/sync-core/src/lib/recordDiff.test.ts", "packages/sync-core/src/lib/TLSyncRoom.ts"],
+  "externals": ["@tldraw/store"],
+  "impact": { "seeds": 3, "callers": 2, "impactedFiles": ["packages/sync-core/src/lib/TLSyncRoom.ts"] }
+}

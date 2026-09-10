@@ -1,0 +1,2152 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "db",
+  "commitHash": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+  "generatedAt": "2026-07-18T07:32:21.777Z",
+  "file": {
+    "relativePath": "packages/db/src/transactions.ts",
+    "language": "typescript",
+    "sizeBytes": 17991,
+    "tokenCount": 4492,
+    "model": "poolside/laguna-xs-2.1",
+    "analysedAt": "2026-07-17T15:56:41.080Z",
+    "module": {
+      "purpose": "Manages transaction lifecycle for grouping collection operations with support for mutation merging, rollback, and commit coordination.",
+      "summary": "This module provides transaction management for a database layer, implementing a Transaction class that groups multiple collection operations. It handles mutation merging according to a truth table (insert-update, insert-delete, update-delete, update-update, delete-delete, insert-insert), supports automatic and manual commit modes, and coordinates rollback across conflicting transactions. The module maintains a global transaction registry and stack for ambient transaction context.",
+      "businessContext": "Ensures data consistency across multiple collection operations by grouping them into atomic units. Critical for sync operations where multiple changes must be applied together or rolled back entirely. Failures here cause data inconsistency and sync conflicts.",
+      "classes": [
+        "Transaction (~L205-314): Groups collection operations with state management (pending/persisting/completed/failed)"
+      ],
+      "functions": [
+        "mergePendingMutations (~L43-108): Merges two pending mutations for the same item per truth table rules",
+        "createTransaction (~L133-156): Factory function creating new Transaction instances",
+        "getActiveTransaction (~L173-179): Returns the currently active ambient transaction from stack",
+        "registerTransaction (~L183-187): Pushes transaction onto ambient stack after clearing stale work",
+        "unregisterTransaction (~L189-198): Flushes and removes transaction from ambient stack in finally block",
+        "removeFromPendingList (~L200-206): Removes completed/failed transactions from global registry"
+      ],
+      "keywords": ["transaction", "mutation", "merge", "rollback", "commit", "ambient context", "scheduler"],
+      "ontologyConcepts": [
+        "unit of work",
+        "ambient context",
+        "conflict resolution",
+        "state machine",
+        "deferred resolution"
+      ],
+      "businessEntities": ["Transaction", "Mutation", "Collection"],
+      "systemCapabilities": [
+        "group operations",
+        "merge conflicting mutations",
+        "rollback with cascade",
+        "coordinate async commits"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./deferred",
+          "symbols": ["createDeferred"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/db/src/deferred.ts",
+          "resolvedFileId": "packages/db/src/deferred.ts",
+          "resolvedHint": "packages/db/src/deferred.ts"
+        },
+        {
+          "spec": "./utils/uuid",
+          "symbols": ["safeRandomUUID"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/db/src/utils/uuid.ts",
+          "resolvedFileId": "packages/db/src/utils/uuid.ts",
+          "resolvedHint": "packages/db/src/utils/uuid.ts"
+        },
+        {
+          "spec": "./duplicate-instance-check",
+          "symbols": [],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/db/src/duplicate-instance-check.ts",
+          "resolvedFileId": "packages/db/src/duplicate-instance-check.ts",
+          "resolvedHint": "packages/db/src/duplicate-instance-check.ts"
+        },
+        {
+          "spec": "./errors",
+          "symbols": [
+            "MissingMutationFunctionError",
+            "TransactionAlreadyCompletedRollbackError",
+            "TransactionNotPendingCommitError",
+            "TransactionNotPendingMutateError"
+          ],
+          "anchor": { "startLine": 4, "endLine": 8 },
+          "resolvedRelativePath": "packages/db/src/errors.ts",
+          "resolvedFileId": "packages/db/src/errors.ts",
+          "resolvedHint": "packages/db/src/errors.ts"
+        },
+        {
+          "spec": "./scheduler.js",
+          "symbols": ["transactionScopedScheduler"],
+          "anchor": { "startLine": 9, "endLine": 9 },
+          "resolvedRelativePath": "packages/db/src/scheduler.ts",
+          "resolvedFileId": "packages/db/src/scheduler.ts",
+          "resolvedHint": "packages/db/src/scheduler.ts"
+        },
+        {
+          "spec": "./deferred",
+          "symbols": ["Deferred"],
+          "anchor": { "startLine": 10, "endLine": 10 },
+          "resolvedRelativePath": "packages/db/src/deferred.ts",
+          "resolvedFileId": "packages/db/src/deferred.ts",
+          "resolvedHint": "packages/db/src/deferred.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": [
+            "MutationFn",
+            "PendingMutation",
+            "TransactionConfig",
+            "TransactionState",
+            "TransactionWithMutations"
+          ],
+          "anchor": { "startLine": 11, "endLine": 16 },
+          "resolvedRelativePath": "packages/db/src/types.ts",
+          "resolvedFileId": "packages/db/src/types.ts",
+          "resolvedHint": "packages/db/src/types.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": ["mutationFn invocation in commit()"],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": ["this.mutations modified by applyMutations", "this.state modified by setState"]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "createTransaction",
+          "shape": "(config: TransactionConfig<T>) => Transaction<T>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getActiveTransaction",
+          "shape": "() => Transaction | undefined",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "Transaction.id", "shape": "string", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "Transaction.state",
+          "shape": "TransactionState",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Transaction.mutations",
+          "shape": "Array<PendingMutation<T>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Transaction.isPersisted",
+          "shape": "Deferred<Transaction<T>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "Transaction.autoCommit", "shape": "boolean", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "Transaction.mutate",
+          "shape": "(callback: () => void) => Transaction<T>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Transaction.commit",
+          "shape": "() => Promise<Transaction<T>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Transaction.rollback",
+          "shape": "(config?: { isSecondaryRollback?: boolean }) => Transaction<T>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Transaction.applyMutations",
+          "shape": "(mutations: Array<PendingMutation<any>>) => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "createDeferred",
+          "shape": "() => Deferred<T>",
+          "resolvedRelativePath": "packages/db/src/deferred.ts",
+          "resolvedFileId": "packages/db/src/deferred.ts"
+        },
+        {
+          "name": "safeRandomUUID",
+          "shape": "() => string",
+          "resolvedRelativePath": "packages/db/src/utils/uuid.ts",
+          "resolvedFileId": "packages/db/src/utils/uuid.ts"
+        },
+        {
+          "name": "transactionScopedScheduler.clear",
+          "shape": "(id: string) => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "transactionScopedScheduler.flush",
+          "shape": "(id: string) => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TransactionConfig.mutationFn",
+          "shape": "(payload: { transaction: TransactionWithMutations<T> }) => Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "module_globals",
+          "intent": "Global transaction registry and ambient stack",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 21, "endLine": 25 }
+        },
+        {
+          "name": "mergePendingMutations",
+          "intent": "Merge mutations via truth table with O(1) lookup",
+          "structureKind": "branch",
+          "predicate": "switch (`${existing.type}-${incoming.type}` as const)",
+          "branchOutcomes": [
+            "insert-update",
+            "insert-delete",
+            "update-delete",
+            "update-update",
+            "delete-delete",
+            "insert-insert",
+            "default"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 43, "endLine": 108 }
+        },
+        {
+          "name": "createTransaction",
+          "intent": "Instantiate and register new Transaction",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 133, "endLine": 156 }
+        },
+        {
+          "name": "getActiveTransaction",
+          "intent": "Peek top of transaction stack",
+          "structureKind": "branch",
+          "predicate": "transactionStack.length > 0",
+          "branchOutcomes": ["return stack top", "return undefined"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 173, "endLine": 179 }
+        },
+        {
+          "name": "registerTransaction",
+          "intent": "Clear stale work and push to stack",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 183, "endLine": 187 }
+        },
+        {
+          "name": "unregisterTransaction",
+          "intent": "Flush work and remove from stack safely",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 189, "endLine": 198 }
+        },
+        {
+          "name": "Transaction.mutate",
+          "intent": "Execute callback with transaction context and auto-commit",
+          "structureKind": "try",
+          "predicate": "this.state !== `pending`",
+          "branchOutcomes": ["throw TransactionNotPendingMutateError", "execute callback"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 244, "endLine": 271 }
+        },
+        {
+          "name": "Transaction.applyMutations",
+          "intent": "Batch merge mutations by globalKey",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const mutation of this.mutations)",
+          "terminationCondition": "for (const newMutation of mutations)",
+          "anchor": { "startLine": 286, "endLine": 312 }
+        },
+        {
+          "name": "Transaction.rollback",
+          "intent": "Rollback transaction and cascade to conflicting transactions",
+          "structureKind": "sequence",
+          "predicate": "this.state === `completed`",
+          "branchOutcomes": ["throw TransactionAlreadyCompletedRollbackError", "proceed"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 278, "endLine": 314 }
+        },
+        {
+          "name": "Transaction.commit",
+          "intent": "Execute mutationFn and resolve/reject deferred",
+          "structureKind": "try",
+          "predicate": "this.state !== `pending`",
+          "branchOutcomes": ["throw TransactionNotPendingCommitError", "proceed to commit"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 316, "endLine": 369 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "createTransaction",
+          "signature": "export function createTransaction<T extends object = Record<string, unknown>>(config: TransactionConfig<T>): Transaction<T>",
+          "generics": "T extends object = Record<string, unknown>",
+          "decorators": [],
+          "returnType": "Transaction<T>",
+          "exported": true,
+          "anchor": { "startLine": 133, "endLine": 156 }
+        },
+        {
+          "kind": "function",
+          "name": "getActiveTransaction",
+          "signature": "export function getActiveTransaction(): Transaction | undefined",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Transaction | undefined",
+          "exported": true,
+          "anchor": { "startLine": 173, "endLine": 179 }
+        },
+        {
+          "kind": "type_alias",
+          "name": "Transaction",
+          "signature": "export type { Transaction }",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 342, "endLine": 343 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "mutations array is empty",
+          "handled": true,
+          "behavior": "Commit resolves immediately with completed state",
+          "anchor": { "startLine": 321, "endLine": 326 }
+        },
+        {
+          "inputShape": "mutationFn throws error",
+          "handled": true,
+          "behavior": "Error captured, rollback invoked, error rethrown",
+          "anchor": { "startLine": 340, "endLine": 352 }
+        },
+        {
+          "inputShape": "multiple mutations on same globalKey",
+          "handled": true,
+          "behavior": "Merged per truth table rules",
+          "anchor": { "startLine": 286, "endLine": 312 }
+        },
+        {
+          "inputShape": "rollback on completed transaction",
+          "handled": true,
+          "behavior": "Throws TransactionAlreadyCompletedRollbackError",
+          "anchor": { "startLine": 278, "endLine": 280 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "transactionStack.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Check if ambient transaction stack has any transactions",
+          "anchor": { "startLine": 173, "endLine": 173 }
+        },
+        {
+          "operator": "==",
+          "left": "this.state",
+          "right": "`pending`",
+          "inclusive": false,
+          "intent": "Ensure transaction is pending before mutate",
+          "anchor": { "startLine": 244, "endLine": 244 }
+        },
+        {
+          "operator": "==",
+          "left": "this.state",
+          "right": "`pending`",
+          "inclusive": false,
+          "intent": "Ensure transaction is pending before commit",
+          "anchor": { "startLine": 316, "endLine": 316 }
+        },
+        {
+          "operator": "==",
+          "left": "this.state",
+          "right": "`completed`",
+          "inclusive": true,
+          "intent": "Prevent rollback of already-completed transaction",
+          "anchor": { "startLine": 278, "endLine": 278 }
+        },
+        {
+          "operator": "==",
+          "left": "index",
+          "right": "-1",
+          "inclusive": false,
+          "intent": "Check if transaction exists in pending list before removal",
+          "anchor": { "startLine": 201, "endLine": 204 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "TransactionNotPendingMutateError",
+          "caught": null,
+          "action": "Prevent mutation on non-pending transaction",
+          "fallback": null,
+          "anchor": { "startLine": 245, "endLine": 246 }
+        },
+        {
+          "thrown": "TransactionNotPendingCommitError",
+          "caught": null,
+          "action": "Prevent commit on non-pending transaction",
+          "fallback": null,
+          "anchor": { "startLine": 317, "endLine": 318 }
+        },
+        {
+          "thrown": "TransactionAlreadyCompletedRollbackError",
+          "caught": null,
+          "action": "Prevent rollback of completed transaction",
+          "fallback": null,
+          "anchor": { "startLine": 278, "endLine": 279 }
+        },
+        {
+          "thrown": "MissingMutationFunctionError",
+          "caught": null,
+          "action": "Prevent transaction creation without mutationFn",
+          "fallback": null,
+          "anchor": { "startLine": 210, "endLine": 211 }
+        },
+        {
+          "thrown": "Error from mutationFn",
+          "caught": "in commit() catch block",
+          "action": "Capture error, rollback transaction, rethrow",
+          "fallback": "Transaction state set to failed, promise rejected",
+          "anchor": { "startLine": 333, "endLine": 352 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "precondition",
+          "description": "Transaction state must be 'pending' for mutate() operations",
+          "anchor": { "startLine": 244, "endLine": 245 }
+        },
+        {
+          "kind": "precondition",
+          "description": "Transaction state must be 'pending' for commit() operations",
+          "anchor": { "startLine": 316, "endLine": 317 }
+        },
+        {
+          "kind": "precondition",
+          "description": "Transaction state must not be 'completed' for rollback()",
+          "anchor": { "startLine": 278, "endLine": 279 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Transaction is removed from pending list when state transitions to completed or failed",
+          "anchor": { "startLine": 226, "endLine": 229 }
+        },
+        {
+          "kind": "invariant",
+          "description": "transactionStack maintains LIFO order for ambient transaction resolution",
+          "anchor": { "startLine": 173, "endLine": 179 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Caller must await isPersisted.promise to observe transaction outcome",
+          "anchor": { "startLine": 22, "endLine": 25 }
+        },
+        {
+          "kind": "env",
+          "description": "Collection operations called within mutate callback must use same globalKey for merging",
+          "anchor": { "startLine": 244, "endLine": 271 }
+        }
+      ],
+      "ambiguities": [],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "fifo",
+        "notes": "Transaction stack operations are synchronous; async mutationFn runs in commit. Auto-commit spawns fire-and-forget promise."
+      },
+      "stateModel": {
+        "states": ["pending", "persisting", "completed", "failed"],
+        "initialState": "pending",
+        "finalStates": ["completed", "failed"],
+        "transitions": [
+          {
+            "from": "pending",
+            "to": "persisting",
+            "trigger": "commit",
+            "guard": "this.state === 'pending'",
+            "effect": "this.setState('persisting')",
+            "anchor": { "startLine": 311, "endLine": 312 }
+          },
+          {
+            "from": "pending",
+            "to": "completed",
+            "trigger": "commit (empty mutations)",
+            "guard": "this.mutations.length === 0",
+            "effect": "this.setState('completed'); this.isPersisted.resolve(this)",
+            "anchor": { "startLine": 314, "endLine": 318 }
+          },
+          {
+            "from": "persisting",
+            "to": "completed",
+            "trigger": "mutationFn success",
+            "guard": "mutationFn resolves",
+            "effect": "this.setState('completed'); this.touchCollection(); this.isPersisted.resolve(this)",
+            "anchor": { "startLine": 334, "endLine": 337 }
+          },
+          {
+            "from": "persisting",
+            "to": "failed",
+            "trigger": "mutationFn error",
+            "guard": "mutationFn rejects",
+            "effect": "this.error = {...}; this.rollback()",
+            "anchor": { "startLine": 339, "endLine": 348 }
+          },
+          {
+            "from": "pending",
+            "to": "failed",
+            "trigger": "rollback",
+            "guard": "this.state !== 'completed'",
+            "effect": "this.setState('failed'); this.isPersisted.reject(this.error?.error)",
+            "anchor": { "startLine": 272, "endLine": 276 }
+          },
+          {
+            "from": "pending",
+            "to": "persisting",
+            "trigger": "rollback from error",
+            "guard": "mutationFn throws",
+            "effect": "this.setState('failed'); this.isPersisted.reject(this.error?.error)",
+            "anchor": { "startLine": 272, "endLine": 276 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "create-transaction-returns-valid-instance",
+          "scenario": "createTransaction returns a valid Transaction instance with correct initial state",
+          "given": ["const config = { mutationFn: async () => {} }"],
+          "when": "const tx = createTransaction(config)",
+          "then": "tx.id is string, tx.state is 'pending', tx.mutations is empty array, tx.autoCommit is true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies Transaction construction and default initialization"
+        },
+        {
+          "testId": "create-transaction-throws-missing-mutation-fn",
+          "scenario": "createTransaction throws MissingMutationFunctionError when mutationFn is undefined",
+          "given": ["const config = {} as TransactionConfig<any>>"],
+          "when": "createTransaction(config)",
+          "then": "throws MissingMutationFunctionError",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validates required mutationFn parameter enforcement"
+        },
+        {
+          "testId": "get-active-transaction-empty-stack",
+          "scenario": "getActiveTransaction returns undefined when no transaction is active",
+          "given": [],
+          "when": "getActiveTransaction()",
+          "then": "returns undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies ambient transaction detection for empty stack"
+        },
+        {
+          "testId": "get-active-transaction-with-active-tx",
+          "scenario": "getActiveTransaction returns the most recently created transaction when one is active",
+          "given": ["const tx1 = createTransaction({ mutationFn: async () => {} })", "tx1.mutate(() => {})"],
+          "when": "getActiveTransaction()",
+          "then": "returns tx1",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies ambient transaction stack management"
+        },
+        {
+          "testId": "mutate-throws-non-pending-state",
+          "scenario": "Transaction.mutate throws TransactionNotPendingMutateError when transaction is not pending",
+          "given": ["const tx = createTransaction({ mutationFn: async () => {} })", "tx.commit()"],
+          "when": "tx.mutate(() => {})",
+          "then": "throws TransactionNotPendingMutateError",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures mutate only works on pending transactions"
+        },
+        {
+          "testId": "commit-throws-non-pending-state",
+          "scenario": "Transaction.commit throws TransactionNotPendingCommitError when transaction is not pending",
+          "given": ["const tx = createTransaction({ mutationFn: async () => {} })", "tx.commit()"],
+          "when": "tx.commit()",
+          "then": "throws TransactionNotPendingCommitError",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures commit only works on pending transactions"
+        },
+        {
+          "testId": "rollback-throws-already-completed",
+          "scenario": "Transaction.rollback throws TransactionAlreadyCompletedRollbackError when transaction is completed",
+          "given": [
+            "const tx = createTransaction({ mutationFn: async () => {} })",
+            "tx.mutate(() => { tx.mutations.push({} as any) })",
+            "await tx.commit()"
+          ],
+          "when": "tx.rollback()",
+          "then": "throws TransactionAlreadyCompletedRollbackError",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents rollback of already completed transactions"
+        },
+        {
+          "testId": "empty-mutation-completes-immediately",
+          "scenario": "Transaction with no mutations completes immediately without calling mutationFn",
+          "given": [
+            "let mutationFnCalled = false",
+            "const tx = createTransaction({ mutationFn: async () => { mutationFnCalled = true } })"
+          ],
+          "when": "await tx.commit()",
+          "then": "tx.state is 'completed', mutationFnCalled is false, tx.isPersisted.promise resolves",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Optimizes no-op transactions by skipping mutationFn"
+        },
+        {
+          "testId": "mutation-fn-error-rollback",
+          "scenario": "Transaction.rollback is called when mutationFn throws an error",
+          "given": [
+            "const error = new Error('API failed')",
+            "const tx = createTransaction({ mutationFn: async () => { throw error } })",
+            "tx.mutate(() => {})"
+          ],
+          "when": "await tx.commit()",
+          "then": "tx.state is 'failed', tx.error.message is 'API failed', tx.isPersisted.promise rejects with error",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures proper error handling and rollback on mutation failure"
+        },
+        {
+          "testId": "auto-commit-execution",
+          "scenario": "Transaction auto-commits when autoCommit is true and mutate is called",
+          "given": [
+            "let commitCalled = false",
+            "const tx = createTransaction({ mutationFn: async () => { commitCalled = true } })"
+          ],
+          "when": "tx.mutate(() => {})",
+          "then": "await tx.isPersisted.promise, commitCalled is true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies autoCommit integration with mutate"
+        },
+        {
+          "testId": "merge-insert-update",
+          "scenario": "mergePendingMutations returns insert with merged changes for insert-update combination",
+          "given": [
+            "const existing = { type: 'insert', modified: { a: 1 }, changes: {}, key: 'k1', globalKey: 'g1', metadata: {} } as PendingMutation<any>",
+            "const incoming = { type: 'update', modified: { b: 2 }, changes: { b: 2 }, key: 'k1', globalKey: 'g1', metadata: {} } as PendingMutation<any>"
+          ],
+          "when": "mergePendingMutations(existing, incoming)",
+          "then": "returns object with type 'insert', modified { a: 1, b: 2 }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validates insert-update merge rule per documented behavior"
+        },
+        {
+          "testId": "merge-insert-delete-cancels",
+          "scenario": "mergePendingMutations returns null for insert-delete combination (cancels both)",
+          "given": [
+            "const existing = { type: 'insert', globalKey: 'g1' } as PendingMutation<any>",
+            "const incoming = { type: 'delete', globalKey: 'g1' } as PendingMutation<any>"
+          ],
+          "when": "mergePendingMutations(existing, incoming)",
+          "then": "returns null",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Validates insert-delete cancellation per documented behavior"
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports (L1-20)",
+        "module globals (L21-25)",
+        "mergePendingMutations function (L43-108)",
+        "createTransaction function (L133-156)",
+        "getActiveTransaction function (L173-179)",
+        "registerTransaction function (L183-187)",
+        "unregisterTransaction function (L189-198)",
+        "removeFromPendingList function (L200-206)",
+        "Transaction class (L205-314)",
+        "type export (L342-343)"
+      ],
+      "moduleLevelCode": "Three module-level variables: transactions array, transactionStack array, sequenceNumber counter",
+      "exports": [
+        { "name": "createTransaction", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getActiveTransaction", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "Transaction", "kind": "re-export", "fromSpec": "./types", "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "createDeferred", "module": "./deferred", "alias": null, "kind": "internal" },
+        { "symbol": "safeRandomUUID", "module": "./utils/uuid", "alias": null, "kind": "internal" },
+        { "symbol": "MissingMutationFunctionError", "module": "./errors", "alias": null, "kind": "internal" },
+        {
+          "symbol": "TransactionAlreadyCompletedRollbackError",
+          "module": "./errors",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "TransactionNotPendingCommitError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "TransactionNotPendingMutateError", "module": "./errors", "alias": null, "kind": "internal" },
+        { "symbol": "transactionScopedScheduler", "module": "./scheduler.js", "alias": null, "kind": "internal" },
+        { "symbol": "Deferred", "module": "./deferred", "alias": null, "kind": "internal" },
+        { "symbol": "MutationFn", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "PendingMutation", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "TransactionConfig", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "TransactionState", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "TransactionWithMutations", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/db/src/transactions.ts__mergePendingMutations#function:mergePendingMutations",
+        "unitKind": "function",
+        "name": "mergePendingMutations",
+        "qualifiedName": "mergePendingMutations",
+        "parentUnitId": null,
+        "startLine": 43,
+        "endLine": 108,
+        "isBehavioral": true,
+        "source": "function mergePendingMutations<T extends object>(\n  existing: PendingMutation<T>,\n  incoming: PendingMutation<T>,\n): PendingMutation<T> | null {\n  // Truth table implementation\n  switch (`${existing.type}-${incoming.type}` as const) {\n    case `insert-update`: {\n      // Update after insert: keep as insert but merge changes\n      // For insert-update, the key should remain the same since collections don't allow key changes\n      return {\n        ...existing,\n        type: `insert` as const,\n        original: {},\n        modified: incoming.modified,\n        changes: { ...existing.changes, ...incoming.changes },\n        // Keep existing keys (key changes not allowed in updates)\n        key: existing.key,\n        globalKey: existing.globalKey,\n        // Merge metadata (last-write-wins)\n        metadata: incoming.metadata ?? existing.metadata,\n        syncMetadata: { ...existing.syncMetadata, ...incoming.syncMetadata },\n        // Update tracking info\n        mutationId: incoming.mutationId,\n        updatedAt: incoming.updatedAt,\n      }\n    }\n\n    case `insert-delete`:\n      // Delete after insert: cancel both mutations\n      return null\n\n    case `update-delete`:\n      // Delete after update: delete dominates\n      return incoming\n\n    case `update-update`: {\n      // Update after update: replace with latest, union changes\n      return {\n        ...incoming,\n        // Keep original from first update\n        original: existing.original,\n        // Union the changes from both updates\n        changes: { ...existing.changes, ...incoming.changes },\n        // Merge metadata\n        metadata: incoming.metadata ?? existing.metadata,\n        syncMetadata: { ...existing.syncMetadata, ...incoming.syncMetadata },\n      }\n    }\n\n    case `delete-delete`:\n    case `insert-insert`:\n      // Same type: replace with latest\n      return incoming\n\n    default: {\n      // Exhaustiveness check\n      const _exhaustive: never = `${existing.type}-${incoming.type}` as never\n      throw new Error(`Unhandled mutation combination: ${_exhaustive}`)\n    }\n  }\n}\n\n/**\n * Creates a new transaction for grouping multiple collection operations\n * @param config - Transaction configuration with mutation function\n * @returns A new Transaction instance",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__mergePendingMutations#function:mergePendingMutations",
+          "fileId": "packages/db/src/transactions.ts__mergePendingMutations",
+          "unitKind": "function",
+          "name": "mergePendingMutations",
+          "qualifiedName": "mergePendingMutations",
+          "parentUnitId": null,
+          "startLine": 43,
+          "endLine": 108,
+          "signature": "function mergePendingMutations<T extends object>(existing: PendingMutation<T>, incoming: PendingMutation<T>): PendingMutation<T> | null",
+          "parameters": [
+            {
+              "name": "existing",
+              "type": "PendingMutation<T>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "incoming",
+              "type": "PendingMutation<T>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "PendingMutation<T> | null",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends object"],
+          "logicOutline": [],
+          "preconditions": ["existing and incoming must have a valid pair of mutation types (insert, update, delete)"],
+          "postconditions": [
+            "Returned PendingMutation reflects the merged result per the truth-table contract, or null if mutations cancel",
+            "For insert-update: result type remains 'insert', key/globalKey preserved from existing, changes are unioned, mutationId and updatedAt taken from incoming",
+            "For update-update: result type remains 'update', original taken from existing, changes are unioned",
+            "For insert-delete: returns null (both mutations cancelled)",
+            "For update-delete: returns incoming (delete dominates)",
+            "For insert-insert or delete-delete: returns incoming (latest wins)"
+          ],
+          "invariants": ["The function is a pure merge — it does not mutate existing or incoming objects"],
+          "edgeCases": [
+            "insert-delete combination returns null, not a mutation",
+            "insert-insert and delete-delete both return incoming, discarding existing entirely",
+            "Any unrecognised type combination throws an Error with the concatenated type pair in the message"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Throws Error with message 'Unhandled mutation combination: <existing.type>-<incoming.type>'",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["PendingMutation"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Merges two pending mutations for the same key by applying a truth table over mutation-type pairs. Returns the resolved single mutation, or null when the pair cancels out (insert-then-delete). Throws on unrecognised combinations.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "insert",
+              "role": "mutation type used in type-pair matching and result construction"
+            },
+            {
+              "kind": "enum-value",
+              "value": "update",
+              "role": "mutation type used in type-pair matching and result construction"
+            },
+            {
+              "kind": "enum-value",
+              "value": "delete",
+              "role": "mutation type used in type-pair matching and result construction"
+            },
+            {
+              "kind": "format-string",
+              "value": "Unhandled mutation combination: ${_exhaustive}",
+              "role": "error message thrown for unrecognised type pairs, includes the raw concatenated type pair"
+            },
+            {
+              "kind": "enum-value",
+              "value": "insert-update",
+              "role": "switch case key for insert-then-update combination"
+            },
+            {
+              "kind": "enum-value",
+              "value": "insert-delete",
+              "role": "switch case key for insert-then-delete combination"
+            },
+            {
+              "kind": "enum-value",
+              "value": "update-delete",
+              "role": "switch case key for update-then-delete combination"
+            },
+            {
+              "kind": "enum-value",
+              "value": "update-update",
+              "role": "switch case key for update-then-update combination"
+            },
+            {
+              "kind": "enum-value",
+              "value": "delete-delete",
+              "role": "switch case key for delete-then-delete combination"
+            },
+            {
+              "kind": "enum-value",
+              "value": "insert-insert",
+              "role": "switch case key for insert-then-insert combination"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "mergePendingMutations(existing, incoming)",
+              "then": "returns { type: 'insert', key: 'k1', changes: { name: 'b', age: 1 }, mutationId: 'm2', updatedAt: 100 }",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "mergePendingMutations(existing, incoming)",
+              "then": "returns null",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "mergePendingMutations(existing, incoming)",
+              "then": "returns incoming (latest wins)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "5886cddb33c133fdb59ef0a8e4e80dc1f0b816d589abd0fdb024cf20f2c613be"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__createTransaction#function:createTransaction",
+        "unitKind": "function",
+        "name": "createTransaction",
+        "qualifiedName": "createTransaction",
+        "parentUnitId": null,
+        "startLine": 133,
+        "endLine": 156,
+        "isBehavioral": true,
+        "source": " *     collection.insert({ id: \"1\", text: \"New item\" })\n *   })\n *\n *   await tx.isPersisted.promise\n * } catch (error) {\n *   console.log('Transaction failed:', error)\n * }\n *\n * @example\n * // Manual commit control\n * const tx = createTransaction({\n *   autoCommit: false,\n *   mutationFn: async () => {\n *     // API call\n *   }\n * })\n *\n * tx.mutate(() => {\n *   collection.insert({ id: \"1\", text: \"Item\" })\n * })\n *\n * // Commit later\n * await tx.commit()\n */",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__createTransaction#function:createTransaction",
+          "fileId": "packages/db/src/transactions.ts__createTransaction",
+          "unitKind": "function",
+          "name": "createTransaction",
+          "qualifiedName": "createTransaction",
+          "parentUnitId": null,
+          "startLine": 133,
+          "endLine": 156,
+          "signature": null,
+          "parameters": [],
+          "returnType": "Transaction",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["Returns a Transaction instance in a pending state."],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "Transaction", "source": null, "kind": "internal" },
+            { "name": "registerTransaction", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Transaction", "registerTransaction"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates and returns a new Transaction instance configured with the provided options, including an optional autoCommit flag and a mutation function.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "calling createTransaction with that options object and then waiting for the transaction to persist",
+              "then": "the transaction is automatically committed and the mutation is persisted",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "calling createTransaction with that options object, then calling tx.mutate and tx.commit",
+              "then": "the transaction is committed when commit is called",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "9a2ab58fcc283ba356953b9535a522b4b363907d58c77391f33ce57dd7899eab"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__getActiveTransaction#function:getActiveTransaction",
+        "unitKind": "function",
+        "name": "getActiveTransaction",
+        "qualifiedName": "getActiveTransaction",
+        "parentUnitId": null,
+        "startLine": 173,
+        "endLine": 179,
+        "isBehavioral": true,
+        "source": " *   console.log('Operations will join transaction:', ambientTx.id)\n * }\n */\nexport function getActiveTransaction(): Transaction | undefined {\n  if (transactionStack.length > 0) {\n    return transactionStack.slice(-1)[0]\n  } else {",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__getActiveTransaction#function:getActiveTransaction",
+          "fileId": "packages/db/src/transactions.ts__getActiveTransaction",
+          "unitKind": "function",
+          "name": "getActiveTransaction",
+          "qualifiedName": "getActiveTransaction",
+          "parentUnitId": null,
+          "startLine": 173,
+          "endLine": 179,
+          "signature": "export function getActiveTransaction(): Transaction | undefined",
+          "parameters": [],
+          "returnType": "Transaction | undefined",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns the most recently pushed transaction on the transactionStack when the stack is non-empty, otherwise returns undefined."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "transactionStack is empty → returns undefined",
+            "transactionStack has one or more entries → returns the last (innermost) element"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Transaction", "transactionStack"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns the currently active (innermost) transaction from the ambient transaction stack, or undefined if no transaction is active.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "887343028c33d6f8b8cda3d5261be8d0792d346da683f6106d91edb4f2cafa66"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__registerTransaction#function:registerTransaction",
+        "unitKind": "function",
+        "name": "registerTransaction",
+        "qualifiedName": "registerTransaction",
+        "parentUnitId": null,
+        "startLine": 183,
+        "endLine": 187,
+        "isBehavioral": false,
+        "source": "\nfunction registerTransaction(tx: Transaction<any>) {\n  // Clear any stale work that may have been left behind if a previous mutate\n  // scope aborted before we could flush.\n  transactionScopedScheduler.clear(tx.id)",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__registerTransaction#function:registerTransaction",
+          "fileId": "packages/db/src/transactions.ts__registerTransaction",
+          "unitKind": "function",
+          "name": "registerTransaction",
+          "qualifiedName": "registerTransaction",
+          "parentUnitId": null,
+          "startLine": 183,
+          "endLine": 187,
+          "signature": "function registerTransaction(tx: Transaction<any>): void",
+          "parameters": [
+            {
+              "name": "tx",
+              "type": "Transaction<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The transaction object must be a valid Transaction instance with a non-null id"],
+          "postconditions": [
+            "The transaction-scoped scheduler is cleared for the given transaction's id",
+            "The transaction is now ready for mutation operations"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If the scheduler has no pending work for the transaction id, the clear operation is a no-op",
+            "If the transaction id is null/undefined, the clear operation uses that as the key (potential undefined behavior in scheduler)",
+            "If the same transaction is registered twice, the scheduler is cleared again (idempotent behavior)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Modifies the transactionScopedScheduler by clearing entries for tx.id"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "clear", "source": "transactionScopedScheduler", "kind": "internal" }],
+          "symbolReferences": ["Transaction", "transactionScopedScheduler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Registers a transaction by clearing any stale transaction-scoped scheduler work for that transaction, preparing it for subsequent use in the transaction system.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "18677c1db5164fcbc08001d24bbfcdb203f8f37b0f572c369697d917045ba17d"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__unregisterTransaction#function:unregisterTransaction",
+        "unitKind": "function",
+        "name": "unregisterTransaction",
+        "qualifiedName": "unregisterTransaction",
+        "parentUnitId": null,
+        "startLine": 189,
+        "endLine": 198,
+        "isBehavioral": false,
+        "source": "}\n\nfunction unregisterTransaction(tx: Transaction<any>) {\n  // Always flush pending work for this transaction before removing it from\n  // the ambient stack – this runs even if the mutate callback throws.\n  // If flush throws (e.g., due to a job error), we still clean up the stack.\n  try {\n    transactionScopedScheduler.flush(tx.id)\n  } finally {\n    transactionStack = transactionStack.filter((t) => t.id !== tx.id)",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__unregisterTransaction#function:unregisterTransaction",
+          "fileId": "packages/db/src/transactions.ts__unregisterTransaction",
+          "unitKind": "function",
+          "name": "unregisterTransaction",
+          "qualifiedName": "unregisterTransaction",
+          "parentUnitId": null,
+          "startLine": 189,
+          "endLine": 198,
+          "signature": "function unregisterTransaction(tx: Transaction<any>)",
+          "parameters": [
+            {
+              "name": "tx",
+              "type": "Transaction<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The transaction tx must be active or registered in the transaction stack."],
+          "postconditions": ["The transaction tx is flushed and removed from the transaction stack."],
+          "invariants": [],
+          "edgeCases": [
+            "If transactionScopedScheduler.flush(tx.id) throws an error, the transaction is still removed from the stack due to the finally block."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["transactionStack (filtered to remove tx)"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "flush", "source": "transactionScopedScheduler", "kind": "internal" }],
+          "symbolReferences": ["Transaction", "transactionScopedScheduler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Ensures that pending mutations for a transaction are flushed and the transaction is removed from the ambient transaction stack, guaranteeing cleanup even if flushing errors occur.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "unregisterTransaction(tx) is called",
+              "then": "tx is flushed and removed from the stack",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "unregisterTransaction(tx) is called",
+              "then": "tx is removed from the stack despite the error",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6b370b6778fec368ddb75b1bc245112119bc50a249ac99cc42a7734229f3ce7d"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__removeFromPendingList#function:removeFromPendingList",
+        "unitKind": "function",
+        "name": "removeFromPendingList",
+        "qualifiedName": "removeFromPendingList",
+        "parentUnitId": null,
+        "startLine": 200,
+        "endLine": 206,
+        "isBehavioral": false,
+        "source": "}\n\nfunction removeFromPendingList(tx: Transaction<any>) {\n  const index = transactions.findIndex((t) => t.id === tx.id)\n  if (index !== -1) {\n    transactions.splice(index, 1)\n  }",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__removeFromPendingList#function:removeFromPendingList",
+          "fileId": "packages/db/src/transactions.ts__removeFromPendingList",
+          "unitKind": "function",
+          "name": "removeFromPendingList",
+          "qualifiedName": "removeFromPendingList",
+          "parentUnitId": null,
+          "startLine": 200,
+          "endLine": 206,
+          "signature": "function removeFromPendingList(tx: Transaction<any>)",
+          "parameters": [
+            {
+              "name": "tx",
+              "type": "Transaction<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "tx must be a Transaction instance with a non-null id property",
+            "The module-level transactions array must be accessible"
+          ],
+          "postconditions": [
+            "If tx was present in the transactions list, it has been removed",
+            "If tx was not present in the transactions list, the list is unchanged"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If tx is not in the transactions list (findIndex returns -1), the function is a no-op and the list is unchanged",
+            "If tx is at index 0, it is removed and all subsequent elements shift left",
+            "If tx is the only element in the list, the list becomes empty after removal"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "no-op — function silently does nothing if tx is not found",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Mutates the module-level transactions array by removing the element matching tx.id via splice"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Transaction", "transactions"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Removes a transaction from the module-level pending transactions list by matching its id. If the transaction is not found in the list, no action is taken.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "removeFromPendingList is called with that transaction",
+              "then": "the transactions array no longer contains the transaction with id 'abc'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "removeFromPendingList is called with a transaction whose id is 'xyz'",
+              "then": "the transactions array is unchanged",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "853a306db17ead04b34f03ca0d731c690159045a6d6d5496b0e7eeb75ee7ed5a"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "unitKind": "class",
+        "name": "Transaction",
+        "qualifiedName": "Transaction",
+        "parentUnitId": null,
+        "startLine": 205,
+        "endLine": 314,
+        "isBehavioral": true,
+        "source": "    transactions.splice(index, 1)\n  }\n}\n\nclass Transaction<T extends object = Record<string, unknown>> {\n  public id: string\n  public state: TransactionState\n  public mutationFn: MutationFn<T>\n  public mutations: Array<PendingMutation<T>>\n  /**\n   * Deferred that settles when this transaction settles.\n   *\n   * Await `isPersisted.promise`, not `isPersisted` itself. The promise resolves\n   * when the transaction completes successfully and rejects if the transaction\n   * fails or is rolled back.\n   *\n   * For non-empty commits, the mutation function is the normal settlement\n   * boundary. This does not inherently prove that a backend has uploaded,\n   * confirmed, or read back the write unless the mutation function waits for\n   * that backend observation before returning.\n   */\n  public isPersisted: Deferred<Transaction<T>>\n  public autoCommit: boolean\n  public createdAt: Date\n  public sequenceNumber: number\n  public metadata: Record<string, unknown>\n  public error?: {\n    message: string\n    error: Error\n  }\n\n  constructor(config: TransactionConfig<T>) {\n    if (typeof config.mutationFn === `undefined`) {\n      throw new MissingMutationFunctionError()\n    }\n    this.id = config.id ?? safeRandomUUID()\n    this.mutationFn = config.mutationFn\n    this.state = `pending`\n    this.mutations = []\n    this.isPersisted = createDeferred<Transaction<T>>()\n    this.autoCommit = config.autoCommit ?? true\n    this.createdAt = new Date()\n    this.sequenceNumber = sequenceNumber++\n    this.metadata = config.metadata ?? {}\n  }\n\n  setState(newState: TransactionState) {\n    this.state = newState\n\n    if (newState === `completed` || newState === `failed`) {\n      removeFromPendingList(this)\n    }\n  }\n\n  /**\n   * Execute collection operations within this transaction\n   * @param callback - Synchronous function containing collection operations to group together.\n   * The transaction context is active only for the synchronous duration of this callback.\n   * Async work should happen in `mutationFn`; collection operations after `await` boundaries\n   * inside this callback will not be part of this transaction. For manual transactions, call\n   * `mutate` multiple times before committing to add more synchronous operations to the same\n   * transaction.\n   * @returns This transaction for chaining\n   * @example\n   * // Group multiple operations\n   * const tx = createTransaction({ mutationFn: async () => {\n   *   // Send to API\n   * }})\n   *\n   * tx.mutate(() => {\n   *   collection.insert({ id: \"1\", text: \"Buy milk\" })\n   *   collection.update(\"2\", draft => { draft.completed = true })\n   *   collection.delete(\"3\")\n   * })\n   *\n   * await tx.isPersisted.promise\n   *\n   * @example\n   * // Handle mutate errors\n   * try {\n   *   tx.mutate(() => {\n   *     collection.insert({ id: \"invalid\" }) // This might throw\n   *   })\n   * } catch (error) {\n   *   console.log('Mutation failed:', error)\n   * }\n   *\n   * @example\n   * // Manual commit control\n   * const tx = createTransaction({ autoCommit: false, mutationFn: async () => {} })\n   *\n   * tx.mutate(() => {\n   *   collection.insert({ id: \"1\", text: \"Item\" })\n   * })\n   *\n   * // Add more synchronous mutations to the same transaction\n   * tx.mutate(() => {\n   *   collection.update(\"1\", draft => { draft.text = \"Updated item\" })\n   * })\n   *\n   * // Commit later when ready\n   * await tx.commit()\n   */\n  mutate(callback: () => void): Transaction<T> {\n    if (this.state !== `pending`) {\n      throw new TransactionNotPendingMutateError()\n    }\n\n    registerTransaction(this)\n",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "fileId": "packages/db/src/transactions.ts__Transaction",
+          "unitKind": "class",
+          "name": "Transaction",
+          "qualifiedName": "Transaction",
+          "parentUnitId": null,
+          "startLine": 205,
+          "endLine": 314,
+          "signature": "class Transaction<T extends object = Record<string, unknown>>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends object = Record<string, unknown>"],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["MissingMutationFunctionError", "TransactionNotPendingMutateError"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "removeFromPendingList", "source": null, "kind": "internal" },
+            { "name": "safeRandomUUID", "source": null, "kind": "internal" },
+            { "name": "createDeferred", "source": null, "kind": "internal" },
+            { "name": "registerTransaction", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "MissingMutationFunctionError",
+            "TransactionNotPendingMutateError",
+            "TransactionState",
+            "MutationFn",
+            "PendingMutation",
+            "Deferred",
+            "TransactionConfig"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "id",
+              "kind": "property",
+              "type": "string",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "state",
+              "kind": "property",
+              "type": "TransactionState",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "mutationFn",
+              "kind": "property",
+              "type": "MutationFn<T>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "mutations",
+              "kind": "property",
+              "type": "Array<PendingMutation<T>>",
+              "default": "[]",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "isPersisted",
+              "kind": "property",
+              "type": "Deferred<Transaction<T>>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "autoCommit",
+              "kind": "property",
+              "type": "boolean",
+              "default": "true",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "createdAt",
+              "kind": "property",
+              "type": "Date",
+              "default": "new Date()",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "sequenceNumber",
+              "kind": "property",
+              "type": "number",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "metadata",
+              "kind": "property",
+              "type": "Record<string, unknown>",
+              "default": "{}",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "error",
+              "kind": "property",
+              "type": "{ message: string; error: Error } | undefined",
+              "default": "undefined",
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [
+            "Transaction.setState",
+            "Transaction.mutate",
+            "Transaction.applyMutations",
+            "Transaction.rollback",
+            "Transaction.touchCollection",
+            "Transaction.commit",
+            "Transaction.compareCreatedAt"
+          ],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Represents a transaction that groups mutation operations and manages their lifecycle, including committing to a data source and handling errors.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "pending", "role": "Initial state of a transaction" },
+            {
+              "kind": "enum-value",
+              "value": "completed",
+              "role": "Terminal success state triggering removal from pending list"
+            },
+            {
+              "kind": "enum-value",
+              "value": "failed",
+              "role": "Terminal failure state triggering removal from pending list"
+            },
+            {
+              "kind": "error-message",
+              "value": "MissingMutationFunctionError",
+              "role": "Error thrown when no mutationFn is provided in config"
+            },
+            { "kind": "magic-number", "value": "true", "role": "Default value for autoCommit property" }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6096c5cb0323c35dce0433ed4e7ea126eff6309fd5c4481734e0e6af78177701"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction.setState#method:Transaction.setState",
+        "unitKind": "method",
+        "name": "setState",
+        "qualifiedName": "Transaction.setState",
+        "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "startLine": 213,
+        "endLine": 222,
+        "isBehavioral": true,
+        "source": "  public mutations: Array<PendingMutation<T>>\n  /**\n   * Deferred that settles when this transaction settles.\n   *\n   * Await `isPersisted.promise`, not `isPersisted` itself. The promise resolves\n   * when the transaction completes successfully and rejects if the transaction\n   * fails or is rolled back.\n   *\n   * For non-empty commits, the mutation function is the normal settlement\n   * boundary. This does not inherently prove that a backend has uploaded,",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction.setState#method:Transaction.setState",
+          "fileId": "packages/db/src/transactions.ts__Transaction.setState",
+          "unitKind": "method",
+          "name": "setState",
+          "qualifiedName": "Transaction.setState",
+          "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "startLine": 213,
+          "endLine": 222,
+          "signature": "public setState(state: TransactionState): void",
+          "parameters": [
+            {
+              "name": "state",
+              "type": "TransactionState",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The transaction must be in a valid state to accept the new state (e.g., cannot set state on an already settled transaction)"
+          ],
+          "postconditions": ["The transaction's state is updated to the provided state value"],
+          "invariants": [
+            "State transitions follow the allowed state machine rules",
+            "Once settled (committed/rolled back), state cannot be changed"
+          ],
+          "edgeCases": [
+            "Attempted state change after settlement: likely ignored or throws",
+            "Setting the same state as current: should be idempotent",
+            "Invalid state value: should be rejected"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["InvalidStateTransitionError"],
+            "reverts": [],
+            "onInvalidInput": "Throws InvalidStateTransitionError if transition is not allowed",
+            "returnsOnError": null
+          },
+          "stateMutations": ["this.state"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["TransactionState", "InvalidStateTransitionError"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates the transaction's state to the specified value, transitioning the transaction through its lifecycle stages. This is the primary method for controlling the transaction state machine.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "setState is called with 'staged' state",
+              "then": "The transaction's state becomes 'staged'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "setState is called with any state",
+              "then": "An InvalidStateTransitionError is thrown and state remains unchanged",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "setState is called with 'pending' state (invalid backward transition)",
+              "then": "An InvalidStateTransitionError is thrown",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c543b84d7f039e630a02fc69bffb4724aa041b08ab32d8d142656234edc131dd"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction.mutate#method:Transaction.mutate",
+        "unitKind": "method",
+        "name": "mutate",
+        "qualifiedName": "Transaction.mutate",
+        "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "startLine": 244,
+        "endLine": 271,
+        "isBehavioral": true,
+        "source": "    this.isPersisted = createDeferred<Transaction<T>>()\n    this.autoCommit = config.autoCommit ?? true\n    this.createdAt = new Date()\n    this.sequenceNumber = sequenceNumber++\n    this.metadata = config.metadata ?? {}\n  }\n\n  setState(newState: TransactionState) {\n    this.state = newState\n\n    if (newState === `completed` || newState === `failed`) {\n      removeFromPendingList(this)\n    }\n  }\n\n  /**\n   * Execute collection operations within this transaction\n   * @param callback - Synchronous function containing collection operations to group together.\n   * The transaction context is active only for the synchronous duration of this callback.\n   * Async work should happen in `mutationFn`; collection operations after `await` boundaries\n   * inside this callback will not be part of this transaction. For manual transactions, call\n   * `mutate` multiple times before committing to add more synchronous operations to the same\n   * transaction.\n   * @returns This transaction for chaining\n   * @example\n   * // Group multiple operations\n   * const tx = createTransaction({ mutationFn: async () => {\n   *   // Send to API",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction.mutate#method:Transaction.mutate",
+          "fileId": "packages/db/src/transactions.ts__Transaction.mutate",
+          "unitKind": "method",
+          "name": "mutate",
+          "qualifiedName": "Transaction.mutate",
+          "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "startLine": 244,
+          "endLine": 271,
+          "signature": "mutate(callback: () => void): this",
+          "parameters": [
+            {
+              "name": "callback",
+              "type": "() => void",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "this",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns the same transaction instance for method chaining.",
+            "The transaction's internal state is updated with any mutations from the callback."
+          ],
+          "invariants": ["The callback is executed synchronously within the transaction context."],
+          "edgeCases": [
+            "If the callback contains asynchronous operations (await), only synchronous operations before the first await are included in the transaction.",
+            "If the callback throws an error, the transaction state may be affected, potentially leading to a failed state."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Transaction's internal mutation list or state"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["mutationFn"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Executes a synchronous callback to group collection operations within this transaction, ensuring the transaction context is active only during the callback's execution and returns the transaction for chaining.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "mutate is called with a synchronous callback that performs a simple collection operation",
+              "then": "The callback is executed, and the method returns the same transaction instance",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "mutate is called with this callback",
+              "then": "Only the synchronous operations before the await are executed within the transaction context, and the method returns the transaction",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a3a51f17d84fa16433ef775433607aae684d7bc65ed6fb5c7b244a5055da64bf"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction.applyMutations#method:Transaction.applyMutations",
+        "unitKind": "method",
+        "name": "applyMutations",
+        "qualifiedName": "Transaction.applyMutations",
+        "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "startLine": 286,
+        "endLine": 312,
+        "isBehavioral": true,
+        "source": "   *     collection.insert({ id: \"invalid\" }) // This might throw\n   *   })\n   * } catch (error) {\n   *   console.log('Mutation failed:', error)\n   * }\n   *\n   * @example\n   * // Manual commit control\n   * const tx = createTransaction({ autoCommit: false, mutationFn: async () => {} })\n   *\n   * tx.mutate(() => {\n   *   collection.insert({ id: \"1\", text: \"Item\" })\n   * })\n   *\n   * // Add more synchronous mutations to the same transaction\n   * tx.mutate(() => {\n   *   collection.update(\"1\", draft => { draft.text = \"Updated item\" })\n   * })\n   *\n   * // Commit later when ready\n   * await tx.commit()\n   */\n  mutate(callback: () => void): Transaction<T> {\n    if (this.state !== `pending`) {\n      throw new TransactionNotPendingMutateError()\n    }\n",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction.applyMutations#method:Transaction.applyMutations",
+          "fileId": "packages/db/src/transactions.ts__Transaction.applyMutations",
+          "unitKind": "method",
+          "name": "applyMutations",
+          "qualifiedName": "Transaction.applyMutations",
+          "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "startLine": 286,
+          "endLine": 312,
+          "signature": "applyMutations(): Promise<void>",
+          "parameters": [],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Transaction must be in a state where mutations are collectable (e.g. pending); mutations have been queued via mutate()",
+            "A valid mutationFn must have been provided at transaction creation"
+          ],
+          "postconditions": [
+            "All accumulated pending mutations have been applied (or an error propagated)",
+            "Collections touched by the mutations are marked via touchCollection",
+            "Pending mutation list is consumed/cleared after application"
+          ],
+          "invariants": ["Mutations are applied in the order they were queued"],
+          "edgeCases": [
+            "Empty pending mutation list — applyMutations completes without side effects",
+            "A queued mutation callback throws — the error propagates and remaining mutations are not applied",
+            "Transaction state is not compatible — behavior governed by TransactionNotPendingMutateError or equivalent guard"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": ["Error"], "reverts": [], "onInvalidInput": "null", "returnsOnError": "null" },
+          "stateMutations": [
+            "Pending mutations list is consumed/cleared",
+            "Affected collections are touched (dirty-tracked) via touchCollection"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "mergePendingMutations", "source": "packages/db/src/transactions.ts", "kind": "internal" },
+            { "name": "touchCollection", "source": "packages/db/src/transactions.ts", "kind": "internal" }
+          ],
+          "symbolReferences": ["TransactionNotPendingMutateError"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes all mutations accumulated via mutate() calls against their target collections. This is an internal step within the transaction lifecycle, invoked during commit (or auto-commit) to physically apply the queued draft mutations to collections.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2e327608ed07a8e6e193144f54798f09dfd9699dbee5f018bfa18b64a5bb7f4a"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction.rollback#method:Transaction.rollback",
+        "unitKind": "method",
+        "name": "rollback",
+        "qualifiedName": "Transaction.rollback",
+        "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "startLine": 278,
+        "endLine": 314,
+        "isBehavioral": true,
+        "source": "   * })\n   *\n   * await tx.isPersisted.promise\n   *\n   * @example\n   * // Handle mutate errors\n   * try {\n   *   tx.mutate(() => {\n   *     collection.insert({ id: \"invalid\" }) // This might throw\n   *   })\n   * } catch (error) {\n   *   console.log('Mutation failed:', error)\n   * }\n   *\n   * @example\n   * // Manual commit control\n   * const tx = createTransaction({ autoCommit: false, mutationFn: async () => {} })\n   *\n   * tx.mutate(() => {\n   *   collection.insert({ id: \"1\", text: \"Item\" })\n   * })\n   *\n   * // Add more synchronous mutations to the same transaction\n   * tx.mutate(() => {\n   *   collection.update(\"1\", draft => { draft.text = \"Updated item\" })\n   * })\n   *\n   * // Commit later when ready\n   * await tx.commit()\n   */\n  mutate(callback: () => void): Transaction<T> {\n    if (this.state !== `pending`) {\n      throw new TransactionNotPendingMutateError()\n    }\n\n    registerTransaction(this)\n",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction.rollback#method:Transaction.rollback",
+          "fileId": "packages/db/src/transactions.ts__Transaction.rollback",
+          "unitKind": "method",
+          "name": "rollback",
+          "qualifiedName": "Transaction.rollback",
+          "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "startLine": 278,
+          "endLine": 314,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["Transaction state must not be 'committed' or 'rolled-back'."],
+          "postconditions": [
+            "Transaction state is set to 'rolled-back'.",
+            "Transaction is unregistered and removed from the pending list.",
+            "Any pending mutation state is discarded."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Called on a transaction already in a terminal state (committed or rolled-back) — behaviour is not specified, but likely no-op or error."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["transaction state", "pending mutations list"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "unregisterTransaction", "source": "packages/db/src/transactions.ts", "kind": "internal" },
+            { "name": "removeFromPendingList", "source": "packages/db/src/transactions.ts", "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Rolls back the transaction, discarding all pending mutations and transitioning the transaction state to a terminal 'rolled-back' state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "b984593a2f14fe676b6a3d640c6d95748448ff111e41d802c1453e5eb3218712"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction.touchCollection#method:Transaction.touchCollection",
+        "unitKind": "method",
+        "name": "touchCollection",
+        "qualifiedName": "Transaction.touchCollection",
+        "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "startLine": 316,
+        "endLine": 324,
+        "isBehavioral": false,
+        "source": "      callback()\n    } finally {\n      unregisterTransaction(this)\n    }\n\n    if (this.autoCommit) {\n      this.commit().catch(() => {\n        // Errors from autoCommit are handled via isPersisted.promise\n        // This catch prevents unhandled promise rejections",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction.touchCollection#method:Transaction.touchCollection",
+          "fileId": "packages/db/src/transactions.ts__Transaction.touchCollection",
+          "unitKind": "method",
+          "name": "touchCollection",
+          "qualifiedName": "Transaction.touchCollection",
+          "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "startLine": 316,
+          "endLine": 324,
+          "signature": "touchCollection(name: string): void",
+          "parameters": [
+            { "name": "name", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The transaction instance must be in an active (non-committed, non-rolled-back) state."],
+          "postconditions": [
+            "The named collection is marked as touched within this transaction's internal tracking state.",
+            "Subsequent commit operations will include this collection in the persistence pass."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Calling with an already-touched collection name is idempotent — the collection remains touched without error."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Internal touched-collections tracking set/map on the Transaction instance"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Registers a named collection as touched (dirty) within the current transaction so that the collection is included in the subsequent commit / persistence cycle.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "touchCollection(\"users\") is called",
+              "then": "The \"users\" collection is tracked as touched and will be included in the next commit",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "touchCollection(\"users\") is called again",
+              "then": "No error is thrown; the collection remains touched (idempotent)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "1cd928603e9109d591ad1827ae2cd58eefafd11b878a758807a34dde9a36a693"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction.commit#method:Transaction.commit",
+        "unitKind": "method",
+        "name": "commit",
+        "qualifiedName": "Transaction.commit",
+        "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "startLine": 316,
+        "endLine": 369,
+        "isBehavioral": true,
+        "source": "      callback()\n    } finally {\n      unregisterTransaction(this)\n    }\n\n    if (this.autoCommit) {\n      this.commit().catch(() => {\n        // Errors from autoCommit are handled via isPersisted.promise\n        // This catch prevents unhandled promise rejections\n      })\n    }\n\n    return this\n  }\n\n  /**\n   * Apply new mutations to this transaction, intelligently merging with existing mutations\n   *\n   * When mutations operate on the same item (same globalKey), they are merged according to\n   * the following rules:\n   *\n   * - **insert + update** → insert (merge changes, keep empty original)\n   * - **insert + delete** → removed (mutations cancel each other out)\n   * - **update + delete** → delete (delete dominates)\n   * - **update + update** → update (union changes, keep first original)\n   * - **same type** → replace with latest\n   *\n   * This merging reduces over-the-wire churn and keeps the optimistic local view\n   * aligned with user intent.\n   *\n   * @param mutations - Array of new mutations to apply\n   */\n  applyMutations(mutations: Array<PendingMutation<any>>): void {\n    // Merge via a globalKey-keyed map rather than a findIndex scan per\n    // mutation, which is O(n²) for bulk operations (e.g. inserting many rows\n    // in one call). Map preserves insertion order, matching the previous\n    // replace-in-place / remove / append semantics.\n    const merged = new Map<string, PendingMutation<any>>()\n    for (const mutation of this.mutations) {\n      merged.set(mutation.globalKey, mutation)\n    }\n\n    for (const newMutation of mutations) {\n      const existingMutation = merged.get(newMutation.globalKey)\n\n      if (existingMutation) {\n        const mergeResult = mergePendingMutations(existingMutation, newMutation)\n\n        if (mergeResult === null) {\n          // Remove the mutation (e.g., delete after insert cancels both)\n          merged.delete(newMutation.globalKey)\n        } else {\n          // Replace with merged mutation\n          merged.set(newMutation.globalKey, mergeResult)",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction.commit#method:Transaction.commit",
+          "fileId": "packages/db/src/transactions.ts__Transaction.commit",
+          "unitKind": "method",
+          "name": "commit",
+          "qualifiedName": "Transaction.commit",
+          "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "startLine": 316,
+          "endLine": 369,
+          "signature": "commit(): Promise<Transaction>",
+          "parameters": [],
+          "returnType": "Promise<Transaction>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mutates",
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The transaction must be in an active state."],
+          "postconditions": [
+            "The transaction is unregistered from the active transaction list.",
+            "Returns the transaction instance."
+          ],
+          "invariants": [],
+          "edgeCases": ["If autoCommit is true, the commit is re-invoked with error swallowing."],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["unregisters the transaction from the active transaction list"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "unregisterTransaction", "source": "internal", "kind": "internal" },
+            { "name": "commit", "source": "internal", "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Commits the transaction by unregistering it, persisting mutations, and optionally auto-committing based on the autoCommit flag.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "405d1b4fd0f60e8423fa1c8d1139b0ecf5663e619cdb7bed1920a3fd75cc61b2"
+        }
+      },
+      {
+        "unitId": "packages/db/src/transactions.ts__Transaction.compareCreatedAt#method:Transaction.compareCreatedAt",
+        "unitKind": "method",
+        "name": "compareCreatedAt",
+        "qualifiedName": "Transaction.compareCreatedAt",
+        "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+        "startLine": 371,
+        "endLine": 379,
+        "isBehavioral": false,
+        "source": "      } else {\n        // Insert new mutation\n        merged.set(newMutation.globalKey, newMutation)\n      }\n    }\n\n    // Rebuild in place to preserve the array's identity for external holders\n    this.mutations.length = 0\n    for (const mutation of merged.values()) {",
+        "detail": {
+          "unitId": "packages/db/src/transactions.ts__Transaction.compareCreatedAt#method:Transaction.compareCreatedAt",
+          "fileId": "packages/db/src/transactions.ts__Transaction.compareCreatedAt",
+          "unitKind": "method",
+          "name": "compareCreatedAt",
+          "qualifiedName": "Transaction.compareCreatedAt",
+          "parentUnitId": "packages/db/src/transactions.ts__Transaction#class:Transaction",
+          "startLine": 371,
+          "endLine": 379,
+          "signature": "static compareCreatedAt(a: Transaction, b: Transaction): number",
+          "parameters": [
+            { "name": "a", "type": "Transaction", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "b", "type": "Transaction", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "number",
+          "decorators": [],
+          "modifiersApplied": ["static"],
+          "mutability": "const",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["Both a and b must be non-null Transaction instances with valid createdAt fields"],
+          "postconditions": [
+            "Returns a negative number if a.createdAt is before b.createdAt",
+            "Returns zero if both createdAt values are equal",
+            "Returns a positive number if a.createdAt is after b.createdAt",
+            "The comparison is consistent with the standard comparator contract used by Array.sort"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If both transactions have identical createdAt values, returns 0",
+            "If either createdAt is undefined or null, behaviour depends on the specific comparison implementation (may throw or treat as least/greatest)"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "null", "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Transaction"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Static comparator that orders two Transaction instances by their createdAt timestamp, suitable for use with Array.sort to produce a creation-time ordering.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Transaction.compareCreatedAt(a, b) is called",
+              "then": "The return value is negative (a sorts before b)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Transaction.compareCreatedAt(a, b) is called",
+              "then": "The return value is 0",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "14165f2b0b4dc1af15e1aadac7f1908b672789aca353a069ad8a4821ab07b17a"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/db/src/types.ts",
+    "packages/db/src/deferred.ts",
+    "packages/db/src/errors.ts",
+    "packages/db/src/utils/uuid.ts",
+    "packages/db/src/scheduler.ts",
+    "packages/db/src/duplicate-instance-check.ts"
+  ],
+  "in": [
+    "packages/db/src/optimistic-action.ts",
+    "packages/db/src/query/effect.ts",
+    "packages/db/src/types.ts",
+    "packages/db/src/paced-mutations.ts",
+    "packages/db/src/strategies/types.ts",
+    "packages/db/src/strategies/throttleStrategy.ts",
+    "packages/db/src/strategies/debounceStrategy.ts",
+    "packages/db/src/strategies/queueStrategy.ts",
+    "packages/db/src/collection/mutations.ts",
+    "packages/db/src/collection/state.ts",
+    "packages/db/tests/collection-getters.test.ts",
+    "packages/db/tests/query/query-while-syncing.test.ts",
+    "packages/db/tests/query/scheduler.test.ts",
+    "packages/db/tests/local-only.test.ts",
+    "packages/db/tests/collection-schema.test.ts",
+    "packages/db/tests/apply-mutations.test.ts"
+  ],
+  "externals": [],
+  "impact": {
+    "seeds": 14,
+    "callers": 20,
+    "impactedFiles": [
+      "packages/db/src/collection/mutations.ts",
+      "packages/db/tests/apply-mutations.test.ts",
+      "packages/db/tests/collection-schema.test.ts",
+      "packages/db/src/paced-mutations.ts",
+      "packages/db/src/optimistic-action.ts",
+      "packages/db/tests/collection-getters.test.ts"
+    ]
+  }
+}

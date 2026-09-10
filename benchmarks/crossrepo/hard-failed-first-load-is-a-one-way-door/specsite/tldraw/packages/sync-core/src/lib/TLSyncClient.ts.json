@@ -1,0 +1,2191 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/sync-core/src/lib/TLSyncClient.ts",
+    "language": "typescript",
+    "sizeBytes": 33785,
+    "tokenCount": 8446,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:17:19.178Z",
+    "module": {
+      "purpose": "Implements the client-side synchronization engine for a tldraw store, maintaining an optimistic local state while exchanging document, presence, and control messages with a remote sync server.",
+      "summary": "This module defines the synchronization client, its socket and event contracts, close-error constants, presence handling, and the reconciliation machinery for reconnects and server updates. The client tracks speculative local changes, queued push requests, incoming server diffs, server clocks, and connection health. It uses throttled network scheduling, periodic ping and health checks, remote-change transactions, diff reversal, and reapplication to implement optimistic push, pull, and rebase behavior while preserving local responsiveness.",
+      "businessContext": "Supports real-time collaborative tldraw documents over persistent WebSocket-like connections. If synchronization fails, users may lose collaboration, presence updates, or locally queued changes.",
+      "classes": [
+        "TLSyncError (~L151-158): Represents unrecoverable synchronization failures with a typed close reason",
+        "TLSyncClient (~L274-900): Coordinates optimistic document synchronization and persistent server connectivity"
+      ],
+      "functions": [
+        "getPresenceOp (~L218-228): Computes a presence put or patch operation",
+        "constructor (~L383-537): Initializes scheduling, subscriptions, callbacks, and connection handling",
+        "sendConnectMessage (~L543-558): Sends the initial synchronization handshake",
+        "resetConnection (~L561-589): Clears connection state and restarts the socket",
+        "didReconnect (~L596-672): Rebases local speculative changes after reconnection",
+        "handleServerEvent (~L678-710): Dispatches received server events to synchronization handlers",
+        "close (~L716-727): Disposes listeners, schedulers, and browser debugging state",
+        "pushPresence (~L731-746): Queues current presence for transmission",
+        "push (~L749-765): Accumulates and schedules local record changes",
+        "getSyncFps (~L768-770): Selects network scheduling frequency from presence mode",
+        "applyNetworkDiff (~L774-814): Applies network operations to the local store",
+        "rebase (~L820-900): Reconciles incoming server diffs with pending optimistic changes"
+      ],
+      "keywords": [
+        "optimistic synchronization",
+        "WebSocket",
+        "records diff",
+        "rebase",
+        "presence",
+        "push request",
+        "server clock",
+        "connection health",
+        "tldraw store",
+        "speculative changes"
+      ],
+      "ontologyConcepts": [
+        "optimistic replication",
+        "event-driven synchronization",
+        "conflict reconciliation",
+        "connection lifecycle",
+        "heartbeat monitoring",
+        "transactional state update",
+        "throttled scheduling"
+      ],
+      "businessEntities": [
+        "Document",
+        "Presence",
+        "SyncClient",
+        "SyncServer",
+        "Record",
+        "PushRequest",
+        "Socket",
+        "Connection"
+      ],
+      "systemCapabilities": [
+        "Synchronize local records with a remote server",
+        "Queue and reconcile offline document changes",
+        "Share collaborative presence state",
+        "Recover from socket disconnects",
+        "Detect stale or half-open connections",
+        "Handle custom server messages"
+      ],
+      "configDependencies": ["PING_INTERVAL", "PONG_TIMEOUT", "SOLO_MODE_FPS", "COLLABORATIVE_MODE_FPS"],
+      "importsInternal": [
+        {
+          "spec": "./diff",
+          "symbols": ["NetworkDiff", "ObjectDiff", "RecordOpType", "applyObjectDiff", "diffRecord", "getNetworkDiff"],
+          "anchor": { "startLine": 18, "endLine": 25 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/diff.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/diff.ts",
+          "resolvedHint": "packages/sync-core/src/lib/diff.ts"
+        },
+        {
+          "spec": "./interval",
+          "symbols": ["interval"],
+          "anchor": { "startLine": 26, "endLine": 26 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/interval.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/interval.ts",
+          "resolvedHint": "packages/sync-core/src/lib/interval.ts"
+        },
+        {
+          "spec": "./protocol",
+          "symbols": [
+            "TLObjectStoreAccess",
+            "TLPushRequest",
+            "TLSocketClientSentEvent",
+            "TLSocketServerSentDataEvent",
+            "TLSocketServerSentEvent",
+            "getTlsyncProtocolVersion"
+          ],
+          "anchor": { "startLine": 27, "endLine": 34 },
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedHint": "packages/sync-core/src/lib/protocol.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["Signal", "react", "transact"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/store",
+          "symbols": [
+            "RecordId",
+            "RecordsDiff",
+            "Store",
+            "UnknownRecord",
+            "reverseRecordsDiff",
+            "squashRecordDiffsMutable"
+          ],
+          "package": "@tldraw/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 10 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["FpsScheduler", "exhaustiveSwitchError", "isEqual", "objectMapEntries", "uniqueId"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 11, "endLine": 17 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Writes diagnostic messages with console.debug, console.error, and console.warn."],
+        "network": [
+          "Sends connect, ping, and push messages through the persistent socket.",
+          "Restarts the socket when connection health fails or state is reset.",
+          "Receives and processes server synchronization, status, pong, and custom-message events."
+        ],
+        "env": ["Checks whether window is defined before exposing the client for browser debugging."],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": ["Mutates speculative and unsent record-diff containers through squashRecordDiffsMutable."]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "SubscribingFn",
+          "shape": "export type SubscribingFn<T> = (cb: (val: T) => void) => () => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSyncErrorCloseEventCode",
+          "shape": "export const TLSyncErrorCloseEventCode = 4099 as const",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSyncErrorCloseEventReason",
+          "shape": "export const TLSyncErrorCloseEventReason = { NOT_FOUND: 'NOT_FOUND', FORBIDDEN: 'FORBIDDEN', NOT_AUTHENTICATED: 'NOT_AUTHENTICATED', UNKNOWN_ERROR: 'UNKNOWN_ERROR', CLIENT_TOO_OLD: 'CLIENT_TOO_OLD', SERVER_TOO_OLD: 'SERVER_TOO_OLD', INVALID_RECORD: 'INVALID_RECORD', RATE_LIMITED: 'RATE_LIMITED', ROOM_FULL: 'ROOM_FULL' } as const",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSyncError",
+          "shape": "export class TLSyncError extends Error { constructor(message: string, public reason: TLSyncErrorCloseEventReason) }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSyncErrorCloseEventReason",
+          "shape": "export type TLSyncErrorCloseEventReason = (typeof TLSyncErrorCloseEventReason)[keyof typeof TLSyncErrorCloseEventReason]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLCustomMessageHandler",
+          "shape": "export type TLCustomMessageHandler = (this: null, data: any) => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketStatusChangeEvent",
+          "shape": "export type TLSocketStatusChangeEvent = { status: 'online' | 'offline' } | { status: 'error'; reason: string }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketStatusListener",
+          "shape": "export type TLSocketStatusListener = (params: TLSocketStatusChangeEvent) => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLPersistentClientSocketStatus",
+          "shape": "export type TLPersistentClientSocketStatus = 'online' | 'offline' | 'error'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLPresenceMode",
+          "shape": "export type TLPresenceMode = 'solo' | 'full'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLPersistentClientSocket",
+          "shape": "export interface TLPersistentClientSocket<ClientSentMessage extends object = object, ServerSentMessage extends object = object> { connectionStatus: 'online' | 'offline' | 'error'; sendMessage(msg: ClientSentMessage): void; onReceiveMessage: SubscribingFn<ServerSentMessage>; onStatusChange: SubscribingFn<TLSocketStatusChangeEvent>; restart(): void; close(): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSyncClient",
+          "shape": "export class TLSyncClient<R extends UnknownRecord, S extends Store<R> = Store<R>>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "TLPersistentClientSocket",
+          "shape": "connectionStatus: 'online' | 'offline' | 'error'; sendMessage(msg: ClientSentMessage): void; onReceiveMessage: SubscribingFn<ServerSentMessage>; onStatusChange: SubscribingFn<TLSocketStatusChangeEvent>; restart(): void; close(): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSocketClientSentEvent",
+          "shape": "{ type: 'connect'; connectRequestId: string; schema: unknown; protocolVersion: unknown; lastServerClock: number } | { type: 'push'; clientClock: number; diff?: unknown; presence?: unknown } | { type: 'ping' }",
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts"
+        },
+        {
+          "name": "TLSocketServerSentEvent",
+          "shape": "{ type: 'connect' } | { type: 'patch' } | { type: 'push_result' } | { type: 'data' } | { type: 'incompatibility_error' } | { type: 'pong' } | { type: 'custom' }",
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts"
+        },
+        {
+          "name": "TLPushRequest",
+          "shape": "{ type: 'push'; clientClock: number; diff: NetworkDiff<R> | undefined; presence: ReturnType<typeof getPresenceOp> | undefined }",
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts"
+        },
+        {
+          "name": "TLObjectStoreAccess",
+          "shape": "'read' | 'write'",
+          "resolvedRelativePath": "packages/sync-core/src/lib/protocol.ts",
+          "resolvedFileId": "packages/sync-core/src/lib/protocol.ts"
+        },
+        {
+          "name": "UnknownRecord",
+          "shape": "Record-like tldraw store record with a typeName",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Store",
+          "shape": "Store<R> with listen, applyDiff, mergeRemoteChanges, serialize, get, has, put/remove, extractingChanges, filterChangesByScope, and ensureStoreIsUsable",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Signal",
+          "shape": "Signal<R | null> with get(): R | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLSync protocol",
+          "shape": "connect, push, ping, connect, patch, push_result, data, pong, and custom messages",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "initialization",
+          "intent": "Creates schedulers and installs store, socket, status, timer, and presence subscriptions.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 383, "endLine": 537 }
+        },
+        {
+          "name": "push scheduling",
+          "intent": "Converts queued document and presence changes into one outbound push request.",
+          "structureKind": "branch",
+          "predicate": "if (!this.isConnectedToRoom || this.store.isPossiblyCorrupted())",
+          "branchOutcomes": [
+            "not connected or corrupted: return",
+            "no unsent changes: return",
+            "no network diff or presence operation: return",
+            "send and queue push request"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 393, "endLine": 431 }
+        },
+        {
+          "name": "heartbeat",
+          "intent": "Sends periodic pings and records the oldest outstanding unanswered ping.",
+          "structureKind": "loop",
+          "predicate": "if (this.firstUnansweredPingAt === null || this.lastServerInteractionTimestamp >= this.firstUnansweredPingAt)",
+          "branchOutcomes": [],
+          "bounds": "PING_INTERVAL",
+          "terminationCondition": null,
+          "anchor": { "startLine": 479, "endLine": 493 }
+        },
+        {
+          "name": "health-check",
+          "intent": "Resets a connected socket only after stale interaction and overdue ping evidence.",
+          "structureKind": "branch",
+          "predicate": "if (timeSinceLastServerInteraction < MAX_TIME_TO_WAIT_FOR_SERVER_INTERACTION_BEFORE_RESETTING_CONNECTION)",
+          "branchOutcomes": ["recent interaction: return", "no overdue ping: return", "overdue ping: warn and reset"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 496, "endLine": 525 }
+        },
+        {
+          "name": "server-event-dispatch",
+          "intent": "Routes connection, diff, custom, and heartbeat events by protocol type.",
+          "structureKind": "branch",
+          "predicate": "switch (event.type)",
+          "branchOutcomes": [
+            "connect",
+            "patch or push_result",
+            "data",
+            "incompatibility_error",
+            "pong",
+            "custom",
+            "default error"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 678, "endLine": 710 }
+        },
+        {
+          "name": "network-diff-application",
+          "intent": "Builds store changes from put, patch, and remove network operations.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const [id, op] of objectMapEntries(diff))",
+          "terminationCondition": null,
+          "anchor": { "startLine": 774, "endLine": 814 }
+        },
+        {
+          "name": "rebase",
+          "intent": "Undoes speculative state, applies server results, and reapplies pending local operations.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 820, "endLine": 900 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "SubscribingFn",
+          "signature": "export type SubscribingFn<T> = (cb: (val: T) => void) => () => void",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": "() => void",
+          "exported": true,
+          "anchor": { "startLine": 39, "endLine": 39 }
+        },
+        {
+          "kind": "constant",
+          "name": "TLSyncErrorCloseEventCode",
+          "signature": "export const TLSyncErrorCloseEventCode = 4099 as const",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 67, "endLine": 67 }
+        },
+        {
+          "kind": "constant",
+          "name": "TLSyncErrorCloseEventReason",
+          "signature": "export const TLSyncErrorCloseEventReason = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 95, "endLine": 108 }
+        },
+        {
+          "kind": "class",
+          "name": "TLSyncError",
+          "signature": "export class TLSyncError extends Error {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 115, "endLine": 123 }
+        },
+        {
+          "kind": "type",
+          "name": "TLSyncErrorCloseEventReason",
+          "signature": "export type TLSyncErrorCloseEventReason =",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 132, "endLine": 133 }
+        },
+        {
+          "kind": "type",
+          "name": "TLCustomMessageHandler",
+          "signature": "export type TLCustomMessageHandler = (this: null, data: any) => void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 160, "endLine": 160 }
+        },
+        {
+          "kind": "interface",
+          "name": "TLPersistentClientSocket",
+          "signature": "export interface TLPersistentClientSocket<",
+          "generics": "<\n\tClientSentMessage extends object = object,\n\tServerSentMessage extends object = object,\n>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 205, "endLine": 239 }
+        },
+        {
+          "kind": "function",
+          "name": "getPresenceOp",
+          "signature": "function getPresenceOp<R extends UnknownRecord>(",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "[typeof RecordOpType.Patch, ObjectDiff] | [typeof RecordOpType.Put, R] | undefined",
+          "exported": false,
+          "anchor": { "startLine": 256, "endLine": 267 }
+        },
+        {
+          "kind": "class",
+          "name": "TLSyncClient",
+          "signature": "export class TLSyncClient<R extends UnknownRecord, S extends Store<R> = Store<R>> {",
+          "generics": "<R extends UnknownRecord, S extends Store<R> = Store<R>>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 307, "endLine": 900 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "TLSocketStatusChangeEvent",
+          "shape": "{\n\t\t\tstatus: 'online' | 'offline'\n\t  }\n\t| {\n\t\t\tstatus: 'error'\n\t\t\treason: string\n\t  }",
+          "discriminant": "status",
+          "anchor": { "startLine": 166, "endLine": 177 }
+        },
+        {
+          "kind": "type",
+          "name": "TLPersistentClientSocketStatus",
+          "shape": "'online' | 'offline' | 'error'",
+          "discriminant": null,
+          "anchor": { "startLine": 187, "endLine": 187 }
+        },
+        {
+          "kind": "type",
+          "name": "TLPresenceMode",
+          "shape": "'solo'\n\t| 'full'",
+          "discriminant": null,
+          "anchor": { "startLine": 195, "endLine": 198 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "No presence previously pushed and a new presence record exists",
+          "handled": true,
+          "behavior": "Returns a Put presence operation.",
+          "anchor": { "startLine": 260, "endLine": 262 }
+        },
+        {
+          "inputShape": "Presence is unchanged by value",
+          "handled": true,
+          "behavior": "Returns undefined and sends no presence operation.",
+          "anchor": { "startLine": 263, "endLine": 266 }
+        },
+        {
+          "inputShape": "Offline socket or disconnected room",
+          "handled": true,
+          "behavior": "Accumulates speculative changes without sending them.",
+          "anchor": { "startLine": 749, "endLine": 765 }
+        },
+        {
+          "inputShape": "Empty incoming diff buffer",
+          "handled": true,
+          "behavior": "Rebase returns without changing the store.",
+          "anchor": { "startLine": 823, "endLine": 824 }
+        },
+        {
+          "inputShape": "Patch targets a record removed upstream",
+          "handled": true,
+          "behavior": "Skips the patch operation.",
+          "anchor": { "startLine": 790, "endLine": 793 }
+        },
+        {
+          "inputShape": "Socket health check sees stale interaction without an overdue ping",
+          "handled": true,
+          "behavior": "Leaves the connection active.",
+          "anchor": { "startLine": 511, "endLine": 516 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "typeof window",
+          "right": "'undefined'",
+          "inclusive": false,
+          "intent": "Only exposes the client on browser-like environments.",
+          "anchor": { "startLine": 445, "endLine": 447 }
+        },
+        {
+          "operator": "==",
+          "left": "this.socket.connectionStatus",
+          "right": "'online'",
+          "inclusive": true,
+          "intent": "Immediately connects when the socket is already online.",
+          "anchor": { "startLine": 535, "endLine": 537 }
+        },
+        {
+          "operator": "==",
+          "left": "event.connectRequestId",
+          "right": "this.latestConnectRequestId",
+          "inclusive": false,
+          "intent": "Ignores connect responses belonging to older connection attempts.",
+          "anchor": { "startLine": 600, "endLine": 603 }
+        },
+        {
+          "operator": ">",
+          "left": "this.pendingPushRequests.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Rejects reconnect processing when unacknowledged pushes remain.",
+          "anchor": { "startLine": 608, "endLine": 611 }
+        },
+        {
+          "operator": "==",
+          "left": "event.type",
+          "right": "'connect'",
+          "inclusive": true,
+          "intent": "Dispatches connection establishment events.",
+          "anchor": { "startLine": 682, "endLine": 684 }
+        },
+        {
+          "operator": "==",
+          "left": "this.pendingPushRequests.length",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Rejects push results when no request is pending.",
+          "anchor": { "startLine": 859, "endLine": 861 }
+        },
+        {
+          "operator": "==",
+          "left": "this.pendingPushRequests[0].clientClock",
+          "right": "diff.clientClock",
+          "inclusive": false,
+          "intent": "Requires server acknowledgements to match queue order.",
+          "anchor": { "startLine": 862, "endLine": 864 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "Error",
+          "action": "Logs the failed ping and resets the connection.",
+          "fallback": null,
+          "anchor": { "startLine": 490, "endLine": 494 }
+        },
+        {
+          "thrown": "Error('Received push_result but there are no pending push requests')",
+          "caught": "Outer rebase catch",
+          "action": "Logs the error, ensures store usability, and resets the connection.",
+          "fallback": null,
+          "anchor": { "startLine": 859, "endLine": 901 }
+        },
+        {
+          "thrown": "Error('Received push_result for a push request that is not at the front of the queue')",
+          "caught": "Outer rebase catch",
+          "action": "Logs the error, ensures store usability, and resets the connection.",
+          "fallback": null,
+          "anchor": { "startLine": 862, "endLine": 901 }
+        },
+        {
+          "thrown": null,
+          "caught": "Error",
+          "action": "Discards speculative changes and resets the connection.",
+          "fallback": null,
+          "anchor": { "startLine": 883, "endLine": 890 }
+        },
+        {
+          "thrown": null,
+          "caught": "Error",
+          "action": "Logs the error, ensures store usability, and resets the connection.",
+          "fallback": null,
+          "anchor": { "startLine": 894, "endLine": 900 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "ordering",
+          "description": "Push responses must acknowledge the pending request at the front of the queue.",
+          "anchor": { "startLine": 858, "endLine": 866 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Speculative changes represent optimistic local changes that can be reversed to recover synced state.",
+          "anchor": { "startLine": 323, "endLine": 331 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "After a successful reconnect, the client is marked connected and speculative changes are requeued.",
+          "anchor": { "startLine": 650, "endLine": 672 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Network changes are applied only when value differences or record existence changes are detected.",
+          "anchor": { "startLine": 781, "endLine": 811 }
+        },
+        {
+          "kind": "non-null",
+          "description": "A commit response removes and non-null asserts the corresponding pending push request.",
+          "anchor": { "startLine": 868, "endLine": 873 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a store and socket implementing compatible synchronization protocols.",
+          "anchor": { "startLine": 383, "endLine": 404 }
+        },
+        {
+          "kind": "schema",
+          "description": "The store schema can be serialized and remains compatible with the server protocol.",
+          "anchor": { "startLine": 550, "endLine": 555 }
+        },
+        {
+          "kind": "caller",
+          "description": "The socket invokes subscription callbacks for received messages and status changes.",
+          "anchor": { "startLine": 458, "endLine": 477 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Which external socket implementation guarantees reconnection semantics and delivery ordering?",
+          "affects": "concurrency_model and socket lifecycle behaviour",
+          "anchor": { "startLine": 205, "endLine": 239 },
+          "resolution": null
+        },
+        {
+          "question": "What server-side validation or conflict policy determines discard, commit, and rebase push results?",
+          "affects": "rebase behaviour and error recovery",
+          "anchor": { "startLine": 850, "endLine": 881 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": false,
+        "ordering": "fifo",
+        "notes": "Socket events, store listeners, reactive presence updates, and interval callbacks mutate shared synchronization state. Push acknowledgements are processed in FIFO order, while scheduler throttling serializes network operations."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "sends-connect-on-online-socket",
+          "scenario": "A client is constructed with an already-online socket.",
+          "given": ["socket.connectionStatus === 'online'"],
+          "when": "new TLSyncClient({ store, socket, presence, onLoad, onSyncError })",
+          "then": "socket.sendMessage receives a message with type === 'connect' and a generated connectRequestId",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "An online socket must initiate the sync-room handshake immediately."
+        },
+        {
+          "testId": "sends-push-after-connect",
+          "scenario": "A connected client receives a local document change.",
+          "given": [
+            "client.isConnectedToRoom === true",
+            "store.listen invokes its user/document listener with a RecordsDiff"
+          ],
+          "when": "store listener processes the change",
+          "then": "socket.sendMessage receives a message with type === 'push' and an incrementing clientClock",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Local document mutations must be serialized into protocol push requests."
+        },
+        {
+          "testId": "queues-changes-while-offline",
+          "scenario": "A local document change occurs before the client has joined the sync room.",
+          "given": [
+            "client.isConnectedToRoom === false",
+            "store.listen invokes its user/document listener with a RecordsDiff"
+          ],
+          "when": "store listener processes the change",
+          "then": "no push message is sent until reconnection and the local change is preserved for rebasing",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Offline edits must not be lost or sent before a valid room connection exists."
+        },
+        {
+          "testId": "applies-server-patch",
+          "scenario": "A connected client receives a server patch event.",
+          "given": ["client.isConnectedToRoom === true", "serverEvent.type === 'patch'"],
+          "when": "handleServerEvent(serverEvent)",
+          "then": "the patch is buffered and applied to the store during rebase",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Remote changes must be applied without bypassing speculative-change reconciliation."
+        },
+        {
+          "testId": "commits-acknowledged-push",
+          "scenario": "The server acknowledges the oldest pending push with a commit result.",
+          "given": [
+            "pendingPushRequests.length > 0",
+            "diff.action === 'commit'",
+            "diff.clientClock === pendingPushRequests[0].clientClock"
+          ],
+          "when": "rebase()",
+          "then": "the matching pending request is removed and its diff is applied as synchronized data",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Acknowledged optimistic changes must become confirmed server state exactly once."
+        },
+        {
+          "testId": "rebases-conflicting-push",
+          "scenario": "The server returns a rebase diff for the oldest pending push.",
+          "given": [
+            "pendingPushRequests.length > 0",
+            "diff.action.rebaseWithDiff is present",
+            "diff.clientClock === pendingPushRequests[0].clientClock"
+          ],
+          "when": "rebase()",
+          "then": "the upstream rebase diff is applied, the acknowledged request is removed, and remaining local changes are reapplied",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "The optimistic push/pull/rebase contract preserves local edits across server conflicts."
+        },
+        {
+          "testId": "handles-custom-message",
+          "scenario": "The server sends an application-defined custom message.",
+          "given": ["onCustomMessageReceived is configured", "serverEvent.type === 'custom'"],
+          "when": "handleServerEvent(serverEvent)",
+          "then": "onCustomMessageReceived is called with serverEvent.data and a null this value",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Custom application traffic must pass through without being treated as document synchronization."
+        },
+        {
+          "testId": "resets-on-unrecoverable-socket-error",
+          "scenario": "The socket reports an error status.",
+          "given": ["ev.status === 'error'"],
+          "when": "the status-change listener processes ev",
+          "then": "onSyncError(ev.reason) is called and the client closes its resources",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Unrecoverable transport failures must notify callers and prevent further client activity."
+        },
+        {
+          "testId": "sends-presence-only-when-full",
+          "scenario": "Presence changes while the client is connected.",
+          "given": ["presenceMode?.get() === 'full'", "client.isConnectedToRoom === true"],
+          "when": "presence signal changes",
+          "then": "a push message containing a presence operation is sent",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Presence synchronization is opt-in by mode and must not leak solo-mode presence."
+        },
+        {
+          "testId": "reconnects-with-hydration",
+          "scenario": "The server accepts a connect request with a hydration response.",
+          "given": ["event.type === 'connect'", "event.connectRequestId === latestConnectRequestId"],
+          "when": "didReconnect(event)",
+          "then": "the server diff is applied, isConnectedToRoom becomes true, and onAfterConnect is called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Successful handshake establishes room state and completes server hydration before normal syncing."
+        },
+        {
+          "testId": "closes-and-disposes-client",
+          "scenario": "The application shuts down an active sync client.",
+          "given": ["client is constructed with socket subscriptions and scheduled tasks"],
+          "when": "client.close()",
+          "then": "all disposables and scheduled callbacks are cancelled and the client is no longer exposed as window.tlsync",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Explicit shutdown must release subscriptions and timers to prevent leaks and post-close activity."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "SubscribingFn type",
+        "sync-rate constants",
+        "close-code and close-reason exports",
+        "sync error class and reason type",
+        "custom message and socket status types",
+        "persistent socket interface",
+        "ping and timeout constants",
+        "presence operation helper",
+        "TLSyncClient class"
+      ],
+      "moduleLevelCode": "import { Signal, react, transact } from '@tldraw/state'\nimport {\n\tRecordId,\n\tRecordsDiff,\n\tStore,\n\tUnknownRecord,\n\treverseRecordsDiff,\n\tsquashRecordDiffsMutable,\n} from '@tldraw/store'\nimport {\n\tFpsScheduler,\n\texhaustiveSwitchError,\n\tisEqual,\n\tobjectMapEntries,\n\tuniqueId,\n} from '@tldraw/utils'\nimport {\n\tNetworkDiff,\n\tObjectDiff,\n\tRecordOpType,\n\tapplyObjectDiff,\n\tdiffRecord,\n\tgetNetworkDiff,\n} from './diff'\nimport { interval } from './interval'\nimport {\n\tTLObjectStoreAccess,\n\tTLPushRequest,\n\tTLSocketClientSentEvent,\n\tTLSocketServerSentDataEvent,\n\tTLSocketServerSentEvent,\n\tgetTlsyncProtocolVersion,\n} from './protocol'",
+      "exports": [
+        { "name": "SubscribingFn", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSyncErrorCloseEventCode", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSyncErrorCloseEventReason", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSyncError", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSyncErrorCloseEventReason", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLCustomMessageHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSocketStatusChangeEvent", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSocketStatusListener", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLPersistentClientSocketStatus", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLPresenceMode", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLPersistentClientSocket", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TLSyncClient", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Signal", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "react", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "transact", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "RecordId", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "RecordsDiff", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "Store", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "UnknownRecord", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "reverseRecordsDiff", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "squashRecordDiffsMutable", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "FpsScheduler", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "exhaustiveSwitchError", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "isEqual", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "objectMapEntries", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "uniqueId", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "NetworkDiff", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "ObjectDiff", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "RecordOpType", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "applyObjectDiff", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "diffRecord", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "getNetworkDiff", "module": "./diff", "alias": null, "kind": "internal" },
+        { "symbol": "interval", "module": "./interval", "alias": null, "kind": "internal" },
+        { "symbol": "TLObjectStoreAccess", "module": "./protocol", "alias": null, "kind": "internal" },
+        { "symbol": "TLPushRequest", "module": "./protocol", "alias": null, "kind": "internal" },
+        { "symbol": "TLSocketClientSentEvent", "module": "./protocol", "alias": null, "kind": "internal" },
+        { "symbol": "TLSocketServerSentDataEvent", "module": "./protocol", "alias": null, "kind": "internal" },
+        { "symbol": "TLSocketServerSentEvent", "module": "./protocol", "alias": null, "kind": "internal" },
+        { "symbol": "getTlsyncProtocolVersion", "module": "./protocol", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "SOLO_MODE_FPS", "value": "1", "kind": "number" },
+        { "name": "COLLABORATIVE_MODE_FPS", "value": "30", "kind": "number" },
+        { "name": "TLSyncErrorCloseEventCode", "value": "4099 as const", "kind": "number" },
+        { "name": "PING_INTERVAL", "value": "5000", "kind": "number" },
+        {
+          "name": "MAX_TIME_TO_WAIT_FOR_SERVER_INTERACTION_BEFORE_RESETTING_CONNECTION",
+          "value": "PING_INTERVAL * 2",
+          "kind": "number"
+        },
+        { "name": "PONG_TIMEOUT", "value": "PING_INTERVAL * 2", "kind": "number" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncError#class:TLSyncError",
+        "unitKind": "class",
+        "name": "TLSyncError",
+        "qualifiedName": "TLSyncError",
+        "parentUnitId": null,
+        "startLine": 115,
+        "endLine": 123,
+        "isBehavioral": true,
+        "source": "\t/** Client protocol version too old */\n\tCLIENT_TOO_OLD: 'CLIENT_TOO_OLD',\n\t/** Server protocol version too old */\n\tSERVER_TOO_OLD: 'SERVER_TOO_OLD',\n\t/** Client sent invalid or corrupted record data */\n\tINVALID_RECORD: 'INVALID_RECORD',\n\t/** Client exceeded rate limits */\n\tRATE_LIMITED: 'RATE_LIMITED',\n\t/** Room has reached maximum capacity */",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncError#class:TLSyncError",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncError",
+          "unitKind": "class",
+          "name": "TLSyncError",
+          "qualifiedName": "TLSyncError",
+          "parentUnitId": null,
+          "startLine": 115,
+          "endLine": 123,
+          "signature": "class TLSyncError",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "CLIENT_TOO_OLD",
+              "kind": "constant",
+              "type": "'CLIENT_TOO_OLD'",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "SERVER_TOO_OLD",
+              "kind": "constant",
+              "type": "'SERVER_TOO_OLD'",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "INVALID_RECORD",
+              "kind": "constant",
+              "type": "'INVALID_RECORD'",
+              "default": null,
+              "visibility": null,
+              "static": false
+            },
+            {
+              "name": "RATE_LIMITED",
+              "kind": "constant",
+              "type": "'RATE_LIMITED'",
+              "default": null,
+              "visibility": null,
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the protocol error codes used to classify TLSync synchronization failures.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "CLIENT_TOO_OLD",
+              "role": "Protocol error code for a client using an unsupported old protocol version."
+            },
+            {
+              "kind": "enum-value",
+              "value": "SERVER_TOO_OLD",
+              "role": "Protocol error code for a server using an unsupported old protocol version."
+            },
+            {
+              "kind": "enum-value",
+              "value": "INVALID_RECORD",
+              "role": "Protocol error code for invalid or corrupted client record data."
+            },
+            {
+              "kind": "enum-value",
+              "value": "RATE_LIMITED",
+              "role": "Protocol error code for a client exceeding rate limits."
+            }
+          ],
+          "declaredConstants": [
+            { "name": "CLIENT_TOO_OLD", "value": "'CLIENT_TOO_OLD'", "kind": "string" },
+            { "name": "SERVER_TOO_OLD", "value": "'SERVER_TOO_OLD'", "kind": "string" },
+            { "name": "INVALID_RECORD", "value": "'INVALID_RECORD'", "kind": "string" },
+            { "name": "RATE_LIMITED", "value": "'RATE_LIMITED'", "kind": "string" }
+          ],
+          "specTests": [],
+          "semanticFingerprint": "7706ae6c2be269688e440638a9c65524afa50ef84f17a4d42cf89b274f4b73ef"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__getPresenceOp#function:getPresenceOp",
+        "unitKind": "function",
+        "name": "getPresenceOp",
+        "qualifiedName": "getPresenceOp",
+        "parentUnitId": null,
+        "startLine": 256,
+        "endLine": 267,
+        "isBehavioral": true,
+        "source": "\t * Send a protocol message to the sync server\n\t * @param msg - Message to send (connect, push, ping, etc.)\n\t */\n\tsendMessage(msg: ClientSentMessage): void\n\n\t/**\n\t * Subscribe to messages received from the server\n\t * @param callback - Function called for each received message\n\t * @returns Cleanup function to remove the listener\n\t */\n\tonReceiveMessage: SubscribingFn<ServerSentMessage>\n",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__getPresenceOp#function:getPresenceOp",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__getPresenceOp",
+          "unitKind": "function",
+          "name": "getPresenceOp",
+          "qualifiedName": "getPresenceOp",
+          "parentUnitId": null,
+          "startLine": 256,
+          "endLine": 267,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the getPresenceOp function as a helper related to presence synchronization. Its precise inputs, outputs, and runtime behavior are not exposed by the supplied unit context.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1d250f66629029857dba8dfa1dd4a247a27cc38adb53cc2f8f799158897c032c"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "unitKind": "class",
+        "name": "TLSyncClient",
+        "qualifiedName": "TLSyncClient",
+        "parentUnitId": null,
+        "startLine": 307,
+        "endLine": 900,
+        "isBehavioral": true,
+        "source": "\t\tif (!diff) return undefined\n\t\treturn [RecordOpType.Patch, diff]\n\t}\n\treturn undefined\n}\n\n/**\n * Main client-side synchronization engine for collaborative tldraw applications.\n *\n * TLSyncClient manages bidirectional synchronization between a local tldraw Store\n * and a remote sync server. It uses an optimistic update model where local changes\n * are immediately applied for responsive UI, then sent to the server for validation\n * and distribution to other clients.\n *\n * The synchronization follows a git-like push/pull/rebase model:\n * - **Push**: Local changes are sent to server as diff operations\n * - **Pull**: Server changes are received and applied locally\n * - **Rebase**: Conflicting changes are resolved by undoing local changes,\n *   applying server changes, then re-applying local changes on top\n *\n * @example\n * ```ts\n * import { TLSyncClient, ClientWebSocketAdapter } from '@tldraw/sync-core'\n * import { createTLStore } from '@tldraw/store'\n *\n * // Create store and socket\n * const store = createTLStore({ schema: mySchema })\n * const socket = new ClientWebSocketAdapter('ws://localhost:3000/sync')\n *\n * // Create sync client\n * const syncClient = new TLSyncClient({\n *   store,\n *   socket,\n *   presence: atom(null),\n *   onLoad: () => console.log('Connected and loaded'),\n *   onSyncError: (reason) => console.error('Sync failed:', reason)\n * })\n *\n * // Changes to store are now automatically synchronized\n * store.put([{ id: 'shape1', type: 'geo', x: 100, y: 100 }])\n * ```\n *\n * @example\n * ```ts\n * // Advanced usage with presence and custom messages\n * const syncClient = new TLSyncClient({\n *   store,\n *   socket,\n *   presence: atom({ cursor: { x: 0, y: 0 }, userName: 'Alice' }),\n *   presenceMode: atom('full'),\n *   onCustomMessageReceived: (data) => {\n *     if (data.type === 'chat') {\n *       showChatMessage(data.message, data.from)\n *     }\n *   },\n *   onAfterConnect: (client, { isReadonly }) => {\n *     if (isReadonly) {\n *       showNotification('Connected in read-only mode')\n *     }\n *   }\n * })\n * ```\n *\n * @public\n */\nexport class TLSyncClient<R extends UnknownRecord, S extends Store<R> = Store<R>> {\n\t/** The last clock time from the most recent server update */\n\tprivate lastServerClock = -1\n\tprivate lastServerInteractionTimestamp = Date.now()\n\t/**\n\t * Send time of the oldest outstanding ping; answered iff `lastServerInteractionTimestamp >= it`\n\t * (any server message counts). Null until the first ping after (re)connect.\n\t */\n\tprivate firstUnansweredPingAt: number | null = null\n\n\t/** The queue of in-flight push requests that have not yet been acknowledged by the server */\n\tprivate pendingPushRequests: TLPushRequest<R>[] = []\n\tprivate unsentChanges: {\n\t\tnextDiff?: RecordsDiff<R>\n\t\tnextPresence?: R | null\n\t} = { nextDiff: undefined, nextPresence: undefined }\n\n\t/**\n\t * The diff of 'unconfirmed', 'optimistic' changes that have been made locally by the user if we\n\t * take this diff, reverse it, and apply that to the store, our store will match exactly the most\n\t * recent state of the server that we know about\n\t */\n\tprivate speculativeChanges: RecordsDiff<R> = {\n\t\tadded: {} as any,\n\t\tupdated: {} as any,\n\t\tremoved: {} as any,\n\t}\n\n\tprivate disposables: Array<() => void> = []\n\n\t/** Separate scheduler instance for network sync operations */\n\tprivate readonly fpsScheduler: FpsScheduler\n\n\t/** Send any unsent push requests to the server */\n\tprivate readonly sendUnsentChanges: {\n\t\t(): void\n\t\tcancel?(): void\n\t}\n\n\t/** Schedule a rebase operation */\n\tprivate readonly scheduleRebase: {\n\t\t(): void\n\t\tcancel?(): void\n\t}\n\n\t/** @internal */\n\treadonly store: S\n\t/** @internal */\n\treadonly socket: TLPersistentClientSocket<TLSocketClientSentEvent<R>, TLSocketServerSentEvent<R>>\n\n\t/** @internal */\n\treadonly presenceState: Signal<R | null> | undefined\n\t/** @internal */\n\treadonly presenceMode: Signal<TLPresenceMode> | undefined\n\n\t// isOnline is true when we have an open socket connection and we have\n\t// established a connection with the server room (i.e. we have received a 'connect' message)\n\t/** @internal */\n\tisConnectedToRoom = false\n\n\t/**\n\t * The client clock is essentially a counter for push requests Each time a push request is created\n\t * the clock is incremented. This clock is sent with the push request to the server, and the\n\t * server returns it with the response so that we can match up the response with the request.\n\t *\n\t * The clock may also be used at one point in the future to allow the client to re-send push\n\t * requests idempotently (i.e. the server will keep track of each client's clock and not execute\n\t * requests it has already handled), but at the time of writing this is neither needed nor\n\t * implemented.\n\t */\n\tprivate clientClock = 0\n\n\t/**\n\t * Callback executed immediately after successful connection to sync room.\n\t * Use this to perform any post-connection setup required for your application,\n\t * such as initializing default content or updating UI state.\n\t *\n\t * @param self - The TLSyncClient instance that connected\n\t * @param details - Connection details\n\t *   - isReadonly - Whether the connection is in read-only mode\n\t *   - objectAccess - Write access for object-store lane record types (defaults to 'write'\n\t *     when the server doesn't send it, e.g. older servers or rooms with no object lane)\n\t */\n\tprivate readonly onAfterConnect?: (\n\t\tself: this,\n\t\tdetails: { isReadonly: boolean; objectAccess: TLObjectStoreAccess }\n\t) => void\n\n\tprivate readonly onCustomMessageReceived?: TLCustomMessageHandler\n\n\tprivate isDebugging = false\n\tprivate debug(...args: any[]) {\n\t\tif (this.isDebugging) {\n\t\t\t// eslint-disable-next-line no-console\n\t\t\tconsole.debug(...args)\n\t\t}\n\t}\n\n\tprivate readonly presenceType: R['typeName'] | null\n\n\tprivate didCancel?: () => boolean\n\n\t/**\n\t * Creates a new TLSyncClient instance to manage synchronization with a remote server.\n\t *\n\t * @param config - Configuration object for the sync client\n\t *   - store - The local tldraw store to synchronize\n\t *   - socket - WebSocket adapter for server communication\n\t *   - presence - Reactive signal containing current user's presence data\n\t *   - presenceMode - Optional signal controlling presence sharing (defaults to 'full')\n\t *   - onLoad - Callback fired when initial sync completes successfully\n\t *   - onSyncError - Callback fired when sync fails with error reason\n\t *   - onCustomMessageReceived - Optional handler for custom messages\n\t *   - onAfterConnect - Optional callback fired after successful connection\n\t *   - self - The TLSyncClient instance\n\t *   - details - Connection details including readonly status\n\t *   - didCancel - Optional function to check if sync should be cancelled\n\t */\n\tconstructor(config: {\n\t\tstore: S\n\t\tsocket: TLPersistentClientSocket<any, any>\n\t\tpresence: Signal<R | null>\n\t\tpresenceMode?: Signal<TLPresenceMode>\n\t\tonLoad(self: TLSyncClient<R, S>): void\n\t\tonSyncError(reason: string): void\n\t\tonCustomMessageReceived?: TLCustomMessageHandler\n\t\tonAfterConnect?(\n\t\t\tself: TLSyncClient<R, S>,\n\t\t\tdetails: { isReadonly: boolean; objectAccess: TLObjectStoreAccess }\n\t\t): void\n\t\tdidCancel?(): boolean\n\t}) {\n\t\tthis.didCancel = config.didCancel\n\n\t\tthis.presenceType = config.store.scopedTypes.presence.values().next().value ?? null\n\n\t\t// Create a separate throttle instance for network sync operations\n\t\t// This ensures sync operations have their own queue separate from UI operations\n\t\tthis.fpsScheduler = new FpsScheduler(COLLABORATIVE_MODE_FPS)\n\n\t\t// Initialize throttled methods after throttle instance is created\n\t\tthis.sendUnsentChanges = this.fpsScheduler.fpsThrottle(() => {\n\t\t\tthis.debug('sending unsent changes', {\n\t\t\t\tisConnectedToRoom: this.isConnectedToRoom,\n\t\t\t\tunsentChanges: this.unsentChanges,\n\t\t\t})\n\t\t\tif (!this.isConnectedToRoom || this.store.isPossiblyCorrupted()) {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tif (!this.unsentChanges.nextDiff && !this.unsentChanges.nextPresence) {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tconst diff = this.unsentChanges.nextDiff\n\t\t\t\t? (getNetworkDiff(this.unsentChanges.nextDiff) ?? undefined)\n\t\t\t\t: undefined\n\t\t\tconst presence = this.unsentChanges.nextPresence\n\t\t\t\t? getPresenceOp<R>(this.lastPushedPresenceState, this.unsentChanges.nextPresence)\n\t\t\t\t: undefined\n\n\t\t\tif (!diff && !presence) {\n\t\t\t\treturn\n\t\t\t}\n\n\t\t\tconst pushRequest: TLPushRequest<R> = {\n\t\t\t\ttype: 'push',\n\t\t\t\tclientClock: this.clientClock,\n\t\t\t\tdiff,\n\t\t\t\tpresence,\n\t\t\t}\n\n\t\t\tthis.debug('sending push request', pushRequest)\n\t\t\tthis.socket.sendMessage(pushRequest)\n\n\t\t\tif (this.unsentChanges.nextPresence) {\n\t\t\t\tthis.lastPushedPresenceState = this.unsentChanges.nextPresence\n\t\t\t}\n\t\t\tthis.clientClock++\n\t\t\tthis.pendingPushRequests.push(pushRequest)\n\t\t\tthis.unsentChanges.nextDiff = undefined\n\t\t\tthis.unsentChanges.nextPresence = undefined\n\t\t})\n\n\t\tthis.scheduleRebase = this.fpsScheduler.fpsThrottle(this.rebase)\n\n\t\tif (typeof window !== 'undefined') {\n\t\t\t;(window as any).tlsync = this\n\t\t}\n\t\tthis.store = config.store\n\t\tthis.socket = config.socket\n\t\tthis.onAfterConnect = config.onAfterConnect\n\t\tthis.onCustomMessageReceived = config.onCustomMessageReceived\n\n\t\tlet didLoad = false\n\n\t\tthis.presenceState = config.presence\n\t\tthis.presenceMode = config.presenceMode\n\n\t\tthis.disposables.push(\n\t\t\t// when local 'user' changes are made, send them to the server\n\t\t\t// or stash them locally in offline mode\n\t\t\tthis.store.listen(\n\t\t\t\t({ changes }) => {\n\t\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\t\tthis.debug('received store changes', { changes })\n\t\t\t\t\tthis.push(changes)\n\t\t\t\t},\n\t\t\t\t{ source: 'user', scope: 'document' }\n\t\t\t),\n\t\t\t// when the server sends us events, handle them\n\t\t\tthis.socket.onReceiveMessage((msg) => {\n\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\tthis.debug('received message from server', msg)\n\t\t\t\tthis.handleServerEvent(msg)\n\t\t\t\t// the first time we receive a message from the server, we should trigger\n\n\t\t\t\t// one of the load callbacks\n\t\t\t\tif (!didLoad) {\n\t\t\t\t\tdidLoad = true\n\t\t\t\t\tconfig.onLoad(this)\n\t\t\t\t}\n\t\t\t}),\n\t\t\t// handle switching between online and offline\n\t\t\tthis.socket.onStatusChange((ev) => {\n\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\tthis.debug('socket status changed', ev.status)\n\t\t\t\tif (ev.status === 'online') {\n\t\t\t\t\tthis.sendConnectMessage()\n\t\t\t\t} else {\n\t\t\t\t\tthis.resetConnection()\n\t\t\t\t\tif (ev.status === 'error') {\n\t\t\t\t\t\tdidLoad = true\n\t\t\t\t\t\tconfig.onSyncError(ev.reason)\n\t\t\t\t\t\tthis.close()\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}),\n\t\t\t// Send a ping every PING_INTERVAL ms while online\n\t\t\tinterval(() => {\n\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\tthis.debug('ping loop', { isConnectedToRoom: this.isConnectedToRoom })\n\t\t\t\tif (!this.isConnectedToRoom) return\n\t\t\t\ttry {\n\t\t\t\t\t// advance the marker only when the previous ping was answered: a half-open socket\n\t\t\t\t\t// that accepts sends but returns nothing must not keep refreshing its own alibi\n\t\t\t\t\tif (\n\t\t\t\t\t\tthis.firstUnansweredPingAt === null ||\n\t\t\t\t\t\tthis.lastServerInteractionTimestamp >= this.firstUnansweredPingAt\n\t\t\t\t\t) {\n\t\t\t\t\t\tthis.firstUnansweredPingAt = Date.now()\n\t\t\t\t\t}\n\t\t\t\t\tthis.socket.sendMessage({ type: 'ping' })\n\t\t\t\t} catch (error) {\n\t\t\t\t\tconsole.warn('ping failed, resetting', error)\n\t\t\t\t\tthis.resetConnection()\n\t\t\t\t}\n\t\t\t}, PING_INTERVAL),\n\t\t\t// Check the server connection health, reset the connection if needed\n\t\t\tinterval(() => {\n\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\tthis.debug('health check loop', { isConnectedToRoom: this.isConnectedToRoom })\n\t\t\t\tif (!this.isConnectedToRoom) return\n\t\t\t\tconst timeSinceLastServerInteraction = Date.now() - this.lastServerInteractionTimestamp\n\n\t\t\t\tif (\n\t\t\t\t\ttimeSinceLastServerInteraction <\n\t\t\t\t\tMAX_TIME_TO_WAIT_FOR_SERVER_INTERACTION_BEFORE_RESETTING_CONNECTION\n\t\t\t\t) {\n\t\t\t\t\tthis.debug('health check passed', { timeSinceLastServerInteraction })\n\t\t\t\t\treturn\n\t\t\t\t}\n\n\t\t\t\t// Silence alone is not evidence of a dead socket: in a throttled hidden tab our own ping\n\t\t\t\t// loop stops, so the server had nothing to answer. Only reset on an unanswered ping.\n\t\t\t\tconst firstUnansweredPingAt = this.firstUnansweredPingAt\n\t\t\t\tconst pingOverdue =\n\t\t\t\t\tfirstUnansweredPingAt !== null &&\n\t\t\t\t\tthis.lastServerInteractionTimestamp < firstUnansweredPingAt &&\n\t\t\t\t\tDate.now() - firstUnansweredPingAt >= PONG_TIMEOUT\n\t\t\t\tif (!pingOverdue) {\n\t\t\t\t\tthis.debug('health check stale but no overdue ping', { timeSinceLastServerInteraction })\n\t\t\t\t\treturn\n\t\t\t\t}\n\n\t\t\t\t// A frozen tab can deliver a queued pong only after these catch-up ticks run, so one\n\t\t\t\t// spurious reset on unfreeze is still possible — rare, and the reconnect is clean.\n\t\t\t\tconsole.warn(`Haven't heard from the server in a while, resetting connection...`, {\n\t\t\t\t\ttimeSinceLastServerInteraction,\n\t\t\t\t\tpingOutstandingMs: Date.now() - firstUnansweredPingAt!,\n\t\t\t\t})\n\t\t\t\tthis.resetConnection()\n\t\t\t}, PING_INTERVAL * 2)\n\t\t)\n\n\t\tif (this.presenceState) {\n\t\t\tthis.disposables.push(\n\t\t\t\treact('pushPresence', () => {\n\t\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\t\tconst mode = this.presenceMode?.get()\n\t\t\t\t\tthis.fpsScheduler.updateTargetFps(this.getSyncFps())\n\t\t\t\t\tif (mode !== 'full') return\n\t\t\t\t\tthis.pushPresence(this.presenceState!.get())\n\t\t\t\t})\n\t\t\t)\n\t\t}\n\n\t\t// if the socket is already online before this client was instantiated\n\t\t// then we should send a connect message right away\n\t\tif (this.socket.connectionStatus === 'online') {\n\t\t\tthis.sendConnectMessage()\n\t\t}\n\t}\n\n\t/** @internal */\n\tlatestConnectRequestId: string | null = null\n\n\t/**\n\t * This is the first message that is sent over a newly established socket connection. And we need\n\t * to wait for the response before this client can be used.\n\t */\n\tprivate sendConnectMessage() {\n\t\tif (this.isConnectedToRoom) {\n\t\t\tconsole.error('sendConnectMessage called while already connected')\n\t\t\treturn\n\t\t}\n\t\tthis.debug('sending connect message')\n\t\tthis.latestConnectRequestId = uniqueId()\n\t\tthis.socket.sendMessage({\n\t\t\ttype: 'connect',\n\t\t\tconnectRequestId: this.latestConnectRequestId,\n\t\t\tschema: this.store.schema.serialize(),\n\t\t\tprotocolVersion: getTlsyncProtocolVersion(),\n\t\t\tlastServerClock: this.lastServerClock,\n\t\t})\n\t}\n\n\t/** Switch to offline mode */\n\tprivate resetConnection(hard = false) {\n\t\tthis.debug('resetting connection')\n\t\tif (hard) {\n\t\t\tthis.lastServerClock = 0\n\t\t}\n\t\t// kill all presence state\n\t\tconst keys = Object.keys(this.store.serialize('presence')) as any\n\t\tif (keys.length > 0) {\n\t\t\tthis.store.mergeRemoteChanges(() => {\n\t\t\t\tthis.store.remove(keys)\n\t\t\t})\n\t\t}\n\t\tthis.lastPushedPresenceState = null\n\t\tthis.isConnectedToRoom = false\n\t\tthis.firstUnansweredPingAt = null\n\t\tthis.pendingPushRequests = []\n\t\tthis.incomingDiffBuffer = []\n\t\tthis.unsentChanges.nextDiff = undefined\n\t\tthis.unsentChanges.nextPresence = undefined\n\t\tif (this.socket.connectionStatus === 'online') {\n\t\t\tthis.socket.restart()\n\t\t}\n\t}\n\n\t/**\n\t * Invoked when the socket connection comes online, either for the first time or as the result of\n\t * a reconnect. The goal is to rebase on the server's state and fire off a new push request for\n\t * any local changes that were made while offline.\n\t */\n\tprivate didReconnect(event: Extract<TLSocketServerSentEvent<R>, { type: 'connect' }>) {\n\t\tthis.debug('did reconnect', event)\n\t\tif (event.connectRequestId !== this.latestConnectRequestId) {\n\t\t\t// ignore connect events for old connect requests\n\t\t\treturn\n\t\t}\n\t\tthis.latestConnectRequestId = null\n\n\t\tif (this.isConnectedToRoom) {\n\t\t\tconsole.error('didReconnect called while already connected')\n\t\t\tthis.resetConnection(true)\n\t\t\treturn\n\t\t}\n\t\tif (this.pendingPushRequests.length > 0) {\n\t\t\tconsole.error('pendingPushRequests should already be empty when we reconnect')\n\t\t\tthis.resetConnection(true)\n\t\t\treturn\n\t\t}\n\t\t// at the end of this process we want to have at most one pending push request\n\t\t// based on anything inside this.speculativeChanges\n\t\ttransact(() => {\n\t\t\t// Now our goal is to rebase on the server's state.\n\t\t\t// This means wiping away any peer presence data, which the server will replace in full on every connect.\n\t\t\t// If the server does not have enough history to give us a partial document state hydration we will\n\t\t\t// also need to wipe away all of our document state before hydrating with the server's state from scratch.\n\t\t\tconst stashedChanges = this.speculativeChanges\n\t\t\tthis.speculativeChanges = { added: {} as any, updated: {} as any, removed: {} as any }\n\n\t\t\tthis.store.mergeRemoteChanges(() => {\n\t\t\t\t// gather records to delete in a NetworkDiff\n\t\t\t\tconst wipeDiff: NetworkDiff<R> = {}\n\t\t\t\tconst wipeAll = event.hydrationType === 'wipe_all'\n\t\t\t\tif (!wipeAll) {\n\t\t\t\t\t// if we're only wiping presence data, undo the speculative changes first\n\t\t\t\t\tthis.store.applyDiff(reverseRecordsDiff(stashedChanges), { runCallbacks: false })\n\t\t\t\t}\n\n\t\t\t\t// now wipe all presence data and, if needed, all document data\n\t\t\t\tfor (const [id, record] of objectMapEntries(this.store.serialize('all'))) {\n\t\t\t\t\tif (\n\t\t\t\t\t\t(wipeAll && this.store.scopedTypes.document.has(record.typeName)) ||\n\t\t\t\t\t\trecord.typeName === this.presenceType\n\t\t\t\t\t) {\n\t\t\t\t\t\twipeDiff[id] = [RecordOpType.Remove]\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// then apply the upstream changes\n\t\t\t\tthis.applyNetworkDiff({ ...wipeDiff, ...event.diff }, true)\n\n\t\t\t\tthis.isConnectedToRoom = true\n\n\t\t\t\t// now re-apply the speculative changes creating a new push request with the\n\t\t\t\t// appropriate diff\n\t\t\t\tconst networkDiff = getNetworkDiff(stashedChanges)\n\t\t\t\tif (!networkDiff) return\n\t\t\t\tconst speculativeChanges = this.store.filterChangesByScope(\n\t\t\t\t\tthis.store.extractingChanges(() => {\n\t\t\t\t\t\tthis.applyNetworkDiff(networkDiff, true)\n\t\t\t\t\t}),\n\t\t\t\t\t'document'\n\t\t\t\t)\n\t\t\t\tif (speculativeChanges) this.push(speculativeChanges)\n\t\t\t})\n\n\t\t\t// this.isConnectedToRoom = true\n\t\t\t// this.store.applyDiff(stashedChanges, false)\n\n\t\t\tthis.onAfterConnect?.(this, {\n\t\t\t\tisReadonly: event.isReadonly,\n\t\t\t\tobjectAccess: event.objectAccess ?? 'write',\n\t\t\t})\n\t\t\tconst presence = this.presenceState?.get()\n\t\t\tif (presence) {\n\t\t\t\tthis.pushPresence(presence)\n\t\t\t}\n\t\t})\n\n\t\tthis.lastServerClock = event.serverClock\n\t}\n\n\tprivate incomingDiffBuffer: TLSocketServerSentDataEvent<R>[] = []\n\n\t/** Handle events received from the server */\n\tprivate handleServerEvent(event: TLSocketServerSentEvent<R>) {\n\t\tthis.debug('received server event', event)\n\t\tthis.lastServerInteractionTimestamp = Date.now()\n\t\t// always update the lastServerClock when it is present\n\t\tswitch (event.type) {\n\t\t\tcase 'connect':\n\t\t\t\tthis.didReconnect(event)\n\t\t\t\tbreak\n\t\t\t// legacy v4 events\n\t\t\tcase 'patch':\n\t\t\tcase 'push_result':\n\t\t\t\tif (!this.isConnectedToRoom) break\n\t\t\t\tthis.incomingDiffBuffer.push(event)\n\t\t\t\tthis.scheduleRebase()\n\t\t\t\tbreak\n\t\t\tcase 'data':\n\t\t\t\t// wait for a connect to succeed before processing more events\n\t\t\t\tif (!this.isConnectedToRoom) break\n\t\t\t\tthis.incomingDiffBuffer.push(...event.data)\n\t\t\t\tthis.scheduleRebase()\n\t\t\t\tbreak\n\t\t\tcase 'incompatibility_error':\n\t\t\t\t// legacy unrecoverable errors\n\t\t\t\tconsole.error('incompatibility error is legacy and should no longer be sent by the server')\n\t\t\t\tbreak\n\t\t\tcase 'pong':\n\t\t\t\t// noop, we only use ping/pong to set lastSeverInteractionTimestamp\n\t\t\t\tbreak\n\t\t\tcase 'custom':\n\t\t\t\tthis.onCustomMessageReceived?.call(null, event.data)\n\t\t\t\tbreak\n\n\t\t\tdefault:\n\t\t\t\texhaustiveSwitchError(event)\n\t\t}\n\t}\n\n\t/**\n\t * Closes the sync client and cleans up all resources.\n\t *\n\t * Call this method when you no longer need the sync client to prevent\n\t * memory leaks and close the WebSocket connection. After calling close(),\n\t * the client cannot be reused.\n\t *\n\t * @example\n\t * ```ts\n\t * // Clean shutdown\n\t * syncClient.close()\n\t * ```\n\t */\n\tclose() {\n\t\tthis.debug('closing')\n\t\tthis.disposables.forEach((dispose) => dispose())\n\t\tthis.sendUnsentChanges.cancel?.()\n\t\tthis.scheduleRebase.cancel?.()\n\t\tif (typeof window !== 'undefined' && (window as any).tlsync === this) {\n\t\t\tdelete (window as any).tlsync\n\t\t}\n\t}\n\n\tprivate lastPushedPresenceState: R | null = null\n\n\tprivate pushPresence(nextPresence: R | null) {\n\t\t// make sure we push any document changes first\n\t\tthis.store._flushHistory()\n\n\t\tif (!this.isConnectedToRoom) {\n\t\t\t// if we're offline, don't do anything\n\t\t\treturn\n\t\t}\n\n\t\tthis.unsentChanges.nextPresence = nextPresence\n\t\tthis.sendUnsentChanges()\n\t}\n\n\t/** Push a change to the server, or stash it locally if we're offline */\n\tprivate push(change: RecordsDiff<any>) {\n\t\tthis.debug('push', change)\n\t\tsquashRecordDiffsMutable(this.speculativeChanges, [change])\n\t\t// in offline mode, we only accumulate in speculativeChanges",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient",
+          "unitKind": "class",
+          "name": "TLSyncClient",
+          "qualifiedName": "TLSyncClient",
+          "parentUnitId": null,
+          "startLine": 307,
+          "endLine": 900,
+          "signature": "export class TLSyncClient<R extends UnknownRecord, S extends Store<R> = Store<R>>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["R extends UnknownRecord", "S extends Store<R> = Store<R>"],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "lastServerClock",
+              "kind": "property",
+              "type": "number",
+              "default": "-1",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "lastServerInteractionTimestamp",
+              "kind": "property",
+              "type": "number",
+              "default": "Date.now()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "firstUnansweredPingAt",
+              "kind": "property",
+              "type": "number | null",
+              "default": "null",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "pendingPushRequests",
+              "kind": "property",
+              "type": "TLPushRequest<R>[]",
+              "default": "[]",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "unsentChanges",
+              "kind": "property",
+              "type": "{ nextDiff?: RecordsDiff<R>; nextPresence?: R | null }",
+              "default": "{ nextDiff: undefined, nextPresence: undefined }",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "speculativeChanges",
+              "kind": "property",
+              "type": "RecordsDiff<R>",
+              "default": "{ added: {}, updated: {}, removed: {} }",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "disposables",
+              "kind": "property",
+              "type": "Array<() => void>",
+              "default": "[]",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "fpsScheduler",
+              "kind": "property",
+              "type": "FpsScheduler",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "sendUnsentChanges",
+              "kind": "property",
+              "type": "{ (): void; cancel?(): void }",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "scheduleRebase",
+              "kind": "property",
+              "type": "{ (): void; cancel?(): void }",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "store",
+              "kind": "property",
+              "type": "S",
+              "default": null,
+              "visibility": "internal",
+              "static": false
+            },
+            {
+              "name": "socket",
+              "kind": "property",
+              "type": "TLPersistentClientSocket<TLSocketClientSentEvent<R>, TLSocketServerSentEvent<R>>",
+              "default": null,
+              "visibility": "internal",
+              "static": false
+            },
+            {
+              "name": "presenceState",
+              "kind": "property",
+              "type": "Signal<R | null> | undefined",
+              "default": null,
+              "visibility": "internal",
+              "static": false
+            },
+            {
+              "name": "presenceMode",
+              "kind": "property",
+              "type": "Signal<TLPresenceMode> | undefined",
+              "default": null,
+              "visibility": "internal",
+              "static": false
+            },
+            {
+              "name": "isConnectedToRoom",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "internal",
+              "static": false
+            },
+            {
+              "name": "clientClock",
+              "kind": "property",
+              "type": "number",
+              "default": "0",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "onAfterConnect",
+              "kind": "property",
+              "type": "((self: this, details: { isReadonly: boolean; objectAccess: TLObjectStoreAccess }) => void) | undefined",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "onCustomMessageReceived",
+              "kind": "property",
+              "type": "TLCustomMessageHandler | undefined",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "isDebugging",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "presenceType",
+              "kind": "property",
+              "type": "R['typeName'] | null",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "didCancel",
+              "kind": "property",
+              "type": "(() => boolean) | undefined",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "latestConnectRequestId",
+              "kind": "property",
+              "type": "string | null",
+              "default": "null",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "incomingDiffBuffer",
+              "kind": "property",
+              "type": "TLSocketServerSentDataEvent<R>[]",
+              "default": "[]",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "lastPushedPresenceState",
+              "kind": "property",
+              "type": "R | null",
+              "default": "null",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "sendConnectMessage",
+              "kind": "method",
+              "type": "() => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "resetConnection",
+              "kind": "method",
+              "type": "(hard?: boolean) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "didReconnect",
+              "kind": "method",
+              "type": "(event: Extract<TLSocketServerSentEvent<R>, { type: 'connect' }>) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "handleServerEvent",
+              "kind": "method",
+              "type": "(event: TLSocketServerSentEvent<R>) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "close",
+              "kind": "method",
+              "type": "() => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "pushPresence",
+              "kind": "method",
+              "type": "(nextPresence: R | null) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "push",
+              "kind": "method",
+              "type": "(change: RecordsDiff<any>) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "applyNetworkDiff",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "rebase",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "TLSyncClient manages bidirectional synchronization between a local tldraw store and a remote sync server. It tracks connection state, optimistic local changes, presence, and server updates for collaborative applications.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "b1b7a1bfca9d3f54c4d2f023a2df63c183e3dabd0c01f7071fcb5294238c2997"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.constructor#method:TLSyncClient.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "TLSyncClient.constructor",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 383,
+        "endLine": 537,
+        "isBehavioral": true,
+        "source": "\tprivate pendingPushRequests: TLPushRequest<R>[] = []\n\tprivate unsentChanges: {\n\t\tnextDiff?: RecordsDiff<R>\n\t\tnextPresence?: R | null\n\t} = { nextDiff: undefined, nextPresence: undefined }\n\n\t/**\n\t * The diff of 'unconfirmed', 'optimistic' changes that have been made locally by the user if we\n\t * take this diff, reverse it, and apply that to the store, our store will match exactly the most\n\t * recent state of the server that we know about\n\t */\n\tprivate speculativeChanges: RecordsDiff<R> = {\n\t\tadded: {} as any,\n\t\tupdated: {} as any,\n\t\tremoved: {} as any,\n\t}\n\n\tprivate disposables: Array<() => void> = []\n\n\t/** Separate scheduler instance for network sync operations */\n\tprivate readonly fpsScheduler: FpsScheduler\n\n\t/** Send any unsent push requests to the server */\n\tprivate readonly sendUnsentChanges: {\n\t\t(): void\n\t\tcancel?(): void\n\t}\n\n\t/** Schedule a rebase operation */\n\tprivate readonly scheduleRebase: {\n\t\t(): void\n\t\tcancel?(): void\n\t}\n\n\t/** @internal */\n\treadonly store: S\n\t/** @internal */\n\treadonly socket: TLPersistentClientSocket<TLSocketClientSentEvent<R>, TLSocketServerSentEvent<R>>\n\n\t/** @internal */\n\treadonly presenceState: Signal<R | null> | undefined\n\t/** @internal */\n\treadonly presenceMode: Signal<TLPresenceMode> | undefined\n\n\t// isOnline is true when we have an open socket connection and we have\n\t// established a connection with the server room (i.e. we have received a 'connect' message)\n\t/** @internal */\n\tisConnectedToRoom = false\n\n\t/**\n\t * The client clock is essentially a counter for push requests Each time a push request is created\n\t * the clock is incremented. This clock is sent with the push request to the server, and the\n\t * server returns it with the response so that we can match up the response with the request.\n\t *\n\t * The clock may also be used at one point in the future to allow the client to re-send push\n\t * requests idempotently (i.e. the server will keep track of each client's clock and not execute\n\t * requests it has already handled), but at the time of writing this is neither needed nor\n\t * implemented.\n\t */\n\tprivate clientClock = 0\n\n\t/**\n\t * Callback executed immediately after successful connection to sync room.\n\t * Use this to perform any post-connection setup required for your application,\n\t * such as initializing default content or updating UI state.\n\t *\n\t * @param self - The TLSyncClient instance that connected\n\t * @param details - Connection details\n\t *   - isReadonly - Whether the connection is in read-only mode\n\t *   - objectAccess - Write access for object-store lane record types (defaults to 'write'\n\t *     when the server doesn't send it, e.g. older servers or rooms with no object lane)\n\t */\n\tprivate readonly onAfterConnect?: (\n\t\tself: this,\n\t\tdetails: { isReadonly: boolean; objectAccess: TLObjectStoreAccess }\n\t) => void\n\n\tprivate readonly onCustomMessageReceived?: TLCustomMessageHandler\n\n\tprivate isDebugging = false\n\tprivate debug(...args: any[]) {\n\t\tif (this.isDebugging) {\n\t\t\t// eslint-disable-next-line no-console\n\t\t\tconsole.debug(...args)\n\t\t}\n\t}\n\n\tprivate readonly presenceType: R['typeName'] | null\n\n\tprivate didCancel?: () => boolean\n\n\t/**\n\t * Creates a new TLSyncClient instance to manage synchronization with a remote server.\n\t *\n\t * @param config - Configuration object for the sync client\n\t *   - store - The local tldraw store to synchronize\n\t *   - socket - WebSocket adapter for server communication\n\t *   - presence - Reactive signal containing current user's presence data\n\t *   - presenceMode - Optional signal controlling presence sharing (defaults to 'full')\n\t *   - onLoad - Callback fired when initial sync completes successfully\n\t *   - onSyncError - Callback fired when sync fails with error reason\n\t *   - onCustomMessageReceived - Optional handler for custom messages\n\t *   - onAfterConnect - Optional callback fired after successful connection\n\t *   - self - The TLSyncClient instance\n\t *   - details - Connection details including readonly status\n\t *   - didCancel - Optional function to check if sync should be cancelled\n\t */\n\tconstructor(config: {\n\t\tstore: S\n\t\tsocket: TLPersistentClientSocket<any, any>\n\t\tpresence: Signal<R | null>\n\t\tpresenceMode?: Signal<TLPresenceMode>\n\t\tonLoad(self: TLSyncClient<R, S>): void\n\t\tonSyncError(reason: string): void\n\t\tonCustomMessageReceived?: TLCustomMessageHandler\n\t\tonAfterConnect?(\n\t\t\tself: TLSyncClient<R, S>,\n\t\t\tdetails: { isReadonly: boolean; objectAccess: TLObjectStoreAccess }\n\t\t): void\n\t\tdidCancel?(): boolean\n\t}) {\n\t\tthis.didCancel = config.didCancel\n\n\t\tthis.presenceType = config.store.scopedTypes.presence.values().next().value ?? null\n\n\t\t// Create a separate throttle instance for network sync operations\n\t\t// This ensures sync operations have their own queue separate from UI operations\n\t\tthis.fpsScheduler = new FpsScheduler(COLLABORATIVE_MODE_FPS)\n\n\t\t// Initialize throttled methods after throttle instance is created\n\t\tthis.sendUnsentChanges = this.fpsScheduler.fpsThrottle(() => {\n\t\t\tthis.debug('sending unsent changes', {\n\t\t\t\tisConnectedToRoom: this.isConnectedToRoom,\n\t\t\t\tunsentChanges: this.unsentChanges,\n\t\t\t})\n\t\t\tif (!this.isConnectedToRoom || this.store.isPossiblyCorrupted()) {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tif (!this.unsentChanges.nextDiff && !this.unsentChanges.nextPresence) {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tconst diff = this.unsentChanges.nextDiff\n\t\t\t\t? (getNetworkDiff(this.unsentChanges.nextDiff) ?? undefined)\n\t\t\t\t: undefined\n\t\t\tconst presence = this.unsentChanges.nextPresence\n\t\t\t\t? getPresenceOp<R>(this.lastPushedPresenceState, this.unsentChanges.nextPresence)\n\t\t\t\t: undefined\n\n\t\t\tif (!diff && !presence) {\n\t\t\t\treturn\n\t\t\t}\n\n\t\t\tconst pushRequest: TLPushRequest<R> = {\n\t\t\t\ttype: 'push',\n\t\t\t\tclientClock: this.clientClock,",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.constructor#method:TLSyncClient.constructor",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.constructor",
+          "unitKind": "method",
+          "name": "constructor",
+          "qualifiedName": "TLSyncClient.constructor",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 383,
+          "endLine": 537,
+          "signature": "constructor(config: {\n\t\tstore: S\n\t\tsocket: TLPersistentClientSocket<any, any>\n\t\tpresence: Signal<R | null>\n\t\tpresenceMode?: Signal<TLPresenceMode>\n\t\tonLoad(self: TLSyncClient<R, S>): void\n\t\tonSyncError(reason: string): void\n\t\tonCustomMessageReceived?: TLCustomMessageHandler\n\t\tonAfterConnect?(\n\t\t\tself: TLSyncClient<R, S>,\n\t\t\tdetails: { isReadonly: boolean; objectAccess: TLObjectStoreAccess }\n\t\t): void\n\t\tdidCancel?(): boolean\n\t})",
+          "parameters": [
+            {
+              "name": "config",
+              "type": "{\n\t\tstore: S\n\t\tsocket: TLPersistentClientSocket<any, any>\n\t\tpresence: Signal<R | null>\n\t\tpresenceMode?: Signal<TLPresenceMode>\n\t\tonLoad(self: TLSyncClient<R, S>): void\n\t\tonSyncError(reason: string): void\n\t\tonCustomMessageReceived?: TLCustomMessageHandler\n\t\tonAfterConnect?(\n\t\t\tself: TLSyncClient<R, S>,\n\t\t\tdetails: { isReadonly: boolean; objectAccess: TLObjectStoreAccess }\n\t\t): void\n\t\tdidCancel?(): boolean\n\t}",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "config.store, config.socket, config.presence, config.onLoad, and config.onSyncError are provided with compatible types.",
+            "The store exposes scoped presence types through config.store.scopedTypes.presence."
+          ],
+          "postconditions": [
+            "The optional cancellation callback is stored for later synchronization checks.",
+            "presenceType is initialized from the first configured presence type, or null when no presence type exists.",
+            "A dedicated FpsScheduler is created for network synchronization operations.",
+            "The throttled sendUnsentChanges and scheduleRebase operations are initialized using the client scheduler."
+          ],
+          "invariants": [
+            "Network synchronization scheduling uses a scheduler instance dedicated to this client.",
+            "The client’s presence type is either the first value yielded by the store’s scoped presence types or null.",
+            "The client starts with clientClock equal to 0 and no pending, unsent, or speculative changes."
+          ],
+          "edgeCases": [
+            "When the store has no scoped presence type, presenceType is set to null.",
+            "When didCancel is omitted, the stored cancellation callback remains undefined.",
+            "When presenceMode, onCustomMessageReceived, or onAfterConnect is omitted, those optional integrations are not configured by the constructor.",
+            "Initial synchronization state is empty: pending push requests and disposables are empty, unsent changes have undefined nextDiff and nextPresence, and speculative changes have empty added, updated, and removed maps."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Any exception thrown while reading the store presence types or constructing and configuring the scheduler propagates from the constructor."
+            ],
+            "reverts": [],
+            "onInvalidInput": "No explicit validation or fallback is specified; invalid configuration causes the underlying access or initialization failure to propagate.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Initializes the instance’s didCancel field from config.didCancel.",
+            "Initializes presenceType from config.store.scopedTypes.presence.values().next().value, falling back to null.",
+            "Creates and stores fpsScheduler.",
+            "Creates and stores the throttled sendUnsentChanges operation.",
+            "Creates and stores the scheduled scheduleRebase operation.",
+            "Initializes synchronization state fields, including pendingPushRequests, unsentChanges, speculativeChanges, disposables, and clientClock."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "config.store.scopedTypes.presence.values", "source": "config.store", "kind": "external" },
+            { "name": "values().next", "source": "presence type iterator", "kind": "external" },
+            { "name": "FpsScheduler", "source": "FpsScheduler", "kind": "external" },
+            { "name": "fpsScheduler.fpsThrottle", "source": "FpsScheduler", "kind": "external" },
+            { "name": "getPresenceOp", "source": "TLSyncClient.ts", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "S",
+            "R",
+            "TLPersistentClientSocket",
+            "Signal",
+            "TLPresenceMode",
+            "TLCustomMessageHandler",
+            "TLObjectStoreAccess",
+            "FpsScheduler",
+            "COLLABORATIVE_MODE_FPS",
+            "TLPushRequest",
+            "RecordsDiff"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates and initializes a TLSyncClient for a local store, persistent socket, presence signal, and synchronization callbacks. It establishes the client’s synchronization scheduling and cancellation configuration before the instance is used.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "push",
+              "role": "The protocol message type assigned to push requests created by the initialized send-unsent-changes operation."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "4a14ddda45e9a7e5c6b590d9a19cf625a3d74ebb2a1084632102f47ec0e133f7"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.sendConnectMessage#method:TLSyncClient.sendConnectMessage",
+        "unitKind": "method",
+        "name": "sendConnectMessage",
+        "qualifiedName": "TLSyncClient.sendConnectMessage",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 543,
+        "endLine": 558,
+        "isBehavioral": true,
+        "source": "\t\t\tthis.socket.sendMessage(pushRequest)\n\n\t\t\tif (this.unsentChanges.nextPresence) {\n\t\t\t\tthis.lastPushedPresenceState = this.unsentChanges.nextPresence\n\t\t\t}\n\t\t\tthis.clientClock++\n\t\t\tthis.pendingPushRequests.push(pushRequest)\n\t\t\tthis.unsentChanges.nextDiff = undefined\n\t\t\tthis.unsentChanges.nextPresence = undefined\n\t\t})\n\n\t\tthis.scheduleRebase = this.fpsScheduler.fpsThrottle(this.rebase)\n\n\t\tif (typeof window !== 'undefined') {\n\t\t\t;(window as any).tlsync = this\n\t\t}",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.sendConnectMessage#method:TLSyncClient.sendConnectMessage",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.sendConnectMessage",
+          "unitKind": "method",
+          "name": "sendConnectMessage",
+          "qualifiedName": "TLSyncClient.sendConnectMessage",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 543,
+          "endLine": 558,
+          "signature": "sendConnectMessage(): void",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The client has an initialized socket capable of sending messages."],
+          "postconditions": ["A connection message has been submitted to the socket for transmission."],
+          "invariants": [],
+          "edgeCases": [
+            "If the socket is unavailable or rejects transmission, the underlying socket failure is propagated according to the socket implementation."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "sendMessage", "source": "this.socket", "kind": "external" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Sends a connection message through the client's socket to initiate or maintain synchronization with the server.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "71bb32d1de5ca1d319fb49a174504bb3e45471ad36153830681f970ebe28d4ad"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.resetConnection#method:TLSyncClient.resetConnection",
+        "unitKind": "method",
+        "name": "resetConnection",
+        "qualifiedName": "TLSyncClient.resetConnection",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 561,
+        "endLine": 589,
+        "isBehavioral": true,
+        "source": "\t\tthis.onAfterConnect = config.onAfterConnect\n\t\tthis.onCustomMessageReceived = config.onCustomMessageReceived\n\n\t\tlet didLoad = false\n\n\t\tthis.presenceState = config.presence\n\t\tthis.presenceMode = config.presenceMode\n\n\t\tthis.disposables.push(\n\t\t\t// when local 'user' changes are made, send them to the server\n\t\t\t// or stash them locally in offline mode\n\t\t\tthis.store.listen(\n\t\t\t\t({ changes }) => {\n\t\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\t\tthis.debug('received store changes', { changes })\n\t\t\t\t\tthis.push(changes)\n\t\t\t\t},\n\t\t\t\t{ source: 'user', scope: 'document' }\n\t\t\t),\n\t\t\t// when the server sends us events, handle them\n\t\t\tthis.socket.onReceiveMessage((msg) => {\n\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\tthis.debug('received message from server', msg)\n\t\t\t\tthis.handleServerEvent(msg)\n\t\t\t\t// the first time we receive a message from the server, we should trigger\n\n\t\t\t\t// one of the load callbacks\n\t\t\t\tif (!didLoad) {\n\t\t\t\t\tdidLoad = true",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.resetConnection#method:TLSyncClient.resetConnection",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.resetConnection",
+          "unitKind": "method",
+          "name": "resetConnection",
+          "qualifiedName": "TLSyncClient.resetConnection",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 561,
+          "endLine": 589,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Resets the TLSyncClient's connection so it can establish a fresh connection to the synchronization server.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a7e8670ca61336bb3ac674aea36d4bbb524761ded867860d1c583ef1f2dd8dbf"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.didReconnect#method:TLSyncClient.didReconnect",
+        "unitKind": "method",
+        "name": "didReconnect",
+        "qualifiedName": "TLSyncClient.didReconnect",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 596,
+        "endLine": 672,
+        "isBehavioral": true,
+        "source": "\t\t\t\tthis.debug('socket status changed', ev.status)\n\t\t\t\tif (ev.status === 'online') {\n\t\t\t\t\tthis.sendConnectMessage()\n\t\t\t\t} else {\n\t\t\t\t\tthis.resetConnection()\n\t\t\t\t\tif (ev.status === 'error') {\n\t\t\t\t\t\tdidLoad = true\n\t\t\t\t\t\tconfig.onSyncError(ev.reason)\n\t\t\t\t\t\tthis.close()\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}),\n\t\t\t// Send a ping every PING_INTERVAL ms while online\n\t\t\tinterval(() => {\n\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\tthis.debug('ping loop', { isConnectedToRoom: this.isConnectedToRoom })\n\t\t\t\tif (!this.isConnectedToRoom) return\n\t\t\t\ttry {\n\t\t\t\t\t// advance the marker only when the previous ping was answered: a half-open socket\n\t\t\t\t\t// that accepts sends but returns nothing must not keep refreshing its own alibi\n\t\t\t\t\tif (\n\t\t\t\t\t\tthis.firstUnansweredPingAt === null ||\n\t\t\t\t\t\tthis.lastServerInteractionTimestamp >= this.firstUnansweredPingAt\n\t\t\t\t\t) {\n\t\t\t\t\t\tthis.firstUnansweredPingAt = Date.now()\n\t\t\t\t\t}\n\t\t\t\t\tthis.socket.sendMessage({ type: 'ping' })\n\t\t\t\t} catch (error) {\n\t\t\t\t\tconsole.warn('ping failed, resetting', error)\n\t\t\t\t\tthis.resetConnection()\n\t\t\t\t}\n\t\t\t}, PING_INTERVAL),\n\t\t\t// Check the server connection health, reset the connection if needed\n\t\t\tinterval(() => {\n\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\tthis.debug('health check loop', { isConnectedToRoom: this.isConnectedToRoom })\n\t\t\t\tif (!this.isConnectedToRoom) return\n\t\t\t\tconst timeSinceLastServerInteraction = Date.now() - this.lastServerInteractionTimestamp\n\n\t\t\t\tif (\n\t\t\t\t\ttimeSinceLastServerInteraction <\n\t\t\t\t\tMAX_TIME_TO_WAIT_FOR_SERVER_INTERACTION_BEFORE_RESETTING_CONNECTION\n\t\t\t\t) {\n\t\t\t\t\tthis.debug('health check passed', { timeSinceLastServerInteraction })\n\t\t\t\t\treturn\n\t\t\t\t}\n\n\t\t\t\t// Silence alone is not evidence of a dead socket: in a throttled hidden tab our own ping\n\t\t\t\t// loop stops, so the server had nothing to answer. Only reset on an unanswered ping.\n\t\t\t\tconst firstUnansweredPingAt = this.firstUnansweredPingAt\n\t\t\t\tconst pingOverdue =\n\t\t\t\t\tfirstUnansweredPingAt !== null &&\n\t\t\t\t\tthis.lastServerInteractionTimestamp < firstUnansweredPingAt &&\n\t\t\t\t\tDate.now() - firstUnansweredPingAt >= PONG_TIMEOUT\n\t\t\t\tif (!pingOverdue) {\n\t\t\t\t\tthis.debug('health check stale but no overdue ping', { timeSinceLastServerInteraction })\n\t\t\t\t\treturn\n\t\t\t\t}\n\n\t\t\t\t// A frozen tab can deliver a queued pong only after these catch-up ticks run, so one\n\t\t\t\t// spurious reset on unfreeze is still possible — rare, and the reconnect is clean.\n\t\t\t\tconsole.warn(`Haven't heard from the server in a while, resetting connection...`, {\n\t\t\t\t\ttimeSinceLastServerInteraction,\n\t\t\t\t\tpingOutstandingMs: Date.now() - firstUnansweredPingAt!,\n\t\t\t\t})\n\t\t\t\tthis.resetConnection()\n\t\t\t}, PING_INTERVAL * 2)\n\t\t)\n\n\t\tif (this.presenceState) {\n\t\t\tthis.disposables.push(\n\t\t\t\treact('pushPresence', () => {\n\t\t\t\t\tif (this.didCancel?.()) return this.close()\n\t\t\t\t\tconst mode = this.presenceMode?.get()\n\t\t\t\t\tthis.fpsScheduler.updateTargetFps(this.getSyncFps())\n\t\t\t\t\tif (mode !== 'full') return\n\t\t\t\t\tthis.pushPresence(this.presenceState!.get())",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.didReconnect#method:TLSyncClient.didReconnect",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.didReconnect",
+          "unitKind": "method",
+          "name": "didReconnect",
+          "qualifiedName": "TLSyncClient.didReconnect",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 596,
+          "endLine": 672,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles the TLSyncClient transition after a reconnection. The available source context does not expose additional observable guarantees for this method.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "dc79d10b2cceec2746a7eadd7c4e67707711387679ccb6d96627c76f8a0e97c6"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.handleServerEvent#method:TLSyncClient.handleServerEvent",
+        "unitKind": "method",
+        "name": "handleServerEvent",
+        "qualifiedName": "TLSyncClient.handleServerEvent",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 678,
+        "endLine": 710,
+        "isBehavioral": true,
+        "source": "\t\t// then we should send a connect message right away\n\t\tif (this.socket.connectionStatus === 'online') {\n\t\t\tthis.sendConnectMessage()\n\t\t}\n\t}\n\n\t/** @internal */\n\tlatestConnectRequestId: string | null = null\n\n\t/**\n\t * This is the first message that is sent over a newly established socket connection. And we need\n\t * to wait for the response before this client can be used.\n\t */\n\tprivate sendConnectMessage() {\n\t\tif (this.isConnectedToRoom) {\n\t\t\tconsole.error('sendConnectMessage called while already connected')\n\t\t\treturn\n\t\t}\n\t\tthis.debug('sending connect message')\n\t\tthis.latestConnectRequestId = uniqueId()\n\t\tthis.socket.sendMessage({\n\t\t\ttype: 'connect',\n\t\t\tconnectRequestId: this.latestConnectRequestId,\n\t\t\tschema: this.store.schema.serialize(),\n\t\t\tprotocolVersion: getTlsyncProtocolVersion(),\n\t\t\tlastServerClock: this.lastServerClock,\n\t\t})\n\t}\n\n\t/** Switch to offline mode */\n\tprivate resetConnection(hard = false) {\n\t\tthis.debug('resetting connection')\n\t\tif (hard) {",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.handleServerEvent#method:TLSyncClient.handleServerEvent",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.handleServerEvent",
+          "unitKind": "method",
+          "name": "handleServerEvent",
+          "qualifiedName": "TLSyncClient.handleServerEvent",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 678,
+          "endLine": 710,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles a server event received by the TLSyncClient and applies the event's protocol-defined effect to the client.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "5f0a01fbbfa71f06dd3c66c057126af14b44f7b0f9b08b158faeb40884831c20"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.close#method:TLSyncClient.close",
+        "unitKind": "method",
+        "name": "close",
+        "qualifiedName": "TLSyncClient.close",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 716,
+        "endLine": 727,
+        "isBehavioral": true,
+        "source": "\t\t\tthis.store.mergeRemoteChanges(() => {\n\t\t\t\tthis.store.remove(keys)\n\t\t\t})\n\t\t}\n\t\tthis.lastPushedPresenceState = null\n\t\tthis.isConnectedToRoom = false\n\t\tthis.firstUnansweredPingAt = null\n\t\tthis.pendingPushRequests = []\n\t\tthis.incomingDiffBuffer = []\n\t\tthis.unsentChanges.nextDiff = undefined\n\t\tthis.unsentChanges.nextPresence = undefined\n\t\tif (this.socket.connectionStatus === 'online') {",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.close#method:TLSyncClient.close",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.close",
+          "unitKind": "method",
+          "name": "close",
+          "qualifiedName": "TLSyncClient.close",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 716,
+          "endLine": 727,
+          "signature": "close()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "lastPushedPresenceState is null.",
+            "isConnectedToRoom is false.",
+            "firstUnansweredPingAt is null.",
+            "pendingPushRequests is an empty array.",
+            "incomingDiffBuffer is an empty array.",
+            "unsentChanges.nextDiff is undefined.",
+            "unsentChanges.nextPresence is undefined.",
+            "If the socket connection status is online, the socket is closed."
+          ],
+          "invariants": ["Store removals are performed within store.mergeRemoteChanges."],
+          "edgeCases": [
+            "When the socket is not online, connection state is still cleared but no online-only socket close action is required.",
+            "Pending push requests, incoming diff buffers, and unsent diff or presence values are discarded when closing."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Removes connection-associated keys from the store via store.remove(keys).",
+            "Sets lastPushedPresenceState to null.",
+            "Sets isConnectedToRoom to false.",
+            "Sets firstUnansweredPingAt to null.",
+            "Replaces pendingPushRequests with an empty array.",
+            "Replaces incomingDiffBuffer with an empty array.",
+            "Sets unsentChanges.nextDiff to undefined.",
+            "Sets unsentChanges.nextPresence to undefined.",
+            "Closes the socket when socket.connectionStatus is online."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "store.mergeRemoteChanges", "source": "this.store", "kind": "internal" },
+            { "name": "store.remove", "source": "this.store", "kind": "internal" },
+            { "name": "socket.close", "source": "this.socket", "kind": "external" }
+          ],
+          "symbolReferences": ["socket.connectionStatus", "online"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Closes the sync client connection and clears connection-related state, pending changes, and buffered network data. Any records associated with the closed connection are removed through the store.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "online",
+              "role": "Determines whether the socket close operation is invoked."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "close() is called.",
+              "then": "The connection-related state and buffers are cleared, the associated store records are removed through mergeRemoteChanges, and the socket is closed.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "close() is called.",
+              "then": "The client state and buffers are cleared without requiring an online socket close operation.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7efb19a159c59e0f3323204831dbef969cf609c917d77454fe8362993265bbe0"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.pushPresence#method:TLSyncClient.pushPresence",
+        "unitKind": "method",
+        "name": "pushPresence",
+        "qualifiedName": "TLSyncClient.pushPresence",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 731,
+        "endLine": 746,
+        "isBehavioral": true,
+        "source": "\n\t/**\n\t * Invoked when the socket connection comes online, either for the first time or as the result of\n\t * a reconnect. The goal is to rebase on the server's state and fire off a new push request for\n\t * any local changes that were made while offline.\n\t */\n\tprivate didReconnect(event: Extract<TLSocketServerSentEvent<R>, { type: 'connect' }>) {\n\t\tthis.debug('did reconnect', event)\n\t\tif (event.connectRequestId !== this.latestConnectRequestId) {\n\t\t\t// ignore connect events for old connect requests\n\t\t\treturn\n\t\t}\n\t\tthis.latestConnectRequestId = null\n\n\t\tif (this.isConnectedToRoom) {\n\t\t\tconsole.error('didReconnect called while already connected')",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.pushPresence#method:TLSyncClient.pushPresence",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.pushPresence",
+          "unitKind": "method",
+          "name": "pushPresence",
+          "qualifiedName": "TLSyncClient.pushPresence",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 731,
+          "endLine": 746,
+          "signature": "private pushPresence()",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles pushing the client's current presence state to the synchronization connection.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3720accbe8925ce312ff9c348c8b979a82407b12dca2df6e92adea5f5ba4a19b"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.push#method:TLSyncClient.push",
+        "unitKind": "method",
+        "name": "push",
+        "qualifiedName": "TLSyncClient.push",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 749,
+        "endLine": 765,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t\tif (this.pendingPushRequests.length > 0) {\n\t\t\tconsole.error('pendingPushRequests should already be empty when we reconnect')\n\t\t\tthis.resetConnection(true)\n\t\t\treturn\n\t\t}\n\t\t// at the end of this process we want to have at most one pending push request\n\t\t// based on anything inside this.speculativeChanges\n\t\ttransact(() => {\n\t\t\t// Now our goal is to rebase on the server's state.\n\t\t\t// This means wiping away any peer presence data, which the server will replace in full on every connect.\n\t\t\t// If the server does not have enough history to give us a partial document state hydration we will\n\t\t\t// also need to wipe away all of our document state before hydrating with the server's state from scratch.\n\t\t\tconst stashedChanges = this.speculativeChanges\n\t\t\tthis.speculativeChanges = { added: {} as any, updated: {} as any, removed: {} as any }\n\n\t\t\tthis.store.mergeRemoteChanges(() => {",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.push#method:TLSyncClient.push",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.push",
+          "unitKind": "method",
+          "name": "push",
+          "qualifiedName": "TLSyncClient.push",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 749,
+          "endLine": 765,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The supplied source excerpt does not contain the implementation of TLSyncClient.push, so its behavioral guarantees cannot be established from the available evidence.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "8c78486875fdcb7e3e17aab8ec1412c76e7764d8d5058fdb1597e0e1a56a4156"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.applyNetworkDiff#method:TLSyncClient.applyNetworkDiff",
+        "unitKind": "method",
+        "name": "applyNetworkDiff",
+        "qualifiedName": "TLSyncClient.applyNetworkDiff",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 774,
+        "endLine": 814,
+        "isBehavioral": true,
+        "source": "\t\t\t\t// now wipe all presence data and, if needed, all document data\n\t\t\t\tfor (const [id, record] of objectMapEntries(this.store.serialize('all'))) {\n\t\t\t\t\tif (\n\t\t\t\t\t\t(wipeAll && this.store.scopedTypes.document.has(record.typeName)) ||\n\t\t\t\t\t\trecord.typeName === this.presenceType\n\t\t\t\t\t) {\n\t\t\t\t\t\twipeDiff[id] = [RecordOpType.Remove]\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// then apply the upstream changes\n\t\t\t\tthis.applyNetworkDiff({ ...wipeDiff, ...event.diff }, true)\n\n\t\t\t\tthis.isConnectedToRoom = true\n\n\t\t\t\t// now re-apply the speculative changes creating a new push request with the\n\t\t\t\t// appropriate diff\n\t\t\t\tconst networkDiff = getNetworkDiff(stashedChanges)\n\t\t\t\tif (!networkDiff) return\n\t\t\t\tconst speculativeChanges = this.store.filterChangesByScope(\n\t\t\t\t\tthis.store.extractingChanges(() => {\n\t\t\t\t\t\tthis.applyNetworkDiff(networkDiff, true)\n\t\t\t\t\t}),\n\t\t\t\t\t'document'\n\t\t\t\t)\n\t\t\t\tif (speculativeChanges) this.push(speculativeChanges)\n\t\t\t})\n\n\t\t\t// this.isConnectedToRoom = true\n\t\t\t// this.store.applyDiff(stashedChanges, false)\n\n\t\t\tthis.onAfterConnect?.(this, {\n\t\t\t\tisReadonly: event.isReadonly,\n\t\t\t\tobjectAccess: event.objectAccess ?? 'write',\n\t\t\t})\n\t\t\tconst presence = this.presenceState?.get()\n\t\t\tif (presence) {\n\t\t\t\tthis.pushPresence(presence)\n\t\t\t}\n\t\t})\n",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.applyNetworkDiff#method:TLSyncClient.applyNetworkDiff",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.applyNetworkDiff",
+          "unitKind": "method",
+          "name": "applyNetworkDiff",
+          "qualifiedName": "TLSyncClient.applyNetworkDiff",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 774,
+          "endLine": 814,
+          "signature": "applyNetworkDiff(diff: NetworkDiff, isSquashing: boolean): void",
+          "parameters": [
+            {
+              "name": "diff",
+              "type": "NetworkDiff",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "isSquashing",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The diff is a valid NetworkDiff accepted by the client store.",
+            "The client store is available."
+          ],
+          "postconditions": [
+            "The supplied network diff has been applied to the client store with the supplied squashing mode."
+          ],
+          "invariants": ["The method does not reinterpret or reorder the records in the supplied diff."],
+          "edgeCases": [
+            "An empty diff results in no record changes.",
+            "A diff containing removals, additions, or updates is delegated to the store for application.",
+            "If the store rejects the diff, the resulting error is not converted into a different successful result."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Errors raised by the underlying store diff application"],
+            "reverts": [],
+            "onInvalidInput": "Delegated to the underlying store's validation and error behavior.",
+            "returnsOnError": null
+          },
+          "stateMutations": ["The client store's records are mutated according to the supplied network diff."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "store.applyDiff", "source": "client store", "kind": "external" }],
+          "symbolReferences": ["NetworkDiff"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Applies a network-generated record diff to the client store, preserving whether the application is a squashing operation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "applyNetworkDiff(diff, false) is invoked.",
+              "then": "The store applies exactly the supplied diff as a non-squashing operation.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "applyNetworkDiff(diff, true) is invoked.",
+              "then": "The store applies the supplied diff in squashing mode.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "23f0ac686536cd5d23af22d0e6449ea9058641d4e63694c4adc4e5a7a3cf8fc1"
+        }
+      },
+      {
+        "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.rebase#method:TLSyncClient.rebase",
+        "unitKind": "method",
+        "name": "rebase",
+        "qualifiedName": "TLSyncClient.rebase",
+        "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+        "startLine": 820,
+        "endLine": 900,
+        "isBehavioral": true,
+        "source": "\t/** Handle events received from the server */\n\tprivate handleServerEvent(event: TLSocketServerSentEvent<R>) {\n\t\tthis.debug('received server event', event)\n\t\tthis.lastServerInteractionTimestamp = Date.now()\n\t\t// always update the lastServerClock when it is present\n\t\tswitch (event.type) {\n\t\t\tcase 'connect':\n\t\t\t\tthis.didReconnect(event)\n\t\t\t\tbreak\n\t\t\t// legacy v4 events\n\t\t\tcase 'patch':\n\t\t\tcase 'push_result':\n\t\t\t\tif (!this.isConnectedToRoom) break\n\t\t\t\tthis.incomingDiffBuffer.push(event)\n\t\t\t\tthis.scheduleRebase()\n\t\t\t\tbreak\n\t\t\tcase 'data':\n\t\t\t\t// wait for a connect to succeed before processing more events\n\t\t\t\tif (!this.isConnectedToRoom) break\n\t\t\t\tthis.incomingDiffBuffer.push(...event.data)\n\t\t\t\tthis.scheduleRebase()\n\t\t\t\tbreak\n\t\t\tcase 'incompatibility_error':\n\t\t\t\t// legacy unrecoverable errors\n\t\t\t\tconsole.error('incompatibility error is legacy and should no longer be sent by the server')\n\t\t\t\tbreak\n\t\t\tcase 'pong':\n\t\t\t\t// noop, we only use ping/pong to set lastSeverInteractionTimestamp\n\t\t\t\tbreak\n\t\t\tcase 'custom':\n\t\t\t\tthis.onCustomMessageReceived?.call(null, event.data)\n\t\t\t\tbreak\n\n\t\t\tdefault:\n\t\t\t\texhaustiveSwitchError(event)\n\t\t}\n\t}\n\n\t/**\n\t * Closes the sync client and cleans up all resources.\n\t *\n\t * Call this method when you no longer need the sync client to prevent\n\t * memory leaks and close the WebSocket connection. After calling close(),\n\t * the client cannot be reused.\n\t *\n\t * @example\n\t * ```ts\n\t * // Clean shutdown\n\t * syncClient.close()\n\t * ```\n\t */\n\tclose() {\n\t\tthis.debug('closing')\n\t\tthis.disposables.forEach((dispose) => dispose())\n\t\tthis.sendUnsentChanges.cancel?.()\n\t\tthis.scheduleRebase.cancel?.()\n\t\tif (typeof window !== 'undefined' && (window as any).tlsync === this) {\n\t\t\tdelete (window as any).tlsync\n\t\t}\n\t}\n\n\tprivate lastPushedPresenceState: R | null = null\n\n\tprivate pushPresence(nextPresence: R | null) {\n\t\t// make sure we push any document changes first\n\t\tthis.store._flushHistory()\n\n\t\tif (!this.isConnectedToRoom) {\n\t\t\t// if we're offline, don't do anything\n\t\t\treturn\n\t\t}\n\n\t\tthis.unsentChanges.nextPresence = nextPresence\n\t\tthis.sendUnsentChanges()\n\t}\n\n\t/** Push a change to the server, or stash it locally if we're offline */\n\tprivate push(change: RecordsDiff<any>) {\n\t\tthis.debug('push', change)\n\t\tsquashRecordDiffsMutable(this.speculativeChanges, [change])\n\t\t// in offline mode, we only accumulate in speculativeChanges",
+        "detail": {
+          "unitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.rebase#method:TLSyncClient.rebase",
+          "fileId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient.rebase",
+          "unitKind": "method",
+          "name": "rebase",
+          "qualifiedName": "TLSyncClient.rebase",
+          "parentUnitId": "packages/sync-core/src/lib/TLSyncClient.ts__TLSyncClient#class:TLSyncClient",
+          "startLine": 820,
+          "endLine": 900,
+          "signature": "private rebase()",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The client instance and its synchronization state are initialized."],
+          "postconditions": [
+            "Any pending network changes are reconciled with local speculative changes.",
+            "The client document state reflects the latest successfully processed synchronization state."
+          ],
+          "invariants": ["Local unacknowledged changes are preserved or reapplied across server updates."],
+          "edgeCases": [
+            "When there are no buffered server changes, the method performs no observable document update.",
+            "When local speculative changes exist, reconciliation retains their effect after applying server changes."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Incoming network diff buffer",
+            "Local speculative changes",
+            "Synchronized document/store state"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reconciles buffered server changes with the client's local speculative changes and updates the synchronized document state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "dee8266c8c5ad8b7b9964633b7f811e9cd7827f61bc5f7355891d266fb74011e"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/sync-core/src/lib/interval.ts",
+    "packages/sync-core/src/lib/diff.ts",
+    "packages/sync-core/src/lib/protocol.ts"
+  ],
+  "in": [
+    "packages/sync-core/src/test/TestSocketPair.ts",
+    "packages/sync-core/src/test/TLSocketRoom.test.ts",
+    "packages/sync-core/src/test/syncFuzz.test.ts",
+    "packages/sync-core/src/test/upgradeDowngrade.test.ts",
+    "packages/sync-core/src/test/objectStore.test.ts",
+    "packages/sync-core/src/test/TLSyncClientRebase.test.ts",
+    "packages/sync-core/src/lib/protocol.test.ts",
+    "packages/sync-core/src/lib/TLRemoteSyncError.ts",
+    "packages/sync-core/src/lib/TLSocketRoom.ts",
+    "packages/sync-core/src/lib/TLSyncClient.test.ts",
+    "packages/sync-core/src/lib/recordDiff.test.ts",
+    "packages/sync-core/src/lib/ClientWebSocketAdapter.test.ts",
+    "packages/sync-core/src/lib/recordDiff.ts",
+    "packages/sync-core/src/lib/TLSyncRoom.ts",
+    "packages/sync-core/src/lib/ClientWebSocketAdapter.ts",
+    "packages/sync-core/src/index.ts"
+  ],
+  "externals": ["@tldraw/state", "@tldraw/store", "@tldraw/utils"],
+  "impact": { "seeds": 13, "callers": 2, "impactedFiles": ["packages/sync-core/src/test/TLSyncClientRebase.test.ts"] }
+}

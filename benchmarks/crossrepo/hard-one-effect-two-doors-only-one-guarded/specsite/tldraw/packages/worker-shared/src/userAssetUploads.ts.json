@@ -1,0 +1,1384 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/worker-shared/src/userAssetUploads.ts",
+    "language": "typescript",
+    "sizeBytes": 7455,
+    "tokenCount": 1864,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:15:31.553Z",
+    "module": {
+      "purpose": "Provides shared Cloudflare Worker handlers for validating R2 object names, uploading user assets with retry and conflict detection, and retrieving cached or ranged assets with secure response headers.",
+      "summary": "This module implements the user-asset boundary for Cloudflare R2. Uploads validate UTF-8 object-name size, detect conflicts, buffer request bodies for retryable writes, and preserve HTTP metadata. Retrievals use the Cloudflare cache API, support conditional and range-aware R2 reads, construct immutable CORS-enabled responses, and protect executable content types with security headers. Transient Worker failures are retried, while invalid object names are converted into client errors.",
+      "businessContext": "User-uploaded assets must be stored and served reliably from object storage while remaining cacheable and safe across the application origin. Failures can block uploads, return missing assets, or expose uploaded content to browser-based attacks.",
+      "classes": [
+        "R2BucketLike (~L38-42): Minimal storage interface abstracting compatible Cloudflare R2 bucket operations"
+      ],
+      "functions": [
+        "isTransientWorkerError (~L7-12): Identifies retryable Cloudflare Worker and connectivity failures",
+        "isInvalidObjectNameError (~L14-17): Detects storage errors caused by invalid object names",
+        "isValidR2ObjectName (~L19-23): Validates nonempty UTF-8 object names against R2 byte limits",
+        "invalidObjectNameResponse (~L25-27): Creates a standardized invalid-name client response",
+        "handleUserAssetUpload (~L79-112): Validates, conflict-checks, retries, and uploads user assets",
+        "handleUserAssetGet (~L143-229): Retrieves, caches, ranges, and secures user asset responses"
+      ],
+      "keywords": [
+        "Cloudflare R2",
+        "ReadableStream buffering",
+        "HTTP range requests",
+        "Cloudflare Cache API",
+        "transient retry",
+        "R2 object names",
+        "ETag",
+        "content-range",
+        "CORS",
+        "content security policy"
+      ],
+      "ontologyConcepts": [
+        "object storage",
+        "retry policy",
+        "content caching",
+        "range retrieval",
+        "conflict detection",
+        "input validation",
+        "HTTP metadata",
+        "web security"
+      ],
+      "businessEntities": ["user asset", "R2 object", "object name", "upload request", "asset response", "cache entry"],
+      "systemCapabilities": [
+        "Validate R2 object identifiers",
+        "Upload assets with conflict protection",
+        "Retry transient storage operations",
+        "Serve cached and ranged assets",
+        "Apply asset response security headers",
+        "Map storage failures to HTTP responses"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./errors",
+          "symbols": ["notFound"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/worker-shared/src/errors.ts",
+          "resolvedFileId": "packages/worker-shared/src/errors.ts",
+          "resolvedHint": "packages/worker-shared/src/errors.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["retry"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "itty-router",
+          "symbols": ["IRequest"],
+          "package": "itty-router",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Creates HTTP Response objects for upload and retrieval results."],
+        "network": ["Calls R2 bucket head, put, and get operations, with transient failures retried."],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "MAX_R2_OBJECT_NAME_BYTES",
+          "shape": "export const MAX_R2_OBJECT_NAME_BYTES = 1024",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isValidR2ObjectName",
+          "shape": "export function isValidR2ObjectName(objectName: string): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TRANSIENT_RETRY_OPTIONS",
+          "shape": "export const TRANSIENT_RETRY_OPTIONS = { attempts: 3, waitDuration: 500, matchError: isTransientWorkerError } as const",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "R2BucketLike",
+          "shape": "export interface R2BucketLike { head(key: string): Promise<any>; get(key: string, options?: any): Promise<any>; put(key: string, value: any, options?: any): Promise<any> }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleUserAssetUpload",
+          "shape": "export async function handleUserAssetUpload({ body, headers, bucket, objectName }: { objectName: string; bucket: R2BucketLike; body: ReadableStream | null; headers: Headers }): Promise<Response>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "handleUserAssetGet",
+          "shape": "export async function handleUserAssetGet({ request, bucket, objectName, context }: { request: IRequest; bucket: R2BucketLike; objectName: string; context: ExecutionContext }): Promise<Response>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "retry",
+          "shape": "retry(() => bucket.head(objectName), TRANSIENT_RETRY_OPTIONS)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "IRequest", "shape": "IRequest", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "notFound",
+          "shape": "notFound()",
+          "resolvedRelativePath": "packages/worker-shared/src/errors.ts",
+          "resolvedFileId": "packages/worker-shared/src/errors.ts"
+        },
+        {
+          "name": "R2BucketLike",
+          "shape": "bucket.head(key: string): Promise<any>; bucket.get(key: string, options?: any): Promise<any>; bucket.put(key: string, value: any, options?: any): Promise<any>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "object-name-validation",
+          "intent": "Reject empty or oversized UTF-8 object names before storage access.",
+          "structureKind": "branch",
+          "predicate": "!isValidR2ObjectName(objectName)",
+          "branchOutcomes": ["invalid name returns HTTP 400", "valid name continues"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 19, "endLine": 23 }
+        },
+        {
+          "name": "upload-conflict-check",
+          "intent": "Retry a metadata lookup and reject uploads for existing objects.",
+          "structureKind": "branch",
+          "predicate": "if (existing)",
+          "branchOutcomes": ["existing object returns HTTP 409", "missing object continues upload"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 92, "endLine": 96 }
+        },
+        {
+          "name": "upload-retry-and-response",
+          "intent": "Buffer the body, retry storage writes, and return the object ETag.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 92, "endLine": 112 }
+        },
+        {
+          "name": "cache-lookup",
+          "intent": "Return an existing Cloudflare cache response before accessing R2.",
+          "structureKind": "branch",
+          "predicate": "if (cachedResponse)",
+          "branchOutcomes": ["cache hit returns cached response", "cache miss continues to R2"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 157, "endLine": 161 }
+        },
+        {
+          "name": "asset-retrieval",
+          "intent": "Retry R2 retrieval and map absent objects to not-found responses.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 163, "endLine": 176 }
+        },
+        {
+          "name": "range-header-construction",
+          "intent": "Derive content-range metadata for suffix and bounded range responses.",
+          "structureKind": "branch",
+          "predicate": "if (object.range)",
+          "branchOutcomes": ["range metadata is calculated", "no range metadata is added"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 199, "endLine": 215 }
+        },
+        {
+          "name": "response-and-cache-selection",
+          "intent": "Select status codes, cache successful bodies, and return asset responses.",
+          "structureKind": "branch",
+          "predicate": "if (status === 200)",
+          "branchOutcomes": [
+            "full response is cached and returned",
+            "partial or conditional response is returned directly"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 217, "endLine": 229 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "constant",
+          "name": "MAX_R2_OBJECT_NAME_BYTES",
+          "signature": "export const MAX_R2_OBJECT_NAME_BYTES = 1024",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 5, "endLine": 5 }
+        },
+        {
+          "kind": "interface",
+          "name": "R2BucketLike",
+          "signature": "export interface R2BucketLike {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 38, "endLine": 42 }
+        },
+        {
+          "kind": "constant",
+          "name": "TRANSIENT_RETRY_OPTIONS",
+          "signature": "export const TRANSIENT_RETRY_OPTIONS = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 29, "endLine": 33 }
+        },
+        {
+          "kind": "function",
+          "name": "isValidR2ObjectName",
+          "signature": "export function isValidR2ObjectName(objectName: string): boolean {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 19, "endLine": 23 }
+        },
+        {
+          "kind": "function",
+          "name": "handleUserAssetUpload",
+          "signature": "export async function handleUserAssetUpload({\n\tbody,\n\theaders,\n\tbucket,\n\tobjectName,\n}: {\n\tobjectName: string\n\tbucket: R2BucketLike\n\tbody: ReadableStream | null\n\theaders: Headers\n}): Promise<Response> {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<Response>",
+          "exported": true,
+          "anchor": { "startLine": 79, "endLine": 89 }
+        },
+        {
+          "kind": "function",
+          "name": "handleUserAssetGet",
+          "signature": "export async function handleUserAssetGet({\n\trequest,\n\tbucket,\n\tobjectName,\n\tcontext,\n}: {\n\trequest: IRequest\n\tbucket: R2BucketLike\n\tobjectName: string\n\tcontext: ExecutionContext\n}): Promise<Response> {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<Response>",
+          "exported": true,
+          "anchor": { "startLine": 143, "endLine": 153 }
+        },
+        {
+          "kind": "function",
+          "name": "isTransientWorkerError",
+          "signature": "function isTransientWorkerError(error: unknown): boolean {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": false,
+          "anchor": { "startLine": 7, "endLine": 7 }
+        },
+        {
+          "kind": "function",
+          "name": "isInvalidObjectNameError",
+          "signature": "function isInvalidObjectNameError(error: unknown): boolean {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": false,
+          "anchor": { "startLine": 14, "endLine": 14 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "R2BucketLike",
+          "shape": "{\n\thead(key: string): Promise<any>\n\tget(key: string, options?: any): Promise<any>\n\tput(key: string, value: any, options?: any): Promise<any>\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 38, "endLine": 42 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "empty object name",
+          "handled": true,
+          "behavior": "Returns HTTP 400 with an Invalid object name error.",
+          "anchor": { "startLine": 19, "endLine": 23 }
+        },
+        {
+          "inputShape": "object name exceeding 1024 UTF-8 bytes",
+          "handled": true,
+          "behavior": "Returns HTTP 400 without accessing R2.",
+          "anchor": { "startLine": 19, "endLine": 23 }
+        },
+        {
+          "inputShape": "existing object during upload",
+          "handled": true,
+          "behavior": "Returns HTTP 409 and does not overwrite the existing asset.",
+          "anchor": { "startLine": 94, "endLine": 96 }
+        },
+        {
+          "inputShape": "null upload body",
+          "handled": true,
+          "behavior": "Passes null as the upload value to the storage write.",
+          "anchor": { "startLine": 98, "endLine": 99 }
+        },
+        {
+          "inputShape": "cache hit",
+          "handled": true,
+          "behavior": "Returns the cached response without querying R2.",
+          "anchor": { "startLine": 158, "endLine": 160 }
+        },
+        {
+          "inputShape": "missing R2 object",
+          "handled": true,
+          "behavior": "Returns the notFound response.",
+          "anchor": { "startLine": 174, "endLine": 176 }
+        },
+        {
+          "inputShape": "suffix or bounded range request",
+          "handled": true,
+          "behavior": "Adds content-range metadata and returns status 206 when a body exists.",
+          "anchor": { "startLine": 200, "endLine": 215 }
+        },
+        {
+          "inputShape": "R2 object without a response body",
+          "handled": true,
+          "behavior": "Returns status 304 with a null body.",
+          "anchor": { "startLine": 217, "endLine": 218 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "objectName.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Requires the object name to contain at least one character.",
+          "anchor": { "startLine": 21, "endLine": 21 }
+        },
+        {
+          "operator": "<=",
+          "left": "new TextEncoder().encode(objectName).length",
+          "right": "MAX_R2_OBJECT_NAME_BYTES",
+          "inclusive": true,
+          "intent": "Allows names up to the configured maximum UTF-8 byte length.",
+          "anchor": { "startLine": 21, "endLine": 21 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "isInvalidObjectNameError(error)",
+          "action": "Converts an invalid storage object-name failure into a client response.",
+          "fallback": "HTTP 400 Invalid object name response",
+          "anchor": { "startLine": 108, "endLine": 110 }
+        },
+        {
+          "thrown": null,
+          "caught": "isInvalidObjectNameError(error)",
+          "action": "Converts an invalid storage object-name failure into a client response.",
+          "fallback": "HTTP 400 Invalid object name response",
+          "anchor": { "startLine": 169, "endLine": 171 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Rethrows all non-invalid-name upload errors.",
+          "fallback": null,
+          "anchor": { "startLine": 110, "endLine": 110 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Rethrows all non-invalid-name retrieval errors.",
+          "fallback": null,
+          "anchor": { "startLine": 171, "endLine": 171 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Only nonempty object names whose UTF-8 encoding is at most 1024 bytes reach R2.",
+          "anchor": { "startLine": 19, "endLine": 23 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Upload bodies are fully buffered before the retryable put operation.",
+          "anchor": { "startLine": 98, "endLine": 99 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Successful uploads return the requested object name and storage ETag.",
+          "anchor": { "startLine": 106, "endLine": 106 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Successful retrieval responses include immutable caching, ETag, CORS, and security headers.",
+          "anchor": { "startLine": 182, "endLine": 195 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Cache lookup precedes R2 retrieval, and cache population occurs only for complete body responses.",
+          "anchor": { "startLine": 157, "endLine": 161 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Upload callers provide a usable R2 bucket, HTTP headers, and a single-use readable body.",
+          "anchor": { "startLine": 79, "endLine": 89 }
+        },
+        {
+          "kind": "platform",
+          "description": "The Cloudflare caches global, R2 range semantics, and ExecutionContext.waitUntil are available.",
+          "anchor": { "startLine": 157, "endLine": 159 }
+        },
+        {
+          "kind": "schema",
+          "description": "R2 get results expose writeHttpMetadata, httpEtag, optional range, size, and body fields.",
+          "anchor": { "startLine": 178, "endLine": 217 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does the cache key need normalization beyond the request URL and request headers?",
+          "affects": "cache behaviour",
+          "anchor": { "startLine": 157, "endLine": 157 },
+          "resolution": null
+        },
+        {
+          "question": "Should a bodyless R2 result always be represented as HTTP 304 rather than another conditional-response status?",
+          "affects": "retrieval response status",
+          "anchor": { "startLine": 217, "endLine": 218 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Handlers await independent request operations; each invocation has local state, while cache writes are scheduled through ExecutionContext.waitUntil."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "rejects-invalid-upload-object-name",
+          "scenario": "An upload request uses an empty or oversized object name.",
+          "given": ["objectName = ''", "bucket = { head: ..., put: ... }"],
+          "when": "handleUserAssetUpload({ objectName, bucket, body, headers })",
+          "then": "the response status is 400 and the JSON body is { error: 'Invalid object name' }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Invalid R2 names must be rejected before any bucket operation."
+        },
+        {
+          "testId": "rejects-existing-upload",
+          "scenario": "An upload targets an object that already exists.",
+          "given": ["bucket.head(objectName) resolves to an existing object"],
+          "when": "handleUserAssetUpload({ objectName, bucket, body, headers })",
+          "then": "the response status is 409 and the JSON body is { error: 'Asset already exists' }",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Uploads use conflict detection rather than overwriting an existing asset."
+        },
+        {
+          "testId": "uploads-new-asset-with-etag",
+          "scenario": "An upload targets a valid object name that does not exist.",
+          "given": [
+            "bucket.head(objectName) resolves to null",
+            "bucket.put(objectName, buffer, { httpMetadata: headers }) resolves to { httpEtag: 'etag-1' }"
+          ],
+          "when": "handleUserAssetUpload({ objectName, bucket, body, headers })",
+          "then": "the response status is 200, the JSON body is { object: objectName }, and the etag response header is 'etag-1'",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "The upload contract preserves the object identity and storage ETag."
+        },
+        {
+          "testId": "rejects-invalid-get-object-name",
+          "scenario": "A retrieval request uses an invalid object name.",
+          "given": ["objectName = ''"],
+          "when": "handleUserAssetGet({ request, bucket, objectName, context })",
+          "then": "the response status is 400 and bucket.get is not called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Retrieval validates names before cache or storage access."
+        },
+        {
+          "testId": "returns-cached-asset",
+          "scenario": "The cache contains a response for the request URL and headers.",
+          "given": ["caches.default.match(cacheKey) resolves to cachedResponse"],
+          "when": "handleUserAssetGet({ request, bucket, objectName, context })",
+          "then": "the result is cachedResponse and bucket.get is not called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Cache hits bypass R2 and preserve the cached response exactly."
+        },
+        {
+          "testId": "returns-not-found-for-missing-asset",
+          "scenario": "The cache misses and R2 has no object for the requested name.",
+          "given": [
+            "caches.default.match(cacheKey) resolves to undefined",
+            "bucket.get(objectName, { range: request.headers, onlyIf: request.headers }) resolves to null"
+          ],
+          "when": "handleUserAssetGet({ request, bucket, objectName, context })",
+          "then": "the result is the response returned by notFound()",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Missing assets map to the shared not-found contract."
+        },
+        {
+          "testId": "serves-full-asset-and-caches-it",
+          "scenario": "R2 returns a complete asset body without a range.",
+          "given": ["object = { body, size, httpEtag, writeHttpMetadata(headers) }", "object.range is undefined"],
+          "when": "handleUserAssetGet({ request, bucket, objectName, context })",
+          "then": "the response status is 200, cache-control is 'public, max-age=31536000, immutable', access-control-allow-origin is '*', content-security-policy is \"default-src 'none'\", x-content-type-options is 'nosniff', and context.waitUntil is called to cache the response",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Successful full responses must be immutable, safe for cross-origin access, and cached."
+        },
+        {
+          "testId": "serves-range-asset",
+          "scenario": "R2 returns a partial asset body for a requested range.",
+          "given": ["object.range = { offset: 10, length: 5 }", "object.size = 100", "object.body is present"],
+          "when": "handleUserAssetGet({ request, bucket, objectName, context })",
+          "then": "the response status is 206 and the content-range header is 'bytes 10-14/100'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Range responses must expose the correct byte interval and partial-content status."
+        },
+        {
+          "testId": "returns-not-modified-without-body",
+          "scenario": "R2 returns metadata indicating no response body is required.",
+          "given": ["object = { httpEtag, writeHttpMetadata(headers) }", "object.body is absent"],
+          "when": "handleUserAssetGet({ request, bucket, objectName, context })",
+          "then": "the response status is 304",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Conditional or metadata-only retrieval must produce a bodyless 304 response."
+        },
+        {
+          "testId": "validates-r2-object-name-byte-length",
+          "scenario": "An object name is non-empty and its UTF-8 encoding is at most 1024 bytes.",
+          "given": ["objectName = 'asset-name'"],
+          "when": "isValidR2ObjectName(objectName)",
+          "then": "the result is true",
+          "targets": [],
+          "oracleKind": "property",
+          "rationale": "Validation is based on encoded byte length rather than JavaScript string length."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "R2 object-name byte limit constant",
+        "transient error predicate",
+        "invalid object-name error predicate",
+        "object-name validator",
+        "invalid-name response helper",
+        "retry options constant",
+        "R2 bucket compatibility interface",
+        "Cloudflare caches declaration",
+        "upload handler",
+        "retrieval handler"
+      ],
+      "moduleLevelCode": "import { retry } from '@tldraw/utils'\nimport { IRequest } from 'itty-router'\nimport { notFound } from './errors'\n\ndeclare const caches: {\n\tdefault: {\n\t\tmatch(request: unknown): Promise<Response | undefined>\n\t\tput(request: unknown, response: Response): Promise<void>\n\t}\n}",
+      "exports": [
+        { "name": "MAX_R2_OBJECT_NAME_BYTES", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "isValidR2ObjectName", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "TRANSIENT_RETRY_OPTIONS", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "R2BucketLike", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "handleUserAssetUpload", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "handleUserAssetGet", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "retry", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "IRequest", "module": "itty-router", "alias": null, "kind": "external" },
+        { "symbol": "notFound", "module": "./errors", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "MAX_R2_OBJECT_NAME_BYTES", "value": "1024", "kind": "number" },
+        {
+          "name": "TRANSIENT_RETRY_OPTIONS",
+          "value": "{\n\tattempts: 3,\n\twaitDuration: 500,\n\tmatchError: isTransientWorkerError,\n} as const",
+          "kind": "object"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/worker-shared/src/userAssetUploads.ts__isTransientWorkerError#function:isTransientWorkerError",
+        "unitKind": "function",
+        "name": "isTransientWorkerError",
+        "qualifiedName": "isTransientWorkerError",
+        "parentUnitId": null,
+        "startLine": 7,
+        "endLine": 12,
+        "isBehavioral": true,
+        "source": "function isTransientWorkerError(error: unknown): boolean {\n\tconst msg = String(error)\n\treturn /internal error|connectivity|network connection lost|service temporarily unavailable|proxy request failed|unspecified error|connection (refused|reset|timed?\\s?out)/i.test(\n\t\tmsg\n\t)\n}",
+        "detail": {
+          "unitId": "packages/worker-shared/src/userAssetUploads.ts__isTransientWorkerError#function:isTransientWorkerError",
+          "fileId": "packages/worker-shared/src/userAssetUploads.ts__isTransientWorkerError",
+          "unitKind": "function",
+          "name": "isTransientWorkerError",
+          "qualifiedName": "isTransientWorkerError",
+          "parentUnitId": null,
+          "startLine": 7,
+          "endLine": 12,
+          "signature": "function isTransientWorkerError(error: unknown): boolean",
+          "parameters": [
+            { "name": "error", "type": "unknown", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The function accepts any value, including nullish and non-error values."],
+          "postconditions": [
+            "Returns a boolean.",
+            "Returns true if the string representation matches the transient-worker error pattern case-insensitively.",
+            "Returns false when the string representation does not match the transient-worker error pattern."
+          ],
+          "invariants": [
+            "Matching is case-insensitive.",
+            "Matching is substring-based rather than requiring the entire string to match."
+          ],
+          "edgeCases": [
+            "Non-string inputs are converted to strings before matching.",
+            "Error messages containing any recognized transient phrase return true.",
+            "Values whose string representation contains no recognized phrase return false.",
+            "Connection messages matching refused, reset, timed out, timeout, or timedout are recognized."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "No input validation error is produced; the value is stringified and tested.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Classifies an unknown error as transient when its string representation contains a recognized internal, connectivity, network, proxy, service-availability, or connection-failure message.",
+          "specLiterals": [
+            {
+              "kind": "regex",
+              "value": "/internal error|connectivity|network connection lost|service temporarily unavailable|proxy request failed|unspecified error|connection (refused|reset|timed?\\s?out)/i",
+              "role": "Defines the case-insensitive transient-worker error message patterns recognized by the classifier."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling isTransientWorkerError(error).",
+              "then": "The result is true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling isTransientWorkerError(error).",
+              "then": "The result is true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling isTransientWorkerError(error).",
+              "then": "The result is false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "057e8c52df6caf9a7626500826630534d8434cda1d88f214c57437f1285ffc84"
+        }
+      },
+      {
+        "unitId": "packages/worker-shared/src/userAssetUploads.ts__isInvalidObjectNameError#function:isInvalidObjectNameError",
+        "unitKind": "function",
+        "name": "isInvalidObjectNameError",
+        "qualifiedName": "isInvalidObjectNameError",
+        "parentUnitId": null,
+        "startLine": 14,
+        "endLine": 17,
+        "isBehavioral": true,
+        "source": "function isInvalidObjectNameError(error: unknown): boolean {\n\tconst msg = String(error)\n\treturn msg.includes('The specified object name is not valid') || msg.includes('(10020)')\n}",
+        "detail": {
+          "unitId": "packages/worker-shared/src/userAssetUploads.ts__isInvalidObjectNameError#function:isInvalidObjectNameError",
+          "fileId": "packages/worker-shared/src/userAssetUploads.ts__isInvalidObjectNameError",
+          "unitKind": "function",
+          "name": "isInvalidObjectNameError",
+          "qualifiedName": "isInvalidObjectNameError",
+          "parentUnitId": null,
+          "startLine": 14,
+          "endLine": 17,
+          "signature": "function isInvalidObjectNameError(error: unknown): boolean",
+          "parameters": [
+            { "name": "error", "type": "unknown", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The input may be any JavaScript or TypeScript value."],
+          "postconditions": [
+            "Returns true if String(error) contains either recognized invalid-object-name indicator.",
+            "Returns false if String(error) contains neither recognized indicator."
+          ],
+          "invariants": [
+            "The input is evaluated through JavaScript String coercion before matching.",
+            "Matching is case-sensitive and checks for substring containment."
+          ],
+          "edgeCases": [
+            "A value whose string representation contains \"The specified object name is not valid\" returns true.",
+            "A value whose string representation contains \"(10020)\" returns true.",
+            "A value whose string representation contains neither indicator, including null or an empty string representation, returns false.",
+            "If String(error) throws during coercion, the thrown error propagates."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Any error thrown while coercing the input with String(error)"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether an unknown error represents an invalid object-name error by checking its string representation for recognized provider indicators.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "The specified object name is not valid",
+              "role": "Recognized substring identifying an invalid object-name error."
+            },
+            {
+              "kind": "error-message",
+              "value": "(10020)",
+              "role": "Recognized provider error-code substring identifying an invalid object-name error."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling isInvalidObjectNameError(error).",
+              "then": "The result is true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling isInvalidObjectNameError(error).",
+              "then": "The result is true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Calling isInvalidObjectNameError(error).",
+              "then": "The result is false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "665112dce706bf5c7a216706911919218b3d29652949d1e8db85fc53c10c113e"
+        }
+      },
+      {
+        "unitId": "packages/worker-shared/src/userAssetUploads.ts__isValidR2ObjectName#function:isValidR2ObjectName",
+        "unitKind": "function",
+        "name": "isValidR2ObjectName",
+        "qualifiedName": "isValidR2ObjectName",
+        "parentUnitId": null,
+        "startLine": 19,
+        "endLine": 23,
+        "isBehavioral": true,
+        "source": "export function isValidR2ObjectName(objectName: string): boolean {\n\treturn (\n\t\tobjectName.length > 0 && new TextEncoder().encode(objectName).length <= MAX_R2_OBJECT_NAME_BYTES\n\t)\n}",
+        "detail": {
+          "unitId": "packages/worker-shared/src/userAssetUploads.ts__isValidR2ObjectName#function:isValidR2ObjectName",
+          "fileId": "packages/worker-shared/src/userAssetUploads.ts__isValidR2ObjectName",
+          "unitKind": "function",
+          "name": "isValidR2ObjectName",
+          "qualifiedName": "isValidR2ObjectName",
+          "parentUnitId": null,
+          "startLine": 19,
+          "endLine": 23,
+          "signature": "export function isValidR2ObjectName(objectName: string): boolean",
+          "parameters": [
+            {
+              "name": "objectName",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["objectName is a string."],
+          "postconditions": [
+            "Returns true only when objectName is non-empty and its UTF-8 encoded byte length is at most MAX_R2_OBJECT_NAME_BYTES.",
+            "Returns false when objectName is empty or its UTF-8 encoded byte length exceeds MAX_R2_OBJECT_NAME_BYTES."
+          ],
+          "invariants": [
+            "Validation is based on UTF-8 encoded byte length rather than JavaScript string character count."
+          ],
+          "edgeCases": [
+            "An empty string returns false.",
+            "Names containing multibyte characters are measured by their UTF-8 byte length.",
+            "A name exactly at the configured byte limit is accepted; a name exceeding the limit is rejected."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns false for an empty name or a name exceeding the configured UTF-8 byte limit.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "TextEncoder.encode", "source": null, "kind": "external" }],
+          "symbolReferences": ["MAX_R2_OBJECT_NAME_BYTES", "TextEncoder"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates that an R2 object name is non-empty and does not exceed the configured maximum UTF-8 byte length.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isValidR2ObjectName(objectName) is called.",
+              "then": "The function returns false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "08ceac6c097ac6db2008bf96519ac9adbf11649c2302832932ed786a2ae99a17"
+        }
+      },
+      {
+        "unitId": "packages/worker-shared/src/userAssetUploads.ts__invalidObjectNameResponse#function:invalidObjectNameResponse",
+        "unitKind": "function",
+        "name": "invalidObjectNameResponse",
+        "qualifiedName": "invalidObjectNameResponse",
+        "parentUnitId": null,
+        "startLine": 25,
+        "endLine": 27,
+        "isBehavioral": true,
+        "source": "function invalidObjectNameResponse() {\n\treturn Response.json({ error: 'Invalid object name' }, { status: 400 })\n}",
+        "detail": {
+          "unitId": "packages/worker-shared/src/userAssetUploads.ts__invalidObjectNameResponse#function:invalidObjectNameResponse",
+          "fileId": "packages/worker-shared/src/userAssetUploads.ts__invalidObjectNameResponse",
+          "unitKind": "function",
+          "name": "invalidObjectNameResponse",
+          "qualifiedName": "invalidObjectNameResponse",
+          "parentUnitId": null,
+          "startLine": 25,
+          "endLine": 27,
+          "signature": "function invalidObjectNameResponse()",
+          "parameters": [],
+          "returnType": "Response",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns a Response with HTTP status 400.",
+            "The response body is JSON containing an error field with value \"Invalid object name\"."
+          ],
+          "invariants": ["The returned response always uses the same error payload and status code."],
+          "edgeCases": ["The function accepts no inputs and therefore has no input-dependent behavior."],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "Response.json", "source": "Response", "kind": "external" }],
+          "symbolReferences": ["Response"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns a Response whose JSON body is {\"error\":\"Invalid object name\"} and whose HTTP status is 400.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a JSON HTTP response indicating that an object name is invalid. The response uses HTTP status 400.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Invalid object name",
+              "role": "JSON error payload consumed by callers to identify an invalid object name."
+            },
+            { "kind": "magic-number", "value": "400", "role": "HTTP status code indicating a bad request." }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "fecf36a28a08d6f77adb679f1992d58d2ac1f2033448bcd495c2665a401470d7"
+        }
+      },
+      {
+        "unitId": "packages/worker-shared/src/userAssetUploads.ts__handleUserAssetUpload#function:handleUserAssetUpload",
+        "unitKind": "function",
+        "name": "handleUserAssetUpload",
+        "qualifiedName": "handleUserAssetUpload",
+        "parentUnitId": null,
+        "startLine": 79,
+        "endLine": 112,
+        "isBehavioral": true,
+        "source": " */\nexport async function handleUserAssetUpload({\n\tbody,\n\theaders,\n\tbucket,\n\tobjectName,\n}: {\n\tobjectName: string\n\tbucket: R2BucketLike\n\tbody: ReadableStream | null\n\theaders: Headers\n}): Promise<Response> {\n\tif (!isValidR2ObjectName(objectName)) return invalidObjectNameResponse()\n\n\ttry {\n\t\tconst existing = await retry(() => bucket.head(objectName), TRANSIENT_RETRY_OPTIONS)\n\t\tif (existing) {\n\t\t\treturn Response.json({ error: 'Asset already exists' }, { status: 409 })\n\t\t}\n\n\t\t// Buffer body so retries can re-send (ReadableStream is single-use)\n\t\tconst buffer = body ? await new Response(body).arrayBuffer() : null\n\n\t\tconst object = await retry(\n\t\t\t() => bucket.put(objectName, buffer, { httpMetadata: headers }),\n\t\t\tTRANSIENT_RETRY_OPTIONS\n\t\t)\n\n\t\treturn Response.json({ object: objectName }, { headers: { etag: object.httpEtag } })\n\t} catch (error) {\n\t\tif (isInvalidObjectNameError(error)) return invalidObjectNameResponse()\n\t\tthrow error\n\t}\n}",
+        "detail": {
+          "unitId": "packages/worker-shared/src/userAssetUploads.ts__handleUserAssetUpload#function:handleUserAssetUpload",
+          "fileId": "packages/worker-shared/src/userAssetUploads.ts__handleUserAssetUpload",
+          "unitKind": "function",
+          "name": "handleUserAssetUpload",
+          "qualifiedName": "handleUserAssetUpload",
+          "parentUnitId": null,
+          "startLine": 79,
+          "endLine": 112,
+          "signature": "export async function handleUserAssetUpload({\n\tbody,\n\theaders,\n\tbucket,\n\tobjectName,\n}: {\n\tobjectName: string\n\tbucket: R2BucketLike\n\tbody: ReadableStream | null\n\theaders: Headers\n}): Promise<Response>",
+          "parameters": [
+            {
+              "name": "objectName",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "bucket",
+              "type": "R2BucketLike",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "body",
+              "type": "ReadableStream | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            { "name": "headers", "type": "Headers", "default": null, "optional": false, "variadic": false, "order": 3 }
+          ],
+          "returnType": "Promise<Response>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "objectName is supplied as a string.",
+            "bucket provides head and put operations compatible with R2BucketLike.",
+            "headers is a Headers instance.",
+            "body is either a readable stream or null."
+          ],
+          "postconditions": [
+            "For a successful upload, the response is a JSON response containing { object: objectName } and an etag response header set to the uploaded object's httpEtag.",
+            "The bucket head operation is completed before attempting the upload.",
+            "A non-null body is fully buffered before the upload operation so it can be reused across retries.",
+            "The upload is attempted with the supplied headers as httpMetadata."
+          ],
+          "invariants": [
+            "The object name is validated before accessing the bucket.",
+            "The bucket head and put operations use the configured transient retry options.",
+            "An existing object is never overwritten by this function."
+          ],
+          "edgeCases": [
+            "If objectName is invalid, no bucket operation is attempted and invalidObjectNameResponse() is returned.",
+            "If bucket.head(objectName) returns an existing object, the function returns HTTP 409 with JSON body { error: 'Asset already exists' } and does not upload.",
+            "If body is null, the upload is invoked with a null body.",
+            "If body is a ReadableStream, it is consumed into an ArrayBuffer before bucket.put is called.",
+            "If bucket.head or bucket.put fails with an invalid-object-name error, invalidObjectNameResponse() is returned.",
+            "Any other error from validation, buffering, retry, head, or put is propagated."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Propagates errors other than those recognized by isInvalidObjectNameError."],
+            "reverts": [],
+            "onInvalidInput": "Returns invalidObjectNameResponse() when objectName is invalid or an operation raises an error recognized by isInvalidObjectNameError.",
+            "returnsOnError": "Returns HTTP 409 JSON { error: 'Asset already exists' } when the object already exists."
+          },
+          "stateMutations": [
+            "Consumes the supplied body ReadableStream when body is non-null.",
+            "Creates or uploads the object at objectName in the supplied bucket."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isValidR2ObjectName", "source": null, "kind": "internal" },
+            { "name": "invalidObjectNameResponse", "source": null, "kind": "internal" },
+            { "name": "retry", "source": null, "kind": "external" },
+            { "name": "bucket.head", "source": "bucket", "kind": "external" },
+            { "name": "bucket.put", "source": "bucket", "kind": "external" },
+            { "name": "isInvalidObjectNameError", "source": null, "kind": "internal" },
+            { "name": "Response.json", "source": "Web Platform Response", "kind": "external" }
+          ],
+          "symbolReferences": ["R2BucketLike", "ReadableStream", "Headers", "Response", "TRANSIENT_RETRY_OPTIONS"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "On conflict, returns a Response with status 409 and JSON body {\"error\":\"Asset already exists\"}. On success, returns a JSON response body {\"object\": objectName} with an etag response header equal to object.httpEtag. The upload call receives objectName, a null body or ArrayBuffer body, and { httpMetadata: headers }.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Validates and uploads a user asset to the provided R2-compatible bucket with transient-operation retries. It rejects invalid or already-existing object names with an HTTP response and returns the uploaded object's name and ETag on success.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Asset already exists",
+              "role": "JSON error message returned when the target asset already exists."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUserAssetUpload is called.",
+              "then": "It returns a response with status 409 and JSON body { error: 'Asset already exists' }, and bucket.put is not called.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUserAssetUpload is called.",
+              "then": "It calls bucket.put with the object name, null, and { httpMetadata: headers }, then returns JSON body { object: objectName } with an etag header of 'etag-value'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUserAssetUpload is called.",
+              "then": "It returns invalidObjectNameResponse() without calling bucket.head or bucket.put.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "5372aefab9325af1f573f2d09e82b81cb8b0918353328569c704c0cffced34b4"
+        }
+      },
+      {
+        "unitId": "packages/worker-shared/src/userAssetUploads.ts__handleUserAssetGet#function:handleUserAssetGet",
+        "unitKind": "function",
+        "name": "handleUserAssetGet",
+        "qualifiedName": "handleUserAssetGet",
+        "parentUnitId": null,
+        "startLine": 143,
+        "endLine": 229,
+        "isBehavioral": true,
+        "source": "export async function handleUserAssetGet({\n\trequest,\n\tbucket,\n\tobjectName,\n\tcontext,\n}: {\n\trequest: IRequest\n\tbucket: R2BucketLike\n\tobjectName: string\n\tcontext: ExecutionContext\n}): Promise<Response> {\n\tif (!isValidR2ObjectName(objectName)) return invalidObjectNameResponse()\n\n\t// this cache automatically handles range responses etc.\n\tconst cacheKey = new Request(request.url, { headers: request.headers })\n\tconst cachedResponse = await caches.default.match(cacheKey)\n\tif (cachedResponse) {\n\t\treturn cachedResponse\n\t}\n\n\tlet object\n\ttry {\n\t\tobject = await retry(\n\t\t\t() => bucket.get(objectName, { range: request.headers, onlyIf: request.headers }),\n\t\t\tTRANSIENT_RETRY_OPTIONS\n\t\t)\n\t} catch (error) {\n\t\tif (isInvalidObjectNameError(error)) return invalidObjectNameResponse()\n\t\tthrow error\n\t}\n\n\tif (!object) {\n\t\treturn notFound()\n\t}\n\n\tconst headers = new Headers()\n\tobject.writeHttpMetadata(headers)\n\n\t// assets are immutable, so we can cache them basically forever:\n\theaders.set('cache-control', 'public, max-age=31536000, immutable')\n\theaders.set('etag', object.httpEtag)\n\n\t// we set CORS headers so all clients can access assets. we do this here so our `cors` helper in\n\t// worker.ts doesn't try to set extra cors headers on responses that have been read from the\n\t// cache, which isn't allowed by cloudflare.\n\theaders.set('access-control-allow-origin', '*')\n\n\t// Prevent XSS from user-uploaded SVGs (or any file served with an executable content-type).\n\t// This is critical when assets are served from the same origin as the app.\n\theaders.set('content-security-policy', \"default-src 'none'\")\n\theaders.set('x-content-type-options', 'nosniff')\n\n\t// cloudflare doesn't set the content-range header automatically in writeHttpMetadata, so we\n\t// need to do it ourselves.\n\tlet contentRange\n\tif (object.range) {\n\t\tif ('suffix' in object.range) {\n\t\t\tconst start = object.size - object.range.suffix\n\t\t\tconst end = object.size - 1\n\t\t\tcontentRange = `bytes ${start}-${end}/${object.size}`\n\t\t} else {\n\t\t\tconst start = object.range.offset ?? 0\n\t\t\tconst end = object.range.length ? start + object.range.length - 1 : object.size - 1\n\t\t\tif (start !== 0 || end !== object.size - 1) {\n\t\t\t\tcontentRange = `bytes ${start}-${end}/${object.size}`\n\t\t\t}\n\t\t}\n\t}\n\n\tif (contentRange) {\n\t\theaders.set('content-range', contentRange)\n\t}\n\n\tconst body = 'body' in object && object.body ? object.body : null\n\tconst status = body ? (contentRange ? 206 : 200) : 304\n\n\tif (status === 200) {\n\t\tconst [cacheBody, responseBody] = body!.tee()\n\t\t// cache the response\n\t\tcontext.waitUntil(\n\t\t\tcaches.default.put(cacheKey, new Response(cacheBody as BodyInit, { headers, status }))\n\t\t)\n\t\treturn new Response(responseBody as BodyInit, { headers, status })\n\t}\n\n\treturn new Response(body as BodyInit | null, { headers, status })\n}",
+        "detail": {
+          "unitId": "packages/worker-shared/src/userAssetUploads.ts__handleUserAssetGet#function:handleUserAssetGet",
+          "fileId": "packages/worker-shared/src/userAssetUploads.ts__handleUserAssetGet",
+          "unitKind": "function",
+          "name": "handleUserAssetGet",
+          "qualifiedName": "handleUserAssetGet",
+          "parentUnitId": null,
+          "startLine": 143,
+          "endLine": 229,
+          "signature": "export async function handleUserAssetGet({\n\trequest,\n\tbucket,\n\tobjectName,\n\tcontext,\n}: {\n\trequest: IRequest\n\tbucket: R2BucketLike\n\tobjectName: string\n\tcontext: ExecutionContext\n}): Promise<Response>",
+          "parameters": [
+            {
+              "name": "request",
+              "type": "IRequest",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "bucket",
+              "type": "R2BucketLike",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "objectName",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "context",
+              "type": "ExecutionContext",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "Promise<Response>",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "request, bucket, objectName, and context are provided with the declared types.",
+            "objectName must satisfy isValidR2ObjectName to perform cache or bucket access."
+          ],
+          "postconditions": [
+            "A valid asset response includes the object's HTTP metadata plus immutable caching, CORS, and security headers.",
+            "A cache hit is returned directly without fetching the object from the bucket.",
+            "A successful full response has status 200 when it has a body; a partial response has status 206 and a content-range header; a bodyless object response has status 304.",
+            "A successful status-200 response is returned to the caller and scheduled for insertion into the default cache."
+          ],
+          "invariants": [
+            "Invalid object names are rejected before cache lookup or bucket access.",
+            "Bucket retrieval is performed through retry using TRANSIENT_RETRY_OPTIONS.",
+            "User assets are served with access-control-allow-origin set to *.",
+            "User assets are served with content-security-policy set to default-src 'none' and x-content-type-options set to nosniff.",
+            "The cache key preserves the request URL and request headers."
+          ],
+          "edgeCases": [
+            "An invalid object name returns invalidObjectNameResponse immediately.",
+            "A matching cached response is returned unchanged.",
+            "A bucket lookup returning no object produces notFound().",
+            "An invalid-object-name bucket error returns invalidObjectNameResponse; other bucket errors are rethrown.",
+            "A suffix range produces a content-range value covering the requested suffix and status 206 when a body exists.",
+            "A non-full offset or length range produces a content-range value and status 206 when a body exists.",
+            "A full-range request does not add content-range and uses status 200 when a body exists.",
+            "An object without a body produces a 304 response with the constructed headers and no body."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Errors from bucket.get that are not recognized by isInvalidObjectNameError"],
+            "reverts": [],
+            "onInvalidInput": "Returns invalidObjectNameResponse() when objectName is invalid or bucket.get raises an invalid-object-name error.",
+            "returnsOnError": "Returns notFound() when the bucket contains no matching object."
+          },
+          "stateMutations": [
+            "Schedules a cache write through context.waitUntil for successful status-200 asset responses."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isValidR2ObjectName", "source": "local sibling function", "kind": "internal" },
+            { "name": "invalidObjectNameResponse", "source": "local sibling function", "kind": "internal" },
+            { "name": "retry", "source": "imported dependency", "kind": "external" },
+            { "name": "isInvalidObjectNameError", "source": "local sibling function", "kind": "internal" },
+            { "name": "notFound", "source": "imported dependency", "kind": "external" },
+            { "name": "caches.default.match", "source": "Cloudflare Cache API", "kind": "external" },
+            { "name": "caches.default.put", "source": "Cloudflare Cache API", "kind": "external" },
+            { "name": "bucket.get", "source": "R2BucketLike", "kind": "external" },
+            { "name": "object.writeHttpMetadata", "source": "R2 object", "kind": "external" },
+            { "name": "context.waitUntil", "source": "ExecutionContext", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "IRequest",
+            "R2BucketLike",
+            "ExecutionContext",
+            "Response",
+            "Request",
+            "Headers",
+            "TRANSIENT_RETRY_OPTIONS",
+            "caches"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns a Response. The cache key is a new Request(request.url, { headers: request.headers }). Responses include object HTTP metadata, cache-control, etag, access-control-allow-origin, content-security-policy, and x-content-type-options headers. Partial responses additionally include content-range and use status 206; full body responses use status 200; bodyless responses use status 304.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Retrieves a user asset from the cache or R2 bucket and returns an HTTP response with metadata, caching, CORS, and security headers. It supports conditional and range retrieval, retries transient bucket operations, and maps invalid or missing objects to appropriate responses.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "public, max-age=31536000, immutable",
+              "role": "Immutable asset cache policy returned on every bucket-served response."
+            },
+            {
+              "kind": "magic-number",
+              "value": "31536000",
+              "role": "One-year max-age used for immutable asset caching."
+            },
+            { "kind": "string", "value": "*", "role": "Allows all origins to access user assets." },
+            {
+              "kind": "string",
+              "value": "default-src 'none'",
+              "role": "Restricts executable and other content sources to prevent XSS from uploaded assets."
+            },
+            { "kind": "string", "value": "nosniff", "role": "Prevents content-type sniffing for served assets." },
+            {
+              "kind": "format-string",
+              "value": "bytes ${start}-${end}/${object.size}",
+              "role": "HTTP Content-Range serialization for partial object responses."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUserAssetGet is called.",
+              "then": "The cached response is returned and bucket retrieval is not required.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUserAssetGet is called with no matching cached response.",
+              "then": "The function returns the response produced by notFound().",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUserAssetGet is called with no matching cached response.",
+              "then": "The response has status 206, a correctly formatted content-range header, the asset security and caching headers, and a cache write is scheduled.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c0554bdf83891c75d258d498efdf289313187e805432b582d91c6f981c3b035d"
+        }
+      }
+    ]
+  },
+  "out": ["packages/worker-shared/src/errors.ts"],
+  "in": ["packages/worker-shared/src/userAssetUploads.test.ts", "packages/worker-shared/src/index.ts"],
+  "externals": ["@tldraw/utils", "itty-router"],
+  "impact": { "seeds": 6, "callers": 2, "impactedFiles": [] }
+}

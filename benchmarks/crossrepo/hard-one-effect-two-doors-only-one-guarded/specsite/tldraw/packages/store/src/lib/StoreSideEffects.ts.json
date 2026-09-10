@@ -1,0 +1,1953 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/store/src/lib/StoreSideEffects.ts",
+    "language": "typescript",
+    "sizeBytes": 23233,
+    "tokenCount": 5809,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:22:20.261Z",
+    "module": {
+      "purpose": "Provides lifecycle-based side-effect management for store record creation, updates, deletion, and atomic operation completion.",
+      "summary": "This module defines typed handler contracts and a manager that stores handlers by record type and lifecycle phase. Before handlers can transform records or veto deletion, while after handlers observe completed mutations and operation completion. Registration methods preserve insertion order and return cleanup callbacks that remove individual handlers or complete handler groups. Processing can be globally disabled, bypassing handlers while preserving default operation results.",
+      "businessContext": "Supports a record store that must enforce consistency, validation, transformation, cleanup, and cross-record business rules. Failure can allow invalid state, orphaned relationships, or missed persistence and notification workflows.",
+      "classes": ["StoreSideEffects (~L201-796): Manages typed lifecycle handlers enforcing consistent store state"],
+      "functions": [
+        "isEnabled (~L225-227): Reports whether lifecycle side-effect processing is enabled",
+        "setIsEnabled (~L236-238): Enables or disables lifecycle side-effect processing",
+        "handleBeforeCreate (~L252-268): Transforms records through registered pre-creation handlers",
+        "handleAfterCreate (~L281-291): Invokes handlers after successful record creation",
+        "handleBeforeChange (~L306-323): Transforms or blocks proposed record changes",
+        "handleAfterChange (~L337-347): Invokes handlers after successful record updates",
+        "handleBeforeDelete (~L362-377): Evaluates handlers that may prevent deletion",
+        "handleAfterDelete (~L391-401): Invokes handlers after successful record deletion",
+        "handleOperationComplete (~L415-423): Invokes handlers after atomic store operations",
+        "register (~L458-490): Registers grouped lifecycle handlers and returns composite cleanup",
+        "registerBeforeCreateHandler (~L527-536): Registers a pre-creation handler for one record type",
+        "registerAfterCreateHandler (~L571-580): Registers a post-creation handler for one record type",
+        "registerBeforeChangeHandler (~L616-625): Registers a pre-update transformation or veto handler",
+        "registerAfterChangeHandler (~L662-671): Registers a post-update side-effect handler",
+        "registerBeforeDeleteHandler (~L707-716): Registers a deletion veto handler for one record type",
+        "registerAfterDeleteHandler (~L753-762): Registers a post-deletion cleanup handler",
+        "registerOperationCompleteHandler (~L790-795): Registers a handler for completed store operations",
+        "remove (~L798-804): Removes the first matching handler from an array"
+      ],
+      "keywords": [
+        "store side effects",
+        "lifecycle hooks",
+        "record handlers",
+        "atomic transactions",
+        "referential integrity",
+        "handler registration",
+        "cleanup callbacks",
+        "record transformation"
+      ],
+      "ontologyConcepts": [
+        "lifecycle processing",
+        "event dispatch",
+        "interception",
+        "validation",
+        "transformation",
+        "transaction completion",
+        "resource cleanup"
+      ],
+      "businessEntities": ["record", "store", "handler", "transaction", "record type", "source"],
+      "systemCapabilities": [
+        "Transform records before creation or update",
+        "Block selected record deletions",
+        "Trigger post-mutation side effects",
+        "Notify consumers after atomic operations",
+        "Register and dispose lifecycle handlers",
+        "Globally enable or disable side effects"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./BaseRecord",
+          "symbols": ["UnknownRecord"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/store/src/lib/BaseRecord.ts",
+          "resolvedFileId": "packages/store/src/lib/BaseRecord.ts",
+          "resolvedHint": "packages/store/src/lib/BaseRecord.ts"
+        },
+        {
+          "spec": "./Store",
+          "symbols": ["Store"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/store/src/lib/Store.ts",
+          "resolvedFileId": "packages/store/src/lib/Store.ts",
+          "resolvedHint": "packages/store/src/lib/Store.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Registration mutates internal handler arrays by appending handlers.",
+          "Cleanup mutates internal handler arrays by removing matching handlers.",
+          "Before handlers may return transformed record values instead of mutating input objects."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "StoreBeforeCreateHandler",
+          "shape": "export type StoreBeforeCreateHandler<R extends UnknownRecord> = (record: R, source: 'remote' | 'user') => R",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreAfterCreateHandler",
+          "shape": "export type StoreAfterCreateHandler<R extends UnknownRecord> = (record: R, source: 'remote' | 'user') => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreBeforeChangeHandler",
+          "shape": "export type StoreBeforeChangeHandler<R extends UnknownRecord> = (prev: R, next: R, source: 'remote' | 'user') => R",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreAfterChangeHandler",
+          "shape": "export type StoreAfterChangeHandler<R extends UnknownRecord> = (prev: R, next: R, source: 'remote' | 'user') => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreBeforeDeleteHandler",
+          "shape": "export type StoreBeforeDeleteHandler<R extends UnknownRecord> = (record: R, source: 'remote' | 'user') => void | false",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreAfterDeleteHandler",
+          "shape": "export type StoreAfterDeleteHandler<R extends UnknownRecord> = (record: R, source: 'remote' | 'user') => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreOperationCompleteHandler",
+          "shape": "export type StoreOperationCompleteHandler = (source: 'remote' | 'user') => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects",
+          "shape": "export class StoreSideEffects<R extends UnknownRecord>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.constructor",
+          "shape": "constructor(private readonly store: Store<R>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.isEnabled",
+          "shape": "isEnabled()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.setIsEnabled",
+          "shape": "setIsEnabled(enabled: boolean)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.handleBeforeCreate",
+          "shape": "handleBeforeCreate(record: R, source: 'remote' | 'user')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.handleAfterCreate",
+          "shape": "handleAfterCreate(record: R, source: 'remote' | 'user')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.handleBeforeChange",
+          "shape": "handleBeforeChange(prev: R, next: R, source: 'remote' | 'user')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.handleAfterChange",
+          "shape": "handleAfterChange(prev: R, next: R, source: 'remote' | 'user')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.handleBeforeDelete",
+          "shape": "handleBeforeDelete(record: R, source: 'remote' | 'user')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.handleAfterDelete",
+          "shape": "handleAfterDelete(record: R, source: 'remote' | 'user')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.handleOperationComplete",
+          "shape": "handleOperationComplete(source: 'remote' | 'user')",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.register",
+          "shape": "register(handlersByType: { [T in R as T['typeName']]?: { beforeCreate?: StoreBeforeCreateHandler<T>; afterCreate?: StoreAfterCreateHandler<T>; beforeChange?: StoreBeforeChangeHandler<T>; afterChange?: StoreAfterChangeHandler<T>; beforeDelete?: StoreBeforeDeleteHandler<T>; afterDelete?: StoreAfterDeleteHandler<T> } })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.registerBeforeCreateHandler",
+          "shape": "registerBeforeCreateHandler<T extends R['typeName']>(typeName: T, handler: StoreBeforeCreateHandler<R & { typeName: T }>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.registerAfterCreateHandler",
+          "shape": "registerAfterCreateHandler<T extends R['typeName']>(typeName: T, handler: StoreAfterCreateHandler<R & { typeName: T }>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.registerBeforeChangeHandler",
+          "shape": "registerBeforeChangeHandler<T extends R['typeName']>(typeName: T, handler: StoreBeforeChangeHandler<R & { typeName: T }>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.registerAfterChangeHandler",
+          "shape": "registerAfterChangeHandler<T extends R['typeName']>(typeName: T, handler: StoreAfterChangeHandler<R & { typeName: T }>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.registerBeforeDeleteHandler",
+          "shape": "registerBeforeDeleteHandler<T extends R['typeName']>(typeName: T, handler: StoreBeforeDeleteHandler<R & { typeName: T }>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.registerAfterDeleteHandler",
+          "shape": "registerAfterDeleteHandler<T extends R['typeName']>(typeName: T, handler: StoreAfterDeleteHandler<R & { typeName: T }>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreSideEffects.registerOperationCompleteHandler",
+          "shape": "registerOperationCompleteHandler(handler: StoreOperationCompleteHandler)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "UnknownRecord",
+          "shape": "UnknownRecord",
+          "resolvedRelativePath": "packages/store/src/lib/BaseRecord.ts",
+          "resolvedFileId": "packages/store/src/lib/BaseRecord.ts"
+        },
+        {
+          "name": "Store",
+          "shape": "Store<R>",
+          "resolvedRelativePath": "packages/store/src/lib/Store.ts",
+          "resolvedFileId": "packages/store/src/lib/Store.ts"
+        },
+        {
+          "name": "StoreBeforeCreateHandler",
+          "shape": "StoreBeforeCreateHandler<R>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreAfterCreateHandler",
+          "shape": "StoreAfterCreateHandler<R>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreBeforeChangeHandler",
+          "shape": "StoreBeforeChangeHandler<R>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreAfterChangeHandler",
+          "shape": "StoreAfterChangeHandler<R>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreBeforeDeleteHandler",
+          "shape": "StoreBeforeDeleteHandler<R>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreAfterDeleteHandler",
+          "shape": "StoreAfterDeleteHandler<R>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StoreOperationCompleteHandler",
+          "shape": "StoreOperationCompleteHandler",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "handler dispatch",
+          "intent": "Dispatches lifecycle handlers by record type while respecting enabled state.",
+          "structureKind": "branch",
+          "predicate": "if (!this._isEnabled) return record",
+          "branchOutcomes": [
+            "disabled returns original record",
+            "enabled dispatches handlers or returns original record"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 252, "endLine": 423 }
+        },
+        {
+          "name": "ordered handler iteration",
+          "intent": "Processes registered handlers sequentially in registration order.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 258, "endLine": 419 }
+        },
+        {
+          "name": "deletion veto",
+          "intent": "Stops deletion processing when a before-delete handler returns false.",
+          "structureKind": "branch",
+          "predicate": "if (handler(record, source) === false)",
+          "branchOutcomes": ["false prevents deletion", "otherwise continue processing"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 370, "endLine": 377 }
+        },
+        {
+          "name": "group registration",
+          "intent": "Registers all supplied lifecycle handlers and composes their disposers.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 458, "endLine": 490 }
+        },
+        {
+          "name": "handler cleanup",
+          "intent": "Invokes individual disposers for every handler registered as a group.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 484, "endLine": 489 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "StoreBeforeCreateHandler",
+          "signature": "export type StoreBeforeCreateHandler<R extends UnknownRecord> = (\n\trecord: R,\n\tsource: 'remote' | 'user'\n) => R",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "R",
+          "exported": true,
+          "anchor": { "startLine": 27, "endLine": 30 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreAfterCreateHandler",
+          "signature": "export type StoreAfterCreateHandler<R extends UnknownRecord> = (\n\trecord: R,\n\tsource: 'remote' | 'user'\n) => void",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 49, "endLine": 52 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreBeforeChangeHandler",
+          "signature": "export type StoreBeforeChangeHandler<R extends UnknownRecord> = (\n\tprev: R,\n\tnext: R,\n\tsource: 'remote' | 'user'\n) => R",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "R",
+          "exported": true,
+          "anchor": { "startLine": 76, "endLine": 80 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreAfterChangeHandler",
+          "signature": "export type StoreAfterChangeHandler<R extends UnknownRecord> = (\n\tprev: R,\n\tnext: R,\n\tsource: 'remote' | 'user'\n) => void",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 102, "endLine": 106 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreBeforeDeleteHandler",
+          "signature": "export type StoreBeforeDeleteHandler<R extends UnknownRecord> = (\n\trecord: R,\n\tsource: 'remote' | 'user'\n) => void | false",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "void | false",
+          "exported": true,
+          "anchor": { "startLine": 130, "endLine": 133 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreAfterDeleteHandler",
+          "signature": "export type StoreAfterDeleteHandler<R extends UnknownRecord> = (\n\trecord: R,\n\tsource: 'remote' | 'user'\n) => void",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 152, "endLine": 155 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreOperationCompleteHandler",
+          "signature": "export type StoreOperationCompleteHandler = (source: 'remote' | 'user') => void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 175, "endLine": 175 }
+        },
+        {
+          "kind": "class",
+          "name": "StoreSideEffects",
+          "signature": "export class StoreSideEffects<R extends UnknownRecord>",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 201, "endLine": 796 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Side effects disabled",
+          "handled": true,
+          "behavior": "Before creation and change return their input record; after and completion handlers do nothing; deletion is allowed.",
+          "anchor": { "startLine": 252, "endLine": 252 }
+        },
+        {
+          "inputShape": "Record type with no registered handlers",
+          "handled": true,
+          "behavior": "Dispatch returns the original record for before hooks or performs no action for after hooks.",
+          "anchor": { "startLine": 261, "endLine": 268 }
+        },
+        {
+          "inputShape": "Before-delete handler returns false",
+          "handled": true,
+          "behavior": "Processing stops immediately and deletion is rejected.",
+          "anchor": { "startLine": 370, "endLine": 373 }
+        },
+        {
+          "inputShape": "Handler registration object omits lifecycle handlers",
+          "handled": true,
+          "behavior": "Only present handlers are registered; absent handlers are ignored.",
+          "anchor": { "startLine": 461, "endLine": 480 }
+        },
+        {
+          "inputShape": "Cleanup called after handler is already absent",
+          "handled": true,
+          "behavior": "The removal helper finds no matching index and leaves the array unchanged.",
+          "anchor": { "startLine": 800, "endLine": 804 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">=",
+          "left": "index",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Removes a handler only when a matching item exists in the array.",
+          "anchor": { "startLine": 801, "endLine": 803 }
+        }
+      ],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "ordering",
+          "description": "Handlers for each record type and lifecycle phase execute in registration order.",
+          "anchor": { "startLine": 258, "endLine": 260 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Disabled side effects bypass handlers and preserve default processing results.",
+          "anchor": { "startLine": 252, "endLine": 252 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Before-create and before-change dispatch returns a record value.",
+          "anchor": { "startLine": 264, "endLine": 268 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Before-delete dispatch returns false only when a handler explicitly returns false.",
+          "anchor": { "startLine": 370, "endLine": 377 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Registration cleanup removes handlers by identity from their corresponding arrays.",
+          "anchor": { "startLine": 531, "endLine": 536 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "Records provide a typeName property used as the handler-dispatch key.",
+          "anchor": { "startLine": 254, "endLine": 254 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers invoke after hooks only after the corresponding store mutation succeeds.",
+          "anchor": { "startLine": 281, "endLine": 281 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers interpret a false result from before-delete processing as a deletion veto.",
+          "anchor": { "startLine": 362, "endLine": 377 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Can handlers throw exceptions, and does the store catch or rollback those exceptions?",
+          "affects": "error_handling and transaction semantics",
+          "anchor": { "startLine": 258, "endLine": 419 },
+          "resolution": null
+        },
+        {
+          "question": "Are handler registrations and dispatches expected to be used recursively during handler execution?",
+          "affects": "concurrency_model and reentrancy",
+          "anchor": { "startLine": 258, "endLine": 419 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "All registration, cleanup, transformation, veto, and dispatch operations are synchronous. Reentrancy is not explicitly prevented; handlers may invoke store operations or registration APIs."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "before-create-transforms-in-registration-order",
+          "scenario": "Multiple before-create handlers transform a record sequentially.",
+          "given": [
+            "sideEffects.registerBeforeCreateHandler('shape', (record) => ({ ...record, first: true }))",
+            "sideEffects.registerBeforeCreateHandler('shape', (record) => ({ ...record, second: true }))"
+          ],
+          "when": "sideEffects.handleBeforeCreate(record, 'user')",
+          "then": "The returned record contains both transformations in registration order.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "disabled-side-effects-bypass-handlers",
+          "scenario": "Side effects are disabled before a lifecycle operation is processed.",
+          "given": ["sideEffects.setIsEnabled(false)", "sideEffects.registerBeforeCreateHandler('shape', handler)"],
+          "when": "sideEffects.handleBeforeCreate(record, 'user')",
+          "then": "The original record is returned and handler is not called.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "before-change-can-block-update",
+          "scenario": "A before-change handler returns the previous record to reject a proposed update.",
+          "given": ["sideEffects.registerBeforeChangeHandler('shape', (prev, next) => prev)"],
+          "when": "sideEffects.handleBeforeChange(prev, next, 'user')",
+          "then": "The returned record is prev.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "before-delete-false-prevents-deletion",
+          "scenario": "A before-delete handler rejects deletion.",
+          "given": ["sideEffects.registerBeforeDeleteHandler('shape', () => false)"],
+          "when": "sideEffects.handleBeforeDelete(record, 'user')",
+          "then": "The result is false and later before-delete handlers are not called.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "before-delete-nonfalse-allows-deletion",
+          "scenario": "All before-delete handlers allow deletion.",
+          "given": ["sideEffects.registerBeforeDeleteHandler('shape', () => undefined)"],
+          "when": "sideEffects.handleBeforeDelete(record, 'remote')",
+          "then": "The result is true.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "handlers-are-filtered-by-record-type",
+          "scenario": "A handler is registered for a different record type than the processed record.",
+          "given": ["sideEffects.registerAfterCreateHandler('shape', handler)"],
+          "when": "sideEffects.handleAfterCreate({ typeName: 'page' } as R, 'user')",
+          "then": "handler is not called.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "registration-returns-removal-callback",
+          "scenario": "A registered lifecycle handler is disposed before another operation.",
+          "given": ["const dispose = sideEffects.registerAfterDeleteHandler('shape', handler)", "dispose()"],
+          "when": "sideEffects.handleAfterDelete(record, 'user')",
+          "then": "handler is not called.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "register-disposes-all-handlers",
+          "scenario": "The bulk registration API installs multiple handlers and its cleanup callback is invoked.",
+          "given": [
+            "const dispose = sideEffects.register({ shape: { beforeCreate, afterChange, afterDelete } })",
+            "dispose()"
+          ],
+          "when": "sideEffects.handleBeforeCreate(record, 'user')",
+          "then": "No bulk-registered handler is called.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "operation-complete-handlers-run-in-order",
+          "scenario": "Multiple operation-complete handlers are registered.",
+          "given": [
+            "sideEffects.registerOperationCompleteHandler(first)",
+            "sideEffects.registerOperationCompleteHandler(second)"
+          ],
+          "when": "sideEffects.handleOperationComplete('user')",
+          "then": "first is called before second.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "after-handlers-receive-source",
+          "scenario": "An after-change handler processes a remotely originated update.",
+          "given": ["sideEffects.registerAfterChangeHandler('shape', handler)"],
+          "when": "sideEffects.handleAfterChange(prev, next, 'remote')",
+          "then": "handler receives prev, next, and 'remote'.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "exported lifecycle handler type aliases",
+        "exported StoreSideEffects class",
+        "private remove helper"
+      ],
+      "moduleLevelCode": "import { UnknownRecord } from './BaseRecord'\nimport { Store } from './Store'",
+      "exports": [
+        { "name": "StoreBeforeCreateHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StoreAfterCreateHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StoreBeforeChangeHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StoreAfterChangeHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StoreBeforeDeleteHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StoreAfterDeleteHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StoreOperationCompleteHandler", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StoreSideEffects", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "UnknownRecord", "module": "./BaseRecord", "alias": null, "kind": "internal" },
+        { "symbol": "Store", "module": "./Store", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "unitKind": "class",
+        "name": "StoreSideEffects",
+        "qualifiedName": "StoreSideEffects",
+        "parentUnitId": null,
+        "startLine": 201,
+        "endLine": 796,
+        "isBehavioral": true,
+        "source": " * @public\n */\nexport class StoreSideEffects<R extends UnknownRecord> {\n\t/**\n\t * Creates a new side effects manager for the given store.\n\t *\n\t * store - The store instance to manage side effects for\n\t */\n\tconstructor(private readonly store: Store<R>) {}\n\n\tprivate _beforeCreateHandlers: { [K in string]?: StoreBeforeCreateHandler<any>[] } = {}\n\tprivate _afterCreateHandlers: { [K in string]?: StoreAfterCreateHandler<any>[] } = {}\n\tprivate _beforeChangeHandlers: { [K in string]?: StoreBeforeChangeHandler<any>[] } = {}\n\tprivate _afterChangeHandlers: { [K in string]?: StoreAfterChangeHandler<any>[] } = {}\n\tprivate _beforeDeleteHandlers: { [K in string]?: StoreBeforeDeleteHandler<any>[] } = {}\n\tprivate _afterDeleteHandlers: { [K in string]?: StoreAfterDeleteHandler<any>[] } = {}\n\tprivate _operationCompleteHandlers: StoreOperationCompleteHandler[] = []\n\n\tprivate _isEnabled = true\n\t/**\n\t * Checks whether side effects are currently enabled.\n\t * When disabled, all side effect handlers are bypassed.\n\t *\n\t * @returns `true` if side effects are enabled, `false` otherwise\n\t * @internal\n\t */\n\tisEnabled() {\n\t\treturn this._isEnabled\n\t}\n\t/**\n\t * Enables or disables side effects processing.\n\t * When disabled, no side effect handlers will be called.\n\t *\n\t * @param enabled - Whether to enable or disable side effects\n\t * @internal\n\t */\n\tsetIsEnabled(enabled: boolean) {\n\t\tthis._isEnabled = enabled\n\t}\n\n\t/**\n\t * Processes all registered 'before create' handlers for a record.\n\t * Handlers are called in registration order and can transform the record.\n\t *\n\t * @param record - The record about to be created\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @returns The potentially modified record to actually create\n\t * @internal\n\t */\n\thandleBeforeCreate(record: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return record\n\n\t\tconst handlers = this._beforeCreateHandlers[record.typeName] as StoreBeforeCreateHandler<R>[]\n\t\tif (handlers) {\n\t\t\tlet r = record\n\t\t\tfor (const handler of handlers) {\n\t\t\t\tr = handler(r, source)\n\t\t\t}\n\t\t\treturn r\n\t\t}\n\n\t\treturn record\n\t}\n\n\t/**\n\t * Processes all registered 'after create' handlers for a record.\n\t * Handlers are called in registration order after the record is created.\n\t *\n\t * @param record - The record that was created\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @internal\n\t */\n\thandleAfterCreate(record: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return\n\n\t\tconst handlers = this._afterCreateHandlers[record.typeName] as StoreAfterCreateHandler<R>[]\n\t\tif (handlers) {\n\t\t\tfor (const handler of handlers) {\n\t\t\t\thandler(record, source)\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Processes all registered 'before change' handlers for a record.\n\t * Handlers are called in registration order and can modify or block the change.\n\t *\n\t * @param prev - The current version of the record\n\t * @param next - The proposed new version of the record\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @returns The potentially modified record to actually store\n\t * @internal\n\t */\n\thandleBeforeChange(prev: R, next: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return next\n\n\t\tconst handlers = this._beforeChangeHandlers[next.typeName] as StoreBeforeChangeHandler<R>[]\n\t\tif (handlers) {\n\t\t\tlet r = next\n\t\t\tfor (const handler of handlers) {\n\t\t\t\tr = handler(prev, r, source)\n\t\t\t}\n\t\t\treturn r\n\t\t}\n\n\t\treturn next\n\t}\n\n\t/**\n\t * Processes all registered 'after change' handlers for a record.\n\t * Handlers are called in registration order after the record is updated.\n\t *\n\t * @param prev - The previous version of the record\n\t * @param next - The new version of the record that was stored\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @internal\n\t */\n\thandleAfterChange(prev: R, next: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return\n\n\t\tconst handlers = this._afterChangeHandlers[next.typeName] as StoreAfterChangeHandler<R>[]\n\t\tif (handlers) {\n\t\t\tfor (const handler of handlers) {\n\t\t\t\thandler(prev, next, source)\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Processes all registered 'before delete' handlers for a record.\n\t * If any handler returns `false`, the deletion is prevented.\n\t *\n\t * @param record - The record about to be deleted\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @returns `true` to allow deletion, `false` to prevent it\n\t * @internal\n\t */\n\thandleBeforeDelete(record: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return true\n\n\t\tconst handlers = this._beforeDeleteHandlers[record.typeName] as StoreBeforeDeleteHandler<R>[]\n\t\tif (handlers) {\n\t\t\tfor (const handler of handlers) {\n\t\t\t\tif (handler(record, source) === false) {\n\t\t\t\t\treturn false\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\treturn true\n\t}\n\n\t/**\n\t * Processes all registered 'after delete' handlers for a record.\n\t * Handlers are called in registration order after the record is deleted.\n\t *\n\t * @param record - The record that was deleted\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @internal\n\t */\n\thandleAfterDelete(record: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return\n\n\t\tconst handlers = this._afterDeleteHandlers[record.typeName] as StoreAfterDeleteHandler<R>[]\n\t\tif (handlers) {\n\t\t\tfor (const handler of handlers) {\n\t\t\t\thandler(record, source)\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Processes all registered operation complete handlers.\n\t * Called after an atomic store operation finishes.\n\t *\n\t * @param source - Whether the operation originated from 'user' or 'remote'\n\t * @internal\n\t */\n\thandleOperationComplete(source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return\n\n\t\tfor (const handler of this._operationCompleteHandlers) {\n\t\t\thandler(source)\n\t\t}\n\t}\n\n\t/**\n\t * Internal helper for registering multiple side effect handlers at once and keeping them organized.\n\t * This provides a convenient way to register handlers for multiple record types and lifecycle events\n\t * in a single call, returning a single cleanup function.\n\t *\n\t * @param handlersByType - An object mapping record type names to their respective handlers\n\t * @returns A function that removes all registered handlers when called\n\t *\n\t * @example\n\t * ```ts\n\t * const cleanup = sideEffects.register({\n\t *   shape: {\n\t *     afterDelete: (shape) => console.log('Shape deleted:', shape.id),\n\t *     beforeChange: (prev, next) => ({ ...next, lastModified: Date.now() })\n\t *   },\n\t *   arrow: {\n\t *     afterCreate: (arrow) => updateConnectedShapes(arrow)\n\t *   }\n\t * })\n\t *\n\t * // Later, remove all handlers\n\t * cleanup()\n\t * ```\n\t *\n\t * @internal\n\t */\n\tregister(handlersByType: {\n\t\t[T in R as T['typeName']]?: {\n\t\t\tbeforeCreate?: StoreBeforeCreateHandler<T>\n\t\t\tafterCreate?: StoreAfterCreateHandler<T>\n\t\t\tbeforeChange?: StoreBeforeChangeHandler<T>\n\t\t\tafterChange?: StoreAfterChangeHandler<T>\n\t\t\tbeforeDelete?: StoreBeforeDeleteHandler<T>\n\t\t\tafterDelete?: StoreAfterDeleteHandler<T>\n\t\t}\n\t}) {\n\t\tconst disposes: (() => void)[] = []\n\t\tfor (const [type, handlers] of Object.entries(handlersByType) as any) {\n\t\t\tif (handlers?.beforeCreate) {\n\t\t\t\tdisposes.push(this.registerBeforeCreateHandler(type, handlers.beforeCreate))\n\t\t\t}\n\t\t\tif (handlers?.afterCreate) {\n\t\t\t\tdisposes.push(this.registerAfterCreateHandler(type, handlers.afterCreate))\n\t\t\t}\n\t\t\tif (handlers?.beforeChange) {\n\t\t\t\tdisposes.push(this.registerBeforeChangeHandler(type, handlers.beforeChange))\n\t\t\t}\n\t\t\tif (handlers?.afterChange) {\n\t\t\t\tdisposes.push(this.registerAfterChangeHandler(type, handlers.afterChange))\n\t\t\t}\n\t\t\tif (handlers?.beforeDelete) {\n\t\t\t\tdisposes.push(this.registerBeforeDeleteHandler(type, handlers.beforeDelete))\n\t\t\t}\n\t\t\tif (handlers?.afterDelete) {\n\t\t\t\tdisposes.push(this.registerAfterDeleteHandler(type, handlers.afterDelete))\n\t\t\t}\n\t\t}\n\t\treturn () => {\n\t\t\tfor (const dispose of disposes) dispose()\n\t\t}\n\t}\n\n\t/**\n\t * Register a handler to be called before a record of a certain type is created. Return a\n\t * modified record from the handler to change the record that will be created.\n\t *\n\t * Use this handle only to modify the creation of the record itself. If you want to trigger a\n\t * side-effect on a different record (for example, moving one shape when another is created),\n\t * use {@link StoreSideEffects.registerAfterCreateHandler} instead.\n\t *\n\t * @example\n\t * ```ts\n\t * editor.sideEffects.registerBeforeCreateHandler('shape', (shape, source) => {\n\t *     // only modify shapes created by the user\n\t *     if (source !== 'user') return shape\n\t *\n\t *     //by default, arrow shapes have no label. Let's make sure they always have a label.\n\t *     if (shape.type === 'arrow') {\n\t *         return {...shape, props: {...shape.props, text: 'an arrow'}}\n\t *     }\n\t *\n\t *     // other shapes get returned unmodified\n\t *     return shape\n\t * })\n\t * ```\n\t *\n\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterBeforeCreateHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreBeforeCreateHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._beforeCreateHandlers[typeName] as StoreBeforeCreateHandler<any>[]\n\t\tif (!handlers) this._beforeCreateHandlers[typeName] = []\n\t\tthis._beforeCreateHandlers[typeName]!.push(handler)\n\t\treturn () => remove(this._beforeCreateHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called after a record is created. This is useful for side-effects\n\t * that would update _other_ records. If you want to modify the record being created use\n\t * {@link StoreSideEffects.registerBeforeCreateHandler} instead.\n\t *\n\t * @example\n\t * ```ts\n\t * editor.sideEffects.registerAfterCreateHandler('page', (page, source) => {\n\t *     // Automatically create a shape when a page is created\n\t *     editor.createShape({\n\t *         id: createShapeId(),\n\t *         type: 'text',\n\t *         props: { richText: toRichText(page.name) },\n\t *     })\n\t * })\n\t * ```\n\t *\n\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterAfterCreateHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreAfterCreateHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._afterCreateHandlers[typeName] as StoreAfterCreateHandler<any>[]\n\t\tif (!handlers) this._afterCreateHandlers[typeName] = []\n\t\tthis._afterCreateHandlers[typeName]!.push(handler)\n\t\treturn () => remove(this._afterCreateHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called before a record is changed. The handler is given the old and\n\t * new record - you can return a modified record to apply a different update, or the old record\n\t * to block the update entirely.\n\t *\n\t * Use this handler only for intercepting updates to the record itself. If you want to update\n\t * other records in response to a change, use\n\t * {@link StoreSideEffects.registerAfterChangeHandler} instead.\n\t *\n\t * @example\n\t * ```ts\n\t * editor.sideEffects.registerBeforeChangeHandler('shape', (prev, next, source) => {\n\t *     if (next.isLocked && !prev.isLocked) {\n\t *         // prevent shapes from ever being locked:\n\t *         return prev\n\t *     }\n\t *     // other types of change are allowed\n\t *     return next\n\t * })\n\t * ```\n\t *\n\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterBeforeChangeHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreBeforeChangeHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._beforeChangeHandlers[typeName] as StoreBeforeChangeHandler<any>[]\n\t\tif (!handlers) this._beforeChangeHandlers[typeName] = []\n\t\tthis._beforeChangeHandlers[typeName]!.push(handler)\n\t\treturn () => remove(this._beforeChangeHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called after a record is changed. This is useful for side-effects\n\t * that would update _other_ records - if you want to modify the record being changed, use\n\t * {@link StoreSideEffects.registerBeforeChangeHandler} instead.\n\t *\n\t * @example\n\t * ```ts\n\t * editor.sideEffects.registerAfterChangeHandler('shape', (prev, next, source) => {\n\t *     if (next.props.color === 'red') {\n\t *         // there can only be one red shape at a time:\n\t *         const otherRedShapes = editor.getCurrentPageShapes().filter(s => s.props.color === 'red' && s.id !== next.id)\n\t *         editor.updateShapes(otherRedShapes.map(s => ({...s, props: {...s.props, color: 'blue'}})))\n\t *     }\n\t * })\n\t * ```\n\t *\n\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterAfterChangeHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreAfterChangeHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._afterChangeHandlers[typeName] as StoreAfterChangeHandler<any>[]\n\t\tif (!handlers) this._afterChangeHandlers[typeName] = []\n\t\tthis._afterChangeHandlers[typeName]!.push(handler as StoreAfterChangeHandler<any>)\n\t\treturn () => remove(this._afterChangeHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called before a record is deleted. The handler can return `false` to\n\t * prevent the deletion.\n\t *\n\t * Use this handler only for intercepting deletions of the record itself. If you want to do\n\t * something to other records in response to a deletion, use\n\t * {@link StoreSideEffects.registerAfterDeleteHandler} instead.\n\t *\n\t * @example\n\t * ```ts\n\t * editor.sideEffects.registerBeforeDeleteHandler('shape', (shape, source) => {\n\t *     if (shape.props.color === 'red') {\n\t *         // prevent red shapes from being deleted\n\t * \t       return false\n\t *     }\n\t * })\n\t * ```\n\t *\n\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterBeforeDeleteHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreBeforeDeleteHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._beforeDeleteHandlers[typeName] as StoreBeforeDeleteHandler<any>[]\n\t\tif (!handlers) this._beforeDeleteHandlers[typeName] = []\n\t\tthis._beforeDeleteHandlers[typeName]!.push(handler as StoreBeforeDeleteHandler<any>)\n\t\treturn () => remove(this._beforeDeleteHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called after a record is deleted. This is useful for side-effects\n\t * that would update _other_ records - if you want to block the deletion of the record itself,\n\t * use {@link StoreSideEffects.registerBeforeDeleteHandler} instead.\n\t *\n\t * @example\n\t * ```ts\n\t * editor.sideEffects.registerAfterDeleteHandler('shape', (shape, source) => {\n\t *     // if the last shape in a frame is deleted, delete the frame too:\n\t *     const parentFrame = editor.getShape(shape.parentId)\n\t *     if (!parentFrame || parentFrame.type !== 'frame') return\n\t *\n\t *     const siblings = editor.getSortedChildIdsForParent(parentFrame)\n\t *     if (siblings.length === 0) {\n\t *         editor.deleteShape(parentFrame.id)\n\t *     }\n\t * })\n\t * ```\n\t *\n\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterAfterDeleteHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreAfterDeleteHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._afterDeleteHandlers[typeName] as StoreAfterDeleteHandler<any>[]\n\t\tif (!handlers) this._afterDeleteHandlers[typeName] = []\n\t\tthis._afterDeleteHandlers[typeName]!.push(handler as StoreAfterDeleteHandler<any>)\n\t\treturn () => remove(this._afterDeleteHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called when a store completes an atomic operation.\n\t *\n\t * @example\n\t * ```ts\n\t * let count = 0\n\t *\n\t * editor.sideEffects.registerOperationCompleteHandler(() => count++)\n\t *\n\t * editor.selectAll()\n\t * expect(count).toBe(1)\n\t *\n\t * editor.store.atomic(() => {\n\t *\teditor.selectNone()\n\t * \teditor.selectAll()\n\t * })\n\t *\n\t * expect(count).toBe(2)\n\t * ```\n\t *\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t *\n\t * @public\n\t */\n\tregisterOperationCompleteHandler(handler: StoreOperationCompleteHandler) {\n\t\tthis._operationCompleteHandlers.push(handler)\n\t\treturn () => remove(this._operationCompleteHandlers, handler)\n\t}\n}\n\nfunction remove(array: any[], item: any) {\n\tconst index = array.indexOf(item)\n\tif (index >= 0) {\n\t\tarray.splice(index, 1)\n\t}\n}\n",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects",
+          "unitKind": "class",
+          "name": "StoreSideEffects",
+          "qualifiedName": "StoreSideEffects",
+          "parentUnitId": null,
+          "startLine": 201,
+          "endLine": 796,
+          "signature": "export class StoreSideEffects<R extends UnknownRecord>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["R extends UnknownRecord"],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "store",
+              "kind": "constructor parameter/property",
+              "type": "Store<R>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_beforeCreateHandlers",
+              "kind": "property",
+              "type": "{ [K in string]?: StoreBeforeCreateHandler<any>[] }",
+              "default": "{}",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_afterCreateHandlers",
+              "kind": "property",
+              "type": "{ [K in string]?: StoreAfterCreateHandler<any>[] }",
+              "default": "{}",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_beforeChangeHandlers",
+              "kind": "property",
+              "type": "{ [K in string]?: StoreBeforeChangeHandler<any>[] }",
+              "default": "{}",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_afterChangeHandlers",
+              "kind": "property",
+              "type": "{ [K in string]?: StoreAfterChangeHandler<any>[] }",
+              "default": "{}",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_beforeDeleteHandlers",
+              "kind": "property",
+              "type": "{ [K in string]?: StoreBeforeDeleteHandler<any>[] }",
+              "default": "{}",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_afterDeleteHandlers",
+              "kind": "property",
+              "type": "{ [K in string]?: StoreAfterDeleteHandler<any>[] }",
+              "default": "{}",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_operationCompleteHandlers",
+              "kind": "property",
+              "type": "StoreOperationCompleteHandler[]",
+              "default": "[]",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_isEnabled",
+              "kind": "property",
+              "type": "boolean",
+              "default": "true",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "isEnabled",
+              "kind": "method",
+              "type": "() => boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "setIsEnabled",
+              "kind": "method",
+              "type": "(enabled: boolean) => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleBeforeCreate",
+              "kind": "method",
+              "type": "(record: R, source: 'remote' | 'user') => R",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleAfterCreate",
+              "kind": "method",
+              "type": "(record: R, source: 'remote' | 'user') => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleBeforeChange",
+              "kind": "method",
+              "type": "(prev: R, next: R, source: 'remote' | 'user') => R",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleAfterChange",
+              "kind": "method",
+              "type": "(prev: R, next: R, source: 'remote' | 'user') => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleBeforeDelete",
+              "kind": "method",
+              "type": "(record: R, source: 'remote' | 'user') => boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleAfterDelete",
+              "kind": "method",
+              "type": "(record: R, source: 'remote' | 'user') => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleOperationComplete",
+              "kind": "method",
+              "type": "(source: 'remote' | 'user') => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "register",
+              "kind": "method",
+              "type": "(handlersByType: { [T in R as T['typeName']]?: { beforeCreate?: StoreBeforeCreateHandler<T>; afterCreate?: StoreAfterCreateHandler<T>; beforeChange?: StoreBeforeChangeHandler<T>; afterChange?: StoreAfterChangeHandler<T>; beforeDelete?: StoreBeforeDeleteHandler<T>; afterDelete?: StoreAfterDeleteHandler<T> } }) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "registerBeforeCreateHandler",
+              "kind": "method",
+              "type": "<T extends R['typeName']>(typeName: T, handler: StoreBeforeCreateHandler<R & { typeName: T }>) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "registerAfterCreateHandler",
+              "kind": "method",
+              "type": "<T extends R['typeName']>(typeName: T, handler: StoreAfterCreateHandler<R & { typeName: T }>) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "registerBeforeChangeHandler",
+              "kind": "method",
+              "type": "<T extends R['typeName']>(typeName: T, handler: StoreBeforeChangeHandler<R & { typeName: T }>) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "registerAfterChangeHandler",
+              "kind": "method",
+              "type": "<T extends R['typeName']>(typeName: T, handler: StoreAfterChangeHandler<R & { typeName: T }>) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "registerBeforeDeleteHandler",
+              "kind": "method",
+              "type": "<T extends R['typeName']>(typeName: T, handler: StoreBeforeDeleteHandler<R & { typeName: T }>) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "registerAfterDeleteHandler",
+              "kind": "method",
+              "type": "<T extends R['typeName']>(typeName: T, handler: StoreAfterDeleteHandler<R & { typeName: T }>) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "registerOperationCompleteHandler",
+              "kind": "method",
+              "type": "(handler: StoreOperationCompleteHandler) => () => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [
+            "StoreSideEffects.handleBeforeCreate",
+            "StoreSideEffects.handleAfterCreate",
+            "StoreSideEffects.handleBeforeChange",
+            "StoreSideEffects.handleAfterChange",
+            "StoreSideEffects.handleBeforeDelete",
+            "StoreSideEffects.handleAfterDelete",
+            "StoreSideEffects.handleOperationComplete",
+            "StoreSideEffects.register",
+            "StoreSideEffects.registerBeforeCreateHandler",
+            "StoreSideEffects.registerAfterCreateHandler",
+            "StoreSideEffects.registerBeforeChangeHandler",
+            "StoreSideEffects.registerAfterChangeHandler"
+          ],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides a typed manager for registering and dispatching store lifecycle side-effect handlers. It maintains handler registrations and an enabled state for the associated store.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "4492fdb3335ff1c3d3e68ac39a13cac4cd6e9491dbf0e6be89c01d9eff9b66ca"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeCreate#method:StoreSideEffects.handleBeforeCreate",
+        "unitKind": "method",
+        "name": "handleBeforeCreate",
+        "qualifiedName": "StoreSideEffects.handleBeforeCreate",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 252,
+        "endLine": 268,
+        "isBehavioral": true,
+        "source": "\n\t\tconst handlers = this._beforeCreateHandlers[record.typeName] as StoreBeforeCreateHandler<R>[]\n\t\tif (handlers) {\n\t\t\tlet r = record\n\t\t\tfor (const handler of handlers) {\n\t\t\t\tr = handler(r, source)\n\t\t\t}\n\t\t\treturn r\n\t\t}\n\n\t\treturn record\n\t}\n\n\t/**\n\t * Processes all registered 'after create' handlers for a record.\n\t * Handlers are called in registration order after the record is created.\n\t *",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeCreate#method:StoreSideEffects.handleBeforeCreate",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeCreate",
+          "unitKind": "method",
+          "name": "handleBeforeCreate",
+          "qualifiedName": "StoreSideEffects.handleBeforeCreate",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 252,
+          "endLine": 268,
+          "signature": null,
+          "parameters": [
+            { "name": "record", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "source", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "record has a typeName property used to select handlers.",
+            "source is suitable for the registered before-create handlers."
+          ],
+          "postconditions": [
+            "When handlers exist for record.typeName, each handler has been invoked in registration order, with the output of one handler passed to the next.",
+            "When no handlers exist for record.typeName, the original record is returned unchanged.",
+            "The final handler result, or the original record when there are no handlers, is returned."
+          ],
+          "invariants": [
+            "Handler execution order matches registration order.",
+            "The value passed to each handler after the first is the preceding handler's return value.",
+            "No handler is invoked when no handlers are registered for the record type."
+          ],
+          "edgeCases": [
+            "No handlers are registered for record.typeName: returns the original record reference.",
+            "Multiple handlers are registered: invokes every handler sequentially and returns the last handler's result.",
+            "A handler returns a replacement record: subsequent handlers receive that replacement.",
+            "A handler throws: processing stops and the thrown error propagates to the caller."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Any error thrown by a registered before-create handler is propagated unchanged."],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "registered before-create handlers",
+              "source": "this._beforeCreateHandlers[record.typeName]",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["StoreBeforeCreateHandler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Applies all registered before-create handlers for the record type in registration order and returns the resulting record. If no handlers are registered for the type, it returns the original record unchanged.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleBeforeCreate(record, source) is called.",
+              "then": "It returns the same record reference and no handler is invoked.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleBeforeCreate(record, source) is called.",
+              "then": "The first handler receives the original record, the second receives the replacement, and the method returns the second handler's result.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleBeforeCreate(record, source) is called.",
+              "then": "The error propagates and later handlers are not invoked.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "64b94d7f18959caa84585ecea912f92a029bff2921f30e253933e58f880f167b"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterCreate#method:StoreSideEffects.handleAfterCreate",
+        "unitKind": "method",
+        "name": "handleAfterCreate",
+        "qualifiedName": "StoreSideEffects.handleAfterCreate",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 281,
+        "endLine": 291,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t}\n\n\t/**\n\t * Processes all registered 'before change' handlers for a record.\n\t * Handlers are called in registration order and can modify or block the change.\n\t *\n\t * @param prev - The current version of the record\n\t * @param next - The proposed new version of the record\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @returns The potentially modified record to actually store",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterCreate#method:StoreSideEffects.handleAfterCreate",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterCreate",
+          "unitKind": "method",
+          "name": "handleAfterCreate",
+          "qualifiedName": "StoreSideEffects.handleAfterCreate",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 281,
+          "endLine": 291,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes the registered side effects that occur after a record is created.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a63117a0d2cd415c0f6a48d2f04ed125d406beb00c3009bd0b2d5b9c100cf42f"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeChange#method:StoreSideEffects.handleBeforeChange",
+        "unitKind": "method",
+        "name": "handleBeforeChange",
+        "qualifiedName": "StoreSideEffects.handleBeforeChange",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 306,
+        "endLine": 323,
+        "isBehavioral": true,
+        "source": "\t\treturn next\n\t}\n\n\t/**\n\t * Processes all registered 'after change' handlers for a record.\n\t * Handlers are called in registration order after the record is updated.\n\t *\n\t * @param prev - The previous version of the record\n\t * @param next - The new version of the record that was stored\n\t * @param source - Whether the change originated from 'user' or 'remote'\n\t * @internal\n\t */\n\thandleAfterChange(prev: R, next: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return\n\n\t\tconst handlers = this._afterChangeHandlers[next.typeName] as StoreAfterChangeHandler<R>[]\n\t\tif (handlers) {\n\t\t\tfor (const handler of handlers) {",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeChange#method:StoreSideEffects.handleBeforeChange",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeChange",
+          "unitKind": "method",
+          "name": "handleBeforeChange",
+          "qualifiedName": "StoreSideEffects.handleBeforeChange",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 306,
+          "endLine": 323,
+          "signature": "handleBeforeChange(prev: R, next: R, source: 'remote' | 'user')",
+          "parameters": [
+            { "name": "prev", "type": "R", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "next", "type": "R", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "source",
+              "type": "'remote' | 'user'",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "R",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "prev and next are records compatible with the generic record type R.",
+            "source is either 'remote' or 'user'."
+          ],
+          "postconditions": [
+            "If side effects are disabled, the returned value is the supplied next record.",
+            "If handlers are registered for next.typeName, they are invoked in registration order and the final handler result is returned.",
+            "The previous record and change source are supplied to each registered handler."
+          ],
+          "invariants": [
+            "Handlers are selected using the next record's typeName.",
+            "Handler execution order follows registration order.",
+            "No handler is invoked when side effects are disabled."
+          ],
+          "edgeCases": [
+            "When side effects are disabled, handler lookup and invocation are skipped and next is returned.",
+            "When no handlers are registered for next.typeName, next is returned unchanged.",
+            "If a handler returns a transformed record, that value is passed to the next handler and ultimately returned.",
+            "If a handler throws, the exception propagates and later handlers are not completed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Exceptions thrown by registered before-change handlers are propagated."],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "The local next record value may be replaced with each handler's return value.",
+            "No persistent store state is mutated by this dispatch method."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "registered before-change handlers for next.typeName", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["R", "StoreBeforeChangeHandler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes registered before-change handlers for a record and returns the resulting record version. When side effects are disabled, it returns the supplied next record unchanged.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "remote",
+              "role": "Allowed value identifying a remotely originated change."
+            },
+            { "kind": "enum-value", "value": "user", "role": "Allowed value identifying a user-originated change." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleBeforeChange is called.",
+              "then": "It returns the supplied next record without invoking any registered handler.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleBeforeChange is called with prev, next, and source.",
+              "then": "Handlers run in registration order; each receives prev, the current next value, and source, and the final returned record is the result.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b06eaf64085c55fb587cb57e910691e25c90560f675bcd12e18b49f204a4ceb0"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterChange#method:StoreSideEffects.handleAfterChange",
+        "unitKind": "method",
+        "name": "handleAfterChange",
+        "qualifiedName": "StoreSideEffects.handleAfterChange",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 337,
+        "endLine": 347,
+        "isBehavioral": true,
+        "source": "\t */\n\thandleBeforeDelete(record: R, source: 'remote' | 'user') {\n\t\tif (!this._isEnabled) return true\n\n\t\tconst handlers = this._beforeDeleteHandlers[record.typeName] as StoreBeforeDeleteHandler<R>[]\n\t\tif (handlers) {\n\t\t\tfor (const handler of handlers) {\n\t\t\t\tif (handler(record, source) === false) {\n\t\t\t\t\treturn false\n\t\t\t\t}\n\t\t\t}",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterChange#method:StoreSideEffects.handleAfterChange",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterChange",
+          "unitKind": "method",
+          "name": "handleAfterChange",
+          "qualifiedName": "StoreSideEffects.handleAfterChange",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 337,
+          "endLine": 347,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The supplied source fragment does not define handleAfterChange; it defines handleBeforeDelete instead. No verifiable surface or behavioral guarantees for handleAfterChange can be established from the provided material.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "7b68ebf866f20f5735b5592f1fba44cdb9f26bfd2ca440f1250b02c31098534f"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeDelete#method:StoreSideEffects.handleBeforeDelete",
+        "unitKind": "method",
+        "name": "handleBeforeDelete",
+        "qualifiedName": "StoreSideEffects.handleBeforeDelete",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 362,
+        "endLine": 377,
+        "isBehavioral": true,
+        "source": "\n\t\tconst handlers = this._afterDeleteHandlers[record.typeName] as StoreAfterDeleteHandler<R>[]\n\t\tif (handlers) {\n\t\t\tfor (const handler of handlers) {\n\t\t\t\thandler(record, source)\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Processes all registered operation complete handlers.\n\t * Called after an atomic store operation finishes.\n\t *\n\t * @param source - Whether the operation originated from 'user' or 'remote'\n\t * @internal\n\t */",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeDelete#method:StoreSideEffects.handleBeforeDelete",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleBeforeDelete",
+          "unitKind": "method",
+          "name": "handleBeforeDelete",
+          "qualifiedName": "StoreSideEffects.handleBeforeDelete",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 362,
+          "endLine": 377,
+          "signature": null,
+          "parameters": [
+            { "name": "record", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "source", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["record has a typeName property used to select handlers"],
+          "postconditions": [
+            "Every registered handler for record.typeName has been invoked once with record and source, when handlers exist",
+            "No handler is invoked when no handlers are registered for record.typeName"
+          ],
+          "invariants": [
+            "Handlers are invoked in their registration-array iteration order",
+            "The record and source arguments are passed through unchanged"
+          ],
+          "edgeCases": [
+            "When no handler array exists for record.typeName, the method completes without invoking a handler",
+            "When multiple handlers exist, all handlers are invoked sequentially"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "registered delete side-effect handler",
+              "source": "_afterDeleteHandlers[record.typeName]",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["StoreAfterDeleteHandler", "_afterDeleteHandlers"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Dispatches the delete side-effect handlers registered for the record's type. Each matching handler receives the record and the operation source.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleBeforeDelete is called with the record and source",
+              "then": "Both handlers are called once, in array order, each receiving the same record and source",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleBeforeDelete is called",
+              "then": "The method completes without invoking any handler",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "702db0c319fccbfc119c86b635b18c73e462122d52fc163914adc474ebeb4ed9"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterDelete#method:StoreSideEffects.handleAfterDelete",
+        "unitKind": "method",
+        "name": "handleAfterDelete",
+        "qualifiedName": "StoreSideEffects.handleAfterDelete",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 391,
+        "endLine": 401,
+        "isBehavioral": true,
+        "source": "\t * @param handlersByType - An object mapping record type names to their respective handlers\n\t * @returns A function that removes all registered handlers when called\n\t *\n\t * @example\n\t * ```ts\n\t * const cleanup = sideEffects.register({\n\t *   shape: {\n\t *     afterDelete: (shape) => console.log('Shape deleted:', shape.id),\n\t *     beforeChange: (prev, next) => ({ ...next, lastModified: Date.now() })\n\t *   },\n\t *   arrow: {",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterDelete#method:StoreSideEffects.handleAfterDelete",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleAfterDelete",
+          "unitKind": "method",
+          "name": "handleAfterDelete",
+          "qualifiedName": "StoreSideEffects.handleAfterDelete",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 391,
+          "endLine": 401,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles the after-delete side-effect phase for a deleted record. It coordinates the registered handlers associated with that deletion event.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "b3390744da1cdefd48d401ca1d6c127a3debca7ddb90d935203897b0285d4c4b"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleOperationComplete#method:StoreSideEffects.handleOperationComplete",
+        "unitKind": "method",
+        "name": "handleOperationComplete",
+        "qualifiedName": "StoreSideEffects.handleOperationComplete",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 415,
+        "endLine": 423,
+        "isBehavioral": true,
+        "source": "\t\t\tafterCreate?: StoreAfterCreateHandler<T>\n\t\t\tbeforeChange?: StoreBeforeChangeHandler<T>\n\t\t\tafterChange?: StoreAfterChangeHandler<T>\n\t\t\tbeforeDelete?: StoreBeforeDeleteHandler<T>\n\t\t\tafterDelete?: StoreAfterDeleteHandler<T>\n\t\t}\n\t}) {\n\t\tconst disposes: (() => void)[] = []\n\t\tfor (const [type, handlers] of Object.entries(handlersByType) as any) {",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleOperationComplete#method:StoreSideEffects.handleOperationComplete",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.handleOperationComplete",
+          "unitKind": "method",
+          "name": "handleOperationComplete",
+          "qualifiedName": "StoreSideEffects.handleOperationComplete",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 415,
+          "endLine": 423,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles completion of a store operation and applies the method's operation-completion side-effect contract.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "00aa4cac4a0b0301afcc6337f10aac53f9f81bb6062f1e79aea5ea92444bb53f"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.register#method:StoreSideEffects.register",
+        "unitKind": "method",
+        "name": "register",
+        "qualifiedName": "StoreSideEffects.register",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 458,
+        "endLine": 490,
+        "isBehavioral": true,
+        "source": "\t * editor.sideEffects.registerBeforeCreateHandler('shape', (shape, source) => {\n\t *     // only modify shapes created by the user\n\t *     if (source !== 'user') return shape\n\t *\n\t *     //by default, arrow shapes have no label. Let's make sure they always have a label.\n\t *     if (shape.type === 'arrow') {\n\t *         return {...shape, props: {...shape.props, text: 'an arrow'}}\n\t *     }\n\t *\n\t *     // other shapes get returned unmodified\n\t *     return shape\n\t * })\n\t * ```\n\t *\n\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterBeforeCreateHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreBeforeCreateHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._beforeCreateHandlers[typeName] as StoreBeforeCreateHandler<any>[]\n\t\tif (!handlers) this._beforeCreateHandlers[typeName] = []\n\t\tthis._beforeCreateHandlers[typeName]!.push(handler)\n\t\treturn () => remove(this._beforeCreateHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called after a record is created. This is useful for side-effects\n\t * that would update _other_ records. If you want to modify the record being created use\n\t * {@link StoreSideEffects.registerBeforeCreateHandler} instead.",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.register#method:StoreSideEffects.register",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.register",
+          "unitKind": "method",
+          "name": "register",
+          "qualifiedName": "StoreSideEffects.register",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 458,
+          "endLine": 490,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The supplied source excerpt documents registerBeforeCreateHandler rather than register, so the callable surface and behavior of StoreSideEffects.register cannot be determined from the available unit source.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "18970c5add40ee52e32e1c3c06f912f434c72b1fcca3cac8dae47d3a0f7738cf"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerBeforeCreateHandler#method:StoreSideEffects.registerBeforeCreateHandler",
+        "unitKind": "method",
+        "name": "registerBeforeCreateHandler",
+        "qualifiedName": "StoreSideEffects.registerBeforeCreateHandler",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 527,
+        "endLine": 536,
+        "isBehavioral": true,
+        "source": "\t *\n\t * @example\n\t * ```ts\n\t * editor.sideEffects.registerBeforeChangeHandler('shape', (prev, next, source) => {\n\t *     if (next.isLocked && !prev.isLocked) {\n\t *         // prevent shapes from ever being locked:\n\t *         return prev\n\t *     }\n\t *     // other types of change are allowed\n\t *     return next",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerBeforeCreateHandler#method:StoreSideEffects.registerBeforeCreateHandler",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerBeforeCreateHandler",
+          "unitKind": "method",
+          "name": "registerBeforeCreateHandler",
+          "qualifiedName": "StoreSideEffects.registerBeforeCreateHandler",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 527,
+          "endLine": 536,
+          "signature": "registerBeforeCreateHandler<T extends UnknownRecord>(typeName: T['typeName'], handler: BeforeCreateHandler<T>)",
+          "parameters": [
+            {
+              "name": "typeName",
+              "type": "T['typeName']",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "handler",
+              "type": "BeforeCreateHandler<T>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "() => void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends UnknownRecord"],
+          "logicOutline": [],
+          "preconditions": [
+            "typeName identifies a supported record type.",
+            "handler is a callable before-create handler."
+          ],
+          "postconditions": [
+            "The handler is registered for before-create processing of the specified record type.",
+            "The returned disposer removes the registration when invoked."
+          ],
+          "invariants": ["Registration is scoped to the specified record type and before-create lifecycle phase."],
+          "edgeCases": [
+            "The handler is registered without being invoked during registration.",
+            "Invoking the returned disposer removes the registration and does not itself create a record."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The StoreSideEffects handler registry is updated with the before-create handler."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "register", "source": "StoreSideEffects", "kind": "internal" }],
+          "symbolReferences": ["UnknownRecord", "BeforeCreateHandler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Registers a handler that is applied before creation of records of the specified type. Returns a function that can unregister the handler.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "registerBeforeCreateHandler is called with those arguments.",
+              "then": "The handler is registered for that record type's before-create lifecycle phase and the method returns an unregister function.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "2802dc786fa7d4228040af21908db1dd81ce952bfbfd6cfa9c887edf907b2961"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerAfterCreateHandler#method:StoreSideEffects.registerAfterCreateHandler",
+        "unitKind": "method",
+        "name": "registerAfterCreateHandler",
+        "qualifiedName": "StoreSideEffects.registerAfterCreateHandler",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 571,
+        "endLine": 580,
+        "isBehavioral": true,
+        "source": "\t * @param typeName - The type of record to listen for\n\t * @param handler - The handler to call\n\t *\n\t * @returns A callback that removes the handler.\n\t */\n\tregisterAfterChangeHandler<T extends R['typeName']>(\n\t\ttypeName: T,\n\t\thandler: StoreAfterChangeHandler<R & { typeName: T }>\n\t) {\n\t\tconst handlers = this._afterChangeHandlers[typeName] as StoreAfterChangeHandler<any>[]",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerAfterCreateHandler#method:StoreSideEffects.registerAfterCreateHandler",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerAfterCreateHandler",
+          "unitKind": "method",
+          "name": "registerAfterCreateHandler",
+          "qualifiedName": "StoreSideEffects.registerAfterCreateHandler",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 571,
+          "endLine": 580,
+          "signature": "registerAfterCreateHandler<T extends R['typeName']>(typeName: T, handler: StoreAfterCreateHandler<R & { typeName: T }>)",
+          "parameters": [
+            { "name": "typeName", "type": "T", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "handler",
+              "type": "StoreAfterCreateHandler<R & { typeName: T }>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "() => void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends R['typeName']"],
+          "logicOutline": [],
+          "preconditions": [
+            "typeName must identify a supported record type.",
+            "handler must be a callable after-create handler compatible with the specified record type."
+          ],
+          "postconditions": [
+            "The handler is registered for after-create events of the specified type.",
+            "A removal callback is returned."
+          ],
+          "invariants": [
+            "Handlers are associated with the supplied record type.",
+            "The registered handler remains available until removed."
+          ],
+          "edgeCases": [
+            "Registering multiple handlers for the same type preserves each registration independently.",
+            "A handler registered for one type is not registered for another type.",
+            "Calling the returned removal callback removes the associated handler."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "The internal after-create handler collection for typeName is updated by adding the supplied handler.",
+            "The returned removal callback can later update the same handler collection by removing the supplied handler."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["R", "StoreAfterCreateHandler"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Registers a handler for after-create side effects for records of the specified type and returns a callback that removes that handler.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "38a7ea5e1712277a7fd98915b936d7a19ba2850e1362b26a1311bf4598ad794a"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerBeforeChangeHandler#method:StoreSideEffects.registerBeforeChangeHandler",
+        "unitKind": "method",
+        "name": "registerBeforeChangeHandler",
+        "qualifiedName": "StoreSideEffects.registerBeforeChangeHandler",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 616,
+        "endLine": 625,
+        "isBehavioral": true,
+        "source": "\t\treturn () => remove(this._beforeDeleteHandlers[typeName]!, handler)\n\t}\n\n\t/**\n\t * Register a handler to be called after a record is deleted. This is useful for side-effects\n\t * that would update _other_ records - if you want to block the deletion of the record itself,\n\t * use {@link StoreSideEffects.registerBeforeDeleteHandler} instead.\n\t *\n\t * @example\n\t * ```ts",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerBeforeChangeHandler#method:StoreSideEffects.registerBeforeChangeHandler",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerBeforeChangeHandler",
+          "unitKind": "method",
+          "name": "registerBeforeChangeHandler",
+          "qualifiedName": "StoreSideEffects.registerBeforeChangeHandler",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 616,
+          "endLine": 625,
+          "signature": null,
+          "parameters": [
+            { "name": "typeName", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "handler", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "typeName identifies the record type whose changes the handler should observe.",
+            "handler is a callable before-change handler."
+          ],
+          "postconditions": [
+            "The handler is registered for the specified record type.",
+            "The returned disposer can remove the registered handler."
+          ],
+          "invariants": [
+            "Registration is scoped to the supplied type name.",
+            "Removing the registration does not remove handlers registered for other type names."
+          ],
+          "edgeCases": [
+            "Registering multiple handlers for the same type keeps them independently registered.",
+            "Calling the returned disposer removes the associated handler registration."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The internal before-change handler collection is updated for the supplied type name."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "remove", "source": null, "kind": "external" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Registers a handler to run before records of the specified type are changed. Returns a disposer that removes the registered handler.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "registerBeforeChangeHandler is called and the returned disposer is not invoked.",
+              "then": "The handler is registered for that type and is eligible to be called before matching records change.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The disposer is invoked.",
+              "then": "The handler is removed from the before-change registrations for that type.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "ae704c78e4e9c1636b1a8076e67dfaf3aea4d04a83db061027920eea2d2dc8b3"
+        }
+      },
+      {
+        "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerAfterChangeHandler#method:StoreSideEffects.registerAfterChangeHandler",
+        "unitKind": "method",
+        "name": "registerAfterChangeHandler",
+        "qualifiedName": "StoreSideEffects.registerAfterChangeHandler",
+        "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+        "startLine": 662,
+        "endLine": 671,
+        "isBehavioral": true,
+        "source": "\t * editor.selectAll()\n\t * expect(count).toBe(1)\n\t *\n\t * editor.store.atomic(() => {\n\t *\teditor.selectNone()\n\t * \teditor.selectAll()\n\t * })\n\t *\n\t * expect(count).toBe(2)\n\t * ```",
+        "detail": {
+          "unitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerAfterChangeHandler#method:StoreSideEffects.registerAfterChangeHandler",
+          "fileId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects.registerAfterChangeHandler",
+          "unitKind": "method",
+          "name": "registerAfterChangeHandler",
+          "qualifiedName": "StoreSideEffects.registerAfterChangeHandler",
+          "parentUnitId": "packages/store/src/lib/StoreSideEffects.ts__StoreSideEffects#class:StoreSideEffects",
+          "startLine": 662,
+          "endLine": 671,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["The supplied after-change handler is registered for subsequent after-change processing."],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The instance's registered after-change handler collection or registry."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Registers a handler for after-change side effects on the store. The registered handler is available to the store-side-effects lifecycle for subsequent after-change processing.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "cb4ac4d3c5b6f27bc79736375f5b31f1b2e45ae6857c86fb90151dd41272c469"
+        }
+      }
+    ]
+  },
+  "out": ["packages/store/src/lib/BaseRecord.ts", "packages/store/src/lib/Store.ts"],
+  "in": ["packages/store/src/lib/Store.ts", "packages/store/src/index.ts"],
+  "externals": [],
+  "impact": { "seeds": 13, "callers": 0, "impactedFiles": [] }
+}
