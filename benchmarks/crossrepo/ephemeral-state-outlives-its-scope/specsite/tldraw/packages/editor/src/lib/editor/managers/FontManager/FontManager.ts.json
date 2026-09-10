@@ -1,0 +1,1786 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts",
+    "language": "typescript",
+    "sizeBytes": 8765,
+    "tokenCount": 2192,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:21:15.735Z",
+    "module": {
+      "purpose": "Manages font discovery, loading, caching, tracking, and CSS embedding for editor shapes and documents.",
+      "summary": "This module provides the editor's font lifecycle boundary. It derives font faces from shapes through reactive caches, deduplicates FontFace instances per document, loads required fonts asynchronously, batches requests through microtasks and transactions, and converts font sources into embedded CSS declarations. Disposal invalidates manager caches while protecting against stale asynchronous load callbacks.",
+      "businessContext": "Supports text rendering and document export in the editor. Failures can leave text incorrectly rendered, fonts duplicated, or exported CSS unable to reproduce typography.",
+      "classes": [
+        "FontState (~L11-15): Tracks a font face instance, loading state, and completion promise",
+        "ShapeFontFacesCache (~L17-19): Abstracts cached font-face lookup for shapes",
+        "ShapeFontLoadStateCache (~L21-23): Abstracts cached font-loading-state lookup for shapes",
+        "FontManager (~L29-233): Coordinates editor font discovery, loading, caching, and embedding"
+      ],
+      "functions": [
+        "getShapeFontFaces (~L69-72): Returns font faces associated with a shape or shape identifier",
+        "trackFontsForShape (~L74-77): Activates reactive font-load tracking for a shape",
+        "loadRequiredFontsForCurrentPage (~L79-93): Loads fonts required by the current page",
+        "getFontState (~L96-98): Retrieves the current tracked state for a font face",
+        "ensureFontIsLoaded (~L100-137): Loads a font once and updates its lifecycle state",
+        "requestFonts (~L140-157): Batches font-load requests into a microtask transaction",
+        "findOrCreateFontFace (~L159-206): Reuses or creates a document FontFace instance",
+        "toEmbeddedCssDeclaration (~L208-232): Converts a font source into embedded CSS",
+        "getFontFaceCacheKey (~L257-264): Builds a descriptor-based cache key for a font",
+        "clearFontFaceCacheForTests (~L271-273): Resets the shared document font cache"
+      ],
+      "keywords": [
+        "FontFace",
+        "FontFaceSet",
+        "font loading",
+        "font descriptors",
+        "embedded CSS",
+        "document cache",
+        "reactive cache",
+        "microtask batching",
+        "stale async callback",
+        "TLFontFace"
+      ],
+      "ontologyConcepts": [
+        "resource lifecycle",
+        "cache invalidation",
+        "deduplication",
+        "reactive dependency tracking",
+        "asynchronous loading",
+        "document embedding",
+        "stale operation prevention"
+      ],
+      "businessEntities": ["Font", "FontFace", "Shape", "Document", "Editor", "Asset"],
+      "systemCapabilities": [
+        "Discover fonts required by editor shapes",
+        "Load and register document fonts",
+        "Deduplicate fonts across editor remounts",
+        "Batch font loading requests",
+        "Generate portable embedded font CSS",
+        "Invalidate manager state safely on disposal"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../../../utils/areShapesContentEqual",
+          "symbols": ["areShapesContentEqual"],
+          "anchor": { "startLine": 11, "endLine": 11 },
+          "resolvedRelativePath": "packages/editor/src/lib/utils/areShapesContentEqual.ts",
+          "resolvedFileId": "packages/editor/src/lib/utils/areShapesContentEqual.ts",
+          "resolvedHint": "packages/editor/src/lib/utils/areShapesContentEqual.ts"
+        },
+        {
+          "spec": "../../Editor",
+          "symbols": ["Editor"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/Editor.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["computed", "EMPTY_ARRAY", "transact"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/store",
+          "symbols": ["AtomMap"],
+          "package": "@tldraw/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["TLFontFace", "TLShape", "TLShapeId"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["areArraysShallowEqual", "compact", "FileHelpers", "mapObjectMapValues", "objectMapEntries"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 4, "endLine": 10 }
+        }
+      ],
+      "sideEffects": {
+        "io": [
+          "Adds resolved FontFace instances to the container document's FontFaceSet.",
+          "Logs interrupted or failed font loads to the console."
+        ],
+        "network": [
+          "Loads font resources through FontFace.load().",
+          "Fetches font URLs through FileHelpers.urlToDataUrl()."
+        ],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "FontManager",
+          "shape": "export class FontManager",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "FontManager.getShapeFontFaces",
+          "shape": "getShapeFontFaces(shape: TLShape | TLShapeId): TLFontFace[]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "FontManager.trackFontsForShape",
+          "shape": "trackFontsForShape(shape: TLShape | TLShapeId)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "FontManager.loadRequiredFontsForCurrentPage",
+          "shape": "async loadRequiredFontsForCurrentPage(limit = Infinity)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "FontManager.ensureFontIsLoaded",
+          "shape": "ensureFontIsLoaded(font: TLFontFace): Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "FontManager.requestFonts",
+          "shape": "requestFonts(fonts: TLFontFace[])",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "FontManager.toEmbeddedCssDeclaration",
+          "shape": "async toEmbeddedCssDeclaration(font: TLFontFace)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "clearFontFaceCacheForTests",
+          "shape": "export function clearFontFaceCacheForTests()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Editor",
+          "shape": "Editor",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts"
+        },
+        { "name": "TLFontFace", "shape": "TLFontFace", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLShape", "shape": "TLShape", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLShapeId", "shape": "TLShapeId", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "FontFace", "shape": "FontFace", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "Document.fonts", "shape": "FontFaceSet", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "FileHelpers.urlToDataUrl",
+          "shape": "FileHelpers.urlToDataUrl(url)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "reactive cache initialization",
+          "intent": "Creates shape font and font-load-state caches backed by editor store computations.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 30, "endLine": 57 }
+        },
+        {
+          "name": "manager disposal",
+          "intent": "Clears tracked state and replaces caches with inert empty implementations.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 59, "endLine": 64 }
+        },
+        {
+          "name": "current-page font collection",
+          "intent": "Collects unique fonts from all shapes on the current page before loading.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "this.editor.getCurrentPageShapeIds()",
+          "terminationCondition": null,
+          "anchor": { "startLine": 79, "endLine": 93 }
+        },
+        {
+          "name": "font-load limit branch",
+          "intent": "Skips loading when the page requires more fonts than the configured limit.",
+          "structureKind": "branch",
+          "predicate": "neededFonts.size > limit",
+          "branchOutcomes": ["returns without loading", "loads all collected fonts"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 87, "endLine": 93 }
+        },
+        {
+          "name": "font loading lifecycle",
+          "intent": "Deduplicates loads and transitions tracked fonts between loading, ready, and error.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 100, "endLine": 137 }
+        },
+        {
+          "name": "batched font requests",
+          "intent": "Coalesces requests into one microtask and loads them inside a transaction.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 140, "endLine": 157 }
+        },
+        {
+          "name": "document FontFace resolution",
+          "intent": "Reuses cached or matching faces and creates missing faces with asset URLs.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const existing of fonts)",
+          "terminationCondition": null,
+          "anchor": { "startLine": 159, "endLine": 206 }
+        },
+        {
+          "name": "embedded CSS generation",
+          "intent": "Fetches font data and emits a complete CSS font-face declaration.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 208, "endLine": 232 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "class",
+          "name": "FontManager",
+          "signature": "export class FontManager {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 29, "endLine": 29 }
+        },
+        {
+          "kind": "method",
+          "name": "constructor",
+          "signature": "\tconstructor(",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 30, "endLine": 32 }
+        },
+        {
+          "kind": "method",
+          "name": "dispose",
+          "signature": "\tdispose() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 59, "endLine": 59 }
+        },
+        {
+          "kind": "method",
+          "name": "getShapeFontFaces",
+          "signature": "\tgetShapeFontFaces(shape: TLShape | TLShapeId): TLFontFace[] {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "TLFontFace[]",
+          "exported": false,
+          "anchor": { "startLine": 69, "endLine": 69 }
+        },
+        {
+          "kind": "method",
+          "name": "trackFontsForShape",
+          "signature": "\ttrackFontsForShape(shape: TLShape | TLShapeId) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 74, "endLine": 74 }
+        },
+        {
+          "kind": "method",
+          "name": "loadRequiredFontsForCurrentPage",
+          "signature": "\tasync loadRequiredFontsForCurrentPage(limit = Infinity) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 79, "endLine": 79 }
+        },
+        {
+          "kind": "method",
+          "name": "ensureFontIsLoaded",
+          "signature": "\tensureFontIsLoaded(font: TLFontFace): Promise<void> {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "anchor": { "startLine": 100, "endLine": 100 }
+        },
+        {
+          "kind": "method",
+          "name": "requestFonts",
+          "signature": "\trequestFonts(fonts: TLFontFace[]) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 140, "endLine": 140 }
+        },
+        {
+          "kind": "method",
+          "name": "toEmbeddedCssDeclaration",
+          "signature": "\tasync toEmbeddedCssDeclaration(font: TLFontFace) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 208, "endLine": 208 }
+        },
+        {
+          "kind": "function",
+          "name": "clearFontFaceCacheForTests",
+          "signature": "export function clearFontFaceCacheForTests() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 271, "endLine": 271 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "FontState",
+          "shape": "{\n\treadonly state: 'loading' | 'ready' | 'error'\n\treadonly instance: FontFace\n\treadonly loadingPromise: Promise<void>\n}",
+          "discriminant": "state",
+          "anchor": { "startLine": 11, "endLine": 15 }
+        },
+        {
+          "kind": "interface",
+          "name": "ShapeFontFacesCache",
+          "shape": "{\n\tget(id: TLShapeId): TLFontFace[] | undefined\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 17, "endLine": 19 }
+        },
+        {
+          "kind": "interface",
+          "name": "ShapeFontLoadStateCache",
+          "shape": "{\n\tget(id: TLShapeId): (FontState | null)[] | undefined\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 21, "endLine": 23 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Shape or shape identifier with no cached font faces",
+          "handled": true,
+          "behavior": "Returns EMPTY_ARRAY instead of undefined.",
+          "anchor": { "startLine": 69, "endLine": 72 }
+        },
+        {
+          "inputShape": "Current page requiring more fonts than limit",
+          "handled": true,
+          "behavior": "Returns without starting any font loads.",
+          "anchor": { "startLine": 87, "endLine": 88 }
+        },
+        {
+          "inputShape": "Font already tracked by the manager",
+          "handled": true,
+          "behavior": "Returns the existing loading promise.",
+          "anchor": { "startLine": 100, "endLine": 102 }
+        },
+        {
+          "inputShape": "Manager disposed while FontFace.load is pending",
+          "handled": true,
+          "behavior": "Logs a debug message and avoids mutating a stale or replacement state.",
+          "anchor": { "startLine": 115, "endLine": 128 }
+        },
+        {
+          "inputShape": "Font load rejects",
+          "handled": true,
+          "behavior": "Logs the error and marks the tracked state as error without rethrowing.",
+          "anchor": { "startLine": 124, "endLine": 132 }
+        },
+        {
+          "inputShape": "Font descriptors omitted",
+          "handled": true,
+          "behavior": "Uses default CSS FontFace descriptor values for matching and cache keys.",
+          "anchor": { "startLine": 182, "endLine": 190 }
+        },
+        {
+          "inputShape": "Optional source format or technology metadata absent",
+          "handled": true,
+          "behavior": "Omits the corresponding format() or tech() CSS source component.",
+          "anchor": { "startLine": 212, "endLine": 217 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "neededFonts.size",
+          "right": "limit",
+          "inclusive": false,
+          "intent": "Stops loading when the number of required fonts exceeds the caller's limit.",
+          "anchor": { "startLine": 87, "endLine": 88 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "FontFace.load() rejection",
+          "action": "Logs the error and updates the tracked font state to error.",
+          "fallback": "The loading promise resolves after the catch handler.",
+          "anchor": { "startLine": 124, "endLine": 132 }
+        },
+        {
+          "thrown": null,
+          "caught": "FontFace.load() completion after manager disposal",
+          "action": "Logs a debug message and skips document registration and state updates.",
+          "fallback": "The loading promise resolves without applying the stale result.",
+          "anchor": { "startLine": 115, "endLine": 120 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "At most one loading promise is tracked for each font face key at a time.",
+          "anchor": { "startLine": 100, "endLine": 102 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Successfully loaded fonts are added to the container document and marked ready.",
+          "anchor": { "startLine": 121, "endLine": 122 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Failed font loads remain represented with an error state rather than rejecting the loading promise.",
+          "anchor": { "startLine": 124, "endLine": 132 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A stale asynchronous callback must not update a replacement font state after disposal.",
+          "anchor": { "startLine": 105, "endLine": 109 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Resolved FontFace instances remain cached per document and are not removed during manager disposal.",
+          "anchor": { "startLine": 247, "endLine": 255 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide valid TLFontFace values and shape identifiers belonging to the editor store.",
+          "anchor": { "startLine": 69, "endLine": 77 }
+        },
+        {
+          "kind": "platform",
+          "description": "The runtime provides Document, FontFace, document.fonts, and queueMicrotask APIs.",
+          "anchor": { "startLine": 159, "endLine": 206 }
+        },
+        {
+          "kind": "caller",
+          "description": "The editor exposes a current-page shape set and returns shapes for those identifiers.",
+          "anchor": { "startLine": 79, "endLine": 84 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Does FileHelpers.urlToDataUrl perform network access, filesystem access, or another external I/O mechanism?",
+          "affects": "side_effects.network and side_effects.io",
+          "anchor": { "startLine": 208, "endLine": 210 },
+          "resolution": null
+        },
+        {
+          "question": "What guarantees does the editor store provide for cache invalidation and computed dependency tracking?",
+          "affects": "invariants and reactive cache behavior",
+          "anchor": { "startLine": 33, "endLine": 55 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Font loads are asynchronous and deduplicated by tracked state; requestFonts batches additions through a microtask and transaction. Stale callbacks are identity-checked after disposal."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "returns-existing-font-load-promise",
+          "scenario": "A font is requested while a load for the same font is already in progress.",
+          "given": ["manager.ensureFontIsLoaded(font)"],
+          "when": "manager.ensureFontIsLoaded(font)",
+          "then": "the returned promise is the same in-flight promise",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Duplicate requests must deduplicate loading work."
+        },
+        {
+          "testId": "adds-loaded-font-to-container-document",
+          "scenario": "A requested font finishes loading successfully.",
+          "given": ["fontFace.load = () => Promise.resolve()"],
+          "when": "await manager.ensureFontIsLoaded(font)",
+          "then": "editor.getContainerDocument().fonts contains the loaded FontFace and its state is ready",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Successful loads must become available through the editor document."
+        },
+        {
+          "testId": "records-font-load-error",
+          "scenario": "A requested font fails to load.",
+          "given": ["fontFace.load = () => Promise.reject(error)"],
+          "when": "await manager.ensureFontIsLoaded(font)",
+          "then": "the font load state becomes error",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Failures must be observable through the tracked font state."
+        },
+        {
+          "testId": "ignores-load-completion-after-dispose",
+          "scenario": "The manager is disposed before an in-flight font load settles.",
+          "given": ["const promise = manager.ensureFontIsLoaded(font)", "manager.dispose()"],
+          "when": "await promise",
+          "then": "the disposed manager does not update a new font state or add the stale FontFace",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Late asynchronous callbacks must not mutate disposed or replacement state."
+        },
+        {
+          "testId": "skips-page-font-loading-over-limit",
+          "scenario": "The current page requires more distinct fonts than the configured limit.",
+          "given": ["editor.getCurrentPageShapeIds() returns shapes requiring more than limit distinct fonts"],
+          "when": "await manager.loadRequiredFontsForCurrentPage(limit)",
+          "then": "no required font is loaded",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The limit prevents bulk loading when demand exceeds the configured threshold."
+        },
+        {
+          "testId": "loads-distinct-current-page-fonts",
+          "scenario": "The current page contains shapes using a set of distinct fonts within the limit.",
+          "given": [
+            "editor.getCurrentPageShapeIds() returns shapes requiring distinct fonts",
+            "limit >= number of distinct required fonts"
+          ],
+          "when": "await manager.loadRequiredFontsForCurrentPage(limit)",
+          "then": "each distinct required font is loaded exactly once",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Page loading must deduplicate fonts across shapes."
+        },
+        {
+          "testId": "coalesces-microtask-font-requests",
+          "scenario": "Multiple font requests are made before the queued microtask runs.",
+          "given": ["manager.requestFonts([fontA])", "manager.requestFonts([fontB])"],
+          "when": "await Promise.resolve()",
+          "then": "fontA and fontB are scheduled for loading in one transaction",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Requests in the same turn should be batched."
+        },
+        {
+          "testId": "does-not-schedule-fonts-after-dispose",
+          "scenario": "Fonts are queued and the editor is disposed before the microtask executes.",
+          "given": ["manager.requestFonts([font])", "editor.isDisposed = true"],
+          "when": "await Promise.resolve()",
+          "then": "font is not loaded",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Disposed editors must not begin deferred work."
+        },
+        {
+          "testId": "reuses-matching-document-font-face",
+          "scenario": "The container document already contains a FontFace with matching family and descriptors.",
+          "given": ["document.fonts contains a matching FontFace"],
+          "when": "manager.ensureFontIsLoaded(font)",
+          "then": "the existing FontFace is reused rather than a duplicate being created",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Matching preloaded faces must be deduplicated."
+        },
+        {
+          "testId": "resolves-asset-url-before-font-creation",
+          "scenario": "A font source URL has an asset URL override.",
+          "given": ["assetUrls[font.src.url] = resolvedUrl"],
+          "when": "manager.ensureFontIsLoaded(font)",
+          "then": "the created FontFace uses resolvedUrl",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Asset mappings must control the browser-facing font URL."
+        },
+        {
+          "testId": "embeds-font-css-with-descriptors",
+          "scenario": "A font has a source URL, format, technology, and optional descriptors.",
+          "given": ["FileHelpers.urlToDataUrl(url) resolves to dataUrl"],
+          "when": "await manager.toEmbeddedCssDeclaration(font)",
+          "then": "the result is an @font-face declaration containing the data URL and supplied descriptors",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Embedded CSS must preserve the wire format and font metadata."
+        },
+        {
+          "testId": "clears-font-face-cache",
+          "scenario": "A document-specific FontFace cache has already been populated.",
+          "given": ["manager.ensureFontIsLoaded(font)", "clearFontFaceCacheForTests()"],
+          "when": "manager.ensureFontIsLoaded(font)",
+          "then": "the next lookup does not use the previously cached FontFace entry",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The test reset must invalidate all per-document cache entries."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "FontState interface",
+        "ShapeFontFacesCache interface",
+        "ShapeFontLoadStateCache interface",
+        "empty cache constants",
+        "FontManager class",
+        "defaultFontFaceDescriptors constant",
+        "fontFaceCacheByDocument variable",
+        "getFontFaceCacheKey function",
+        "clearFontFaceCacheForTests function"
+      ],
+      "moduleLevelCode": "import { computed, EMPTY_ARRAY, transact } from '@tldraw/state'\nimport { AtomMap } from '@tldraw/store'\nimport { TLFontFace, TLShape, TLShapeId } from '@tldraw/tlschema'\nimport {\n\tareArraysShallowEqual,\n\tcompact,\n\tFileHelpers,\n\tmapObjectMapValues,\n\tobjectMapEntries,\n} from '@tldraw/utils'\nimport { areShapesContentEqual } from '../../../utils/areShapesContentEqual'\nimport type { Editor } from '../../Editor'",
+      "exports": [
+        { "name": "FontManager", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "clearFontFaceCacheForTests", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "computed", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "EMPTY_ARRAY", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "transact", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "AtomMap", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "TLFontFace", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLShape", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLShapeId", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "areArraysShallowEqual", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "compact", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "FileHelpers", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "mapObjectMapValues", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "objectMapEntries", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        {
+          "symbol": "areShapesContentEqual",
+          "module": "../../../utils/areShapesContentEqual",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "Editor", "module": "../../Editor", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "EMPTY_SHAPE_FONT_FACES_CACHE", "value": "{ get: () => undefined }", "kind": "object constant" },
+        { "name": "EMPTY_SHAPE_FONT_LOAD_STATE_CACHE", "value": "{ get: () => undefined }", "kind": "object constant" },
+        {
+          "name": "defaultFontFaceDescriptors",
+          "value": "{\n\tstyle: 'normal',\n\tweight: 'normal',\n\tstretch: 'normal',\n\tunicodeRange: 'U+0-10FFFF',\n\tfeatureSettings: 'normal',\n\tascentOverride: 'normal',\n\tdescentOverride: 'normal',\n\tlineGapOverride: 'normal',\n}",
+          "kind": "object constant"
+        },
+        {
+          "name": "fontFaceCacheByDocument",
+          "value": "new WeakMap<Document, Map<string, FontFace>>()",
+          "kind": "mutable module cache"
+        }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "unitKind": "class",
+        "name": "FontManager",
+        "qualifiedName": "FontManager",
+        "parentUnitId": null,
+        "startLine": 29,
+        "endLine": 233,
+        "isBehavioral": true,
+        "source": "const EMPTY_SHAPE_FONT_LOAD_STATE_CACHE: ShapeFontLoadStateCache = { get: () => undefined }\n\n/** @public */\nexport class FontManager {\n\tconstructor(\n\t\tprivate readonly editor: Editor,\n\t\tprivate readonly assetUrls?: { [key: string]: string | undefined }\n\t) {\n\t\tthis.shapeFontFacesCache = editor.store.createComputedCache(\n\t\t\t'shape font faces',\n\t\t\t(shape: TLShape) => {\n\t\t\t\tconst shapeUtil = this.editor.getShapeUtil(shape)\n\t\t\t\treturn shapeUtil.getFontFaces(shape)\n\t\t\t},\n\t\t\t{\n\t\t\t\tareResultsEqual: areArraysShallowEqual,\n\t\t\t\tareRecordsEqual: areShapesContentEqual,\n\t\t\t}\n\t\t)\n\n\t\tthis.shapeFontLoadStateCache = editor.store.createCache<(FontState | null)[], TLShape>(\n\t\t\t(id: TLShapeId) => {\n\t\t\t\tconst fontFacesComputed = computed('font faces', () => this.getShapeFontFaces(id))\n\t\t\t\treturn computed(\n\t\t\t\t\t'font load state',\n\t\t\t\t\t() => {\n\t\t\t\t\t\tconst states = fontFacesComputed.get().map((face) => this.getFontState(face))\n\t\t\t\t\t\treturn states\n\t\t\t\t\t},\n\t\t\t\t\t{ isEqual: areArraysShallowEqual }\n\t\t\t\t)\n\t\t\t}\n\t\t)\n\t}\n\n\tdispose() {\n\t\tthis.fontStates.clear()\n\t\tthis.fontsToLoad.clear()\n\t\tthis.shapeFontFacesCache = EMPTY_SHAPE_FONT_FACES_CACHE\n\t\tthis.shapeFontLoadStateCache = EMPTY_SHAPE_FONT_LOAD_STATE_CACHE\n\t}\n\n\tprivate shapeFontFacesCache: ShapeFontFacesCache\n\tprivate shapeFontLoadStateCache: ShapeFontLoadStateCache\n\n\tgetShapeFontFaces(shape: TLShape | TLShapeId): TLFontFace[] {\n\t\tconst shapeId = typeof shape === 'string' ? shape : shape.id\n\t\treturn this.shapeFontFacesCache.get(shapeId) ?? EMPTY_ARRAY\n\t}\n\n\ttrackFontsForShape(shape: TLShape | TLShapeId) {\n\t\tconst shapeId = typeof shape === 'string' ? shape : shape.id\n\t\tthis.shapeFontLoadStateCache.get(shapeId)\n\t}\n\n\tasync loadRequiredFontsForCurrentPage(limit = Infinity) {\n\t\tconst neededFonts = new Set<TLFontFace>()\n\t\tfor (const shapeId of this.editor.getCurrentPageShapeIds()) {\n\t\t\tfor (const font of this.getShapeFontFaces(this.editor.getShape(shapeId)!)) {\n\t\t\t\tneededFonts.add(font)\n\t\t\t}\n\t\t}\n\n\t\tif (neededFonts.size > limit) {\n\t\t\treturn\n\t\t}\n\n\t\tconst promises = Array.from(neededFonts, (font) => this.ensureFontIsLoaded(font))\n\t\tawait Promise.all(promises)\n\t}\n\n\tprivate readonly fontStates = new AtomMap<TLFontFace, FontState>('font states')\n\tprivate getFontState(font: TLFontFace): FontState | null {\n\t\treturn this.fontStates.get(font) ?? null\n\t}\n\n\tensureFontIsLoaded(font: TLFontFace): Promise<void> {\n\t\tconst existingState = this.getFontState(font)\n\t\tif (existingState) return existingState.loadingPromise\n\n\t\tconst instance = this.findOrCreateFontFace(font)\n\t\t// dispose() clears fontStates while loads may still be in flight, so a late\n\t\t// callback must only touch the exact entry it was created for - not a fresh\n\t\t// entry from a later request. Check identity, not just presence.\n\t\tconst isStale = () => this.fontStates.__unsafe__getWithoutCapture(font) !== state\n\t\tconst state: FontState = {\n\t\t\tstate: 'loading',\n\t\t\tinstance,\n\t\t\tloadingPromise: instance\n\t\t\t\t.load()\n\t\t\t\t.then(() => {\n\t\t\t\t\tif (isStale()) {\n\t\t\t\t\t\t// eslint-disable-next-line no-console\n\t\t\t\t\t\tconsole.debug(`Font \"${font.family}\" load interrupted by editor dispose`)\n\t\t\t\t\t\treturn\n\t\t\t\t\t}\n\t\t\t\t\tthis.editor.getContainerDocument().fonts.add(instance)\n\t\t\t\t\tthis.fontStates.update(font, (s) => ({ ...s, state: 'ready' }))\n\t\t\t\t})\n\t\t\t\t.catch((err) => {\n\t\t\t\t\tif (isStale()) {\n\t\t\t\t\t\t// eslint-disable-next-line no-console\n\t\t\t\t\t\tconsole.debug(`Font \"${font.family}\" load interrupted by editor dispose`, err)\n\t\t\t\t\t\treturn\n\t\t\t\t\t}\n\t\t\t\t\tconsole.error(err)\n\t\t\t\t\tthis.fontStates.update(font, (s) => ({ ...s, state: 'error' }))\n\t\t\t\t}),\n\t\t}\n\n\t\tthis.fontStates.set(font, state)\n\t\treturn state.loadingPromise\n\t}\n\n\tprivate fontsToLoad = new Set<TLFontFace>()\n\trequestFonts(fonts: TLFontFace[]) {\n\t\tif (!this.fontsToLoad.size) {\n\t\t\tqueueMicrotask(() => {\n\t\t\t\tif (this.editor.isDisposed) return\n\t\t\t\tconst toLoad = this.fontsToLoad\n\t\t\t\tthis.fontsToLoad = new Set()\n\t\t\t\ttransact(() => {\n\t\t\t\t\tfor (const font of toLoad) {\n\t\t\t\t\t\tthis.ensureFontIsLoaded(font)\n\t\t\t\t\t}\n\t\t\t\t})\n\t\t\t})\n\t\t}\n\t\tfor (const font of fonts) {\n\t\t\tthis.fontsToLoad.add(font)\n\t\t}\n\t}\n\n\tprivate findOrCreateFontFace(font: TLFontFace) {\n\t\tconst containerDocument = this.editor.getContainerDocument()\n\n\t\t// `findOrCreateFontFace` runs for every font on every editor mount, and a fresh\n\t\t// editor (e.g. switching documents) gets a fresh FontManager with no memory of the\n\t\t// previous one. The dedup below is an O(n) scan of the document's whole FontFaceSet,\n\t\t// so without a cache that scan re-ran on every mount (measurably expensive on mobile\n\t\t// Safari). Cache the resolved FontFace per document so repeated lookups - and\n\t\t// remounts - are O(1). Keyed per document for cross-window embedding.\n\t\tlet cache = fontFaceCacheByDocument.get(containerDocument)\n\t\tif (!cache) {\n\t\t\tcache = new Map()\n\t\t\tfontFaceCacheByDocument.set(containerDocument, cache)\n\t\t}\n\t\tconst key = getFontFaceCacheKey(font)\n\t\tconst cached = cache.get(key)\n\t\tif (cached) return cached\n\n\t\tconst fonts = containerDocument.fonts\n\t\t// On a cache miss we still scan once, so font faces added outside this manager\n\t\t// (e.g. preloaded fonts) are reused rather than duplicated.\n\t\tfor (const existing of fonts) {\n\t\t\tif (\n\t\t\t\texisting.family === font.family &&\n\t\t\t\tobjectMapEntries(defaultFontFaceDescriptors).every(\n\t\t\t\t\t([key, defaultValue]) => existing[key] === (font[key] ?? defaultValue)\n\t\t\t\t)\n\t\t\t) {\n\t\t\t\tcache.set(key, existing)\n\t\t\t\treturn existing\n\t\t\t}\n\t\t}\n\n\t\tconst url = this.assetUrls?.[font.src.url] ?? font.src.url\n\t\tconst instance = new FontFace(font.family, `url(${JSON.stringify(url)})`, {\n\t\t\t...mapObjectMapValues(defaultFontFaceDescriptors, (key) => font[key]),\n\t\t\tdisplay: 'swap',\n\t\t})\n\n\t\tfonts.add(instance)\n\t\tcache.set(key, instance)\n\n\t\treturn instance\n\t}\n\n\tasync toEmbeddedCssDeclaration(font: TLFontFace) {\n\t\tconst url = this.assetUrls?.[font.src.url] ?? font.src.url\n\t\tconst dataUrl = await FileHelpers.urlToDataUrl(url)\n\n\t\tconst src = compact([\n\t\t\t`url(\"${dataUrl}\")`,\n\t\t\tfont.src.format ? `format(${font.src.format})` : null,\n\t\t\tfont.src.tech ? `tech(${font.src.tech})` : null,\n\t\t]).join(' ')\n\t\treturn compact([\n\t\t\t`@font-face {`,\n\t\t\t`  font-family: \"${font.family}\";`,\n\t\t\tfont.ascentOverride ? `  ascent-override: ${font.ascentOverride};` : null,\n\t\t\tfont.descentOverride ? `  descent-override: ${font.descentOverride};` : null,\n\t\t\tfont.stretch ? `  font-stretch: ${font.stretch};` : null,\n\t\t\tfont.style ? `  font-style: ${font.style};` : null,\n\t\t\tfont.weight ? `  font-weight: ${font.weight};` : null,\n\t\t\tfont.featureSettings ? `  font-feature-settings: ${font.featureSettings};` : null,\n\t\t\tfont.lineGapOverride ? `  line-gap-override: ${font.lineGapOverride};` : null,\n\t\t\tfont.unicodeRange ? `  unicode-range: ${font.unicodeRange};` : null,\n\t\t\t`  src: ${src};`,\n\t\t\t`}`,\n\t\t]).join('\\n')\n\t}\n}\n\n// From https://drafts.csswg.org/css-font-loading/#fontface-interface",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager",
+          "unitKind": "class",
+          "name": "FontManager",
+          "qualifiedName": "FontManager",
+          "parentUnitId": null,
+          "startLine": 29,
+          "endLine": 233,
+          "signature": "export class FontManager",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "editor",
+              "kind": "property",
+              "type": "Editor",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "assetUrls",
+              "kind": "property",
+              "type": "{ [key: string]: string | undefined } | undefined",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "shapeFontFacesCache",
+              "kind": "property",
+              "type": "ShapeFontFacesCache",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "shapeFontLoadStateCache",
+              "kind": "property",
+              "type": "ShapeFontLoadStateCache",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "fontStates",
+              "kind": "property",
+              "type": "AtomMap<TLFontFace, FontState>",
+              "default": "new AtomMap<TLFontFace, FontState>('font states')",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "fontsToLoad",
+              "kind": "property",
+              "type": "Set<TLFontFace>",
+              "default": "new Set<TLFontFace>()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "dispose",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getShapeFontFaces",
+              "kind": "method",
+              "type": "TLFontFace[]",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "trackFontsForShape",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "loadRequiredFontsForCurrentPage",
+              "kind": "method",
+              "type": "Promise<void>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getFontState",
+              "kind": "method",
+              "type": "FontState | null",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "ensureFontIsLoaded",
+              "kind": "method",
+              "type": "Promise<void>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "requestFonts",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "findOrCreateFontFace",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "toEmbeddedCssDeclaration",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "FontManager coordinates discovery, caching, loading, and CSS embedding of fonts required by editor shapes. It reuses document FontFace instances and tracks asynchronous load state per font.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6e040cbcce467dc37c3f7e0412579e40752f7737870bba7e4af351629c7d382e"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.constructor#method:FontManager.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "FontManager.constructor",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "startLine": 30,
+        "endLine": 57,
+        "isBehavioral": true,
+        "source": "\n/** @public */\nexport class FontManager {\n\tconstructor(\n\t\tprivate readonly editor: Editor,\n\t\tprivate readonly assetUrls?: { [key: string]: string | undefined }\n\t) {\n\t\tthis.shapeFontFacesCache = editor.store.createComputedCache(\n\t\t\t'shape font faces',\n\t\t\t(shape: TLShape) => {\n\t\t\t\tconst shapeUtil = this.editor.getShapeUtil(shape)\n\t\t\t\treturn shapeUtil.getFontFaces(shape)\n\t\t\t},\n\t\t\t{\n\t\t\t\tareResultsEqual: areArraysShallowEqual,\n\t\t\t\tareRecordsEqual: areShapesContentEqual,\n\t\t\t}\n\t\t)\n\n\t\tthis.shapeFontLoadStateCache = editor.store.createCache<(FontState | null)[], TLShape>(\n\t\t\t(id: TLShapeId) => {\n\t\t\t\tconst fontFacesComputed = computed('font faces', () => this.getShapeFontFaces(id))\n\t\t\t\treturn computed(\n\t\t\t\t\t'font load state',\n\t\t\t\t\t() => {\n\t\t\t\t\t\tconst states = fontFacesComputed.get().map((face) => this.getFontState(face))\n\t\t\t\t\t\treturn states\n\t\t\t\t\t},",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.constructor#method:FontManager.constructor",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.constructor",
+          "unitKind": "method",
+          "name": "constructor",
+          "qualifiedName": "FontManager.constructor",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "startLine": 30,
+          "endLine": 57,
+          "signature": "constructor(private readonly editor: Editor, private readonly assetUrls?: { [key: string]: string | undefined })",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "assetUrls",
+              "type": "{ [key: string]: string | undefined }",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "editor is a valid Editor instance with a store that provides createComputedCache and createCache."
+          ],
+          "postconditions": [
+            "The manager retains the supplied editor and optional asset URL mapping.",
+            "A computed cache for shape font faces is created.",
+            "A cache for per-shape font load state is created."
+          ],
+          "invariants": [
+            "Shape font-face cache results are compared with areArraysShallowEqual.",
+            "Shape records used by the computed cache are compared with areShapesContentEqual.",
+            "Font load state is derived from the font faces associated with each shape."
+          ],
+          "edgeCases": [
+            "assetUrls is omitted; initialization proceeds without an asset URL mapping.",
+            "assetUrls is supplied with keys whose values are undefined; those entries remain part of the optional mapping."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Any error thrown by editor.store.createComputedCache or editor.store.createCache, or by their cache setup callbacks."
+            ],
+            "reverts": [],
+            "onInvalidInput": "No explicit validation or fallback behavior is specified; invalid dependencies may cause initialization to throw.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Initializes the FontManager's shapeFontFacesCache field.",
+            "Initializes the FontManager's shapeFontLoadStateCache field.",
+            "Stores the constructor's editor and optional assetUrls parameters on the instance."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "editor.store.createComputedCache", "source": "Editor.store", "kind": "external" },
+            { "name": "editor.store.createCache", "source": "Editor.store", "kind": "external" },
+            { "name": "computed", "source": null, "kind": "internal" },
+            { "name": "editor.getShapeUtil", "source": "Editor", "kind": "external" },
+            { "name": "shapeUtil.getFontFaces", "source": "shape utility", "kind": "external" },
+            { "name": "this.getShapeFontFaces", "source": "FontManager", "kind": "internal" },
+            { "name": "this.getFontState", "source": "FontManager", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "Editor",
+            "TLShape",
+            "TLShapeId",
+            "FontState",
+            "areArraysShallowEqual",
+            "areShapesContentEqual"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes a FontManager for the supplied editor, optionally using asset URL mappings. It creates the caches required to derive shape font faces and track their loading state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1ac57a8e0de4d1f171d8698bdf9115e1da1f8415649b6eff7988ebdaffe6845a"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.dispose#method:FontManager.dispose",
+        "unitKind": "method",
+        "name": "dispose",
+        "qualifiedName": "FontManager.dispose",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "startLine": 59,
+        "endLine": 64,
+        "isBehavioral": true,
+        "source": "\t\t\t\t)\n\t\t\t}\n\t\t)\n\t}\n\n\tdispose() {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.dispose#method:FontManager.dispose",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.dispose",
+          "unitKind": "method",
+          "name": "dispose",
+          "qualifiedName": "FontManager.dispose",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "startLine": 59,
+          "endLine": 64,
+          "signature": "dispose()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the FontManager disposal operation for releasing manager-owned resources. No specific externally observable disposal effects are established by the available unit source.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "d4b2175d7af7656947908df665b6edd0ac855e44bebd1b80a7d036676f309d1b"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.loadRequiredFontsForCurrentPage#method:FontManager.loadRequiredFontsForCurrentPage",
+        "unitKind": "method",
+        "name": "loadRequiredFontsForCurrentPage",
+        "qualifiedName": "FontManager.loadRequiredFontsForCurrentPage",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "startLine": 79,
+        "endLine": 93,
+        "isBehavioral": true,
+        "source": "\ttrackFontsForShape(shape: TLShape | TLShapeId) {\n\t\tconst shapeId = typeof shape === 'string' ? shape : shape.id\n\t\tthis.shapeFontLoadStateCache.get(shapeId)\n\t}\n\n\tasync loadRequiredFontsForCurrentPage(limit = Infinity) {\n\t\tconst neededFonts = new Set<TLFontFace>()\n\t\tfor (const shapeId of this.editor.getCurrentPageShapeIds()) {\n\t\t\tfor (const font of this.getShapeFontFaces(this.editor.getShape(shapeId)!)) {\n\t\t\t\tneededFonts.add(font)\n\t\t\t}\n\t\t}\n\n\t\tif (neededFonts.size > limit) {\n\t\t\treturn",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.loadRequiredFontsForCurrentPage#method:FontManager.loadRequiredFontsForCurrentPage",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.loadRequiredFontsForCurrentPage",
+          "unitKind": "method",
+          "name": "loadRequiredFontsForCurrentPage",
+          "qualifiedName": "FontManager.loadRequiredFontsForCurrentPage",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "startLine": 79,
+          "endLine": 93,
+          "signature": "async loadRequiredFontsForCurrentPage(limit = Infinity)",
+          "parameters": [
+            { "name": "limit", "type": null, "default": "Infinity", "optional": true, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The editor dependency is initialized and can provide current-page shape IDs and shapes.",
+            "Each current-page shape ID resolves to a shape when passed to the editor."
+          ],
+          "postconditions": [
+            "The font faces obtained from all current-page shapes are deduplicated by set membership.",
+            "If the number of unique required font faces is greater than limit, the asynchronous operation completes without continuing past the limit check."
+          ],
+          "invariants": [
+            "Each font face is included at most once in the collected required-font set.",
+            "Only shapes returned by getCurrentPageShapeIds() are considered."
+          ],
+          "edgeCases": [
+            "When the current page has no shapes, the collected required-font set is empty.",
+            "When multiple shapes require the same font face, that font face is counted once.",
+            "When the number of unique required fonts is greater than limit, the method returns early.",
+            "When limit is Infinity, the size-based early-return condition is not triggered by a finite required-font set."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "editor.getCurrentPageShapeIds", "source": "editor", "kind": "external" },
+            { "name": "editor.getShape", "source": "editor", "kind": "external" },
+            { "name": "getShapeFontFaces", "source": "FontManager", "kind": "internal" }
+          ],
+          "symbolReferences": ["TLFontFace", "TLShape", "TLShapeId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Inspects the shapes on the current editor page and determines the unique font faces they require. If the number of required fonts exceeds the supplied limit, the method exits without continuing.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "Infinity",
+              "role": "Default limit value indicating that finite required-font sets are not rejected by the size check."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "loadRequiredFontsForCurrentPage is called with that limit.",
+              "then": "Both shapes are inspected, the shared font face is counted once, and the operation does not take the over-limit early-return path.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "loadRequiredFontsForCurrentPage is called.",
+              "then": "The method completes via the early return after the size check.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a1121b62b042a97c5c8d133d8177ed554c89b8e7c00d8220acc7ca9db5d8b3c6"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.ensureFontIsLoaded#method:FontManager.ensureFontIsLoaded",
+        "unitKind": "method",
+        "name": "ensureFontIsLoaded",
+        "qualifiedName": "FontManager.ensureFontIsLoaded",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "startLine": 100,
+        "endLine": 137,
+        "isBehavioral": true,
+        "source": "\tprivate readonly fontStates = new AtomMap<TLFontFace, FontState>('font states')\n\tprivate getFontState(font: TLFontFace): FontState | null {\n\t\treturn this.fontStates.get(font) ?? null\n\t}\n\n\tensureFontIsLoaded(font: TLFontFace): Promise<void> {\n\t\tconst existingState = this.getFontState(font)\n\t\tif (existingState) return existingState.loadingPromise\n\n\t\tconst instance = this.findOrCreateFontFace(font)\n\t\t// dispose() clears fontStates while loads may still be in flight, so a late\n\t\t// callback must only touch the exact entry it was created for - not a fresh\n\t\t// entry from a later request. Check identity, not just presence.\n\t\tconst isStale = () => this.fontStates.__unsafe__getWithoutCapture(font) !== state\n\t\tconst state: FontState = {\n\t\t\tstate: 'loading',\n\t\t\tinstance,\n\t\t\tloadingPromise: instance\n\t\t\t\t.load()\n\t\t\t\t.then(() => {\n\t\t\t\t\tif (isStale()) {\n\t\t\t\t\t\t// eslint-disable-next-line no-console\n\t\t\t\t\t\tconsole.debug(`Font \"${font.family}\" load interrupted by editor dispose`)\n\t\t\t\t\t\treturn\n\t\t\t\t\t}\n\t\t\t\t\tthis.editor.getContainerDocument().fonts.add(instance)\n\t\t\t\t\tthis.fontStates.update(font, (s) => ({ ...s, state: 'ready' }))\n\t\t\t\t})\n\t\t\t\t.catch((err) => {\n\t\t\t\t\tif (isStale()) {\n\t\t\t\t\t\t// eslint-disable-next-line no-console\n\t\t\t\t\t\tconsole.debug(`Font \"${font.family}\" load interrupted by editor dispose`, err)\n\t\t\t\t\t\treturn\n\t\t\t\t\t}\n\t\t\t\t\tconsole.error(err)\n\t\t\t\t\tthis.fontStates.update(font, (s) => ({ ...s, state: 'error' }))\n\t\t\t\t}),\n\t\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.ensureFontIsLoaded#method:FontManager.ensureFontIsLoaded",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.ensureFontIsLoaded",
+          "unitKind": "method",
+          "name": "ensureFontIsLoaded",
+          "qualifiedName": "FontManager.ensureFontIsLoaded",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "startLine": 100,
+          "endLine": 137,
+          "signature": "ensureFontIsLoaded(font: TLFontFace): Promise<void>",
+          "parameters": [
+            { "name": "font", "type": "TLFontFace", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "font is a valid TLFontFace value.",
+            "The FontManager instance has access to its font-state store and editor document."
+          ],
+          "postconditions": [
+            "If the font was already loading or ready, the existing loading promise is returned.",
+            "For a new request whose load succeeds, the loaded FontFace instance is added to the editor container document's fonts and the font state becomes ready.",
+            "For a new request whose load fails, the error is logged and the font state becomes error while the returned promise resolves.",
+            "If the request becomes stale because the font-state entry was replaced or cleared, the late completion does not modify the current font-state entry or document font set."
+          ],
+          "invariants": [
+            "At most one loading promise is created per currently tracked font-state entry.",
+            "All completion handlers verify that the state entry is the exact entry created for the request before mutating state.",
+            "A rejected FontFace.load() is converted into a fulfilled Promise<void> after error handling."
+          ],
+          "edgeCases": [
+            "When a state already exists for the font, no new FontFace is created or loaded; the existing loadingPromise is returned.",
+            "When FontFace.load() succeeds while the request is current, the instance is registered in the editor document and the state transitions from loading to ready.",
+            "When FontFace.load() rejects while the request is current, the rejection is logged and the state transitions from loading to error without propagating the rejection.",
+            "When dispose or another request makes the state entry stale before load completion, the completion is ignored for state and document mutation and the promise still resolves."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "FontFace.load() errors are logged and the returned Promise<void> resolves after the font state is marked error; stale completion errors are debug-logged and otherwise ignored."
+          },
+          "stateMutations": [
+            "Creates or updates the fontStates entry for the supplied font.",
+            "On successful current completion, adds the loaded FontFace instance to editor.getContainerDocument().fonts and updates the entry state to ready.",
+            "On failed current completion, updates the entry state to error."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getFontState", "source": "FontManager", "kind": "internal" },
+            { "name": "findOrCreateFontFace", "source": "FontManager", "kind": "internal" },
+            { "name": "FontFace.load", "source": "created FontFace instance", "kind": "external" },
+            { "name": "editor.getContainerDocument", "source": "editor", "kind": "external" },
+            { "name": "Document.fonts.add", "source": "editor container document", "kind": "external" },
+            { "name": "fontStates.update", "source": "fontStates", "kind": "internal" }
+          ],
+          "symbolReferences": ["TLFontFace", "FontState", "AtomMap", "FontFace", "FontManager.editor"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Ensures that the specified font is loaded and registered in the editor document. Repeated requests for the same font share the existing loading promise.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "loading", "role": "Initial state recorded for a newly requested font." },
+            {
+              "kind": "enum-value",
+              "value": "ready",
+              "role": "State recorded after a current font load succeeds and the font is registered."
+            },
+            { "kind": "enum-value", "value": "error", "role": "State recorded after a current font load fails." },
+            {
+              "kind": "format-string",
+              "value": "Font \"${font.family}\" load interrupted by editor dispose",
+              "role": "Debug message for a stale successful load completion."
+            },
+            {
+              "kind": "format-string",
+              "value": "Font \"${font.family}\" load interrupted by editor dispose",
+              "role": "Debug message prefix for a stale failed load completion."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "ensureFontIsLoaded(font) is called and the returned promise settles.",
+              "then": "The created FontFace instance is added to the editor container document's font set, the font state is ready, and the returned promise fulfills.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "ensureFontIsLoaded(font) is called and the returned promise settles.",
+              "then": "The error is logged, the font state is error, and the returned promise fulfills rather than rejecting.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "ensureFontIsLoaded(font) is called again.",
+              "then": "The method returns P and does not create or start another font load.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "05cc92b195a1096f37f12c9dc4c220f764993801b8a7c4509de3b05e9ece2b5f"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.requestFonts#method:FontManager.requestFonts",
+        "unitKind": "method",
+        "name": "requestFonts",
+        "qualifiedName": "FontManager.requestFonts",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "startLine": 140,
+        "endLine": 157,
+        "isBehavioral": true,
+        "source": "\t\treturn state.loadingPromise\n\t}\n\n\tprivate fontsToLoad = new Set<TLFontFace>()\n\trequestFonts(fonts: TLFontFace[]) {\n\t\tif (!this.fontsToLoad.size) {\n\t\t\tqueueMicrotask(() => {\n\t\t\t\tif (this.editor.isDisposed) return\n\t\t\t\tconst toLoad = this.fontsToLoad\n\t\t\t\tthis.fontsToLoad = new Set()\n\t\t\t\ttransact(() => {\n\t\t\t\t\tfor (const font of toLoad) {\n\t\t\t\t\t\tthis.ensureFontIsLoaded(font)\n\t\t\t\t\t}\n\t\t\t\t})\n\t\t\t})\n\t\t}\n\t\tfor (const font of fonts) {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.requestFonts#method:FontManager.requestFonts",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.requestFonts",
+          "unitKind": "method",
+          "name": "requestFonts",
+          "qualifiedName": "FontManager.requestFonts",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "startLine": 140,
+          "endLine": 157,
+          "signature": "requestFonts(fonts: TLFontFace[])",
+          "parameters": [
+            {
+              "name": "fonts",
+              "type": "TLFontFace[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["fonts is an array of TLFontFace values."],
+          "postconditions": [
+            "Every font supplied is added to the pending font set before the method returns.",
+            "A loading microtask is scheduled when no fonts were previously pending.",
+            "When the scheduled microtask runs for a non-disposed editor, the pending set is replaced with a new empty set and each distinct queued font is passed to ensureFontIsLoaded inside a transaction."
+          ],
+          "invariants": [
+            "Pending fonts are deduplicated by Set identity.",
+            "Additional requests made while a batch is pending join the existing batch and do not schedule another microtask."
+          ],
+          "edgeCases": [
+            "An empty fonts array still schedules a microtask when no fonts are pending; the resulting batch is empty.",
+            "Duplicate references in fonts are loaded at most once in the batch because pending fonts are stored in a Set.",
+            "If the editor is disposed before the queued microtask executes, the callback returns without loading fonts or clearing the pending set."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Adds supplied font face references to the private fontsToLoad Set.",
+            "For a non-disposed queued batch, replaces fontsToLoad with a new empty Set before invoking font loading."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "queueMicrotask", "source": "global runtime", "kind": "external" },
+            { "name": "transact", "source": "imported transaction helper", "kind": "external" },
+            { "name": "ensureFontIsLoaded", "source": "FontManager", "kind": "internal" }
+          ],
+          "symbolReferences": ["TLFontFace"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Queues requested font faces for loading and batches requests received within the same microtask. Each distinct queued font is passed to the manager's loading routine unless the editor has been disposed before the batch executes.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "requestFonts is called with two distinct font face references, followed by another call before the microtask runs.",
+              "then": "Only one loading microtask is scheduled, and when it runs ensureFontIsLoaded is invoked once for each distinct requested font.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The queued microtask executes.",
+              "then": "No font-loading calls occur and the pending font set is not cleared by that callback.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "49473864a319c7c3f345610d045cca3de8e9a5ccb2b03f4ca921e1fdcacade1a"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.findOrCreateFontFace#method:FontManager.findOrCreateFontFace",
+        "unitKind": "method",
+        "name": "findOrCreateFontFace",
+        "qualifiedName": "FontManager.findOrCreateFontFace",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "startLine": 159,
+        "endLine": 206,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t}\n\n\tprivate findOrCreateFontFace(font: TLFontFace) {\n\t\tconst containerDocument = this.editor.getContainerDocument()\n\n\t\t// `findOrCreateFontFace` runs for every font on every editor mount, and a fresh\n\t\t// editor (e.g. switching documents) gets a fresh FontManager with no memory of the\n\t\t// previous one. The dedup below is an O(n) scan of the document's whole FontFaceSet,\n\t\t// so without a cache that scan re-ran on every mount (measurably expensive on mobile\n\t\t// Safari). Cache the resolved FontFace per document so repeated lookups - and\n\t\t// remounts - are O(1). Keyed per document for cross-window embedding.\n\t\tlet cache = fontFaceCacheByDocument.get(containerDocument)\n\t\tif (!cache) {\n\t\t\tcache = new Map()\n\t\t\tfontFaceCacheByDocument.set(containerDocument, cache)\n\t\t}\n\t\tconst key = getFontFaceCacheKey(font)\n\t\tconst cached = cache.get(key)\n\t\tif (cached) return cached\n\n\t\tconst fonts = containerDocument.fonts\n\t\t// On a cache miss we still scan once, so font faces added outside this manager\n\t\t// (e.g. preloaded fonts) are reused rather than duplicated.\n\t\tfor (const existing of fonts) {\n\t\t\tif (\n\t\t\t\texisting.family === font.family &&\n\t\t\t\tobjectMapEntries(defaultFontFaceDescriptors).every(\n\t\t\t\t\t([key, defaultValue]) => existing[key] === (font[key] ?? defaultValue)\n\t\t\t\t)\n\t\t\t) {\n\t\t\t\tcache.set(key, existing)\n\t\t\t\treturn existing\n\t\t\t}\n\t\t}\n\n\t\tconst url = this.assetUrls?.[font.src.url] ?? font.src.url\n\t\tconst instance = new FontFace(font.family, `url(${JSON.stringify(url)})`, {\n\t\t\t...mapObjectMapValues(defaultFontFaceDescriptors, (key) => font[key]),\n\t\t\tdisplay: 'swap',\n\t\t})\n\n\t\tfonts.add(instance)\n\t\tcache.set(key, instance)\n\n\t\treturn instance\n\t}\n",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.findOrCreateFontFace#method:FontManager.findOrCreateFontFace",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.findOrCreateFontFace",
+          "unitKind": "method",
+          "name": "findOrCreateFontFace",
+          "qualifiedName": "FontManager.findOrCreateFontFace",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "startLine": 159,
+          "endLine": 206,
+          "signature": "private findOrCreateFontFace(font: TLFontFace)",
+          "parameters": [
+            { "name": "font", "type": "TLFontFace", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "FontFace",
+          "decorators": [],
+          "modifiersApplied": ["private"],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "font is a valid TLFontFace value.",
+            "this.editor provides a container Document with a FontFaceSet at document.fonts."
+          ],
+          "postconditions": [
+            "Returns a FontFace matching the supplied family and default descriptor values.",
+            "The returned FontFace is cached for the container document and the font's cache key.",
+            "When a matching FontFace does not already exist, the newly created FontFace is added to the container document's FontFaceSet."
+          ],
+          "invariants": [
+            "The cache is scoped per container Document, preventing reuse across documents or windows.",
+            "A cached FontFace is returned without scanning the document's FontFaceSet.",
+            "Existing matching FontFace instances are reused rather than duplicated.",
+            "Newly created FontFace instances use font display mode swap."
+          ],
+          "edgeCases": [
+            "When no cache exists for the container document, a cache is created before lookup.",
+            "When the cache contains the font's key, the cached FontFace is returned immediately.",
+            "When the document already contains a matching family and all default descriptor values, that existing FontFace is cached and returned.",
+            "When the font source URL has no asset URL mapping, the original font source URL is used.",
+            "When the font source URL has an asset URL mapping, the mapped URL is used in the created FontFace.",
+            "When FontFace construction or adding the FontFace to the document fails, the error propagates to the caller."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Errors thrown by this.editor.getContainerDocument(), FontFace construction, or containerDocument.fonts.add(instance)"
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Mutates the per-document fontFaceCacheByDocument cache by creating document caches and storing resolved FontFace instances.",
+            "Mutates the container document's FontFaceSet when a new FontFace is created."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "this.editor.getContainerDocument", "source": "Editor instance", "kind": "internal" },
+            { "name": "getFontFaceCacheKey", "source": "local module function", "kind": "internal" },
+            { "name": "FontFace", "source": "Web Font Loading API", "kind": "external" },
+            { "name": "containerDocument.fonts.add", "source": "Document.fonts FontFaceSet", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "TLFontFace",
+            "fontFaceCacheByDocument",
+            "defaultFontFaceDescriptors",
+            "assetUrls",
+            "FontFace",
+            "Document.fonts"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Creates FontFace instances with family equal to font.family, source descriptor formatted as url(${JSON.stringify(resolvedUrl)}), descriptor values derived from font, and display set to swap.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Finds or creates a FontFace for the supplied font in the editor's container document. Repeated lookups for the same document and font descriptor reuse a cached or already-registered FontFace instead of creating duplicates.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "url(${JSON.stringify(url)})",
+              "role": "CSS font source format passed to the FontFace constructor."
+            },
+            {
+              "kind": "enum-value",
+              "value": "swap",
+              "role": "FontFace display descriptor applied to newly created font faces."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findOrCreateFontFace is called with that font.",
+              "then": "The existing FontFace is returned, cached for the document and key, and no new FontFace is added.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findOrCreateFontFace is called with a font whose source URL resolves to a mapped asset URL.",
+              "then": "A new FontFace is created using the mapped URL and display swap, added to the document's FontFaceSet, cached, and returned.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findOrCreateFontFace is called again with that key.",
+              "then": "The cached FontFace is returned without requiring another FontFaceSet scan or creating a duplicate.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "05977611282d1033bdc1641901463783f410a27d84f8aca9d984ec97830c7a05"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.toEmbeddedCssDeclaration#method:FontManager.toEmbeddedCssDeclaration",
+        "unitKind": "method",
+        "name": "toEmbeddedCssDeclaration",
+        "qualifiedName": "FontManager.toEmbeddedCssDeclaration",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+        "startLine": 208,
+        "endLine": 232,
+        "isBehavioral": true,
+        "source": "\t\tconst url = this.assetUrls?.[font.src.url] ?? font.src.url\n\t\tconst dataUrl = await FileHelpers.urlToDataUrl(url)\n\n\t\tconst src = compact([\n\t\t\t`url(\"${dataUrl}\")`,\n\t\t\tfont.src.format ? `format(${font.src.format})` : null,\n\t\t\tfont.src.tech ? `tech(${font.src.tech})` : null,\n\t\t]).join(' ')\n\t\treturn compact([\n\t\t\t`@font-face {`,\n\t\t\t`  font-family: \"${font.family}\";`,\n\t\t\tfont.ascentOverride ? `  ascent-override: ${font.ascentOverride};` : null,\n\t\t\tfont.descentOverride ? `  descent-override: ${font.descentOverride};` : null,\n\t\t\tfont.stretch ? `  font-stretch: ${font.stretch};` : null,\n\t\t\tfont.style ? `  font-style: ${font.style};` : null,\n\t\t\tfont.weight ? `  font-weight: ${font.weight};` : null,\n\t\t\tfont.featureSettings ? `  font-feature-settings: ${font.featureSettings};` : null,\n\t\t\tfont.lineGapOverride ? `  line-gap-override: ${font.lineGapOverride};` : null,\n\t\t\tfont.unicodeRange ? `  unicode-range: ${font.unicodeRange};` : null,\n\t\t\t`  src: ${src};`,\n\t\t\t`}`,\n\t\t]).join('\\n')\n\t}\n}\n",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.toEmbeddedCssDeclaration#method:FontManager.toEmbeddedCssDeclaration",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager.toEmbeddedCssDeclaration",
+          "unitKind": "method",
+          "name": "toEmbeddedCssDeclaration",
+          "qualifiedName": "FontManager.toEmbeddedCssDeclaration",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__FontManager#class:FontManager",
+          "startLine": 208,
+          "endLine": 232,
+          "signature": null,
+          "parameters": [
+            { "name": "font", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "Promise<string>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "font.src.url identifies a retrievable font resource.",
+            "FileHelpers.urlToDataUrl accepts the resolved source URL."
+          ],
+          "postconditions": [
+            "Returns a CSS @font-face declaration string.",
+            "The declaration uses a data URL for the font source.",
+            "Optional font descriptors are included only when their values are truthy.",
+            "The source format and technology hints are included when present."
+          ],
+          "invariants": [
+            "The assetUrls mapping is preferred over the original font source URL when a mapping exists.",
+            "The generated declaration contains the font family and src descriptors.",
+            "Optional descriptors preserve their supplied values without transformation."
+          ],
+          "edgeCases": [
+            "When assetUrls has no entry for font.src.url, the original font.src.url is passed to FileHelpers.urlToDataUrl.",
+            "When an assetUrls entry exists, that mapped URL is passed to FileHelpers.urlToDataUrl instead.",
+            "When format or tech is absent or falsy, its corresponding src descriptor is omitted.",
+            "When an optional font-face descriptor is absent or falsy, its CSS declaration line is omitted.",
+            "If URL-to-data-URL conversion fails, the resulting error propagates and no CSS declaration is returned."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Errors rejected by FileHelpers.urlToDataUrl"],
+            "reverts": [],
+            "onInvalidInput": "Not explicitly handled; invalid or unsupported input errors from URL conversion or subsequent processing propagate.",
+            "returnsOnError": null
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "FileHelpers.urlToDataUrl", "source": "FileHelpers", "kind": "external" },
+            { "name": "compact", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["FileHelpers", "assetUrls"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns a newline-separated CSS string in the form @font-face {, a quoted font-family declaration, zero or more optional descriptor declarations, a src declaration containing url(\"<dataUrl>\") with optional format(...) and tech(...) hints, and }.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Converts a font source and its optional font-face descriptors into an embedded CSS @font-face declaration. The source URL is converted to a data URL before being included in the declaration.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "@font-face {",
+              "role": "Opening CSS font-face rule emitted by the method."
+            },
+            {
+              "kind": "format-string",
+              "value": "  font-family: \"${font.family}\";",
+              "role": "CSS font-family declaration format."
+            },
+            {
+              "kind": "format-string",
+              "value": "url(\"${dataUrl}\")",
+              "role": "CSS source URL declaration format using the embedded data URL."
+            },
+            {
+              "kind": "format-string",
+              "value": "format(${font.src.format})",
+              "role": "Optional CSS source format hint."
+            },
+            {
+              "kind": "format-string",
+              "value": "tech(${font.src.tech})",
+              "role": "Optional CSS source technology hint."
+            },
+            { "kind": "format-string", "value": "  src: ${src};", "role": "CSS source declaration format." },
+            { "kind": "format-string", "value": "}", "role": "Closing CSS font-face rule emitted by the method." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "toEmbeddedCssDeclaration is called.",
+              "then": "It returns a CSS @font-face declaration containing font-family: \"Inter\";, src: url(\"data:font/woff2;base64,AAA\") format(woff2);, and no absent optional descriptor lines.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "toEmbeddedCssDeclaration is called.",
+              "then": "The mapped asset URL is converted and the resulting data URL is used in the src declaration instead of the original URL.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "toEmbeddedCssDeclaration is called.",
+              "then": "The returned declaration includes each corresponding descriptor line and includes tech(<value>) in the src declaration.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "2cc5555acf4ed40555e0337d314a44eb66955a6950baef70efaf8cc9e37c6b5e"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__getFontFaceCacheKey#function:getFontFaceCacheKey",
+        "unitKind": "function",
+        "name": "getFontFaceCacheKey",
+        "qualifiedName": "getFontFaceCacheKey",
+        "parentUnitId": null,
+        "startLine": 257,
+        "endLine": 264,
+        "isBehavioral": true,
+        "source": "\t\t),\n\t])\n}\n\n/**\n * Resets the per-document font-face cache. Only intended for tests.\n * @internal\n */",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__getFontFaceCacheKey#function:getFontFaceCacheKey",
+          "fileId": "packages/editor/src/lib/editor/managers/FontManager/FontManager.ts__getFontFaceCacheKey",
+          "unitKind": "function",
+          "name": "getFontFaceCacheKey",
+          "qualifiedName": "getFontFaceCacheKey",
+          "parentUnitId": null,
+          "startLine": 257,
+          "endLine": 264,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Derives the cache key used to identify a font-face entry in the font-face cache.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "f13ea537debe0bea90c27f4188bad6324eccc8389a440e0e9652003bc955b425"
+        }
+      }
+    ]
+  },
+  "out": ["packages/editor/src/lib/utils/areShapesContentEqual.ts"],
+  "in": ["packages/editor/src/lib/editor/managers/FontManager/FontManager.test.ts"],
+  "externals": ["@tldraw/state", "@tldraw/store", "@tldraw/tlschema", "@tldraw/utils"],
+  "impact": { "seeds": 9, "callers": 1, "impactedFiles": [] }
+}

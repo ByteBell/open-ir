@@ -1,0 +1,839 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "zustand",
+  "file": {
+    "relativePath": "src/middleware/persist.ts",
+    "language": "typescript",
+    "sizeBytes": 11947,
+    "tokenCount": 2987,
+    "model": "minimax/minimax-m3",
+    "analysedAt": "2026-09-06T15:25:20.523Z",
+    "module": {
+      "purpose": "Implements Zustand's persist middleware that transparently syncs store state with an external storage backend (e.g. localStorage). It provides rehydration on initialization, automatic persistence on state changes, version-based migration, partialize/merge customization, SSR safety, hydration lifecycle hooks, and concurrent-rehydrate race protection.",
+      "summary": "This file defines the persist middleware for the Zustand state management library. It exports a `persist` function that wraps a state creator to automatically persist state changes and rehydrate from storage on creation. Key capabilities include: configurable storage via `PersistStorage`/`StateStorage` interfaces; a `createJSONStorage` factory that adapts raw storage (like `window.localStorage`) into JSON-aware storage with optional reviver/replacer; `PersistOptions` for naming, partialize, version, migrate, merge, skipHydration, and onRehydrateStorage callbacks; a Thenable helper (`toThenable`) that unifies synchronous and Promise-based storage responses; race-safe rehydration via a `hydrationVersion` counter; and an augmented store API exposing `persist.setOptions`, `clearStorage`, `rehydrate`, `hasHydrated`, `onHydrate`, `onFinishHydration`, and `getOptions`. Type-level plumbing uses a `'zustand/persist'` mutator to extend the store type with a `persist` namespace while preserving `setState` overload signatures.",
+      "businessContext": "Persisting client state across page reloads is foundational for modern web apps (carts, auth tokens, UI preferences). If this middleware fails, users lose their session and unsaved state on every refresh, breaking core UX and often requiring re-authentication.",
+      "classes": [
+        "StateStorage (~L7-11): Raw key/value storage contract with sync or async getItem/setItem/removeItem",
+        "StorageValue (~L13-16): Wraps persisted state with an optional schema version number",
+        "PersistStorage (~L18-24): Storage contract that reads/writes StorageValue envelopes",
+        "JsonStorageOptions (~L26-29): Optional JSON.parse reviver and JSON.stringify replacer hooks",
+        "PersistOptions (~L63-121): Public configuration for the persist middleware",
+        "PersistListener (~L123): Callback signature invoked with state during hydration events",
+        "StorePersist (~L125-146): Conditional store shape augmented with a persist API namespace",
+        "Thenable (~L148-155): Minimal then/catch contract used to unify sync and async results",
+        "Persist (~L377-385): Public curried type signature for the exported persist middleware",
+        "Write (~L393): Utility mapped type that overlays U onto T",
+        "WithPersist (~L395): Composes Write with StorePersist for store mutator augmentation",
+        "PersistImpl (~L397-400): Internal function-type alias for the concrete persist implementation"
+      ],
+      "functions": [
+        "createJSONStorage (~L31-61): Wraps a StateStorage getter into JSON-aware PersistStorage with reviver/replacer",
+        "toThenable (~L157-185): Normalizes a sync/Promise-returning function into a chainable Thenable",
+        "persistImpl (~L187-375): Core persist middleware factory wiring set/get hooks, hydration, and persist API",
+        "persist (~L402): Public exported middleware bound to the Persist type signature"
+      ],
+      "keywords": [
+        "zustand",
+        "persist middleware",
+        "state rehydration",
+        "localStorage",
+        "JSON serialization",
+        "version migration",
+        "partialize",
+        "skipHydration",
+        "StoreMutatorIdentifier",
+        "Thenable"
+      ],
+      "ontologyConcepts": [
+        "State persistence",
+        "Rehydration lifecycle",
+        "Schema versioning and migration",
+        "Middleware composition",
+        "Type-level store augmentation",
+        "SSR-safe storage access",
+        "Concurrent operation cancellation"
+      ],
+      "businessEntities": [
+        "Store",
+        "PersistedState",
+        "StorageValue",
+        "Storage backend",
+        "Migration payload",
+        "Hydration listener"
+      ],
+      "systemCapabilities": [
+        "Persist store state to pluggable storage",
+        "Rehydrate state on store creation with race protection",
+        "Migrate persisted state across schema versions",
+        "Customize which slice of state is persisted via partialize",
+        "Merge persisted state with current state using a user strategy",
+        "Expose lifecycle hooks for hydration start/finish and rehydrate callbacks"
+      ],
+      "configDependencies": [
+        "options.name",
+        "options.storage",
+        "options.partialize",
+        "options.onRehydrateStorage",
+        "options.version",
+        "options.migrate",
+        "options.merge",
+        "options.skipHydration",
+        "JsonStorageOptions.reviver",
+        "JsonStorageOptions.replacer",
+        "window.localStorage"
+      ],
+      "importsInternal": [
+        {
+          "spec": "../vanilla.ts",
+          "symbols": ["StateCreator", "StoreApi", "StoreMutatorIdentifier"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "src/vanilla.ts",
+          "resolvedFileId": "src/vanilla.ts",
+          "resolvedHint": "src/vanilla.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [
+          "console.warn when storage unavailable and setState called (line 211)",
+          "console.error when version mismatch and no migrate function (line 287)"
+        ],
+        "network": [],
+        "env": ["reads window.localStorage by default via createJSONStorage(() => window.localStorage) (line 190)"],
+        "fs": ["calls storage.getItem / storage.setItem / storage.removeItem (lines 50, 57, 58, 223, 270, 349)"],
+        "process": [],
+        "mutationOfArg": [
+          "api.setState is replaced with wrapper that calls setItem (lines 229-234)",
+          "api.getInitialState is assigned (line 245)",
+          "api.persist object is attached (line 337)",
+          "options is reassigned in setOptions (lines 339-347)",
+          "storage local is reassigned when newOptions.storage provided (lines 344-346)",
+          "hydrationListeners and finishHydrationListeners Sets are mutated (lines 354-367)"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "StateStorage",
+          "shape": "interface StateStorage<R = unknown> { getItem(name: string): string | null | Promise<string | null>; setItem(name: string, value: string): R; removeItem(name: string): R; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StorageValue",
+          "shape": "type StorageValue<S> = { state: S; version?: number; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "PersistStorage",
+          "shape": "interface PersistStorage<S, R = unknown> { getItem(name: string): StorageValue<S> | null | Promise<StorageValue<S> | null>; setItem(name: string, value: StorageValue<S>): R; removeItem(name: string): R; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "JsonStorageOptions",
+          "shape": "type JsonStorageOptions = { reviver?: (key: string, value: unknown) => unknown; replacer?: (key: string, value: unknown) => unknown; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "createJSONStorage",
+          "shape": "function createJSONStorage<S, R = unknown>(getStorage: () => StateStorage<R>, options?: JsonStorageOptions): PersistStorage<S, unknown> | undefined",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "PersistOptions",
+          "shape": "interface PersistOptions<S, PersistedState = S, PersistReturn = unknown> { name: string; storage?: PersistStorage<PersistedState, PersistReturn> | undefined; partialize?: (state: S) => PersistedState; onRehydrateStorage?: (state: S) => ((state?: S, error?: unknown) => void) | void; version?: number; migrate?: (persistedState: unknown, version: number) => PersistedState | Promise<PersistedState>; merge?: (persistedState: unknown, currentState: S) => S; skipHydration?: boolean; }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "persist", "shape": "const persist: Persist", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "contractsConsumed": [],
+      "sectionMap": [
+        {
+          "name": "Storage type declarations",
+          "intent": "Declares StateStorage, StorageValue, PersistStorage, JsonStorageOptions interfaces used by the middleware.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 7, "endLine": 29 }
+        },
+        {
+          "name": "createJSONStorage",
+          "intent": "Factory that wraps a StateStorage with JSON parse/stringify and optional reviver/replacer; returns undefined on SSR.",
+          "structureKind": "branch",
+          "predicate": "storage = getStorage()",
+          "branchOutcomes": ["success: build persistStorage object", "throw: return undefined"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 31, "endLine": 61 }
+        },
+        {
+          "name": "getItem async/sync branch",
+          "intent": "Returns parsed StorageValue, handling sync and Promise storage results transparently.",
+          "structureKind": "branch",
+          "predicate": "str instanceof Promise",
+          "branchOutcomes": ["Promise: str.then(parse)", "sync: parse(str)"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 43, "endLine": 55 }
+        },
+        {
+          "name": "PersistOptions interface",
+          "intent": "Configurable options for the persist middleware including storage, partialize, version, migrate, merge, skipHydration.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 63, "endLine": 121 }
+        },
+        {
+          "name": "toThenable helper",
+          "intent": "Wraps a function returning sync/Promise/Thenable result into a Thenable with then/catch and error handling.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 157, "endLine": 185 }
+        },
+        {
+          "name": "persistImpl middleware body",
+          "intent": "Core middleware: initializes options, handles missing storage, wraps setState, runs hydrate, exposes persist API.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 187, "endLine": 375 }
+        },
+        {
+          "name": "Storage unavailable fallback",
+          "intent": "If storage falsy, call config with set wrapper that warns and forwards to set.",
+          "structureKind": "branch",
+          "predicate": "!storage",
+          "branchOutcomes": [
+            "storage missing: invoke config with warning wrapper and return",
+            "storage present: continue normal flow"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 208, "endLine": 219 }
+        },
+        {
+          "name": "hydrate function",
+          "intent": "Rehydrates state from storage with version check, optional migration, merge, and post-rehydration callback; supports concurrent invalidation via hydrationVersion.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 253, "endLine": 335 }
+        },
+        {
+          "name": "Version mismatch / migrate branch",
+          "intent": "If stored version differs and migrate provided, run migrate (sync or async); else log error and skip migration.",
+          "structureKind": "branch",
+          "predicate": "typeof deserializedStorageValue.version === 'number' && deserializedStorageValue.version !== options.version",
+          "branchOutcomes": [
+            "mismatch + migrate: run migrate (Promise or sync)",
+            "mismatch + no migrate: console.error, fall through",
+            "match: use deserializedStorageValue.state directly"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 272, "endLine": 295 }
+        },
+        {
+          "name": "persist API exposure",
+          "intent": "Attaches setOptions, clearStorage, rehydrate, hasHydrated, onHydrate, onFinishHydration, getOptions onto api.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 337, "endLine": 368 }
+        },
+        {
+          "name": "Initial hydration trigger",
+          "intent": "Calls hydrate() at middleware setup unless skipHydration is true.",
+          "structureKind": "branch",
+          "predicate": "!options.skipHydration",
+          "branchOutcomes": ["skipHydration false: hydrate()", "skipHydration true: skip"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 370, "endLine": 374 }
+        },
+        {
+          "name": "Type aliases and module augmentation",
+          "intent": "Declares Persist, WithPersist, PersistImpl types and augments StoreMutators with 'zustand/persist'.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 377, "endLine": 402 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "StateStorage",
+          "signature": "export interface StateStorage<R = unknown> {",
+          "generics": "R = unknown",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 7, "endLine": 7 }
+        },
+        {
+          "kind": "type",
+          "name": "StorageValue",
+          "signature": "export type StorageValue<S> = {",
+          "generics": "S",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 13, "endLine": 13 }
+        },
+        {
+          "kind": "interface",
+          "name": "PersistStorage",
+          "signature": "export interface PersistStorage<S, R = unknown> {",
+          "generics": "S, R = unknown",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 18, "endLine": 18 }
+        },
+        {
+          "kind": "function",
+          "name": "createJSONStorage",
+          "signature": "export function createJSONStorage<S, R = unknown>(\n  getStorage: () => StateStorage<R>,\n  options?: JsonStorageOptions,\n): PersistStorage<S, unknown> | undefined {",
+          "generics": "S, R = unknown",
+          "decorators": [],
+          "returnType": "PersistStorage<S, unknown> | undefined",
+          "exported": true,
+          "anchor": { "startLine": 31, "endLine": 34 }
+        },
+        {
+          "kind": "interface",
+          "name": "PersistOptions",
+          "signature": "export interface PersistOptions<\n  S,\n  PersistedState = S,\n  PersistReturn = unknown,\n> {",
+          "generics": "S, PersistedState = S, PersistReturn = unknown",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 63, "endLine": 67 }
+        },
+        {
+          "kind": "const",
+          "name": "persist",
+          "signature": "export const persist = persistImpl as unknown as Persist",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 402, "endLine": 402 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "StateStorage",
+          "shape": "  getItem: (name: string) => string | null | Promise<string | null>\n  setItem: (name: string, value: string) => R\n  removeItem: (name: string) => R",
+          "discriminant": null,
+          "anchor": { "startLine": 7, "endLine": 11 }
+        },
+        {
+          "kind": "type",
+          "name": "StorageValue",
+          "shape": "{\n  state: S\n  version?: number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 13, "endLine": 16 }
+        },
+        {
+          "kind": "interface",
+          "name": "PersistStorage",
+          "shape": "  getItem: (\n    name: string,\n  ) => StorageValue<S> | null | Promise<StorageValue<S> | null>\n  setItem: (name: string, value: StorageValue<S>) => R\n  removeItem: (name: string) => R",
+          "discriminant": null,
+          "anchor": { "startLine": 18, "endLine": 24 }
+        },
+        {
+          "kind": "type",
+          "name": "JsonStorageOptions",
+          "shape": "{\n  reviver?: (key: string, value: unknown) => unknown\n  replacer?: (key: string, value: unknown) => unknown\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 26, "endLine": 29 }
+        },
+        {
+          "kind": "interface",
+          "name": "PersistOptions",
+          "shape": "  /** Name of the storage (must be unique) */\n  name: string\n  /**\n   * Use a custom persist storage.\n   *\n   * Combining `createJSONStorage` helps creating a persist storage\n   * with JSON.parse and JSON.stringify.\n   *\n   * @default createJSONStorage(() => window.localStorage)\n   */\n  storage?: PersistStorage<PersistedState, PersistReturn> | undefined\n  /**\n   * Filter the persisted value.\n   *\n   * @params state The state's value\n   */\n  partialize?: (state: S) => PersistedState\n  /**\n   * A function returning another (optional) function.\n   * The main function will be called before the state rehydration.\n   * The returned function will be called after the state rehydration or when an error occurred.\n   */\n  onRehydrateStorage?: (\n    state: S,\n  ) => ((state?: S, error?: unknown) => void) | void\n  /**\n   * If the stored state's version mismatch the one specified here, the storage will not be used.\n   * This is useful when adding a breaking change to your store.\n   */\n  version?: number\n  /**\n   * A function to perform persisted state migration.\n   * This function will be called when persisted state versions mismatch with the one specified here.\n   */\n  migrate?: (\n    persistedState: unknown,\n    version: number,\n  ) => PersistedState | Promise<PersistedState>\n  /**\n   * A function to perform custom hydration merges when combining the stored state with the current one.\n   * By default, this function does a shallow merge.\n   */\n  merge?: (persistedState: unknown, currentState: S) => S\n\n  /**\n   * An optional boolean that will prevent the persist middleware from triggering hydration on initialization,\n   * This allows you to call `rehydrate()` at a specific point in your apps rendering life-cycle.\n   *\n   * This is useful in SSR application.\n   *\n   * @default false\n   */\n  skipHydration?: boolean",
+          "discriminant": null,
+          "anchor": { "startLine": 63, "endLine": 121 }
+        },
+        {
+          "kind": "type",
+          "name": "PersistListener",
+          "shape": "(state: S) => void",
+          "discriminant": null,
+          "anchor": { "startLine": 123, "endLine": 123 }
+        },
+        {
+          "kind": "type",
+          "name": "StorePersist",
+          "shape": "S extends {\n  getState: () => infer T\n  setState: {\n    // capture both overloads of setState\n    (...args: infer Sa1): infer Sr1\n    (...args: infer Sa2): infer Sr2\n  }\n}\n  ? {\n      setState(...args: Sa1): Sr1 | Pr\n      setState(...args: Sa2): Sr2 | Pr\n      persist: {\n        setOptions: (options: Partial<PersistOptions<T, Ps, Pr>>) => void\n        clearStorage: () => void\n        rehydrate: () => Promise<void> | void\n        hasHydrated: () => boolean\n        onHydrate: (fn: PersistListener<T>) => () => void\n        onFinishHydration: (fn: PersistListener<T>) => () => void\n        getOptions: () => Partial<PersistOptions<T, Ps, Pr>>\n      }\n    }\n  : never",
+          "discriminant": null,
+          "anchor": { "startLine": 125, "endLine": 146 }
+        },
+        {
+          "kind": "type",
+          "name": "Thenable",
+          "shape": "{\n  then<V>(\n    onFulfilled: (value: Value) => V | Promise<V> | Thenable<V>,\n  ): Thenable<V>\n  catch<V>(\n    onRejected: (reason: Error) => V | Promise<V> | Thenable<V>,\n  ): Thenable<V>\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 148, "endLine": 155 }
+        },
+        {
+          "kind": "type",
+          "name": "Persist",
+          "shape": "<\n  T,\n  Mps extends [StoreMutatorIdentifier, unknown][] = [],\n  Mcs extends [StoreMutatorIdentifier, unknown][] = [],\n  U = T,\n>(\n  initializer: StateCreator<T, [...Mps, ['zustand/persist', unknown]], Mcs>,\n  options: PersistOptions<T, U>,\n) => StateCreator<T, Mps, [['zustand/persist', U], ...Mcs]>",
+          "discriminant": null,
+          "anchor": { "startLine": 377, "endLine": 385 }
+        },
+        {
+          "kind": "type",
+          "name": "Write",
+          "shape": "Omit<T, keyof U> & U",
+          "discriminant": null,
+          "anchor": { "startLine": 393, "endLine": 393 }
+        },
+        {
+          "kind": "type",
+          "name": "WithPersist",
+          "shape": "Write<S, StorePersist<S, A, unknown>>",
+          "discriminant": null,
+          "anchor": { "startLine": 395, "endLine": 395 }
+        },
+        {
+          "kind": "type",
+          "name": "PersistImpl",
+          "shape": "<T>(\n  storeInitializer: StateCreator<T, [], []>,\n  options: PersistOptions<T, T>,\n) => StateCreator<T, [], []>",
+          "discriminant": null,
+          "anchor": { "startLine": 397, "endLine": 400 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "getStorage throws (e.g., SSR where window.localStorage undefined)",
+          "handled": true,
+          "behavior": "createJSONStorage catches and returns undefined; persist middleware then takes the !storage branch, calling config with a set wrapper that warns to console.",
+          "anchor": { "startLine": 36, "endLine": 41 }
+        },
+        {
+          "inputShape": "storage.getItem returns null",
+          "handled": true,
+          "behavior": "parse returns null; hydrate treats null deserializedStorageValue as falsy and returns [false, undefined], merging undefined (no change).",
+          "anchor": { "startLine": 44, "endLine": 49 }
+        },
+        {
+          "inputShape": "storage.getItem returns a Promise",
+          "handled": true,
+          "behavior": "getItem returns str.then(parse); hydrate chains a Thenable on it.",
+          "anchor": { "startLine": 50, "endLine": 55 }
+        },
+        {
+          "inputShape": "version mismatch with migrate function returning Promise",
+          "handled": true,
+          "behavior": "Migration awaited; result forwarded as [true, result].",
+          "anchor": { "startLine": 282, "endLine": 285 }
+        },
+        {
+          "inputShape": "version mismatch without migrate function",
+          "handled": true,
+          "behavior": "console.error logged; no migration; deserializedStorageValue.state is not used (fallthrough returns [false, undefined]).",
+          "anchor": { "startLine": 287, "endLine": 295 }
+        },
+        {
+          "inputShape": "Concurrent rehydrate() calls",
+          "handled": true,
+          "behavior": "hydrationVersion increments; stale callbacks short-circuit when currentVersion !== hydrationVersion.",
+          "anchor": { "startLine": 262, "endLine": 334 }
+        },
+        {
+          "inputShape": "skipHydration: true",
+          "handled": true,
+          "behavior": "Initial hydrate() call skipped; user must call api.persist.rehydrate() manually.",
+          "anchor": { "startLine": 370, "endLine": 374 }
+        },
+        {
+          "inputShape": "postRehydrationCallback mutates state synchronously",
+          "handled": true,
+          "behavior": "stateFromStorage updated to get() after callback to avoid being overwritten.",
+          "anchor": { "startLine": 319, "endLine": 326 }
+        },
+        {
+          "inputShape": "Storage setItem/removeItem throws or returns Promise",
+          "handled": false,
+          "behavior": "No try/catch around setItem/removeItem in persistImpl; errors propagate to caller of setState.",
+          "anchor": { "startLine": 221, "endLine": 234 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "Error from getStorage() invocation (e.g., ReferenceError to window)",
+          "caught": "createJSONStorage try/catch",
+          "action": "return undefined",
+          "fallback": "persist middleware falls into !storage branch and warns on set",
+          "anchor": { "startLine": 36, "endLine": 41 }
+        },
+        {
+          "thrown": "any exception thrown by fn inside toThenable",
+          "caught": "toThenable try/catch",
+          "action": "returns Thenable whose .then is no-op and .catch invokes onRejected with the error",
+          "fallback": "catch branch of hydrate calls postRehydrationCallback?.(undefined, e)",
+          "anchor": { "startLine": 162, "endLine": 184 }
+        },
+        {
+          "thrown": "Error from storage.getItem or migrate",
+          "caught": "hydrate .catch",
+          "action": "if currentVersion still matches, invoke postRehydrationCallback with (undefined, e)",
+          "fallback": null,
+          "anchor": { "startLine": 328, "endLine": 334 }
+        },
+        {
+          "thrown": "Version mismatch with no migrate",
+          "caught": null,
+          "action": "console.error logged; falls through returning [false, undefined]",
+          "fallback": "no migration performed",
+          "anchor": { "startLine": 287, "endLine": 295 }
+        },
+        {
+          "thrown": "Warning when storage unavailable and set called",
+          "caught": null,
+          "action": "console.warn with message about being unable to update item",
+          "fallback": "still calls set(...args)",
+          "anchor": { "startLine": 211, "endLine": 214 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "env",
+          "description": "Assumes a browser-like environment with window.localStorage available at default storage factory call.",
+          "anchor": { "startLine": 190, "endLine": 190 }
+        },
+        {
+          "kind": "env",
+          "description": "createJSONStorage caller may rely on SSR safety — getStorage may throw when window is undefined.",
+          "anchor": { "startLine": 36, "endLine": 41 }
+        },
+        {
+          "kind": "platform",
+          "description": "Assumes Promise is available (used in instanceof Promise checks).",
+          "anchor": { "startLine": 51, "endLine": 164 }
+        },
+        {
+          "kind": "caller",
+          "description": "Assumes options.storage, when provided, implements PersistStorage contract with getItem/setItem/removeItem.",
+          "anchor": { "startLine": 206, "endLine": 270 }
+        },
+        {
+          "kind": "caller",
+          "description": "Assumes options.partialize returns a serializable subset of state suitable for JSON.stringify.",
+          "anchor": { "startLine": 191, "endLine": 222 }
+        },
+        {
+          "kind": "caller",
+          "description": "Assumes options.merge and options.migrate (if provided) conform to documented signatures.",
+          "anchor": { "startLine": 102, "endLine": 110 }
+        },
+        {
+          "kind": "init-order",
+          "description": "State from storage is merged into configResult before initial render via getInitialState assignment.",
+          "anchor": { "startLine": 245, "endLine": 245 }
+        },
+        {
+          "kind": "schema",
+          "description": "Stored JSON must conform to StorageValue<S> = { state: S, version?: number }; non-numeric version is treated as no-version (always matches).",
+          "anchor": { "startLine": 13, "endLine": 274 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What happens if storage.setItem returns a Promise but the wrapped setState call doesn't await it?",
+          "affects": "persistence ordering and error propagation for async storage backends",
+          "anchor": { "startLine": 229, "endLine": 234 },
+          "resolution": null
+        },
+        {
+          "question": "What if options.name is undefined or empty? Storage calls would pass undefined as name.",
+          "affects": "behavior of storage.getItem/setItem/removeItem keying",
+          "anchor": { "startLine": 69, "endLine": 223 },
+          "resolution": null
+        },
+        {
+          "question": "What if onRehydrateStorage returns a value (not void) that is not a function?",
+          "affects": "postRehydrationCallback invocation semantics",
+          "anchor": { "startLine": 266, "endLine": 267 },
+          "resolution": null
+        },
+        {
+          "question": "What if options.merge returns a value that is not assignable to S?",
+          "affects": "state type safety post-hydration",
+          "anchor": { "startLine": 302, "endLine": 305 },
+          "resolution": null
+        },
+        {
+          "question": "What is the behavior when storage.getItem resolves with an object missing both state and version?",
+          "affects": "merge target and version branch",
+          "anchor": { "startLine": 271, "endLine": 295 },
+          "resolution": null
+        },
+        {
+          "question": "Should hydrate's catch handler invoke onFinishHydration listeners on error? Currently it only calls postRehydrationCallback.",
+          "affects": "completion notification contract",
+          "anchor": { "startLine": 328, "endLine": 334 },
+          "resolution": null
+        }
+      ],
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [],
+      "language": "typescript",
+      "moduleLayout": [
+        "import type { StateCreator, StoreApi, StoreMutatorIdentifier } from '../vanilla.ts'",
+        "interface StateStorage",
+        "type StorageValue",
+        "interface PersistStorage",
+        "type JsonStorageOptions",
+        "function createJSONStorage",
+        "interface PersistOptions",
+        "type PersistListener",
+        "type StorePersist",
+        "type Thenable",
+        "const toThenable",
+        "const persistImpl",
+        "type Persist",
+        "declare module '../vanilla'",
+        "type Write",
+        "type WithPersist",
+        "type PersistImpl",
+        "const persist"
+      ],
+      "moduleLevelCode": "import type {\n  StateCreator,\n  StoreApi,\n  StoreMutatorIdentifier,\n} from '../vanilla.ts'",
+      "exports": [
+        { "name": "StateStorage", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StorageValue", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "PersistStorage", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "JsonStorageOptions", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "createJSONStorage", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "PersistOptions", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "persist", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "StateCreator", "module": "../vanilla.ts", "alias": null, "kind": "internal" },
+        { "symbol": "StoreApi", "module": "../vanilla.ts", "alias": null, "kind": "internal" },
+        { "symbol": "StoreMutatorIdentifier", "module": "../vanilla.ts", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "src/middleware/persist.ts__StateStorage_1#interface:StateStorage",
+        "unitKind": "interface",
+        "name": "StateStorage",
+        "qualifiedName": "StateStorage",
+        "parentUnitId": null,
+        "startLine": 7,
+        "endLine": 11,
+        "isBehavioral": false,
+        "source": "export interface StateStorage<R = unknown> {\n  getItem: (name: string) => string | null | Promise<string | null>\n  setItem: (name: string, value: string) => R\n  removeItem: (name: string) => R\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__StorageValue_2#type_alias:StorageValue",
+        "unitKind": "type_alias",
+        "name": "StorageValue",
+        "qualifiedName": "StorageValue",
+        "parentUnitId": null,
+        "startLine": 13,
+        "endLine": 16,
+        "isBehavioral": false,
+        "source": "export type StorageValue<S> = {\n  state: S\n  version?: number\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__PersistStorage_3#interface:PersistStorage",
+        "unitKind": "interface",
+        "name": "PersistStorage",
+        "qualifiedName": "PersistStorage",
+        "parentUnitId": null,
+        "startLine": 18,
+        "endLine": 24,
+        "isBehavioral": false,
+        "source": "export interface PersistStorage<S, R = unknown> {\n  getItem: (\n    name: string,\n  ) => StorageValue<S> | null | Promise<StorageValue<S> | null>\n  setItem: (name: string, value: StorageValue<S>) => R\n  removeItem: (name: string) => R\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__JsonStorageOptions_4#type_alias:JsonStorageOptions",
+        "unitKind": "type_alias",
+        "name": "JsonStorageOptions",
+        "qualifiedName": "JsonStorageOptions",
+        "parentUnitId": null,
+        "startLine": 26,
+        "endLine": 29,
+        "isBehavioral": false,
+        "source": "type JsonStorageOptions = {\n  reviver?: (key: string, value: unknown) => unknown\n  replacer?: (key: string, value: unknown) => unknown\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__createJSONStorage_5#function:createJSONStorage",
+        "unitKind": "function",
+        "name": "createJSONStorage",
+        "qualifiedName": "createJSONStorage",
+        "parentUnitId": null,
+        "startLine": 31,
+        "endLine": 33,
+        "isBehavioral": true,
+        "source": "export function createJSONStorage<S, R = unknown>(\n  getStorage: () => StateStorage<R>,\n  options?: JsonStorageOptions,"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__PersistOptions_6#interface:PersistOptions",
+        "unitKind": "interface",
+        "name": "PersistOptions",
+        "qualifiedName": "PersistOptions",
+        "parentUnitId": null,
+        "startLine": 63,
+        "endLine": 66,
+        "isBehavioral": false,
+        "source": "export interface PersistOptions<\n  S,\n  PersistedState = S,\n  PersistReturn = unknown,"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__PersistListener_7#type_alias:PersistListener",
+        "unitKind": "type_alias",
+        "name": "PersistListener",
+        "qualifiedName": "PersistListener",
+        "parentUnitId": null,
+        "startLine": 123,
+        "endLine": 132,
+        "isBehavioral": false,
+        "source": "type PersistListener<S> = (state: S) => void\n\ntype StorePersist<S, Ps, Pr> = S extends {\n  getState: () => infer T\n  setState: {\n    // capture both overloads of setState\n    (...args: infer Sa1): infer Sr1\n    (...args: infer Sa2): infer Sr2\n  }\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__StorePersist_8#type_alias:StorePersist",
+        "unitKind": "type_alias",
+        "name": "StorePersist",
+        "qualifiedName": "StorePersist",
+        "parentUnitId": null,
+        "startLine": 125,
+        "endLine": 132,
+        "isBehavioral": false,
+        "source": "type StorePersist<S, Ps, Pr> = S extends {\n  getState: () => infer T\n  setState: {\n    // capture both overloads of setState\n    (...args: infer Sa1): infer Sr1\n    (...args: infer Sa2): infer Sr2\n  }\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__Thenable_9#type_alias:Thenable",
+        "unitKind": "type_alias",
+        "name": "Thenable",
+        "qualifiedName": "Thenable",
+        "parentUnitId": null,
+        "startLine": 148,
+        "endLine": 155,
+        "isBehavioral": false,
+        "source": "type Thenable<Value> = {\n  then<V>(\n    onFulfilled: (value: Value) => V | Promise<V> | Thenable<V>,\n  ): Thenable<V>\n  catch<V>(\n    onRejected: (reason: Error) => V | Promise<V> | Thenable<V>,\n  ): Thenable<V>\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__toThenable_10#function:toThenable",
+        "unitKind": "function",
+        "name": "toThenable",
+        "qualifiedName": "toThenable",
+        "parentUnitId": null,
+        "startLine": 157,
+        "endLine": 185,
+        "isBehavioral": true,
+        "source": "const toThenable =\n  <Result, Input>(\n    fn: (input: Input) => Result | Promise<Result> | Thenable<Result>,\n  ) =>\n  (input: Input): Thenable<Result> => {\n    try {\n      const result = fn(input)\n      if (result instanceof Promise) {\n        return result as Thenable<Result>\n      }\n      return {\n        then(onFulfilled) {\n          return toThenable(onFulfilled)(result as Result)\n        },\n        catch(_onRejected) {\n          return this as Thenable<any>\n        },\n      }\n    } catch (e: any) {\n      return {\n        then(_onFulfilled) {\n          return this as Thenable<any>\n        },\n        catch(onRejected) {\n          return toThenable(onRejected)(e)\n        },\n      }\n    }\n  }"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__persistImpl_11#function:persistImpl",
+        "unitKind": "function",
+        "name": "persistImpl",
+        "qualifiedName": "persistImpl",
+        "parentUnitId": null,
+        "startLine": 187,
+        "endLine": 375,
+        "isBehavioral": true,
+        "source": "const persistImpl: PersistImpl = (config, baseOptions) => (set, get, api) => {\n  type S = ReturnType<typeof config>\n  let options = {\n    storage: createJSONStorage<S, void>(() => window.localStorage),\n    partialize: (state: S) => state,\n    version: 0,\n    merge: (persistedState: unknown, currentState: S) => ({\n      ...currentState,\n      ...(persistedState as object),\n    }),\n    ...baseOptions,\n  }\n\n  let hasHydrated = false\n  // Counter to track hydration versions and prevent race conditions\n  // when multiple rehydrate() calls happen concurrently\n  let hydrationVersion = 0\n  const hydrationListeners = new Set<PersistListener<S>>()\n  const finishHydrationListeners = new Set<PersistListener<S>>()\n  let storage = options.storage\n\n  if (!storage) {\n    return config(\n      (...args) => {\n        console.warn(\n          `[zustand persist middleware] Unable to update item '${options.name}', the given storage is currently unavailable.`,\n        )\n        set(...(args as Parameters<typeof set>))\n      },\n      get,\n      api,\n    )\n  }\n\n  const setItem = () => {\n    const state = options.partialize({ ...get() })\n    return (storage as PersistStorage<S, unknown>).setItem(options.name, {\n      state,\n      version: options.version,\n    })\n  }\n\n  const savedSetState = api.setState\n\n  api.setState = (state, replace) => {\n    savedSetState(state, replace as any)\n    return setItem()\n  }\n\n  const configResult = config(\n    (...args) => {\n      set(...(args as Parameters<typeof set>))\n      return setItem()\n    },\n    get,\n    api,\n  )\n\n  api.getInitialState = () => configResult\n\n  // a workaround to solve the issue of not storing rehydrated state in sync storage\n  // the set(state) value would be later overridden with initial state by create()\n  // to avoid this, we merge the state from localStorage into the initial state.\n  let stateFromStorage: S | undefined\n\n  // rehydrate initial state with existing stored state\n  const hydrate = () => {\n    if (!storage) return\n\n    // On the first invocation of 'hydrate', state will not yet be defined (this is\n    // true for both the 'asynchronous' and 'synchronous' case). Pass 'configResult'\n    // as a backup  to 'get()' so listeners and 'onRehydrateStorage' are called with\n    // the latest available state.\n\n    // Increment version to invalidate any in-flight hydration\n    const currentVersion = ++hydrationVersion\n    hasHydrated = false\n    hydrationListeners.forEach((cb) => cb(get() ?? configResult))\n\n    const postRehydrationCallback =\n      options.onRehydrateStorage?.(get() ?? configResult) || undefined\n\n    // bind is used to avoid `TypeError: Illegal invocation` error\n    return toThenable(storage.getItem.bind(storage))(options.name)\n      .then((deserializedStorageValue) => {\n        if (deserializedStorageValue) {\n          if (\n            typeof deserializedStorageValue.version === 'number' &&\n            deserializedStorageValue.version !== options.version\n          ) {\n            if (options.migrate) {\n              const migration = options.migrate(\n                deserializedStorageValue.state,\n                deserializedStorageValue.version,\n              )\n              if (migration instanceof Promise) {\n                return migration.then((result) => [true, result] as const)\n              }\n              return [true, migration] as const\n            }\n            console.error(\n              `State loaded from storage couldn't be migrated since no migrate function was provided`,\n            )\n          } else {\n            return [false, deserializedStorageValue.state] as const\n          }\n        }\n        return [false, undefined] as const\n      })\n      .then((migrationResult) => {\n        // Abort if a newer hydration has started\n        if (currentVersion !== hydrationVersion) {\n          return\n        }\n        const [migrated, migratedState] = migrationResult\n        stateFromStorage = options.merge(\n          migratedState as S,\n          get() ?? configResult,\n        )\n\n        set(stateFromStorage as S, true)\n        if (migrated) {\n          return setItem()\n        }\n      })\n      .then(() => {\n        // Abort if a newer hydration has started\n        if (currentVersion !== hydrationVersion) {\n          return\n        }\n        postRehydrationCallback?.(get(), undefined)\n\n        // It's possible that 'postRehydrationCallback' updated the state. To ensure\n        // that isn't overwritten when returning 'stateFromStorage' below\n        // (synchronous-case only), update 'stateFromStorage' to point to the latest\n        // state. In the asynchronous case, 'stateFromStorage' isn't used after this\n        // callback, so there's no harm in updating it to match the latest state.\n        stateFromStorage = get()\n        hasHydrated = true\n        finishHydrationListeners.forEach((cb) => cb(stateFromStorage as S))\n      })\n      .catch((e: Error) => {\n        // Abort if a newer hydration has started\n        if (currentVersion !== hydrationVersion) {\n          return\n        }\n        postRehydrationCallback?.(undefined, e)\n      })\n  }\n\n  ;(api as StoreApi<S> & StorePersist<StoreApi<S>, S, unknown>).persist = {\n    setOptions: (newOptions) => {\n      options = {\n        ...options,\n        ...newOptions,\n      }\n\n      if (newOptions.storage) {\n        storage = newOptions.storage\n      }\n    },\n    clearStorage: () => {\n      storage?.removeItem(options.name)\n    },\n    getOptions: () => options,\n    rehydrate: () => hydrate() as Promise<void>,\n    hasHydrated: () => hasHydrated,\n    onHydrate: (cb) => {\n      hydrationListeners.add(cb)\n\n      return () => {\n        hydrationListeners.delete(cb)\n      }\n    },\n    onFinishHydration: (cb) => {\n      finishHydrationListeners.add(cb)\n\n      return () => {\n        finishHydrationListeners.delete(cb)\n      }\n    },\n  }\n\n  if (!options.skipHydration) {\n    hydrate()\n  }\n\n  return stateFromStorage || configResult\n}"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__Persist_12#type_alias:Persist",
+        "unitKind": "type_alias",
+        "name": "Persist",
+        "qualifiedName": "Persist",
+        "parentUnitId": null,
+        "startLine": 377,
+        "endLine": 381,
+        "isBehavioral": false,
+        "source": "type Persist = <\n  T,\n  Mps extends [StoreMutatorIdentifier, unknown][] = [],\n  Mcs extends [StoreMutatorIdentifier, unknown][] = [],\n  U = T,"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__Write_13#type_alias:Write",
+        "unitKind": "type_alias",
+        "name": "Write",
+        "qualifiedName": "Write",
+        "parentUnitId": null,
+        "startLine": 393,
+        "endLine": 393,
+        "isBehavioral": false,
+        "source": "type Write<T, U> = Omit<T, keyof U> & U"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__WithPersist_14#type_alias:WithPersist",
+        "unitKind": "type_alias",
+        "name": "WithPersist",
+        "qualifiedName": "WithPersist",
+        "parentUnitId": null,
+        "startLine": 395,
+        "endLine": 395,
+        "isBehavioral": false,
+        "source": "type WithPersist<S, A> = Write<S, StorePersist<S, A, unknown>>"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__PersistImpl_15#type_alias:PersistImpl",
+        "unitKind": "type_alias",
+        "name": "PersistImpl",
+        "qualifiedName": "PersistImpl",
+        "parentUnitId": null,
+        "startLine": 397,
+        "endLine": 399,
+        "isBehavioral": false,
+        "source": "type PersistImpl = <T>(\n  storeInitializer: StateCreator<T, [], []>,\n  options: PersistOptions<T, T>,"
+      },
+      {
+        "unitId": "src/middleware/persist.ts__persist_16#function:persist",
+        "unitKind": "function",
+        "name": "persist",
+        "qualifiedName": "persist",
+        "parentUnitId": null,
+        "startLine": 402,
+        "endLine": 402,
+        "isBehavioral": true,
+        "source": "export const persist = persistImpl as unknown as Persist"
+      }
+    ]
+  },
+  "out": ["src/vanilla.ts"],
+  "in": ["src/middleware.ts"],
+  "externals": [],
+  "impact": { "seeds": 15, "callers": 0, "impactedFiles": [] }
+}

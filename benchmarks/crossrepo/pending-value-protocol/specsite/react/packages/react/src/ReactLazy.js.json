@@ -1,0 +1,847 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "react",
+  "commitHash": "3a717e42438afac81020cdec297dadb5613a4304",
+  "generatedAt": "2026-08-01T22:13:01.193Z",
+  "file": {
+    "relativePath": "packages/react/src/ReactLazy.js",
+    "language": "javascript",
+    "sizeBytes": 8732,
+    "tokenCount": 2075,
+    "model": "tencent/hy3",
+    "analysedAt": "2026-08-01T16:54:52.792Z",
+    "module": {
+      "purpose": "Implements React's lazy() API for deferring component module loading, managing initialization state machine and optional async debug info.",
+      "summary": "This module provides the lazy function that wraps a dynamic import callback into a LazyComponent object understood by React's reconciler. It defines a payload state machine (uninitialized, pending, resolved, rejected) and the lazyInitializer that resolves the thenable, mutating payload status and result. In development with async debug info enabled, it tracks performance timing and promise introspection for DevTools.",
+      "businessContext": "Supports code-splitting in React apps. If broken, lazy-loaded components fail to render or throw incorrect errors.",
+      "classes": [],
+      "functions": [
+        "lazyInitializer (~L70-224): Resolves lazy payload state and returns default export",
+        "lazy (~L226-263): Creates lazy component wrapper for dynamic import"
+      ],
+      "keywords": [
+        "react",
+        "lazy",
+        "code-splitting",
+        "thenable",
+        "suspense",
+        "state machine",
+        "dynamic import",
+        "async debug"
+      ],
+      "ontologyConcepts": ["Lazy initialization", "State machine", "Promise resolution", "Component deferred loading"],
+      "businessEntities": ["LazyComponent", "Payload", "Module"],
+      "systemCapabilities": ["Defer component loading", "Track async debug info", "Throw until resolved"],
+      "configDependencies": ["enableAsyncDebugInfo"],
+      "importsInternal": [
+        {
+          "spec": "shared/ReactTypes",
+          "symbols": ["Wakeable", "Thenable", "FulfilledThenable", "RejectedThenable", "ReactDebugInfo", "ReactIOInfo"],
+          "anchor": { "startLine": 10, "endLine": 17 },
+          "resolvedRelativePath": "packages/shared/ReactTypes.js",
+          "resolvedFileId": "packages/shared/ReactTypes.js",
+          "resolvedHint": null
+        },
+        {
+          "spec": "shared/ReactFeatureFlags",
+          "symbols": ["enableAsyncDebugInfo"],
+          "anchor": { "startLine": 19, "endLine": 19 },
+          "resolvedRelativePath": "packages/shared/ReactFeatureFlags.js",
+          "resolvedFileId": "packages/shared/ReactFeatureFlags.js",
+          "resolvedHint": null
+        },
+        {
+          "spec": "shared/ReactSymbols",
+          "symbols": ["REACT_LAZY_TYPE"],
+          "anchor": { "startLine": 21, "endLine": 21 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": null
+        },
+        {
+          "spec": "shared/noop",
+          "symbols": ["noop"],
+          "anchor": { "startLine": 23, "endLine": 23 },
+          "resolvedRelativePath": "packages/shared/noop.js",
+          "resolvedFileId": "packages/shared/noop.js",
+          "resolvedHint": null
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [
+          "Calls console.error in dev for malformed module",
+          "Calls performance.now() in dev",
+          "Creates Promise for debug introspection",
+          "Calls console.createTask in dev"
+        ],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates payload._status and payload._result",
+          "Mutates thenable.status/value/reason in dev",
+          "Assigns payload._ioInfo in lazy"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "lazy",
+          "shape": "export function lazy<T>(ctor: () => Thenable<{default: T, ...}>): LazyComponent<T, Payload<T}>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "LazyComponent",
+          "shape": "export type LazyComponent<T, P> = { $$typeof: symbol | number, _payload: P, _init: (payload: P) => T, _debugInfo?: null | ReactDebugInfo, _store?: {validated: 0 | 1 | 2, ...} }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "REACT_LAZY_TYPE",
+          "shape": "import {REACT_LAZY_TYPE} from 'shared/ReactSymbols'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "enableAsyncDebugInfo",
+          "shape": "import {enableAsyncDebugInfo} from 'shared/ReactFeatureFlags'",
+          "resolvedRelativePath": "packages/shared/ReactFeatureFlags.js",
+          "resolvedFileId": "packages/shared/ReactFeatureFlags.js"
+        },
+        {
+          "name": "noop",
+          "shape": "import noop from 'shared/noop'",
+          "resolvedRelativePath": "packages/shared/noop.js",
+          "resolvedFileId": "packages/shared/noop.js"
+        },
+        {
+          "name": "Thenable",
+          "shape": "import type {Thenable} from 'shared/ReactTypes'",
+          "resolvedRelativePath": "packages/shared/ReactTypes.js",
+          "resolvedFileId": "packages/shared/ReactTypes.js"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "init-uninitialized",
+          "intent": "Kick off thenable and transition state",
+          "structureKind": "branch",
+          "predicate": "payload._status === Uninitialized",
+          "branchOutcomes": ["enter initialization", "skip if already pending/resolved"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 71, "endLine": 190 }
+        },
+        {
+          "name": "thenable-success",
+          "intent": "Handle resolved thenable and store module",
+          "structureKind": "branch",
+          "predicate": "(payload as Payload<T>)._status === Pending ||\n          payload._status === Uninitialized",
+          "branchOutcomes": ["transition to Resolved", "ignore if already resolved/rejected"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 97, "endLine": 132 }
+        },
+        {
+          "name": "thenable-error",
+          "intent": "Handle rejected thenable and store error",
+          "structureKind": "branch",
+          "predicate": "(payload as Payload<T>)._status === Pending ||\n          payload._status === Uninitialized",
+          "branchOutcomes": ["transition to Rejected", "ignore otherwise"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 135, "endLine": 170 }
+        },
+        {
+          "name": "return-resolved",
+          "intent": "Return default export or throw result",
+          "structureKind": "branch",
+          "predicate": "payload._status === Resolved",
+          "branchOutcomes": ["return moduleObject.default", "throw payload._result"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 191, "endLine": 223 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "lazyInitializer",
+          "signature": "function lazyInitializer<T>(payload: Payload<T>): T {",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": "T",
+          "exported": false,
+          "anchor": { "startLine": 70, "endLine": 70 }
+        },
+        {
+          "kind": "function",
+          "name": "lazy",
+          "signature": "export function lazy<T>(\n  ctor: () => Thenable<{default: T, ...}>,\n): LazyComponent<T, Payload<T>> {",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": "LazyComponent<T, Payload<T>>",
+          "exported": true,
+          "anchor": { "startLine": 226, "endLine": 228 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "UninitializedPayload",
+          "shape": "type UninitializedPayload<T> = {\n  _status: -1,\n  _result: () => Thenable<{default: T, ...}>,\n  _ioInfo?: ReactIOInfo, // DEV-only\n};",
+          "discriminant": null,
+          "anchor": { "startLine": 30, "endLine": 34 }
+        },
+        {
+          "kind": "type",
+          "name": "PendingPayload",
+          "shape": "type PendingPayload = {\n  _status: 0,\n  _result: Wakeable,\n  _ioInfo?: ReactIOInfo, // DEV-only\n};",
+          "discriminant": null,
+          "anchor": { "startLine": 36, "endLine": 40 }
+        },
+        {
+          "kind": "type",
+          "name": "ResolvedPayload",
+          "shape": "type ResolvedPayload<T> = {\n  _status: 1,\n  _result: {default: T, ...},\n  _ioInfo?: ReactIOInfo, // DEV-only\n};",
+          "discriminant": null,
+          "anchor": { "startLine": 42, "endLine": 46 }
+        },
+        {
+          "kind": "type",
+          "name": "RejectedPayload",
+          "shape": "type RejectedPayload = {\n  _status: 2,\n  _result: mixed,\n  _ioInfo?: ReactIOInfo, // DEV-only\n};",
+          "discriminant": null,
+          "anchor": { "startLine": 48, "endLine": 52 }
+        },
+        {
+          "kind": "type",
+          "name": "Payload",
+          "shape": "type Payload<T> =\n  | UninitializedPayload<T>\n  | PendingPayload\n  | ResolvedPayload<T>\n  | RejectedPayload;",
+          "discriminant": null,
+          "anchor": { "startLine": 54, "endLine": 58 }
+        },
+        {
+          "kind": "type",
+          "name": "LazyComponent",
+          "shape": "export type LazyComponent<T, P> = {\n  $$typeof: symbol | number,\n  _payload: P,\n  _init: (payload: P) => T,\n\n  // __DEV__\n  _debugInfo?: null | ReactDebugInfo,\n  _store?: {validated: 0 | 1 | 2, ...}, // 0: not validated, 1: validated, 2: force fail\n};",
+          "discriminant": null,
+          "anchor": { "startLine": 60, "endLine": 68 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "moduleObject undefined",
+          "handled": true,
+          "behavior": "console.error in dev, still returns undefined.default (throws)",
+          "anchor": { "startLine": 194, "endLine": 205 }
+        },
+        {
+          "inputShape": "moduleObject missing 'default'",
+          "handled": true,
+          "behavior": "console.error in dev",
+          "anchor": { "startLine": 208, "endLine": 218 }
+        },
+        {
+          "inputShape": "ctor throws synchronously",
+          "handled": true,
+          "behavior": "payload stays Uninitialized, retry next call",
+          "anchor": { "startLine": 89, "endLine": 89 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "payload._status",
+          "right": "Uninitialized",
+          "inclusive": true,
+          "intent": "Check if payload not yet initialized",
+          "anchor": { "startLine": 71, "endLine": 71 }
+        },
+        {
+          "operator": "==",
+          "left": "(payload as Payload<T>)._status",
+          "right": "Pending",
+          "inclusive": true,
+          "intent": "Ensure not already resolved before updating",
+          "anchor": { "startLine": 98, "endLine": 98 }
+        },
+        {
+          "operator": "==",
+          "left": "payload._status",
+          "right": "Uninitialized",
+          "inclusive": true,
+          "intent": "Ensure not already resolved before updating",
+          "anchor": { "startLine": 99, "endLine": 99 }
+        },
+        {
+          "operator": "==",
+          "left": "thenable.status",
+          "right": "undefined",
+          "inclusive": true,
+          "intent": "Only annotate thenable if not already introspectable",
+          "anchor": { "startLine": 126, "endLine": 126 }
+        },
+        {
+          "operator": "==",
+          "left": "payload._status",
+          "right": "Resolved",
+          "inclusive": true,
+          "intent": "Return default if resolved else throw",
+          "anchor": { "startLine": 191, "endLine": 191 }
+        },
+        {
+          "operator": "==",
+          "left": "moduleObject",
+          "right": "undefined",
+          "inclusive": true,
+          "intent": "Dev check for bad dynamic import result",
+          "anchor": { "startLine": 194, "endLine": 194 }
+        },
+        {
+          "operator": "!=",
+          "left": "ioInfo",
+          "right": "null",
+          "inclusive": false,
+          "intent": "Guard dev ioInfo access",
+          "anchor": { "startLine": 76, "endLine": 76 }
+        },
+        {
+          "operator": "==",
+          "left": "typeof displayName",
+          "right": "'string'",
+          "inclusive": true,
+          "intent": "Set ioInfo.name only if string",
+          "anchor": { "startLine": 177, "endLine": 177 }
+        },
+        {
+          "operator": "==",
+          "left": "thenable.status",
+          "right": "undefined",
+          "inclusive": true,
+          "intent": "Annotate rejected thenable if needed",
+          "anchor": { "startLine": 164, "endLine": 164 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Throws payload._result when status not Resolved",
+          "fallback": null,
+          "anchor": { "startLine": 222, "endLine": 222 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "console.error for undefined moduleObject or missing default in dev",
+          "fallback": null,
+          "anchor": { "startLine": 195, "endLine": 204 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "payload._status is one of Uninitialized/Pending/Resolved/Rejected",
+          "anchor": { "startLine": 25, "endLine": 28 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "lazy() returns object with $$typeof REACT_LAZY_TYPE and _init=lazyInitializer",
+          "anchor": { "startLine": 235, "endLine": 239 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Caller passes ctor returning a Thenable with default export",
+          "anchor": { "startLine": 88, "endLine": 89 }
+        },
+        {
+          "kind": "env",
+          "description": "__DEV__ global indicates development build",
+          "anchor": { "startLine": 74, "endLine": 74 }
+        },
+        {
+          "kind": "config",
+          "description": "enableAsyncDebugInfo flag controls dev tracking",
+          "anchor": { "startLine": 19, "endLine": 19 }
+        }
+      ],
+      "ambiguities": [],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "non-deterministic",
+        "notes": "Relies on thenable resolution callbacks; multiple init calls guarded by status checks"
+      },
+      "stateModel": {
+        "states": ["Uninitialized", "Pending", "Resolved", "Rejected"],
+        "initialState": "Uninitialized",
+        "finalStates": ["Resolved", "Rejected"],
+        "transitions": [
+          {
+            "from": "Uninitialized",
+            "to": "Pending",
+            "trigger": "lazyInitializer called and ctor() returns thenable",
+            "guard": "payload._status === Uninitialized",
+            "effect": "pending._status = Pending; pending._result = thenable",
+            "anchor": { "startLine": 65, "endLine": 190 }
+          },
+          {
+            "from": "Uninitialized",
+            "to": "Resolved",
+            "trigger": "thenable resolves",
+            "guard": "payload._status === Pending || payload._status === Uninitialized",
+            "effect": "resolved._status = Resolved; resolved._result = moduleObject",
+            "anchor": { "startLine": 65, "endLine": 190 }
+          },
+          {
+            "from": "Uninitialized",
+            "to": "Rejected",
+            "trigger": "thenable rejects",
+            "guard": "payload._status === Pending || payload._status === Uninitialized",
+            "effect": "rejected._status = Rejected; rejected._result = error",
+            "anchor": { "startLine": 65, "endLine": 190 }
+          },
+          {
+            "from": "Pending",
+            "to": "Resolved",
+            "trigger": "thenable resolves",
+            "guard": "payload._status === Pending",
+            "effect": "resolved._status = Resolved; resolved._result = moduleObject",
+            "anchor": { "startLine": 65, "endLine": 190 }
+          },
+          {
+            "from": "Pending",
+            "to": "Rejected",
+            "trigger": "thenable rejects",
+            "guard": "payload._status === Pending",
+            "effect": "rejected._status = Rejected; rejected._result = error",
+            "anchor": { "startLine": 65, "endLine": 190 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "returns-default-on-resolve",
+          "scenario": "When lazy payload is Resolved with module containing default, initializer returns that default",
+          "given": ["payload._status = Resolved", "payload._result = {default: Comp}"],
+          "when": "lazyInitializer(payload)",
+          "then": "returns Comp",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "throws-on-rejected",
+          "scenario": "When payload is Rejected, initializer throws the stored error",
+          "given": ["payload._status = Rejected", "payload._result = error"],
+          "when": "lazyInitializer(payload)",
+          "then": "throws error",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "transitions-to-pending-when-uninitialized",
+          "scenario": "When uninitialized and ctor returns thenable, status moves to Pending",
+          "given": ["payload._status = Uninitialized", "payload._result = () => Promise.resolve({default: C})"],
+          "when": "lazyInitializer(payload)",
+          "then": "payload._status === Pending and payload._result is thenable",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "dev-warns-missing-default",
+          "scenario": "In dev, resolved module without default triggers console.error",
+          "given": ["__DEV__ = true", "payload._status = Resolved", "payload._result = {}"],
+          "when": "lazyInitializer(payload)",
+          "then": "console.error called with lazy expected default message",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards against incorrect dynamic import usage"
+        },
+        {
+          "testId": "lazy-creates-proper-type",
+          "scenario": "lazy() returns object with $$typeof REACT_LAZY_TYPE and _init initializer",
+          "given": ["ctor = () => Promise.resolve({default: C})"],
+          "when": "lazy(ctor)",
+          "then": "result.$$typeof === REACT_LAZY_TYPE and result._init === lazyInitializer",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        }
+      ],
+      "language": "javascript",
+      "moduleLayout": [
+        "import type {...} from 'shared/ReactTypes'",
+        "import {enableAsyncDebugInfo} from 'shared/ReactFeatureFlags'",
+        "import {REACT_LAZY_TYPE} from 'shared/ReactSymbols'",
+        "import noop from 'shared/noop'",
+        "const Uninitialized/Pending/Resolved/Rejected",
+        "type UninitializedPayload/PendingPayload/ResolvedPayload/RejectedPayload/Payload/LazyComponent",
+        "function lazyInitializer",
+        "export function lazy"
+      ],
+      "moduleLevelCode": "Imports and constant definitions for status enums",
+      "exports": [
+        { "name": "LazyComponent", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "lazy", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Wakeable", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "Thenable", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "FulfilledThenable", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "RejectedThenable", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "ReactDebugInfo", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "ReactIOInfo", "module": "shared/ReactTypes", "alias": null, "kind": "internal" },
+        { "symbol": "enableAsyncDebugInfo", "module": "shared/ReactFeatureFlags", "alias": null, "kind": "internal" },
+        { "symbol": "REACT_LAZY_TYPE", "module": "shared/ReactSymbols", "alias": null, "kind": "internal" },
+        { "symbol": "noop", "module": "shared/noop", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "Uninitialized", "value": "-1", "kind": "number" },
+        { "name": "Pending", "value": "0", "kind": "number" },
+        { "name": "Resolved", "value": "1", "kind": "number" },
+        { "name": "Rejected", "value": "2", "kind": "number" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/react/src/ReactLazy.js__lazyInitializer#function:lazyInitializer",
+        "unitKind": "function",
+        "name": "lazyInitializer",
+        "qualifiedName": "lazyInitializer",
+        "parentUnitId": null,
+        "startLine": 70,
+        "endLine": 224,
+        "isBehavioral": true,
+        "source": "function lazyInitializer<T>(payload: Payload<T>): T {\n  if (payload._status === Uninitialized) {\n    let resolveDebugValue: (void | T) => void = null as any;\n    let rejectDebugValue: mixed => void = null as any;\n    if (__DEV__ && enableAsyncDebugInfo) {\n      const ioInfo = payload._ioInfo;\n      if (ioInfo != null) {\n        // Mark when we first kicked off the lazy request.\n        // $FlowFixMe[cannot-write]\n        ioInfo.start = ioInfo.end = performance.now();\n        // Stash a Promise for introspection of the value later.\n        // $FlowFixMe[cannot-write]\n        ioInfo.value = new Promise((resolve, reject) => {\n          resolveDebugValue = resolve;\n          rejectDebugValue = reject;\n        });\n      }\n    }\n    const ctor = payload._result;\n    const thenable = ctor();\n    // Transition to the next state.\n    // This might throw either because it's missing or throws. If so, we treat it\n    // as still uninitialized and try again next time. Which is the same as what\n    // happens if the ctor or any wrappers processing the ctor throws. This might\n    // end up fixing it if the resolution was a concurrency bug.\n    thenable.then(\n      moduleObject => {\n        if (\n          (payload as Payload<T>)._status === Pending ||\n          payload._status === Uninitialized\n        ) {\n          // Transition to the next state.\n          const resolved: ResolvedPayload<T> = payload as any;\n          resolved._status = Resolved;\n          resolved._result = moduleObject;\n          if (__DEV__ && enableAsyncDebugInfo) {\n            const ioInfo = payload._ioInfo;\n            if (ioInfo != null) {\n              // Mark the end time of when we resolved.\n              // $FlowFixMe[cannot-write]\n              ioInfo.end = performance.now();\n              // Surface the default export as the resolved \"value\" for debug purposes.\n              const debugValue =\n                moduleObject == null ? undefined : moduleObject.default;\n              resolveDebugValue(debugValue);\n              // $FlowFixMe[incompatible-use]\n              // $FlowFixMe[prop-missing]\n              ioInfo.value.status = 'fulfilled';\n              // $FlowFixMe[incompatible-use]\n              // $FlowFixMe[prop-missing]\n              ioInfo.value.value = debugValue;\n            }\n          }\n          // Make the thenable introspectable\n          // TODO we should move the lazy introspection into the resolveLazy\n          // impl or make suspendedThenable be able to be a lazy itself\n          if (thenable.status === undefined) {\n            const fulfilledThenable: FulfilledThenable<{default: T, ...}> =\n              thenable as any;\n            fulfilledThenable.status = 'fulfilled';\n            fulfilledThenable.value = moduleObject;\n          }\n        }\n      },\n      error => {\n        if (\n          (payload as Payload<T>)._status === Pending ||\n          payload._status === Uninitialized\n        ) {\n          // Transition to the next state.\n          const rejected: RejectedPayload = payload as any;\n          rejected._status = Rejected;\n          rejected._result = error;\n          if (__DEV__ && enableAsyncDebugInfo) {\n            const ioInfo = payload._ioInfo;\n            if (ioInfo != null) {\n              // Mark the end time of when we rejected.\n              // $FlowFixMe[cannot-write]\n              ioInfo.end = performance.now();\n              // Hide unhandled rejections.\n              // $FlowFixMe[incompatible-use]\n              ioInfo.value.then(noop, noop);\n              rejectDebugValue(error);\n              // $FlowFixMe[incompatible-use]\n              // $FlowFixMe[prop-missing]\n              ioInfo.value.status = 'rejected';\n              // $FlowFixMe[incompatible-use]\n              // $FlowFixMe[prop-missing]\n              ioInfo.value.reason = error;\n            }\n          }\n          // Make the thenable introspectable\n          // TODO we should move the lazy introspection into the resolveLazy\n          // impl or make suspendedThenable be able to be a lazy itself\n          if (thenable.status === undefined) {\n            const rejectedThenable: RejectedThenable<{default: T, ...}> =\n              thenable as any;\n            rejectedThenable.status = 'rejected';\n            rejectedThenable.reason = error;\n          }\n        }\n      },\n    );\n    if (__DEV__ && enableAsyncDebugInfo) {\n      const ioInfo = payload._ioInfo;\n      if (ioInfo != null) {\n        const displayName = thenable.displayName;\n        if (typeof displayName === 'string') {\n          // $FlowFixMe[cannot-write]\n          ioInfo.name = displayName;\n        }\n      }\n    }\n    if (payload._status === Uninitialized) {\n      // In case, we're still uninitialized, then we're waiting for the thenable\n      // to resolve. Set it as pending in the meantime.\n      const pending: PendingPayload = payload as any;\n      pending._status = Pending;\n      pending._result = thenable;\n    }\n  }\n  if (payload._status === Resolved) {\n    const moduleObject = payload._result;\n    if (__DEV__) {\n      if (moduleObject === undefined) {\n        console.error(\n          'lazy: Expected the result of a dynamic imp' +\n            'ort() call. ' +\n            'Instead received: %s\\n\\nYour code should look like: \\n  ' +\n            // Break up imports to avoid accidentally parsing them as dependencies.\n            'const MyComponent = lazy(() => imp' +\n            \"ort('./MyComponent'))\\n\\n\" +\n            'Did you accidentally put curly braces around the import?',\n          moduleObject,\n        );\n      }\n    }\n    if (__DEV__) {\n      if (!('default' in moduleObject)) {\n        console.error(\n          'lazy: Expected the result of a dynamic imp' +\n            'ort() call. ' +\n            'Instead received: %s\\n\\nYour code should look like: \\n  ' +\n            // Break up imports to avoid accidentally parsing them as dependencies.\n            'const MyComponent = lazy(() => imp' +\n            \"ort('./MyComponent'))\",\n          moduleObject,\n        );\n      }\n    }\n    return moduleObject.default;\n  } else {\n    throw payload._result;\n  }\n}",
+        "detail": {
+          "unitId": "packages/react/src/ReactLazy.js__lazyInitializer#function:lazyInitializer",
+          "fileId": "packages/react/src/ReactLazy.js__lazyInitializer",
+          "unitKind": "function",
+          "name": "lazyInitializer",
+          "qualifiedName": "lazyInitializer",
+          "parentUnitId": null,
+          "startLine": 70,
+          "endLine": 224,
+          "signature": "function lazyInitializer<T>(payload: Payload<T>): T",
+          "parameters": [
+            {
+              "name": "payload",
+              "type": "Payload<T>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "T",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T"],
+          "logicOutline": [],
+          "preconditions": [
+            "payload must be a valid Payload<T> object with _status and _result properties",
+            "when _status is Uninitialized, payload._result must be callable (a constructor returning a thenable)",
+            "when _status is Resolved, payload._result must be a module object (possibly with a default export)"
+          ],
+          "postconditions": [
+            "if payload._status is Resolved after initialization, returns moduleObject.default",
+            "if payload._status is not Resolved after initialization, throws payload._result",
+            "on successful ctor invocation, attaches thenable handlers that transition payload to Resolved or Rejected"
+          ],
+          "invariants": [
+            "payload state transitions follow: Uninitialized -> Pending -> Resolved | Rejected",
+            "thenable handlers only execute state transitions if payload._status is Pending or Uninitialized",
+            "the payload's _status is never set back to Uninitialized once transitioned",
+            "thenable.status is only set once (if undefined) to either 'fulfilled' or 'rejected'"
+          ],
+          "edgeCases": [
+            "Uninitialized payload: ctor is invoked, thenable handlers attached, payload transitions to Pending and throws the thenable",
+            "Resolved payload with moduleObject === undefined (DEV): logs console.error about expected dynamic import() result, then returns undefined.default which throws TypeError",
+            "Resolved payload without 'default' property (DEV): logs console.error about missing default export, then returns undefined which throws TypeError",
+            "Rejected payload: skips initialization, throws payload._result (the error/rejection reason)",
+            "Pending payload: skips initialization, throws payload._result (the pending thenable)",
+            "Thenable with status already defined: does not overwrite the status/value/reason annotations",
+            "Synchronous ctor throw: exception propagates out of lazyInitializer without transitioning payload state"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["whatever payload._result holds (Error, rejection reason, or pending thenable)"],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "payload._status (set to Resolved, Rejected, or Pending)",
+            "payload._result (set to moduleObject, error, or thenable)",
+            "payload._ioInfo.start (Performance API timestamp, DEV + enableAsyncDebugInfo)",
+            "payload._ioInfo.end (Performance API timestamp, DEV + enableAsyncDebugInfo)",
+            "payload._ioInfo.value (Promise for introspection, DEV + enableAsyncDebugInfo)",
+            "payload._ioInfo.name (displayName from thenable, DEV + enableAsyncDebugInfo)",
+            "payload._ioInfo.value.status (set to 'fulfilled' or 'rejected', DEV + enableAsyncDebugInfo)",
+            "payload._ioInfo.value.value (debug value, DEV + enableAsyncDebugInfo)",
+            "payload._ioInfo.value.reason (error, DEV + enableAsyncDebugInfo)",
+            "thenable.status (set to 'fulfilled' or 'rejected' if undefined)",
+            "thenable.value (set to moduleObject, if status was undefined)",
+            "thenable.reason (set to error, if status was undefined)"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "ctor (payload._result)()", "source": "payload._result", "kind": "internal" },
+            { "name": "thenable.then(resolve, reject)", "source": "thenable", "kind": "internal" },
+            { "name": "console.error", "source": "global", "kind": "external" },
+            { "name": "performance.now", "source": "global", "kind": "external" },
+            { "name": "ioInfo.value.then(noop, noop)", "source": "payload._ioInfo", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "Payload",
+            "T",
+            "ResolvedPayload",
+            "RejectedPayload",
+            "PendingPayload",
+            "FulfilledThenable",
+            "RejectedThenable",
+            "Uninitialized",
+            "Pending",
+            "Resolved",
+            "Rejected",
+            "__DEV__",
+            "enableAsyncDebugInfo",
+            "performance",
+            "console",
+            "noop"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes a lazily-loaded React component by invoking the payload's constructor, transitioning the payload through pending/resolved/rejected states, and returning the resolved module's default export or throwing the pending/rejected result.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "lazy: Expected the result of a dynamic import() call. Instead received: %s\n\nYour code should look like: \n  const MyComponent = lazy(() => import('./MyComponent'))\n\nDid you accidentally put curly braces around the import?",
+              "role": "DEV error surfaced when the resolved module object is undefined"
+            },
+            {
+              "kind": "error-message",
+              "value": "lazy: Expected the result of a dynamic import() call. Instead received: %s\n\nYour code should look like: \n  const MyComponent = lazy(() => import('./MyComponent'))",
+              "role": "DEV error surfaced when the resolved module object lacks a default export"
+            },
+            {
+              "kind": "enum-value",
+              "value": "fulfilled",
+              "role": "thenable.status value indicating successful resolution of the lazy payload"
+            },
+            {
+              "kind": "enum-value",
+              "value": "rejected",
+              "role": "thenable.status value indicating rejection of the lazy payload"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "lazyInitializer(payload) is called",
+              "then": "returns 'exported'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "lazyInitializer(payload) is called",
+              "then": "throws the Error('fail')",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "lazyInitializer(payload) is called",
+              "then": "throws the thenable and payload._status transitions to Pending",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e4bc53c41d68db50e65a1ddb36ad1296b9ddcd06a7e38e783b15872fdf5772c1"
+        }
+      },
+      {
+        "unitId": "packages/react/src/ReactLazy.js__lazy#function:lazy",
+        "unitKind": "function",
+        "name": "lazy",
+        "qualifiedName": "lazy",
+        "parentUnitId": null,
+        "startLine": 226,
+        "endLine": 263,
+        "isBehavioral": true,
+        "source": "export function lazy<T>(\n  ctor: () => Thenable<{default: T, ...}>,\n): LazyComponent<T, Payload<T>> {\n  const payload: Payload<T> = {\n    // We use these fields to store the result.\n    _status: Uninitialized,\n    _result: ctor,\n  };\n\n  const lazyType: LazyComponent<T, Payload<T>> = {\n    $$typeof: REACT_LAZY_TYPE,\n    _payload: payload,\n    _init: lazyInitializer,\n  };\n\n  if (__DEV__ && enableAsyncDebugInfo) {\n    // TODO: We should really track the owner here but currently ReactIOInfo\n    // can only contain ReactComponentInfo and not a Fiber. It's unusual to\n    // create a lazy inside an owner though since they should be in module scope.\n    const owner = null;\n    const ioInfo: ReactIOInfo = {\n      name: 'lazy',\n      start: -1,\n      end: -1,\n      value: null,\n      owner: owner,\n      debugStack: new Error('react-stack-top-frame'),\n      // eslint-disable-next-line react-internal/no-production-logging\n      debugTask: console.createTask ? console.createTask('lazy()') : null,\n    };\n    payload._ioInfo = ioInfo;\n    // Add debug info to the lazy, but this doesn't have an await stack yet.\n    // That will be inferred by later usage.\n    lazyType._debugInfo = [{awaited: ioInfo}];\n  }\n\n  return lazyType;\n}",
+        "detail": {
+          "unitId": "packages/react/src/ReactLazy.js__lazy#function:lazy",
+          "fileId": "packages/react/src/ReactLazy.js__lazy",
+          "unitKind": "function",
+          "name": "lazy",
+          "qualifiedName": "lazy",
+          "parentUnitId": null,
+          "startLine": 226,
+          "endLine": 263,
+          "signature": "export function lazy<T>(ctor: () => Thenable<{default: T, ...}>,): LazyComponent<T, Payload<T>>",
+          "parameters": [
+            {
+              "name": "ctor",
+              "type": "() => Thenable<{default: T, ...}>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "LazyComponent<T, Payload<T>>",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": "view",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T"],
+          "logicOutline": [],
+          "preconditions": [
+            "The ctor parameter must be a function returning a Thenable",
+            "The Thenable must resolve to an object containing a 'default' key"
+          ],
+          "postconditions": [
+            "Returns a LazyComponent object with $$typeof set to REACT_LAZY_TYPE",
+            "The returned object's _payload has _status set to Uninitialized and _result set to ctor",
+            "The returned object's _init is set to lazyInitializer",
+            "When __DEV__ and enableAsyncDebugInfo are both true, payload._ioInfo and lazyType._debugInfo are populated with debug metadata"
+          ],
+          "invariants": [
+            "The returned LazyComponent's $$typeof is always REACT_LAZY_TYPE",
+            "The _payload._status is always Uninitialized at creation time",
+            "The _payload._result always equals the ctor argument passed in"
+          ],
+          "edgeCases": [
+            "When __DEV__ and enableAsyncDebugInfo are both true: payload._ioInfo is set to a ReactIOInfo object with name 'lazy', and lazyType._debugInfo is set to an array containing one awaited info entry",
+            "When either __DEV__ is false or enableAsyncDebugInfo is false: _ioInfo and _debugInfo fields are not set on the payload or lazyType",
+            "The ctor is stored as-is in _result without being called; resolution is deferred to lazyInitializer at render time"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Creates a new payload object of type Payload<T>",
+            "Creates a new lazyType object of type LazyComponent<T, Payload<T>>",
+            "Does not mutate the ctor parameter or any external state"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "lazyInitializer", "source": "same module (ReactLazy.js)", "kind": "internal" }],
+          "symbolReferences": [
+            "T",
+            "Thenable",
+            "LazyComponent",
+            "Payload",
+            "REACT_LAZY_TYPE",
+            "Uninitialized",
+            "lazyInitializer",
+            "__DEV__",
+            "enableAsyncDebugInfo",
+            "ReactIOInfo",
+            "console",
+            "Error"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a lazy-loadable React component that defers loading its implementation until first render, storing the constructor in a payload object and returning a LazyComponent type object marked with REACT_LAZY_TYPE.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "REACT_LAZY_TYPE",
+              "role": "React type identifier symbol assigned to $$typeof for lazy component discrimination by the reconciler"
+            },
+            {
+              "kind": "magic-number",
+              "value": "Uninitialized",
+              "role": "Initial _status value stored in _payload; read by lazyInitializer to detect first invocation"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "lazy(ctor) is called",
+              "then": "the returned object has $$typeof === REACT_LAZY_TYPE, _payload._status === Uninitialized, _payload._result === ctor, and _init === lazyInitializer",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f6ed97f1d0ab89359e27a3a0ac7e59b711ba18c356d0c23feb0136f0cae7752b"
+        }
+      }
+    ]
+  },
+  "out": ["packages/shared/ReactTypes.js", "packages/shared/noop.js", "packages/shared/ReactFeatureFlags.js"],
+  "in": [
+    "packages/shared/getComponentNameFromType.js",
+    "packages/react-server/src/ReactFlightCallUserSpace.js",
+    "packages/react-server/src/ReactFizzCallUserSpace.js",
+    "packages/react/src/ReactServer.experimental.development.js",
+    "packages/react/src/ReactClient.js",
+    "packages/react/src/ReactServer.experimental.js",
+    "packages/react/src/ReactServer.fb.js",
+    "packages/react/src/ReactServer.js",
+    "packages/react-markup/src/ReactMarkupServer.js",
+    "packages/react-reconciler/src/ReactFiberThenable.js",
+    "packages/react-reconciler/src/ReactFiberCallUserSpace.js"
+  ],
+  "externals": ["shared/ReactSymbols"],
+  "impact": { "seeds": 2, "callers": 1, "impactedFiles": [] }
+}

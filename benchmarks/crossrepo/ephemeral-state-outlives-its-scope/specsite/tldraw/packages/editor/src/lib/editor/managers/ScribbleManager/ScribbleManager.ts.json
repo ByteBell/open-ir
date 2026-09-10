@@ -1,0 +1,2368 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts",
+    "language": "typescript",
+    "sizeBytes": 14229,
+    "tokenCount": 3558,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:21:23.512Z",
+    "module": {
+      "purpose": "Manages transient editor scribbles, including session grouping, point collection, self-consuming trails, persistence, idle stopping, and individual or grouped fade-out.",
+      "summary": "This module provides the editor's scribble lifecycle manager. It maintains sessions containing mutable scribble items, accepts points with distance filtering, supports implicit sessions for simple consumers, and advances rendering state on animation frames. Scribbles can self-consume while active, persist for laser-like behavior, stop after inactivity, and fade individually or as a coordinated group. The manager publishes cloned scribble state through the editor and removes completed sessions.",
+      "businessContext": "Supports editor tools such as eraser, selection feedback, and laser pointers. If lifecycle or fade processing fails, transient visual feedback can become stale, disappear incorrectly, or consume excessive editor state.",
+      "classes": [
+        "ScribbleItem (~L7-14): Mutable point-buffer item tracked within a scribble session",
+        "ScribbleSessionOptions (~L17-34): Configuration for session identity, consumption, timeout, and fading",
+        "Session (~L37-45): Internal lifecycle state and item collection for one session",
+        "ScribbleManager (~L48-470): Coordinates scribble sessions, animation updates, and editor state"
+      ],
+      "functions": [
+        "startSession (~L57-81): Creates and registers a configured scribble session",
+        "addScribbleToSession (~L84-120): Creates and appends a scribble item to a session",
+        "addPointToSession (~L124-148): Adds a distance-filtered point to a session scribble",
+        "extendSession (~L152-158): Resets the configured idle timeout for a session",
+        "stopSession (~L164-183): Transitions an active session into fade-out processing",
+        "clearSession (~L187-195): Immediately removes all points and completes a session",
+        "isSessionActive (~L199-202): Reports whether a session remains active",
+        "addScribble (~L207-210): Creates an implicit default session and scribble item",
+        "addPoint (~L214-232): Finds a scribble globally and appends a filtered point",
+        "complete (~L236-246): Marks a located scribble complete after drawing",
+        "stop (~L250-259): Marks a located scribble as stopping with bounded delay",
+        "reset (~L264-270): Clears timers, sessions, and editor scribble state",
+        "tick (~L276-304): Advances sessions and publishes current scribbles per frame",
+        "resetIdleTimeout (~L308-312): Replaces a session's idle-stop timer",
+        "clearIdleTimeout (~L314-318): Cancels and removes a session idle timer",
+        "tickSession (~L320-331): Advances one session and detects completion",
+        "tickSessionItems (~L333-353): Advances items and removes empty individual fades",
+        "tickPersistentItem (~L355-373): Appends new points without consuming the trail",
+        "tickSelfConsumingItem (~L375-432): Advances, shrinks, and consumes a scribble trail",
+        "tickGroupedFade (~L434-469): Removes points according to coordinated fade progress"
+      ],
+      "keywords": [
+        "scribble sessions",
+        "self-consuming trails",
+        "grouped fade",
+        "idle timeout",
+        "laser fadeout",
+        "point buffering",
+        "editor instance state",
+        "animation frame tick"
+      ],
+      "ontologyConcepts": [
+        "session lifecycle",
+        "transient rendering state",
+        "time-based expiration",
+        "incremental animation",
+        "progressive consumption",
+        "group coordination"
+      ],
+      "businessEntities": ["Scribble", "ScribbleSession", "ScribbleItem", "Editor", "Point", "Laser"],
+      "systemCapabilities": [
+        "Group transient scribbles into sessions",
+        "Collect and filter pointer points",
+        "Animate self-consuming scribble trails",
+        "Apply individual or grouped fade-out",
+        "Expire inactive sessions automatically",
+        "Publish rendered scribbles to editor state"
+      ],
+      "configDependencies": ["laserFadeoutMs"],
+      "importsInternal": [
+        {
+          "spec": "../../../primitives/Vec",
+          "symbols": ["Vec"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/Vec.ts"
+        },
+        {
+          "spec": "../../Editor",
+          "symbols": ["Editor"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/Editor.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["TLScribble", "VecModel"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["uniqueId"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "ScribbleItem",
+          "shape": "export interface ScribbleItem { id: string; scribble: TLScribble; timeoutMs: number; delayRemaining: number; prev: null | VecModel; next: null | VecModel }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleSessionOptions",
+          "shape": "export interface ScribbleSessionOptions { id?: string; selfConsume?: boolean; idleTimeoutMs?: number; fadeMode?: 'individual' | 'grouped'; fadeEasing?: 'linear' | 'ease-in'; fadeDurationMs?: number }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.startSession",
+          "shape": "startSession(options: ScribbleSessionOptions = {}): string",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.addScribbleToSession",
+          "shape": "addScribbleToSession(sessionId: string, scribble: Partial<TLScribble>, scribbleId = uniqueId()): ScribbleItem",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.addPointToSession",
+          "shape": "addPointToSession(sessionId: string, scribbleId: string, x: number, y: number, z = 0.5): ScribbleItem",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.extendSession",
+          "shape": "extendSession(sessionId: string): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.stopSession",
+          "shape": "stopSession(sessionId: string): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.clearSession",
+          "shape": "clearSession(sessionId: string): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.isSessionActive",
+          "shape": "isSessionActive(sessionId: string): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.addScribble",
+          "shape": "addScribble(scribble: Partial<TLScribble>, id = uniqueId()): ScribbleItem",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.addPoint",
+          "shape": "addPoint(id: string, x: number, y: number, z = 0.5): ScribbleItem",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.complete",
+          "shape": "complete(id: string): ScribbleItem",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.stop",
+          "shape": "stop(id: string): ScribbleItem",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.reset",
+          "shape": "reset(): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ScribbleManager.tick",
+          "shape": "tick(elapsed: number): void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Editor.options.laserFadeoutMs",
+          "shape": "this.editor.options.laserFadeoutMs",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Editor.timers.setTimeout",
+          "shape": "this.editor.timers.setTimeout(() => { this.stopSession(session.id) }, session.options.idleTimeoutMs)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Editor.getInstanceState",
+          "shape": "this.editor.getInstanceState().scribbles",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Editor.run",
+          "shape": "this.editor.run(() => { ... })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Editor.updateInstanceState",
+          "shape": "this.editor.updateInstanceState({ scribbles })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Vec.Dist",
+          "shape": "Vec.Dist(item.prev, point) >= 1",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "uniqueId", "shape": "uniqueId()", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLScribble", "shape": "Partial<TLScribble>", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "VecModel",
+          "shape": "prev: null | VecModel; next: null | VecModel",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "session creation and registration",
+          "intent": "Builds normalized session options and registers the session",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 57, "endLine": 81 }
+        },
+        {
+          "name": "session lifecycle controls",
+          "intent": "Adds, stops, clears, extends, and queries session-managed scribbles",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 84, "endLine": 202 }
+        },
+        {
+          "name": "simple scribble lookup",
+          "intent": "Provides implicit-session operations by searching all existing sessions",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "this.sessions.values()",
+          "terminationCondition": null,
+          "anchor": { "startLine": 214, "endLine": 259 }
+        },
+        {
+          "name": "frame update orchestration",
+          "intent": "Ticks sessions, removes completed state, and publishes cloned scribbles",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 276, "endLine": 304 }
+        },
+        {
+          "name": "session item ticking",
+          "intent": "Chooses persistent or self-consuming behavior and removes empty items",
+          "structureKind": "branch",
+          "predicate": "shouldSelfConsume",
+          "branchOutcomes": ["self-consuming item", "persistent item"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 333, "endLine": 353 }
+        },
+        {
+          "name": "self-consuming state machine",
+          "intent": "Appends points, delays consumption, shrinks stopping trails, and handles pauses",
+          "structureKind": "branch",
+          "predicate": "scribble.state",
+          "branchOutcomes": ["active", "stopping", "paused"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 375, "endLine": 432 }
+        },
+        {
+          "name": "grouped fade progression",
+          "intent": "Removes points across items according to elapsed eased fade progress",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "removed < pointsToRemove && itemIndex < session.items.length",
+          "terminationCondition": null,
+          "anchor": { "startLine": 434, "endLine": 469 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "ScribbleItem",
+          "signature": "export interface ScribbleItem",
+          "generics": null,
+          "decorators": ["/** @public */"],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 7, "endLine": 14 }
+        },
+        {
+          "kind": "interface",
+          "name": "ScribbleSessionOptions",
+          "signature": "export interface ScribbleSessionOptions",
+          "generics": null,
+          "decorators": ["/** @public */"],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 17, "endLine": 34 }
+        },
+        {
+          "kind": "class",
+          "name": "ScribbleManager",
+          "signature": "export class ScribbleManager",
+          "generics": null,
+          "decorators": ["/** @public */"],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 48, "endLine": 470 }
+        },
+        {
+          "kind": "method",
+          "name": "startSession",
+          "signature": "startSession(options: ScribbleSessionOptions = {}): string",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string",
+          "exported": true,
+          "anchor": { "startLine": 57, "endLine": 81 }
+        },
+        {
+          "kind": "method",
+          "name": "addScribbleToSession",
+          "signature": "addScribbleToSession(\n\t\tsessionId: string,\n\t\tscribble: Partial<TLScribble>,\n\t\tscribbleId = uniqueId()\n\t): ScribbleItem",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ScribbleItem",
+          "exported": true,
+          "anchor": { "startLine": 84, "endLine": 120 }
+        },
+        {
+          "kind": "method",
+          "name": "addPointToSession",
+          "signature": "addPointToSession(\n\t\tsessionId: string,\n\t\tscribbleId: string,\n\t\tx: number,\n\t\ty: number,\n\t\tz = 0.5\n\t): ScribbleItem",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ScribbleItem",
+          "exported": true,
+          "anchor": { "startLine": 124, "endLine": 148 }
+        },
+        {
+          "kind": "method",
+          "name": "extendSession",
+          "signature": "extendSession(sessionId: string): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 152, "endLine": 158 }
+        },
+        {
+          "kind": "method",
+          "name": "stopSession",
+          "signature": "stopSession(sessionId: string): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 164, "endLine": 183 }
+        },
+        {
+          "kind": "method",
+          "name": "clearSession",
+          "signature": "clearSession(sessionId: string): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 187, "endLine": 195 }
+        },
+        {
+          "kind": "method",
+          "name": "isSessionActive",
+          "signature": "isSessionActive(sessionId: string): boolean",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 199, "endLine": 202 }
+        },
+        {
+          "kind": "method",
+          "name": "addScribble",
+          "signature": "addScribble(scribble: Partial<TLScribble>, id = uniqueId()): ScribbleItem",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ScribbleItem",
+          "exported": true,
+          "anchor": { "startLine": 207, "endLine": 210 }
+        },
+        {
+          "kind": "method",
+          "name": "addPoint",
+          "signature": "addPoint(id: string, x: number, y: number, z = 0.5): ScribbleItem",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ScribbleItem",
+          "exported": true,
+          "anchor": { "startLine": 214, "endLine": 232 }
+        },
+        {
+          "kind": "method",
+          "name": "complete",
+          "signature": "complete(id: string): ScribbleItem",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ScribbleItem",
+          "exported": true,
+          "anchor": { "startLine": 236, "endLine": 246 }
+        },
+        {
+          "kind": "method",
+          "name": "stop",
+          "signature": "stop(id: string): ScribbleItem",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ScribbleItem",
+          "exported": true,
+          "anchor": { "startLine": 250, "endLine": 259 }
+        },
+        {
+          "kind": "method",
+          "name": "reset",
+          "signature": "reset(): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 264, "endLine": 270 }
+        },
+        {
+          "kind": "method",
+          "name": "tick",
+          "signature": "tick(elapsed: number): void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 276, "endLine": 304 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "ScribbleItem",
+          "shape": "{\n\tid: string\n\tscribble: TLScribble\n\ttimeoutMs: number\n\tdelayRemaining: number\n\tprev: null | VecModel\n\tnext: null | VecModel\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 7, "endLine": 14 }
+        },
+        {
+          "kind": "interface",
+          "name": "ScribbleSessionOptions",
+          "shape": "{\n\t/** Session id. Auto-generated if not provided. */\n\tid?: string\n\t/**\n\t * Whether scribbles self-consume (shrink from start) while drawing.\n\t * - true: scribbles eat their own tail as you draw (default, used for eraser/select)\n\t * - false: scribbles persist until session stops (used for laser)\n\t */\n\tselfConsume?: boolean\n\t/**\n\t * How long to wait after last activity before auto-stopping the session.\n\t * Only applies when selfConsume is false.\n\t */\n\tidleTimeoutMs?: number\n\t/**\n\t * How scribbles fade when stopping.\n\t * - 'individual': each scribble fades on its own (default)\n\t * - 'grouped': all scribbles fade together as one sequence\n\t */\n\tfadeMode?: 'individual' | 'grouped'\n\t/**\n\t * Easing for grouped fade.\n\t */\n\tfadeEasing?: 'linear' | 'ease-in'\n\t/**\n\t * Duration of the fade in milliseconds.\n\t */\n\tfadeDurationMs?: number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 17, "endLine": 34 }
+        },
+        {
+          "kind": "interface",
+          "name": "Session",
+          "shape": "{\n\tid: string\n\titems: ScribbleItem[]\n\tstate: 'active' | 'stopping' | 'complete'\n\toptions: Required<Omit<ScribbleSessionOptions, 'id'>>\n\tidleTimeoutHandle?: number\n\tfadeElapsed: number\n\ttotalPointsAtFadeStart: number\n}",
+          "discriminant": "state",
+          "anchor": { "startLine": 37, "endLine": 45 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Unknown session identifier",
+          "handled": true,
+          "behavior": "Session-specific add operations throw an Error; extension, stopping, clearing, and activity checks return without mutation.",
+          "anchor": { "startLine": 90, "endLine": 91 }
+        },
+        {
+          "inputShape": "Unknown scribble identifier",
+          "handled": true,
+          "behavior": "Global point, complete, and stop operations throw an Error after searching all sessions.",
+          "anchor": { "startLine": 231, "endLine": 232 }
+        },
+        {
+          "inputShape": "Point less than one unit from previous point",
+          "handled": true,
+          "behavior": "The point is ignored and the existing next point remains unchanged.",
+          "anchor": { "startLine": 138, "endLine": 140 }
+        },
+        {
+          "inputShape": "Empty session or session with no remaining points",
+          "handled": true,
+          "behavior": "A stopping session, or an empty session, transitions to complete during ticking.",
+          "anchor": { "startLine": 328, "endLine": 331 }
+        },
+        {
+          "inputShape": "Fade duration reached or exceeded",
+          "handled": true,
+          "behavior": "Grouped fading clears all remaining points immediately.",
+          "anchor": { "startLine": 445, "endLine": 450 }
+        },
+        {
+          "inputShape": "Scribble with one or fewer stopping points",
+          "handled": true,
+          "behavior": "The point buffer is cleared and the item stops processing for that tick.",
+          "anchor": { "startLine": 417, "endLine": 421 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">=",
+          "left": "Vec.Dist(item.prev, point)",
+          "right": "1",
+          "inclusive": true,
+          "intent": "Accepts a point when it is at least one unit from the previous point.",
+          "anchor": { "startLine": 138, "endLine": 140 }
+        },
+        {
+          "operator": ">",
+          "left": "scribble.points.length",
+          "right": "8",
+          "inclusive": false,
+          "intent": "Transitions a starting scribble to active after more than eight points.",
+          "anchor": { "startLine": 362, "endLine": 364 }
+        },
+        {
+          "operator": ">=",
+          "left": "item.timeoutMs",
+          "right": "16",
+          "inclusive": true,
+          "intent": "Resets consumption timing whenever the accumulated timeout reaches sixteen milliseconds.",
+          "anchor": { "startLine": 391, "endLine": 394 }
+        },
+        {
+          "operator": ">",
+          "left": "scribble.points.length",
+          "right": "8",
+          "inclusive": false,
+          "intent": "Allows active scribbles to consume their tail only after exceeding eight points.",
+          "anchor": { "startLine": 403, "endLine": 405 }
+        },
+        {
+          "operator": "<=",
+          "left": "scribble.points.length",
+          "right": "1",
+          "inclusive": true,
+          "intent": "Clears a stopping scribble when at most one point remains.",
+          "anchor": { "startLine": 418, "endLine": 421 }
+        },
+        {
+          "operator": ">=",
+          "left": "session.fadeElapsed",
+          "right": "session.options.fadeDurationMs",
+          "inclusive": true,
+          "intent": "Completes grouped fading when elapsed time reaches the configured duration.",
+          "anchor": { "startLine": 445, "endLine": 450 }
+        },
+        {
+          "operator": ">",
+          "left": "session.options.idleTimeoutMs",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Installs or resets idle timers only for positive timeout settings.",
+          "anchor": { "startLine": 76, "endLine": 77 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "Error(`Session ${sessionId} not found`)",
+          "caught": null,
+          "action": "Rejects adding a scribble or point to an unknown session.",
+          "fallback": null,
+          "anchor": { "startLine": 90, "endLine": 91 }
+        },
+        {
+          "thrown": "Error(`Scribble ${scribbleId} not found in session ${sessionId}`)",
+          "caught": null,
+          "action": "Rejects adding a point for an unknown scribble within a known session.",
+          "fallback": null,
+          "anchor": { "startLine": 134, "endLine": 135 }
+        },
+        {
+          "thrown": "Error(`Scribble with id ${id} not found`)",
+          "caught": null,
+          "action": "Rejects global point, completion, or stop operations when no matching scribble exists.",
+          "fallback": null,
+          "anchor": { "startLine": 231, "endLine": 232 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Session options are normalized with defaults before the session is registered.",
+          "anchor": { "startLine": 59, "endLine": 72 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A point is appended only when it differs from the previous accepted point.",
+          "anchor": { "startLine": 137, "endLine": 140 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Scribbles are published in session insertion order and item insertion order.",
+          "anchor": { "startLine": 293, "endLine": 300 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Completed sessions are removed after ticking and their idle timers are cleared.",
+          "anchor": { "startLine": 285, "endLine": 290 }
+        },
+        {
+          "kind": "non-null",
+          "description": "Returned scribble items always contain initialized point, linkage, delay, and timeout fields.",
+          "anchor": { "startLine": 93, "endLine": 111 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide valid editor-managed scribble identifiers when using session-specific operations.",
+          "anchor": { "startLine": 124, "endLine": 135 }
+        },
+        {
+          "kind": "caller",
+          "description": "The editor invokes tick with elapsed milliseconds on animation frames.",
+          "anchor": { "startLine": 272, "endLine": 276 }
+        },
+        {
+          "kind": "config",
+          "description": "editor.options.laserFadeoutMs supplies the default fade duration.",
+          "anchor": { "startLine": 67, "endLine": 68 }
+        },
+        {
+          "kind": "platform",
+          "description": "Timer handles are compatible with the numeric handle type stored in sessions.",
+          "anchor": { "startLine": 308, "endLine": 312 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What external code consumes the editor scribbles state and renders the point buffers?",
+          "affects": "side_effects and editor integration behavior",
+          "anchor": { "startLine": 302, "endLine": 303 },
+          "resolution": null
+        },
+        {
+          "question": "What are the exact semantics of TLScribble states and fields outside this manager?",
+          "affects": "type_shapes and scribble lifecycle invariants",
+          "anchor": { "startLine": 95, "endLine": 105 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Public operations mutate in-memory session state synchronously; timer callbacks invoke stopSession asynchronously, while frame updates run through the editor transaction wrapper."
+      },
+      "stateModel": {
+        "states": ["active", "stopping", "complete", "starting", "paused"],
+        "initialState": "active",
+        "finalStates": ["complete"],
+        "transitions": [
+          {
+            "from": "active",
+            "to": "stopping",
+            "trigger": "stopSession(sessionId)",
+            "guard": "session.state === 'active'",
+            "effect": "session.state = 'stopping'; item.scribble.state = 'stopping'",
+            "anchor": { "startLine": 208, "endLine": 229 }
+          },
+          {
+            "from": "active",
+            "to": "complete",
+            "trigger": "clearSession(sessionId)",
+            "guard": "session exists",
+            "effect": "item.scribble.points.length = 0; session.state = 'complete'",
+            "anchor": { "startLine": 239, "endLine": 248 }
+          },
+          {
+            "from": "stopping",
+            "to": "complete",
+            "trigger": "tick(elapsed)",
+            "guard": "!hasContent && (session.state === 'stopping' || session.items.length === 0)",
+            "effect": "session.state = 'complete'",
+            "anchor": { "startLine": 377, "endLine": 381 }
+          },
+          {
+            "from": "starting",
+            "to": "active",
+            "trigger": "tickSessionItems(session, elapsed)",
+            "guard": "scribble.points.length > 8",
+            "effect": "scribble.state = 'active'",
+            "anchor": { "startLine": 459, "endLine": 462 }
+          },
+          {
+            "from": "starting",
+            "to": "active",
+            "trigger": "tickSelfConsumingItem(item, elapsed)",
+            "guard": "scribble.points.length > 8",
+            "effect": "scribble.state = 'active'",
+            "anchor": { "startLine": 484, "endLine": 490 }
+          },
+          {
+            "from": "active",
+            "to": "complete",
+            "trigger": "complete(id)",
+            "guard": "scribble.state === 'starting' || scribble.state === 'active'",
+            "effect": "item.scribble.state = 'complete'",
+            "anchor": { "startLine": 291, "endLine": 296 }
+          },
+          {
+            "from": "active",
+            "to": "stopping",
+            "trigger": "stop(id)",
+            "guard": "item exists",
+            "effect": "item.scribble.state = 'stopping'",
+            "anchor": { "startLine": 309, "endLine": 314 }
+          },
+          {
+            "from": "stopping",
+            "to": "complete",
+            "trigger": "tickGroupedFade(session, elapsed)",
+            "guard": "session.fadeElapsed >= session.options.fadeDurationMs",
+            "effect": "item.scribble.points.length = 0",
+            "anchor": { "startLine": 553, "endLine": 558 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "starts-session-with-default-options",
+          "scenario": "Starting a session without options creates an active session with a returned identifier.",
+          "given": ["const manager = new ScribbleManager(editor)"],
+          "when": "const sessionId = manager.startSession()",
+          "then": "sessionId is a string and manager.isSessionActive(sessionId) === true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins default session creation and active-state behavior."
+        },
+        {
+          "testId": "adds-scribble-with-default-properties",
+          "scenario": "Adding a scribble to an existing session fills omitted scribble properties with defaults.",
+          "given": ["const sessionId = manager.startSession()"],
+          "when": "const item = manager.addScribbleToSession(sessionId, {})",
+          "then": "item.scribble.state === 'starting' && item.scribble.size === 20 && item.scribble.color === 'accent' && item.scribble.opacity === 0.8 && item.scribble.points.length === 0",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the public default scribble shape."
+        },
+        {
+          "testId": "rejects-unknown-session",
+          "scenario": "Adding or updating a scribble with an unknown session identifier fails.",
+          "given": [],
+          "when": "manager.addScribbleToSession('missing', {})",
+          "then": "throws Error('Session missing not found')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the error contract for invalid session references."
+        },
+        {
+          "testId": "deduplicates-nearby-points",
+          "scenario": "A point less than one unit from the previous point is not queued for rendering.",
+          "given": [
+            "const sessionId = manager.startSession()",
+            "const item = manager.addScribbleToSession(sessionId, {})",
+            "item.prev = { x: 0, y: 0, z: 0.5 }"
+          ],
+          "when": "manager.addPointToSession(sessionId, item.id, 0.5, 0.5)",
+          "then": "item.next === item.prev",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the minimum point-distance invariant."
+        },
+        {
+          "testId": "stops-session-and-marks-items",
+          "scenario": "Stopping an active session transitions it to stopping and marks every contained scribble as stopping.",
+          "given": [
+            "const sessionId = manager.startSession()",
+            "const item = manager.addScribbleToSession(sessionId, {})"
+          ],
+          "when": "manager.stopSession(sessionId)",
+          "then": "manager.isSessionActive(sessionId) === false && item.scribble.state === 'stopping'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins coordinated session and item state transitions."
+        },
+        {
+          "testId": "clears-session-immediately",
+          "scenario": "Clearing a session removes all points and completes the session.",
+          "given": [
+            "const sessionId = manager.startSession()",
+            "const item = manager.addScribbleToSession(sessionId, { points: [{ x: 1, y: 2, z: 0.5 }] })"
+          ],
+          "when": "manager.clearSession(sessionId)",
+          "then": "item.scribble.points.length === 0 && manager.isSessionActive(sessionId) === false",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards immediate clearing independently of fade behavior."
+        },
+        {
+          "testId": "publishes-renderable-scribbles-on-tick",
+          "scenario": "A tick publishes copies of non-empty scribbles through editor instance state.",
+          "given": [
+            "const sessionId = manager.startSession()",
+            "manager.addScribbleToSession(sessionId, { points: [{ x: 1, y: 2, z: 0.5 }] })"
+          ],
+          "when": "manager.tick(16)",
+          "then": "editor.updateInstanceState was called with an object whose scribbles contains the non-empty scribble and whose points array is a copy",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the rendering synchronization contract and defensive point copying."
+        },
+        {
+          "testId": "auto-stops-after-idle-timeout",
+          "scenario": "A session configured with an idle timeout stops when its timer expires.",
+          "given": [
+            "const sessionId = manager.startSession({ selfConsume: false, idleTimeoutMs: 100 })",
+            "const timeoutCallback = capturedTimerCallback"
+          ],
+          "when": "timeoutCallback()",
+          "then": "manager.isSessionActive(sessionId) === false",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the externally observable idle-session lifecycle."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "exported interface ScribbleItem",
+        "exported interface ScribbleSessionOptions",
+        "internal interface Session",
+        "exported class ScribbleManager"
+      ],
+      "moduleLevelCode": "import { TLScribble, VecModel } from '@tldraw/tlschema'\nimport { uniqueId } from '@tldraw/utils'\nimport { Vec } from '../../../primitives/Vec'\nimport type { Editor } from '../../Editor'",
+      "exports": [
+        { "name": "ScribbleItem", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ScribbleSessionOptions", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ScribbleManager", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "TLScribble", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "VecModel", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "uniqueId", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "Vec", "module": "../../../primitives/Vec", "alias": null, "kind": "internal" },
+        { "symbol": "Editor", "module": "../../Editor", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "unitKind": "class",
+        "name": "ScribbleManager",
+        "qualifiedName": "ScribbleManager",
+        "parentUnitId": null,
+        "startLine": 48,
+        "endLine": 470,
+        "isBehavioral": true,
+        "source": "interface Session {\n\tid: string\n\titems: ScribbleItem[]\n\tstate: 'active' | 'stopping' | 'complete'\n\toptions: Required<Omit<ScribbleSessionOptions, 'id'>>\n\tidleTimeoutHandle?: number\n\tfadeElapsed: number\n\ttotalPointsAtFadeStart: number\n}\n\n/** @public */\nexport class ScribbleManager {\n\tprivate sessions = new Map<string, Session>()\n\n\tconstructor(private editor: Editor) {}\n\n\t// ==================== SESSION API ====================\n\n\t/**\n\t * Start a new session for grouping scribbles.\n\t * Returns a session ID that can be used with other session methods.\n\t *\n\t * @param options - Session configuration\n\t * @returns Session ID\n\t * @public\n\t */\n\tstartSession(options: ScribbleSessionOptions = {}): string {\n\t\tconst id = options.id ?? uniqueId()\n\t\tconst session: Session = {\n\t\t\tid,\n\t\t\titems: [],\n\t\t\tstate: 'active',\n\t\t\toptions: {\n\t\t\t\tselfConsume: options.selfConsume ?? true,\n\t\t\t\tidleTimeoutMs: options.idleTimeoutMs ?? 0,\n\t\t\t\tfadeMode: options.fadeMode ?? 'individual',\n\t\t\t\tfadeEasing: options.fadeEasing ?? (options.fadeMode === 'grouped' ? 'ease-in' : 'linear'),\n\t\t\t\tfadeDurationMs: options.fadeDurationMs ?? this.editor.options.laserFadeoutMs,\n\t\t\t},\n\t\t\tfadeElapsed: 0,\n\t\t\ttotalPointsAtFadeStart: 0,\n\t\t}\n\n\t\tthis.sessions.set(id, session)\n\n\t\t// Set up idle timeout if configured\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}\n\n\t\treturn id\n\t}\n\n\t/**\n\t * Add a scribble to a session.\n\t *\n\t * @param sessionId - The session ID\n\t * @param scribble - Partial scribble properties\n\t * @param scribbleId - Optional scribble ID\n\t * @public\n\t */\n\taddScribbleToSession(\n\t\tsessionId: string,\n\t\tscribble: Partial<TLScribble>,\n\t\tscribbleId = uniqueId()\n\t): ScribbleItem {\n\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session) throw Error(`Session ${sessionId} not found`)\n\n\t\tconst item: ScribbleItem = {\n\t\t\tid: scribbleId,\n\t\t\tscribble: {\n\t\t\t\tid: scribbleId,\n\t\t\t\tsize: 20,\n\t\t\t\tcolor: 'accent',\n\t\t\t\topacity: 0.8,\n\t\t\t\tdelay: 0,\n\t\t\t\tpoints: [],\n\t\t\t\tshrink: 0.1,\n\t\t\t\ttaper: true,\n\t\t\t\t...scribble,\n\t\t\t\tstate: 'starting',\n\t\t\t},\n\t\t\ttimeoutMs: 0,\n\t\t\tdelayRemaining: scribble.delay ?? 0,\n\t\t\tprev: null,\n\t\t\tnext: null,\n\t\t}\n\n\t\tsession.items.push(item)\n\n\t\t// Reset idle timeout on activity\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}\n\n\t\treturn item\n\t}\n\n\t/**\n\t * Add a point to a scribble in a session.\n\t *\n\t * @param sessionId - The session ID\n\t * @param scribbleId - The scribble ID\n\t * @param x - X coordinate\n\t * @param y - Y coordinate\n\t * @param z - Z coordinate (pressure)\n\t * @public\n\t */\n\taddPointToSession(\n\t\tsessionId: string,\n\t\tscribbleId: string,\n\t\tx: number,\n\t\ty: number,\n\t\tz = 0.5\n\t): ScribbleItem {\n\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session) throw Error(`Session ${sessionId} not found`)\n\n\t\tconst item = session.items.find((i) => i.id === scribbleId)\n\t\tif (!item) throw Error(`Scribble ${scribbleId} not found in session ${sessionId}`)\n\n\t\tconst point = { x, y, z }\n\t\tif (!item.prev || Vec.Dist(item.prev, point) >= 1) {\n\t\t\titem.next = point\n\t\t}\n\n\t\t// Reset idle timeout on activity\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}\n\n\t\treturn item\n\t}\n\n\t/**\n\t * Extend a session, resetting its idle timeout.\n\t *\n\t * @param sessionId - The session ID\n\t * @public\n\t */\n\textendSession(sessionId: string): void {\n\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session) return\n\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}\n\t}\n\n\t/**\n\t * Stop a session, triggering fade-out.\n\t *\n\t * @param sessionId - The session ID\n\t * @public\n\t */\n\tstopSession(sessionId: string): void {\n\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session || session.state !== 'active') return\n\n\t\tthis.clearIdleTimeout(session)\n\t\tsession.state = 'stopping'\n\n\t\tif (session.options.fadeMode === 'grouped') {\n\t\t\tsession.totalPointsAtFadeStart = session.items.reduce(\n\t\t\t\t(sum, item) => sum + item.scribble.points.length,\n\t\t\t\t0\n\t\t\t)\n\t\t\tsession.fadeElapsed = 0\n\t\t\tfor (const item of session.items) {\n\t\t\t\titem.scribble.state = 'stopping'\n\t\t\t}\n\t\t} else {\n\t\t\tfor (const item of session.items) {\n\t\t\t\titem.delayRemaining = Math.min(item.delayRemaining, 200)\n\t\t\t\titem.scribble.state = 'stopping'\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Clear all scribbles in a session immediately.\n\t *\n\t * @param sessionId - The session ID\n\t * @public\n\t */\n\tclearSession(sessionId: string): void {\n\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session) return\n\n\t\tthis.clearIdleTimeout(session)\n\t\tfor (const item of session.items) {\n\t\t\titem.scribble.points.length = 0\n\t\t}\n\t\tsession.state = 'complete'\n\t}\n\n\t/**\n\t * Check if a session is active.\n\t *\n\t * @param sessionId - The session ID\n\t * @public\n\t */\n\tisSessionActive(sessionId: string): boolean {\n\t\tconst session = this.sessions.get(sessionId)\n\t\treturn session?.state === 'active'\n\t}\n\n\t// ==================== SIMPLE API (for eraser, select, etc.) ====================\n\n\t/**\n\t * Add a scribble using the default self-consuming behavior.\n\t * Creates an implicit session for the scribble.\n\t *\n\t * @param scribble - Partial scribble properties\n\t * @param id - Optional scribble id\n\t * @returns The created scribble item\n\t * @public\n\t */\n\taddScribble(scribble: Partial<TLScribble>, id = uniqueId()): ScribbleItem {\n\t\tconst sessionId = this.startSession()\n\t\treturn this.addScribbleToSession(sessionId, scribble, id)\n\t}\n\n\t/**\n\t * Add a point to a scribble. Searches all sessions.\n\t *\n\t * @param id - The scribble id\n\t * @param x - X coordinate\n\t * @param y - Y coordinate\n\t * @param z - Z coordinate (pressure)\n\t * @public\n\t */\n\taddPoint(id: string, x: number, y: number, z = 0.5): ScribbleItem {\n\t\tfor (const session of this.sessions.values()) {\n\t\t\tconst item = session.items.find((i) => i.id === id)\n\t\t\tif (item) {\n\t\t\t\tconst point = { x, y, z }\n\t\t\t\tif (!item.prev || Vec.Dist(item.prev, point) >= 1) {\n\t\t\t\t\titem.next = point\n\t\t\t\t}\n\t\t\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\t\t\tthis.resetIdleTimeout(session)\n\t\t\t\t}\n\t\t\t\treturn item\n\t\t\t}\n\t\t}\n\t\tthrow Error(`Scribble with id ${id} not found`)\n\t}\n\n\t/**\n\t * Mark a scribble as complete (done being drawn but not yet fading).\n\t * Searches all sessions.\n\t *\n\t * @param id - The scribble id\n\t * @public\n\t */\n\tcomplete(id: string): ScribbleItem {\n\t\tfor (const session of this.sessions.values()) {\n\t\t\tconst item = session.items.find((i) => i.id === id)\n\t\t\tif (item) {\n\t\t\t\tif (item.scribble.state === 'starting' || item.scribble.state === 'active') {\n\t\t\t\t\titem.scribble.state = 'complete'\n\t\t\t\t}\n\t\t\t\treturn item\n\t\t\t}\n\t\t}\n\t\tthrow Error(`Scribble with id ${id} not found`)\n\t}\n\n\t/**\n\t * Stop a scribble. Searches all sessions.\n\t *\n\t * @param id - The scribble id\n\t * @public\n\t */\n\tstop(id: string): ScribbleItem {\n\t\tfor (const session of this.sessions.values()) {\n\t\t\tconst item = session.items.find((i) => i.id === id)\n\t\t\tif (item) {\n\t\t\t\titem.delayRemaining = Math.min(item.delayRemaining, 200)\n\t\t\t\titem.scribble.state = 'stopping'\n\t\t\t\treturn item\n\t\t\t}\n\t\t}\n\t\tthrow Error(`Scribble with id ${id} not found`)\n\t}\n\n\t/**\n\t * Stop and remove all sessions.\n\t *\n\t * @public\n\t */\n\treset(): void {\n\t\tfor (const session of this.sessions.values()) {\n\t\t\tthis.clearIdleTimeout(session)\n\t\t}\n\t\tthis.sessions.clear()\n\t\tthis.editor.updateInstanceState({ scribbles: [] })\n\t}\n\n\t/**\n\t * Update on each animation frame.\n\t *\n\t * @param elapsed - The number of milliseconds since the last tick.\n\t * @public\n\t */\n\ttick(elapsed: number): void {\n\t\tconst currentScribbles = this.editor.getInstanceState().scribbles\n\t\tif (this.sessions.size === 0 && currentScribbles.length === 0) return\n\n\t\tthis.editor.run(() => {\n\t\t\t// Tick all sessions\n\t\t\tfor (const session of this.sessions.values()) {\n\t\t\t\tthis.tickSession(session, elapsed)\n\t\t\t}\n\n\t\t\t// Remove completed sessions\n\t\t\tfor (const [id, session] of this.sessions) {\n\t\t\t\tif (session.state === 'complete') {\n\t\t\t\t\tthis.clearIdleTimeout(session)\n\t\t\t\t\tthis.sessions.delete(id)\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Collect scribbles from all sessions\n\t\t\tconst scribbles: TLScribble[] = []\n\t\t\tfor (const session of this.sessions.values()) {\n\t\t\t\tfor (const item of session.items) {\n\t\t\t\t\tif (item.scribble.points.length > 0) {\n\t\t\t\t\t\tscribbles.push({\n\t\t\t\t\t\t\t...item.scribble,\n\t\t\t\t\t\t\tpoints: [...item.scribble.points],\n\t\t\t\t\t\t})\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tthis.editor.updateInstanceState({ scribbles })\n\t\t})\n\t}\n\n\t// ==================== PRIVATE HELPERS ====================\n\n\tprivate resetIdleTimeout(session: Session): void {\n\t\tthis.clearIdleTimeout(session)\n\t\tsession.idleTimeoutHandle = this.editor.timers.setTimeout(() => {\n\t\t\tthis.stopSession(session.id)\n\t\t}, session.options.idleTimeoutMs)\n\t}\n\n\tprivate clearIdleTimeout(session: Session): void {\n\t\tif (session.idleTimeoutHandle !== undefined) {\n\t\t\tclearTimeout(session.idleTimeoutHandle)\n\t\t\tsession.idleTimeoutHandle = undefined\n\t\t}\n\t}\n\n\tprivate tickSession(session: Session, elapsed: number): void {\n\t\tif (session.state === 'complete') return\n\n\t\tif (session.state === 'stopping' && session.options.fadeMode === 'grouped') {\n\t\t\tthis.tickGroupedFade(session, elapsed)\n\t\t} else {\n\t\t\tthis.tickSessionItems(session, elapsed)\n\t\t}\n\n\t\t// Check if session is complete\n\t\tconst hasContent = session.items.some((item) => item.scribble.points.length > 0)\n\t\tif (!hasContent && (session.state === 'stopping' || session.items.length === 0)) {\n\t\t\tsession.state = 'complete'\n\t\t}\n\t}\n\n\tprivate tickSessionItems(session: Session, elapsed: number): void {\n\t\tfor (const item of session.items) {\n\t\t\tconst shouldSelfConsume =\n\t\t\t\tsession.options.selfConsume ||\n\t\t\t\tsession.state === 'stopping' ||\n\t\t\t\titem.scribble.state === 'stopping'\n\n\t\t\tif (shouldSelfConsume) {\n\t\t\t\tthis.tickSelfConsumingItem(item, elapsed)\n\t\t\t} else {\n\t\t\t\tthis.tickPersistentItem(item)\n\t\t\t}\n\t\t}\n\n\t\t// Remove completed items in individual fade mode\n\t\tif (session.options.fadeMode === 'individual') {\n\t\t\tfor (let i = session.items.length - 1; i >= 0; i--) {\n\t\t\t\tif (session.items[i].scribble.points.length === 0) {\n\t\t\t\t\tsession.items.splice(i, 1)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate tickPersistentItem(item: ScribbleItem): void {\n\t\tconst { scribble } = item\n\n\t\tif (scribble.state === 'starting') {\n\t\t\tconst { next, prev } = item\n\t\t\tif (next && next !== prev) {\n\t\t\t\titem.prev = next\n\t\t\t\tscribble.points.push(next)\n\t\t\t}\n\t\t\tif (scribble.points.length > 8) {\n\t\t\t\tscribble.state = 'active'\n\t\t\t}\n\t\t\treturn\n\t\t}\n\n\t\tif (scribble.state === 'active') {\n\t\t\tconst { next, prev } = item\n\t\t\tif (next && next !== prev) {\n\t\t\t\titem.prev = next\n\t\t\t\tscribble.points.push(next)\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate tickSelfConsumingItem(item: ScribbleItem, elapsed: number): void {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager",
+          "unitKind": "class",
+          "name": "ScribbleManager",
+          "qualifiedName": "ScribbleManager",
+          "parentUnitId": null,
+          "startLine": 48,
+          "endLine": 470,
+          "signature": "export class ScribbleManager",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "sessions",
+              "kind": "property",
+              "type": "Map<string, Session>",
+              "default": "new Map<string, Session>()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "editor",
+              "kind": "property",
+              "type": "Editor",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "ScribbleManager is the editor-owned container for managing scribble sessions and their associated editor state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "20f91ff6223caa5f88f557de08ffa0df8b84b51972b231d3fd1c5157a0ad5852"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.startSession#method:ScribbleManager.startSession",
+        "unitKind": "method",
+        "name": "startSession",
+        "qualifiedName": "ScribbleManager.startSession",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 57,
+        "endLine": 81,
+        "isBehavioral": true,
+        "source": "\n/** @public */\nexport class ScribbleManager {\n\tprivate sessions = new Map<string, Session>()\n\n\tconstructor(private editor: Editor) {}\n\n\t// ==================== SESSION API ====================\n\n\t/**\n\t * Start a new session for grouping scribbles.\n\t * Returns a session ID that can be used with other session methods.\n\t *\n\t * @param options - Session configuration\n\t * @returns Session ID\n\t * @public\n\t */\n\tstartSession(options: ScribbleSessionOptions = {}): string {\n\t\tconst id = options.id ?? uniqueId()\n\t\tconst session: Session = {\n\t\t\tid,\n\t\t\titems: [],\n\t\t\tstate: 'active',\n\t\t\toptions: {\n\t\t\t\tselfConsume: options.selfConsume ?? true,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.startSession#method:ScribbleManager.startSession",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.startSession",
+          "unitKind": "method",
+          "name": "startSession",
+          "qualifiedName": "ScribbleManager.startSession",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 57,
+          "endLine": 81,
+          "signature": "startSession(options: ScribbleSessionOptions = {}): string",
+          "parameters": [
+            {
+              "name": "options",
+              "type": "ScribbleSessionOptions",
+              "default": "{}",
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "string",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "A new session is registered in the manager.",
+            "The new session has the returned identifier.",
+            "The new session starts in the active state with an empty item list.",
+            "The session selfConsume option defaults to true when it is not provided."
+          ],
+          "invariants": [
+            "The returned session identifier identifies the newly created session.",
+            "Each newly created session has state 'active' and no session items."
+          ],
+          "edgeCases": [
+            "When options is omitted, an empty options object is used and selfConsume defaults to true.",
+            "When options.id is provided, that identifier is used for the new session.",
+            "When options.id is absent, a generated unique identifier is used."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Adds a new Session entry to the manager's private sessions map."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "uniqueId", "source": null, "kind": "external" }],
+          "symbolReferences": ["ScribbleSessionOptions", "Session"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Starts a new active scribble session and returns its identifier. The session is initialized without items and uses the supplied session configuration, defaulting self-consumption to enabled.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "active",
+              "role": "Initial state assigned to every newly created session."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "startSession() is called.",
+              "then": "It returns a string identifier and registers a new active session with no items and selfConsume set to true.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "startSession({ id: \"session-1\" }) is called.",
+              "then": "It returns \"session-1\" and registers the new session under that identifier.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "154ec379662d466ea9584e53e8ccaa3624ede6fd32e256297a0ae915f7a8dc61"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addScribbleToSession#method:ScribbleManager.addScribbleToSession",
+        "unitKind": "method",
+        "name": "addScribbleToSession",
+        "qualifiedName": "ScribbleManager.addScribbleToSession",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 84,
+        "endLine": 120,
+        "isBehavioral": true,
+        "source": "\t\t\t\tfadeEasing: options.fadeEasing ?? (options.fadeMode === 'grouped' ? 'ease-in' : 'linear'),\n\t\t\t\tfadeDurationMs: options.fadeDurationMs ?? this.editor.options.laserFadeoutMs,\n\t\t\t},\n\t\t\tfadeElapsed: 0,\n\t\t\ttotalPointsAtFadeStart: 0,\n\t\t}\n\n\t\tthis.sessions.set(id, session)\n\n\t\t// Set up idle timeout if configured\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}\n\n\t\treturn id\n\t}\n\n\t/**\n\t * Add a scribble to a session.\n\t *\n\t * @param sessionId - The session ID\n\t * @param scribble - Partial scribble properties\n\t * @param scribbleId - Optional scribble ID\n\t * @public\n\t */\n\taddScribbleToSession(\n\t\tsessionId: string,\n\t\tscribble: Partial<TLScribble>,\n\t\tscribbleId = uniqueId()\n\t): ScribbleItem {\n\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session) throw Error(`Session ${sessionId} not found`)\n\n\t\tconst item: ScribbleItem = {\n\t\t\tid: scribbleId,\n\t\t\tscribble: {\n\t\t\t\tid: scribbleId,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addScribbleToSession#method:ScribbleManager.addScribbleToSession",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addScribbleToSession",
+          "unitKind": "method",
+          "name": "addScribbleToSession",
+          "qualifiedName": "ScribbleManager.addScribbleToSession",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 84,
+          "endLine": 120,
+          "signature": "addScribbleToSession(\n\t\tsessionId: string,\n\t\tscribble: Partial<TLScribble>,\n\t\tscribbleId = uniqueId()\n\t): ScribbleItem",
+          "parameters": [
+            {
+              "name": "sessionId",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "scribble",
+              "type": "Partial<TLScribble>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "scribbleId",
+              "type": null,
+              "default": "uniqueId()",
+              "optional": true,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "ScribbleItem",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "sessionId must identify an existing session.",
+            "scribble must be an object containing zero or more TLScribble properties."
+          ],
+          "postconditions": [
+            "A new ScribbleItem is added to the identified session.",
+            "The item's id and nested scribble id equal scribbleId.",
+            "The created ScribbleItem is returned."
+          ],
+          "invariants": [
+            "The session's existing items are not replaced when a scribble is added.",
+            "The item identifier is used consistently for both the item and its nested scribble."
+          ],
+          "edgeCases": [
+            "When scribbleId is omitted, uniqueId() supplies the identifier.",
+            "When scribble contains only a subset of TLScribble properties, the item is created using those partial properties together with the assigned id.",
+            "When sessionId does not exist, the method throws Error with message `Session ${sessionId} not found` and does not add an item."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Throws when the requested session does not exist.",
+            "returnsOnError": null
+          },
+          "stateMutations": ["Adds the created ScribbleItem to the identified session."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "sessions.get", "source": "ScribbleManager.sessions", "kind": "internal" },
+            { "name": "uniqueId", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["TLScribble", "ScribbleItem", "uniqueId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Adds a scribble item to an existing session, assigning the supplied identifier or a generated unique identifier. Returns the created ScribbleItem.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Session ${sessionId} not found",
+              "role": "Error message raised when the requested session does not exist."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "addScribbleToSession is called for that session.",
+              "then": "It creates and registers one ScribbleItem with a generated identifier, uses that identifier for the nested scribble id, and returns the item.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "addScribbleToSession is called.",
+              "then": "It throws an Error whose message is `Session ${sessionId} not found`.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6027009b17517c6361b6d8f59d26662126b6052e3105e6b6bf12823d434c0e11"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addPointToSession#method:ScribbleManager.addPointToSession",
+        "unitKind": "method",
+        "name": "addPointToSession",
+        "qualifiedName": "ScribbleManager.addPointToSession",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 124,
+        "endLine": 148,
+        "isBehavioral": true,
+        "source": "\t\t\t\tdelay: 0,\n\t\t\t\tpoints: [],\n\t\t\t\tshrink: 0.1,\n\t\t\t\ttaper: true,\n\t\t\t\t...scribble,\n\t\t\t\tstate: 'starting',\n\t\t\t},\n\t\t\ttimeoutMs: 0,\n\t\t\tdelayRemaining: scribble.delay ?? 0,\n\t\t\tprev: null,\n\t\t\tnext: null,\n\t\t}\n\n\t\tsession.items.push(item)\n\n\t\t// Reset idle timeout on activity\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}\n\n\t\treturn item\n\t}\n\n\t/**\n\t * Add a point to a scribble in a session.",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addPointToSession#method:ScribbleManager.addPointToSession",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addPointToSession",
+          "unitKind": "method",
+          "name": "addPointToSession",
+          "qualifiedName": "ScribbleManager.addPointToSession",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 124,
+          "endLine": 148,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Adds a point to a scribble within an active session.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "c9e5fa0559e891ce89e2d8dd00de90dad923f10288061f11a32f7077b5b08145"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.extendSession#method:ScribbleManager.extendSession",
+        "unitKind": "method",
+        "name": "extendSession",
+        "qualifiedName": "ScribbleManager.extendSession",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 152,
+        "endLine": 158,
+        "isBehavioral": true,
+        "source": "\t * @param x - X coordinate\n\t * @param y - Y coordinate\n\t * @param z - Z coordinate (pressure)\n\t * @public\n\t */\n\taddPointToSession(\n\t\tsessionId: string,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.extendSession#method:ScribbleManager.extendSession",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.extendSession",
+          "unitKind": "method",
+          "name": "extendSession",
+          "qualifiedName": "ScribbleManager.extendSession",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 152,
+          "endLine": 158,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Extends an existing scribble session according to the manager's session-handling contract.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3d36353edc8d3bb867d345eca6b5f9d7d167b758a8714f1a3e45e1a7cd0ed819"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.stopSession#method:ScribbleManager.stopSession",
+        "unitKind": "method",
+        "name": "stopSession",
+        "qualifiedName": "ScribbleManager.stopSession",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 164,
+        "endLine": 183,
+        "isBehavioral": true,
+        "source": "\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session) throw Error(`Session ${sessionId} not found`)\n\n\t\tconst item = session.items.find((i) => i.id === scribbleId)\n\t\tif (!item) throw Error(`Scribble ${scribbleId} not found in session ${sessionId}`)\n\n\t\tconst point = { x, y, z }\n\t\tif (!item.prev || Vec.Dist(item.prev, point) >= 1) {\n\t\t\titem.next = point\n\t\t}\n\n\t\t// Reset idle timeout on activity\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}\n\n\t\treturn item\n\t}\n\n\t/**",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.stopSession#method:ScribbleManager.stopSession",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.stopSession",
+          "unitKind": "method",
+          "name": "stopSession",
+          "qualifiedName": "ScribbleManager.stopSession",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 164,
+          "endLine": 183,
+          "signature": null,
+          "parameters": [
+            { "name": "sessionId", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "scribbleId", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "x", "type": null, "default": null, "optional": false, "variadic": false, "order": 2 },
+            { "name": "y", "type": null, "default": null, "optional": false, "variadic": false, "order": 3 },
+            { "name": "z", "type": null, "default": null, "optional": false, "variadic": false, "order": 4 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The supplied session identifier must identify an existing session.",
+            "The supplied scribble identifier must identify an item in that session."
+          ],
+          "postconditions": [
+            "The matching scribble item is returned.",
+            "A new point is assigned to the item's next point only when it has no previous point or its distance from the previous point is at least 1.",
+            "When the session idle timeout is greater than 0, the session idle timeout is reset."
+          ],
+          "invariants": [
+            "The point used for distance comparison and assignment has the shape { x, y, z }.",
+            "Points closer than distance 1 to the previous point do not replace the item's next point."
+          ],
+          "edgeCases": [
+            "A missing session causes an Error to be thrown before scribble lookup.",
+            "A missing scribble in an existing session causes an Error to be thrown.",
+            "An item without a previous point receives the supplied point as its next point.",
+            "An item whose previous point is at distance exactly 1 receives the supplied point as its next point.",
+            "An item whose previous point is at distance less than 1 does not receive the supplied point as its next point.",
+            "A session with idleTimeoutMs equal to 0 does not reset its idle timeout."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Error when the session does not exist",
+              "Error when the scribble does not exist in the session"
+            ],
+            "reverts": [],
+            "onInvalidInput": "Throws an Error for an unknown session or scribble identifier.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "May mutate the matching session item's next point.",
+            "May reset the matching session's idle timeout."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "Vec.Dist", "source": null, "kind": "external" },
+            { "name": "resetIdleTimeout", "source": "ScribbleManager", "kind": "internal" }
+          ],
+          "symbolReferences": ["Vec"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Locates a scribble within a session and records a new point when it is sufficiently distant from the previous point. Activity resets the session idle timeout when that timeout is enabled, and the scribble item is returned.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Session ${sessionId} not found",
+              "role": "Error message for an unknown session identifier"
+            },
+            {
+              "kind": "error-message",
+              "value": "Scribble ${scribbleId} not found in session ${sessionId}",
+              "role": "Error message for an unknown scribble identifier"
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "Minimum distance required before assigning the supplied point"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The method is called with coordinates x, y, and z.",
+              "then": "The returned scribble has next equal to { x, y, z }.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The method is called.",
+              "then": "The scribble's next point is not replaced by the supplied point.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The method is called.",
+              "then": "It throws an Error with the corresponding session-not-found or scribble-not-found message.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "89e86f149c4e86c8c649c68aaf767b57d7cea359ecc213404034b638551b7c90"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.clearSession#method:ScribbleManager.clearSession",
+        "unitKind": "method",
+        "name": "clearSession",
+        "qualifiedName": "ScribbleManager.clearSession",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 187,
+        "endLine": 195,
+        "isBehavioral": true,
+        "source": "\t * @public\n\t */\n\textendSession(sessionId: string): void {\n\t\tconst session = this.sessions.get(sessionId)\n\t\tif (!session) return\n\n\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\tthis.resetIdleTimeout(session)\n\t\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.clearSession#method:ScribbleManager.clearSession",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.clearSession",
+          "unitKind": "method",
+          "name": "clearSession",
+          "qualifiedName": "ScribbleManager.clearSession",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 187,
+          "endLine": 195,
+          "signature": "clearSession(sessionId: string): void",
+          "parameters": [
+            { "name": "sessionId", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The session identifier is supplied as a string."],
+          "postconditions": ["The targeted session is no longer retained by the manager, if it existed."],
+          "invariants": [],
+          "edgeCases": [
+            "If the session identifier does not correspond to an existing session, no session state is removed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The manager's session collection is mutated by removing the targeted session."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Clears the manager's session state associated with the supplied session identifier.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "29c047118f3b5be6385aa00281d8502f18a7ad644f09ff64a55b9952d930dc48"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addPoint#method:ScribbleManager.addPoint",
+        "unitKind": "method",
+        "name": "addPoint",
+        "qualifiedName": "ScribbleManager.addPoint",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 214,
+        "endLine": 232,
+        "isBehavioral": true,
+        "source": "\t\t\t\t0\n\t\t\t)\n\t\t\tsession.fadeElapsed = 0\n\t\t\tfor (const item of session.items) {\n\t\t\t\titem.scribble.state = 'stopping'\n\t\t\t}\n\t\t} else {\n\t\t\tfor (const item of session.items) {\n\t\t\t\titem.delayRemaining = Math.min(item.delayRemaining, 200)\n\t\t\t\titem.scribble.state = 'stopping'\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Clear all scribbles in a session immediately.\n\t *\n\t * @param sessionId - The session ID\n\t * @public",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addPoint#method:ScribbleManager.addPoint",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.addPoint",
+          "unitKind": "method",
+          "name": "addPoint",
+          "qualifiedName": "ScribbleManager.addPoint",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 214,
+          "endLine": 232,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "The supplied point is added to the associated scribble when that scribble and its session are available."
+          ],
+          "invariants": ["Existing scribble points and session state are preserved while adding the new point."],
+          "edgeCases": [
+            "If the associated scribble or session cannot be resolved, no point is added and no unrelated session state is changed."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "No point is added when the target scribble or session is unavailable.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "The associated scribble's point collection.",
+            "Associated session state needed to track the scribble."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "addPointToSession", "source": "ScribbleManager", "kind": "internal" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Adds a point to the managed scribble associated with the call. The point is incorporated into the scribble's active session state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "cb969ca577ebe33d328794d7e2e4f3605f4da2709f492c8e664b7998b2fe0b47"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.complete#method:ScribbleManager.complete",
+        "unitKind": "method",
+        "name": "complete",
+        "qualifiedName": "ScribbleManager.complete",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 236,
+        "endLine": 246,
+        "isBehavioral": true,
+        "source": "\t\tif (!session) return\n\n\t\tthis.clearIdleTimeout(session)\n\t\tfor (const item of session.items) {\n\t\t\titem.scribble.points.length = 0\n\t\t}\n\t\tsession.state = 'complete'\n\t}\n\n\t/**\n\t * Check if a session is active.",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.complete#method:ScribbleManager.complete",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.complete",
+          "unitKind": "method",
+          "name": "complete",
+          "qualifiedName": "ScribbleManager.complete",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 236,
+          "endLine": 246,
+          "signature": "complete(session: ScribbleSession | undefined): void",
+          "parameters": [
+            {
+              "name": "session",
+              "type": "ScribbleSession | undefined",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The session argument may be undefined; when provided, it is expected to be a scribble session with an items collection and state."
+          ],
+          "postconditions": [
+            "If a session is provided, its idle timeout is cleared.",
+            "If a session is provided, every item in the session has an empty points array.",
+            "If a session is provided, its state is set to 'complete'.",
+            "If no session is provided, no state or item data is changed."
+          ],
+          "invariants": [
+            "All session item points are empty after successful completion.",
+            "The completed session state is exactly 'complete'."
+          ],
+          "edgeCases": [
+            "When session is undefined, the method returns immediately without clearing timeouts or mutating any session.",
+            "When the session contains no items, the session is still marked 'complete' and its idle timeout is cleared.",
+            "When the session contains multiple items, points are cleared for every item before the session is marked complete."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "An absent session is treated as a no-op.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Clears the idle timeout associated with the session.",
+            "Sets each session item's scribble.points array length to 0.",
+            "Sets session.state to 'complete'."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "clearIdleTimeout", "source": "ScribbleManager", "kind": "internal" }],
+          "symbolReferences": ["ScribbleSession"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Completes an active scribble session by cancelling its idle timeout, clearing all item points, and marking the session complete. If no session is supplied, it performs no action.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "'complete'",
+              "role": "The terminal state assigned to a completed scribble session."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "complete(session) is called.",
+              "then": "The idle timeout is cleared, both points arrays are emptied, and session.state equals 'complete'.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "complete(undefined) is called.",
+              "then": "The method returns without throwing and does not mutate any session state.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b63dd375502cbd58f8c546750f585316aa9ef450638df9386d91bf0906f29e11"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.stop#method:ScribbleManager.stop",
+        "unitKind": "method",
+        "name": "stop",
+        "qualifiedName": "ScribbleManager.stop",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 250,
+        "endLine": 259,
+        "isBehavioral": true,
+        "source": "\t */\n\tisSessionActive(sessionId: string): boolean {\n\t\tconst session = this.sessions.get(sessionId)\n\t\treturn session?.state === 'active'\n\t}\n\n\t// ==================== SIMPLE API (for eraser, select, etc.) ====================\n\n\t/**\n\t * Add a scribble using the default self-consuming behavior.",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.stop#method:ScribbleManager.stop",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.stop",
+          "unitKind": "method",
+          "name": "stop",
+          "qualifiedName": "ScribbleManager.stop",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 250,
+          "endLine": 259,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Exposes the manager operation used to stop the current scribble workflow.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "8e222d3e58ba47581f0b872b8388c1b4719950c4632500ecd529f653df0e799e"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.reset#method:ScribbleManager.reset",
+        "unitKind": "method",
+        "name": "reset",
+        "qualifiedName": "ScribbleManager.reset",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 264,
+        "endLine": 270,
+        "isBehavioral": true,
+        "source": "\t * @returns The created scribble item\n\t * @public\n\t */\n\taddScribble(scribble: Partial<TLScribble>, id = uniqueId()): ScribbleItem {\n\t\tconst sessionId = this.startSession()\n\t\treturn this.addScribbleToSession(sessionId, scribble, id)\n\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.reset#method:ScribbleManager.reset",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.reset",
+          "unitKind": "method",
+          "name": "reset",
+          "qualifiedName": "ScribbleManager.reset",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 264,
+          "endLine": 270,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "The reset method belongs to ScribbleManager, but its implementation and public signature are not present in the supplied unit source, so no behavioral guarantees can be established.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "20aed9d9bbabf98550a130e6b6520164ee69b9d0c3e2ed2c7d466b71fda074bc"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tick#method:ScribbleManager.tick",
+        "unitKind": "method",
+        "name": "tick",
+        "qualifiedName": "ScribbleManager.tick",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 276,
+        "endLine": 304,
+        "isBehavioral": true,
+        "source": "\t * @param x - X coordinate\n\t * @param y - Y coordinate\n\t * @param z - Z coordinate (pressure)\n\t * @public\n\t */\n\taddPoint(id: string, x: number, y: number, z = 0.5): ScribbleItem {\n\t\tfor (const session of this.sessions.values()) {\n\t\t\tconst item = session.items.find((i) => i.id === id)\n\t\t\tif (item) {\n\t\t\t\tconst point = { x, y, z }\n\t\t\t\tif (!item.prev || Vec.Dist(item.prev, point) >= 1) {\n\t\t\t\t\titem.next = point\n\t\t\t\t}\n\t\t\t\tif (session.options.idleTimeoutMs > 0) {\n\t\t\t\t\tthis.resetIdleTimeout(session)\n\t\t\t\t}\n\t\t\t\treturn item\n\t\t\t}\n\t\t}\n\t\tthrow Error(`Scribble with id ${id} not found`)\n\t}\n\n\t/**\n\t * Mark a scribble as complete (done being drawn but not yet fading).\n\t * Searches all sessions.\n\t *\n\t * @param id - The scribble id\n\t * @public\n\t */",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tick#method:ScribbleManager.tick",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tick",
+          "unitKind": "method",
+          "name": "tick",
+          "qualifiedName": "ScribbleManager.tick",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 276,
+          "endLine": 304,
+          "signature": "tick(): void",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["The manager's active scribble state is advanced for the current tick."],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Active scribble/session state managed by the instance"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "tickSession", "source": "ScribbleManager", "kind": "internal" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Advances the ScribbleManager's active scribble state for the current update cycle. It performs this update without returning a value.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a771217049674cf83a0548527023b98249c5189561d40c83f22d9212ee661957"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.resetIdleTimeout#method:ScribbleManager.resetIdleTimeout",
+        "unitKind": "method",
+        "name": "resetIdleTimeout",
+        "qualifiedName": "ScribbleManager.resetIdleTimeout",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 308,
+        "endLine": 312,
+        "isBehavioral": true,
+        "source": "\t\t\tif (item) {\n\t\t\t\tif (item.scribble.state === 'starting' || item.scribble.state === 'active') {\n\t\t\t\t\titem.scribble.state = 'complete'\n\t\t\t\t}\n\t\t\t\treturn item",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.resetIdleTimeout#method:ScribbleManager.resetIdleTimeout",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.resetIdleTimeout",
+          "unitKind": "method",
+          "name": "resetIdleTimeout",
+          "qualifiedName": "ScribbleManager.resetIdleTimeout",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 308,
+          "endLine": 312,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the ScribbleManager operation for resetting idle-timeout state during the manager's session lifecycle.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2775af1cdcd1e7d46c0a98d5c9ab8b6e2d1e1a96ba7c09675287c5b35fbb1ad2"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.clearIdleTimeout#method:ScribbleManager.clearIdleTimeout",
+        "unitKind": "method",
+        "name": "clearIdleTimeout",
+        "qualifiedName": "ScribbleManager.clearIdleTimeout",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 314,
+        "endLine": 318,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t\tthrow Error(`Scribble with id ${id} not found`)\n\t}\n\n\t/**",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.clearIdleTimeout#method:ScribbleManager.clearIdleTimeout",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.clearIdleTimeout",
+          "unitKind": "method",
+          "name": "clearIdleTimeout",
+          "qualifiedName": "ScribbleManager.clearIdleTimeout",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 314,
+          "endLine": 318,
+          "signature": "clearIdleTimeout(): void",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Any pending idle timeout managed by the ScribbleManager is cleared.",
+            "The method returns without a value."
+          ],
+          "invariants": ["Clearing an already-cleared or absent idle timeout does not produce an observable error."],
+          "edgeCases": ["When no idle timeout is pending, the method completes without error."],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The manager's idle-timeout handle/state is cleared."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "clearTimeout", "source": "global timer API", "kind": "external" }],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Clears the manager's pending idle-timeout mechanism so it can no longer trigger idle-session handling.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "63a15a9bbc49d0b58378a37ad5cb04947af4540b6347d84322e7ec5eb0cf4759"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSession#method:ScribbleManager.tickSession",
+        "unitKind": "method",
+        "name": "tickSession",
+        "qualifiedName": "ScribbleManager.tickSession",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 320,
+        "endLine": 331,
+        "isBehavioral": true,
+        "source": "\t *\n\t * @param id - The scribble id\n\t * @public\n\t */\n\tstop(id: string): ScribbleItem {\n\t\tfor (const session of this.sessions.values()) {\n\t\t\tconst item = session.items.find((i) => i.id === id)\n\t\t\tif (item) {\n\t\t\t\titem.delayRemaining = Math.min(item.delayRemaining, 200)\n\t\t\t\titem.scribble.state = 'stopping'\n\t\t\t\treturn item\n\t\t\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSession#method:ScribbleManager.tickSession",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSession",
+          "unitKind": "method",
+          "name": "tickSession",
+          "qualifiedName": "ScribbleManager.tickSession",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 320,
+          "endLine": 331,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes the time-based update for a scribble session. The available source excerpt does not expose its parameter, return, mutation, or error contract.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6fa1d1b560733b5c1f603f907bda22dc3747b38164ed7a8ab07728f1d6865e61"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSessionItems#method:ScribbleManager.tickSessionItems",
+        "unitKind": "method",
+        "name": "tickSessionItems",
+        "qualifiedName": "ScribbleManager.tickSessionItems",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 333,
+        "endLine": 353,
+        "isBehavioral": true,
+        "source": "\t\tthrow Error(`Scribble with id ${id} not found`)\n\t}\n\n\t/**\n\t * Stop and remove all sessions.\n\t *\n\t * @public\n\t */\n\treset(): void {\n\t\tfor (const session of this.sessions.values()) {\n\t\t\tthis.clearIdleTimeout(session)\n\t\t}\n\t\tthis.sessions.clear()\n\t\tthis.editor.updateInstanceState({ scribbles: [] })\n\t}\n\n\t/**\n\t * Update on each animation frame.\n\t *\n\t * @param elapsed - The number of milliseconds since the last tick.\n\t * @public",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSessionItems#method:ScribbleManager.tickSessionItems",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSessionItems",
+          "unitKind": "method",
+          "name": "tickSessionItems",
+          "qualifiedName": "ScribbleManager.tickSessionItems",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 333,
+          "endLine": 353,
+          "signature": "private tickSessionItems(session: ScribbleSession, elapsed: number): void",
+          "parameters": [
+            {
+              "name": "session",
+              "type": "ScribbleSession",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "elapsed", "type": "number", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The session argument is a valid ScribbleSession.",
+            "elapsed represents the time in milliseconds since the previous animation tick."
+          ],
+          "postconditions": [
+            "Each item in the session has been advanced according to its item type and the elapsed duration.",
+            "Items that have completed their lifecycle are no longer retained in the session."
+          ],
+          "invariants": [
+            "Items are processed as session items without creating unrelated sessions.",
+            "The method does not return a value."
+          ],
+          "edgeCases": [
+            "An empty session has no items to process and remains without items.",
+            "A session containing multiple item types dispatches each item to its corresponding ticking behavior.",
+            "Items reaching the end of their lifecycle during the tick are removed rather than retained as active items."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates the scribble items held by the supplied session.",
+            "Removes completed scribble items from the supplied session."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "tickPersistentItem", "source": "ScribbleManager", "kind": "internal" },
+            { "name": "tickSelfConsumingItem", "source": "ScribbleManager", "kind": "internal" },
+            { "name": "tickGroupedFade", "source": "ScribbleManager", "kind": "internal" }
+          ],
+          "symbolReferences": ["ScribbleSession"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Advances every scribble item in a session by the elapsed animation time. Item-specific ticking is delegated according to each item's lifecycle behavior, with completed items removed from the session.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "f3e77f89ed1543e5a9aa6620ef69a82ad168adf12211c43101fa751dabdb835a"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickPersistentItem#method:ScribbleManager.tickPersistentItem",
+        "unitKind": "method",
+        "name": "tickPersistentItem",
+        "qualifiedName": "ScribbleManager.tickPersistentItem",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 355,
+        "endLine": 373,
+        "isBehavioral": true,
+        "source": "\ttick(elapsed: number): void {\n\t\tconst currentScribbles = this.editor.getInstanceState().scribbles\n\t\tif (this.sessions.size === 0 && currentScribbles.length === 0) return\n\n\t\tthis.editor.run(() => {\n\t\t\t// Tick all sessions\n\t\t\tfor (const session of this.sessions.values()) {\n\t\t\t\tthis.tickSession(session, elapsed)\n\t\t\t}\n\n\t\t\t// Remove completed sessions\n\t\t\tfor (const [id, session] of this.sessions) {\n\t\t\t\tif (session.state === 'complete') {\n\t\t\t\t\tthis.clearIdleTimeout(session)\n\t\t\t\t\tthis.sessions.delete(id)\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Collect scribbles from all sessions",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickPersistentItem#method:ScribbleManager.tickPersistentItem",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickPersistentItem",
+          "unitKind": "method",
+          "name": "tickPersistentItem",
+          "qualifiedName": "ScribbleManager.tickPersistentItem",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 355,
+          "endLine": 373,
+          "signature": null,
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates the lifecycle state of a persistent scribble item during a manager tick. The item remains managed according to the persistent-item ticking rules until the applicable completion condition is reached.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "be10c8c1e182e2fd52a2fc4b843d9355e3864229d28310ba39abb98509e7743c"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSelfConsumingItem#method:ScribbleManager.tickSelfConsumingItem",
+        "unitKind": "method",
+        "name": "tickSelfConsumingItem",
+        "qualifiedName": "ScribbleManager.tickSelfConsumingItem",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 375,
+        "endLine": 432,
+        "isBehavioral": true,
+        "source": "\t\t\tfor (const session of this.sessions.values()) {\n\t\t\t\tfor (const item of session.items) {\n\t\t\t\t\tif (item.scribble.points.length > 0) {\n\t\t\t\t\t\tscribbles.push({\n\t\t\t\t\t\t\t...item.scribble,\n\t\t\t\t\t\t\tpoints: [...item.scribble.points],\n\t\t\t\t\t\t})\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tthis.editor.updateInstanceState({ scribbles })\n\t\t})\n\t}\n\n\t// ==================== PRIVATE HELPERS ====================\n\n\tprivate resetIdleTimeout(session: Session): void {\n\t\tthis.clearIdleTimeout(session)\n\t\tsession.idleTimeoutHandle = this.editor.timers.setTimeout(() => {\n\t\t\tthis.stopSession(session.id)\n\t\t}, session.options.idleTimeoutMs)\n\t}\n\n\tprivate clearIdleTimeout(session: Session): void {\n\t\tif (session.idleTimeoutHandle !== undefined) {\n\t\t\tclearTimeout(session.idleTimeoutHandle)\n\t\t\tsession.idleTimeoutHandle = undefined\n\t\t}\n\t}\n\n\tprivate tickSession(session: Session, elapsed: number): void {\n\t\tif (session.state === 'complete') return\n\n\t\tif (session.state === 'stopping' && session.options.fadeMode === 'grouped') {\n\t\t\tthis.tickGroupedFade(session, elapsed)\n\t\t} else {\n\t\t\tthis.tickSessionItems(session, elapsed)\n\t\t}\n\n\t\t// Check if session is complete\n\t\tconst hasContent = session.items.some((item) => item.scribble.points.length > 0)\n\t\tif (!hasContent && (session.state === 'stopping' || session.items.length === 0)) {\n\t\t\tsession.state = 'complete'\n\t\t}\n\t}\n\n\tprivate tickSessionItems(session: Session, elapsed: number): void {\n\t\tfor (const item of session.items) {\n\t\t\tconst shouldSelfConsume =\n\t\t\t\tsession.options.selfConsume ||\n\t\t\t\tsession.state === 'stopping' ||\n\t\t\t\titem.scribble.state === 'stopping'\n\n\t\t\tif (shouldSelfConsume) {\n\t\t\t\tthis.tickSelfConsumingItem(item, elapsed)\n\t\t\t} else {\n\t\t\t\tthis.tickPersistentItem(item)",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSelfConsumingItem#method:ScribbleManager.tickSelfConsumingItem",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickSelfConsumingItem",
+          "unitKind": "method",
+          "name": "tickSelfConsumingItem",
+          "qualifiedName": "ScribbleManager.tickSelfConsumingItem",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 375,
+          "endLine": 432,
+          "signature": "private tickSelfConsumingItem(item: ScribbleItem, elapsed: number): void",
+          "parameters": [
+            {
+              "name": "item",
+              "type": "ScribbleItem",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "elapsed", "type": "number", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The item is a session item with a mutable scribble state.",
+            "elapsed represents the time since the previous tick."
+          ],
+          "postconditions": [
+            "The item's self-consuming animation or lifecycle state is advanced by elapsed time.",
+            "The item is marked or reduced appropriately when its consumable content reaches completion."
+          ],
+          "invariants": [
+            "The item remains a member of its owning session.",
+            "The operation does not produce a return value."
+          ],
+          "edgeCases": [
+            "An elapsed value of zero leaves time-based progress unchanged.",
+            "An item whose consumable content is already exhausted remains in its terminal state.",
+            "A stopping item is processed as a self-consuming item by the session tick flow."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["item.scribble lifecycle, consumption, and/or visibility state"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["ScribbleItem"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Advances a self-consuming scribble item according to the elapsed time, updating the item so it can progressively consume or finish its content.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a8945dccd6fd03e0217f7c3ba5dc375d1ff6f4bb6f9374ed1f30abaad06d46ee"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickGroupedFade#method:ScribbleManager.tickGroupedFade",
+        "unitKind": "method",
+        "name": "tickGroupedFade",
+        "qualifiedName": "ScribbleManager.tickGroupedFade",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+        "startLine": 434,
+        "endLine": 469,
+        "isBehavioral": true,
+        "source": "\t\t}\n\n\t\t// Remove completed items in individual fade mode\n\t\tif (session.options.fadeMode === 'individual') {\n\t\t\tfor (let i = session.items.length - 1; i >= 0; i--) {\n\t\t\t\tif (session.items[i].scribble.points.length === 0) {\n\t\t\t\t\tsession.items.splice(i, 1)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate tickPersistentItem(item: ScribbleItem): void {\n\t\tconst { scribble } = item\n\n\t\tif (scribble.state === 'starting') {\n\t\t\tconst { next, prev } = item\n\t\t\tif (next && next !== prev) {\n\t\t\t\titem.prev = next\n\t\t\t\tscribble.points.push(next)\n\t\t\t}\n\t\t\tif (scribble.points.length > 8) {\n\t\t\t\tscribble.state = 'active'\n\t\t\t}\n\t\t\treturn\n\t\t}\n\n\t\tif (scribble.state === 'active') {\n\t\t\tconst { next, prev } = item\n\t\t\tif (next && next !== prev) {\n\t\t\t\titem.prev = next\n\t\t\t\tscribble.points.push(next)\n\t\t\t}\n\t\t}\n\t}\n",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickGroupedFade#method:ScribbleManager.tickGroupedFade",
+          "fileId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager.tickGroupedFade",
+          "unitKind": "method",
+          "name": "tickGroupedFade",
+          "qualifiedName": "ScribbleManager.tickGroupedFade",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/ScribbleManager/ScribbleManager.ts__ScribbleManager#class:ScribbleManager",
+          "startLine": 434,
+          "endLine": 469,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Advances the manager's grouped-fade behavior for the relevant scribble state. The method is an internal lifecycle step and does not define a public caller-facing API.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6f5238dcaf4bfe8256b4091b2709f6fa4b7743cc1c4c0643c65ff5b27fd8de23"
+        }
+      }
+    ]
+  },
+  "out": ["packages/editor/src/lib/primitives/Vec.ts"],
+  "in": [],
+  "externals": ["@tldraw/tlschema", "@tldraw/utils"],
+  "impact": { "seeds": 19, "callers": 0, "impactedFiles": [] }
+}

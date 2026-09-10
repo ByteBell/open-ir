@@ -1,0 +1,1489 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "redux-toolkit",
+  "commitHash": "b1c5130154c454ca8387f55da6122fcb507c560c",
+  "generatedAt": "2026-08-01T22:01:37.770Z",
+  "file": {
+    "relativePath": "packages/toolkit/src/query/core/buildMiddleware/polling.ts",
+    "language": "typescript",
+    "sizeBytes": 5372,
+    "tokenCount": 1247,
+    "model": "poolside/laguna-s-2.1",
+    "analysedAt": "2026-08-01T15:13:56.516Z",
+    "module": {
+      "purpose": "Implements RTK Query's automatic polling middleware. Exports buildPollingHandler, a factory closed over shared poll/subscription state that returns a synchronous redux middleware handler. The handler inspects incoming actions (subscription option changes, unsubscribes, pending/rejected/fulfilled thunk transitions, and api-state resets) and routes them to batched scheduling logic: subscription-option updates are coalesced into a single setTimeout(0) batch, each active query key maintains its own setTimeout that recursively reschedules refetches, the minimum polling interval is reduced across all subscribers, focused-window gating suppresses refetches when unfocused, and cleanup clears stale timeouts before replacement and purges everything on state reset. Lives at packages/toolkit/src/query/core/buildMiddleware/polling.ts as one of the core middleware builders consumed by the RTK Query api middleware pipeline.",
+      "summary": "This module implements the polling subsystem for RTK Query's middleware layer. It exports a single factory that closes over shared polling state (a Map of active polls and a Map of subscriptions) and returns a synchronous redux middleware handler. The handler inspects incoming actions — subscription option changes, unsubscribe events, pending/rejected/fulfilled thunk transitions, and api-state resets — and routes them to the appropriate scheduling routine. Polling updates are batched into a single setTimeout(0) callback to coalesce frequent option changes, while each active query key maintains its own setTimeout that recursively reschedules refetches. The minimum polling interval is derived by reducing across all subscribers of a query, and focused-window gating prevents refetches when the tab is unfocused. Cleanup is centralized so that stale timeouts are cleared before replacement and the entire poll set can be purged on state reset.",
+      "businessContext": "RTK Query automatic background refetching of queries on configurable intervals. Drives data freshness for dashboards and live views; if polling breaks, cached query data goes stale and UIs display outdated content.",
+      "classes": [],
+      "functions": [
+        "buildPollingHandler (~L17-188): Factory closing over poll state, returning the middleware dispatch handler.",
+        "handler (~L30-61): Inspects incoming actions and routes to scheduling, polling, or reset routines.",
+        "schedulePollingUpdate (~L63-76): Batches polling-interval updates into one setTimeout(0) callback.",
+        "startNextPoll (~L78-111): Registers a per-key setTimeout that refetches and recursively reschedules.",
+        "updatePollingInterval (~L113-147): Recomputes and adjusts the polling interval for a given query key.",
+        "cleanupPollForKey (~L149-155): Clears a key's pending timeout and removes it from the poll map.",
+        "clearPolls (~L157-161): Iterates all poll keys and cleans up each stored poll.",
+        "findLowestPollingInterval (~L163-184): Reduces subscriber polling intervals to the minimum value."
+      ],
+      "keywords": [
+        "polling",
+        "middleware",
+        "refetch",
+        "setTimeout",
+        "batching",
+        "subscriber aggregation",
+        "minimum interval",
+        "RTK Query",
+        "redux middleware",
+        "recursive scheduling"
+      ],
+      "ontologyConcepts": [
+        "polling interval scheduling",
+        "middleware action dispatch",
+        "update batching",
+        "subscriber aggregation",
+        "recursive timer rescheduling",
+        "state reset cleanup",
+        "focused-window gating"
+      ],
+      "businessEntities": ["Query", "Subscription", "Poll", "QueryCacheKey", "ThunkAction"],
+      "systemCapabilities": [
+        "schedule automatic query refetches on intervals",
+        "batch subscription-option updates into a single timer tick",
+        "compute minimum polling interval across subscribers",
+        "cancel and reschedule stale polls safely",
+        "purge all polls on api state reset"
+      ],
+      "configDependencies": ["process.env.NODE_ENV"],
+      "importsInternal": [
+        {
+          "spec": "../apiState",
+          "symbols": ["QueryCacheKey", "QuerySubstateIdentifier", "Subscribers", "SubscribersInternal"],
+          "anchor": { "startLine": 1, "endLine": 6 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/apiState.ts"
+        },
+        {
+          "spec": "../apiState",
+          "symbols": ["QueryStatus", "STATUS_UNINITIALIZED"],
+          "anchor": { "startLine": 7, "endLine": 7 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/apiState.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": [
+            "QueryStateMeta",
+            "SubMiddlewareApi",
+            "TimeoutId",
+            "InternalHandlerBuilder",
+            "ApiMiddlewareInternalHandler",
+            "InternalMiddlewareState"
+          ],
+          "anchor": { "startLine": 8, "endLine": 15 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/buildMiddleware/types.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/buildMiddleware/types.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/buildMiddleware/types.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [
+          "Creates setTimeout timers for batch updates and per-key poll scheduling",
+          "Clears setTimeout timers via clearTimeout during reschedule and cleanup",
+          "Reads process.env.NODE_ENV for test instrumentation"
+        ],
+        "network": [
+          "Dispatches refetchQuery(querySubState) through the middleware api on each poll expiry when window is focused or focus-gating is disabled"
+        ],
+        "env": ["Reads process.env.NODE_ENV to gate test-only poll update counter mutation"],
+        "fs": [],
+        "process": [
+          "Dispatches redux actions (refetchQuery thunk) via api.dispatch",
+          "Mutates the currentPolls Map (add/update/delete entries)",
+          "Mutates the pendingPollingUpdates Set (add/clear)",
+          "Mutates the pollingUpdateTimer closure variable",
+          "Mutates (currentPolls as any).pollUpdateCounters in test mode"
+        ],
+        "mutationOfArg": [
+          "Mutates currentPolls Map entries (clears timeout field before reschedule)",
+          "Mutates (currentPolls as any).pollUpdateCounters object in test mode"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "buildPollingHandler",
+          "shape": "export const buildPollingHandler: InternalHandlerBuilder = ({ reducerPath, queryThunk, api, refetchQuery, internalState }) => ApiMiddlewareInternalHandler",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "queryThunk",
+          "shape": "{ pending, fulfilled, rejected } matchable thunk with meta.arg.queryCacheKey",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "api.internalActions.updateSubscriptionOptions",
+          "shape": "action matcher with payload.queryCacheKey",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "api.internalActions.unsubscribeQueryResult",
+          "shape": "action matcher with payload.queryCacheKey",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "api.util.resetApiState",
+          "shape": "action matcher",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "refetchQuery",
+          "shape": "(querySubState) => action",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "imports_and_type_imports",
+          "intent": "Pull in apiState enums/types and middleware types used by the polling handler",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 1, "endLine": 15 }
+        },
+        {
+          "name": "closure_state_init",
+          "intent": "Destructure shared poll/subscription maps and create batching state",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 24, "endLine": 28 }
+        },
+        {
+          "name": "handler_dispatch",
+          "intent": "Route each incoming middleware action to the matching poll routine",
+          "structureKind": "branch",
+          "predicate": null,
+          "branchOutcomes": [
+            "schedulePollingUpdate on updateSubscriptionOptions|unsubscribeQueryResult",
+            "schedulePollingUpdate on pending|rejected+condition",
+            "startNextPoll on fulfilled|rejected+no-condition",
+            "clearPolls on resetApiState"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 30, "endLine": 61 }
+        },
+        {
+          "name": "schedulePollingUpdate_batching",
+          "intent": "Coalesce frequent interval changes into a single setTimeout(0) batch",
+          "structureKind": "io",
+          "predicate": "!pollingUpdateTimer",
+          "branchOutcomes": ["schedule-batch-timer", "accumulate-into-pending-set"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 63, "endLine": 76 }
+        },
+        {
+          "name": "startNextPoll_recursive_scheduling",
+          "intent": "Schedule a per-key refetch timeout that recursively reschedules the next poll",
+          "structureKind": "recursion",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 78, "endLine": 111 }
+        },
+        {
+          "name": "updatePollingInterval",
+          "intent": "Recompute the lowest interval and reschedule only when a sooner poll is needed",
+          "structureKind": "branch",
+          "predicate": null,
+          "branchOutcomes": ["test-counter-mutation", "non-finite-interval-cleanup", "reschedule-if-earlier"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 113, "endLine": 147 }
+        },
+        {
+          "name": "cleanup_and_clear_polls",
+          "intent": "Clear per-key timeouts, delete entries, and purge the entire poll set",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const key of currentPolls.keys())",
+          "terminationCondition": null,
+          "anchor": { "startLine": 149, "endLine": 161 }
+        },
+        {
+          "name": "findLowestPollingInterval",
+          "intent": "Reduce subscriber intervals to the minimum polling interval and focused-gate flag",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "for (const entry of subscribers.values())",
+          "terminationCondition": null,
+          "anchor": { "startLine": 163, "endLine": 184 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "buildPollingHandler",
+          "signature": "export const buildPollingHandler: InternalHandlerBuilder = ({\n  reducerPath,\n  queryThunk,\n  api,\n  refetchQuery,\n  internalState,\n}) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 17, "endLine": 23 }
+        },
+        {
+          "kind": "function",
+          "name": "handler",
+          "signature": "  const handler: ApiMiddlewareInternalHandler = (action, mwApi) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 30, "endLine": 30 }
+        },
+        {
+          "kind": "function",
+          "name": "schedulePollingUpdate",
+          "signature": "  function schedulePollingUpdate(queryCacheKey: string, api: SubMiddlewareApi) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 63, "endLine": 63 }
+        },
+        {
+          "kind": "function",
+          "name": "startNextPoll",
+          "signature": "  function startNextPoll(\n    { queryCacheKey }: QuerySubstateIdentifier,\n    api: SubMiddlewareApi,\n  ) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 78, "endLine": 81 }
+        },
+        {
+          "kind": "function",
+          "name": "updatePollingInterval",
+          "signature": "  function updatePollingInterval(\n    { queryCacheKey }: QuerySubstateIdentifier,\n    api: SubMiddlewareApi,\n  ) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 113, "endLine": 116 }
+        },
+        {
+          "kind": "function",
+          "name": "cleanupPollForKey",
+          "signature": "  function cleanupPollForKey(key: string) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 149, "endLine": 149 }
+        },
+        {
+          "kind": "function",
+          "name": "clearPolls",
+          "signature": "  function clearPolls() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 157, "endLine": 157 }
+        },
+        {
+          "kind": "function",
+          "name": "findLowestPollingInterval",
+          "signature": "  function findLowestPollingInterval(\n    subscribers: SubscribersInternal = new Map(),\n  ) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 163, "endLine": 165 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Query with no subscribers (currentSubscriptions.get returns undefined)",
+          "handled": true,
+          "behavior": "findLowestPollingInterval defaults to empty Map -> Infinity -> Number.isFinite guard skips poll.",
+          "anchor": { "startLine": 84, "endLine": 84 }
+        },
+        {
+          "inputShape": "Uninitialized query substate (status === STATUS_UNINITIALIZED)",
+          "handled": true,
+          "behavior": "startNextPoll and updatePollingInterval return early; no poll scheduled.",
+          "anchor": { "startLine": 86, "endLine": 90 }
+        },
+        {
+          "inputShape": "Non-finite pollingInterval (Infinity from Math.min of no valid intervals)",
+          "handled": true,
+          "behavior": "Number.isFinite check prevents scheduling; updatePollingInterval cleans up existing poll.",
+          "anchor": { "startLine": 90, "endLine": 138 }
+        },
+        {
+          "inputShape": "resetApiState action with pending polling updates",
+          "handled": true,
+          "behavior": "clearPolls clears all timeouts; pollingUpdateTimer cleared and pendingPollingUpdates emptied.",
+          "anchor": { "startLine": 52, "endLine": 60 }
+        },
+        {
+          "inputShape": "New poll timestamp not earlier than existing (nextPollTimestamp >= current)",
+          "handled": true,
+          "behavior": "updatePollingInterval skips rescheduling; keeps existing poll.",
+          "anchor": { "startLine": 144, "endLine": 146 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "querySubState.status",
+          "right": "STATUS_UNINITIALIZED",
+          "inclusive": true,
+          "intent": "Skip polling for uninitialized query substates in startNextPoll.",
+          "anchor": { "startLine": 86, "endLine": 86 }
+        },
+        {
+          "operator": "==",
+          "left": "querySubState.status",
+          "right": "STATUS_UNINITIALIZED",
+          "inclusive": true,
+          "intent": "Bail out early when query substate never initialized in updatePollingInterval.",
+          "anchor": { "startLine": 121, "endLine": 121 }
+        },
+        {
+          "operator": "==",
+          "left": "process.env.NODE_ENV",
+          "right": "'test'",
+          "inclusive": true,
+          "intent": "Gate test-only instrumentation for poll update counters.",
+          "anchor": { "startLine": 129, "endLine": 129 }
+        },
+        {
+          "operator": "<",
+          "left": "nextPollTimestamp",
+          "right": "currentPoll.nextPollTimestamp",
+          "inclusive": false,
+          "intent": "Only reschedule if the new poll fires sooner than the existing one.",
+          "anchor": { "startLine": 144, "endLine": 144 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Early return when querySubState is missing or uninitialized (startNextPoll/startNextPoll)",
+          "fallback": "skips scheduling next poll",
+          "anchor": { "startLine": 86, "endLine": 90 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Early return when lowestPollingInterval is not finite (updatePollingInterval)",
+          "fallback": "cleans up existing poll and returns without rescheduling",
+          "anchor": { "startLine": 121, "endLine": 138 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "refetchQuery dispatch inside setTimeout has no try/catch wrapper",
+          "fallback": "errors propagate uncaught on the timer callback",
+          "anchor": { "startLine": 104, "endLine": 110 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "non-null",
+          "description": "pollingUpdateTimer stays non-null from scheduling until the batch callback completes and resets it to null.",
+          "anchor": { "startLine": 66, "endLine": 74 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Any existing per-key poll timeout is clearTimeout'd before a new one is registered for that key.",
+          "anchor": { "startLine": 94, "endLine": 97 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Every currentPolls entry written via startNextPoll contains nextPollTimestamp, pollingInterval, and a timeout.",
+          "anchor": { "startLine": 101, "endLine": 110 }
+        },
+        {
+          "kind": "non-null",
+          "description": "pendingPollingUpdates is non-empty only while pollingUpdateTimer is pending; flushed and cleared together.",
+          "anchor": { "startLine": 64, "endLine": 72 }
+        },
+        {
+          "kind": "invariant",
+          "description": "findLowestPollingInterval never returns a negative interval; defaults to POSITIVE_INFINITY for no subscribers.",
+          "anchor": { "startLine": 167, "endLine": 176 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "InternalHandlerBuilder deps (reducerPath, queryThunk, api, refetchQuery, internalState) are pre-wired by the RTK Query middleware factory.",
+          "anchor": { "startLine": 17, "endLine": 23 }
+        },
+        {
+          "kind": "env",
+          "description": "process.env.NODE_ENV is defined; the test-env branch relies on it being set to 'test' during tests.",
+          "anchor": { "startLine": 129, "endLine": 129 }
+        },
+        {
+          "kind": "schema",
+          "description": "internalState exposes currentPolls and currentSubscriptions Maps keyed by queryCacheKey.",
+          "anchor": { "startLine": 24, "endLine": 24 }
+        },
+        {
+          "kind": "caller",
+          "description": "api.getState()[reducerPath] returns a state object with a `queries` map and `config.focused` boolean.",
+          "anchor": { "startLine": 82, "endLine": 83 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "The `as any` casts (key coercion on L70, pollUpdateCounters on L130) bypass type safety — are these intentional escape hatches or technical debt?",
+          "affects": "type safety / public_signatures",
+          "anchor": { "startLine": 70, "endLine": 130 },
+          "resolution": null
+        },
+        {
+          "question": "(currentPolls as any).pollUpdateCounters mutates a property on a Map — is this test-only instrumentation stable or subject to change?",
+          "affects": "side_effects.mutation_of_arg",
+          "anchor": { "startLine": 130, "endLine": 130 },
+          "resolution": null
+        },
+        {
+          "question": "InternalHandlerBuilder / ApiMiddlewareInternalHandler / InternalMiddlewareState shapes are imported types not defined here — exact field contracts unresolved.",
+          "affects": "type_shapes / public_signatures",
+          "anchor": { "startLine": 8, "endLine": 15 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": true,
+        "ordering": "fifo",
+        "notes": "The handler runs synchronously per dispatched action, but scheduling is asynchronous via setTimeout(0) batching and per-key setTimeout recursion. Multiple per-key timers may overlap, but per-key timeout clearing serializes each key's own timer. pendingPollingUpdates accumulates and flushes on the next tick."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "starts-poll-after-fulfilled",
+          "scenario": "When a query thunk fulfills, a next poll is scheduled for the lowest polling interval",
+          "given": ["querySubState with status != STATUS_UNINITIALIZED", "subscriptions with finite pollingInterval"],
+          "when": "handler receives queryThunk.fulfilled action",
+          "then": "currentPolls has timeout set and nextPollTimestamp = Date.now() + lowestPollingInterval",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures auto-refetch polling begins after data loads"
+        },
+        {
+          "testId": "clears-polls-on-reset",
+          "scenario": "On resetApiState, all polls and pending timers are cleared",
+          "given": ["active polls in currentPolls", "pendingPollingUpdates has entries"],
+          "when": "api.util.resetApiState matched",
+          "then": "currentPolls is empty, pollingUpdateTimer cleared, pendingPollingUpdates cleared",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents stale polling after cache reset"
+        },
+        {
+          "testId": "batches-polling-updates",
+          "scenario": "Multiple subscription updates are batched via setTimeout(0)",
+          "given": ["two updateSubscriptionOptions actions dispatched synchronously"],
+          "when": "schedulePollingUpdate called twice",
+          "then": "updatePollingInterval called once per queryCacheKey after timer fires",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Avoids redundant synchronous recalculations"
+        },
+        {
+          "testId": "stops-polling-when-no-interval",
+          "scenario": "If no finite polling interval, poll is cleaned up",
+          "given": ["subscriptions with no pollingInterval"],
+          "when": "updatePollingInterval called",
+          "then": "cleanupPollForKey removes poll from currentPolls",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Terminates polling when no subscriber requests it"
+        },
+        {
+          "testId": "skips-poll-if-unfocused",
+          "scenario": "If skipPollingIfUnfocused and app unfocused, refetch not dispatched",
+          "given": ["state.config.focused = false", "subscription skipPollingIfUnfocused = true"],
+          "when": "poll timeout fires",
+          "then": "refetchQuery not dispatched and startNextPoll recurs",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Respects focus-aware polling optimization"
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import type { QueryCacheKey, QuerySubstateIdentifier, Subscribers, SubscribersInternal } from '../apiState'",
+        "import { QueryStatus, STATUS_UNINITIALIZED } from '../apiState'",
+        "import type { QueryStateMeta, SubMiddlewareApi, TimeoutId, InternalHandlerBuilder, ApiMiddlewareInternalHandler, InternalMiddlewareState } from './types'",
+        "buildPollingHandler (exported factory, lines 17-188)"
+      ],
+      "moduleLevelCode": "import type { QueryCacheKey, QuerySubstateIdentifier, Subscribers, SubscribersInternal } from '../apiState'; import { QueryStatus, STATUS_UNINITIALIZED } from '../apiState'; import type { QueryStateMeta, SubMiddlewareApi, TimeoutId, InternalHandlerBuilder, ApiMiddlewareInternalHandler, InternalMiddlewareState } from './types'",
+      "exports": [{ "name": "buildPollingHandler", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "QueryCacheKey", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QuerySubstateIdentifier", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "Subscribers", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "SubscribersInternal", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QueryStatus", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "STATUS_UNINITIALIZED", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QueryStateMeta", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "SubMiddlewareApi", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "TimeoutId", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "InternalHandlerBuilder", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "ApiMiddlewareInternalHandler", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "InternalMiddlewareState", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "unitKind": "function",
+        "name": "buildPollingHandler",
+        "qualifiedName": "buildPollingHandler",
+        "parentUnitId": null,
+        "startLine": 17,
+        "endLine": 188,
+        "isBehavioral": true,
+        "source": "export const buildPollingHandler: InternalHandlerBuilder = ({\n  reducerPath,\n  queryThunk,\n  api,\n  refetchQuery,\n  internalState,\n}) => {\n  const { currentPolls, currentSubscriptions } = internalState\n\n  // Batching state for polling updates\n  const pendingPollingUpdates = new Set<string>()\n  let pollingUpdateTimer: ReturnType<typeof setTimeout> | null = null\n\n  const handler: ApiMiddlewareInternalHandler = (action, mwApi) => {\n    if (\n      api.internalActions.updateSubscriptionOptions.match(action) ||\n      api.internalActions.unsubscribeQueryResult.match(action)\n    ) {\n      schedulePollingUpdate(action.payload.queryCacheKey, mwApi)\n    }\n\n    if (\n      queryThunk.pending.match(action) ||\n      (queryThunk.rejected.match(action) && action.meta.condition)\n    ) {\n      schedulePollingUpdate(action.meta.arg.queryCacheKey, mwApi)\n    }\n\n    if (\n      queryThunk.fulfilled.match(action) ||\n      (queryThunk.rejected.match(action) && !action.meta.condition)\n    ) {\n      startNextPoll(action.meta.arg, mwApi)\n    }\n\n    if (api.util.resetApiState.match(action)) {\n      clearPolls()\n      // Clear any pending updates\n      if (pollingUpdateTimer) {\n        clearTimeout(pollingUpdateTimer)\n        pollingUpdateTimer = null\n      }\n      pendingPollingUpdates.clear()\n    }\n  }\n\n  function schedulePollingUpdate(queryCacheKey: string, api: SubMiddlewareApi) {\n    pendingPollingUpdates.add(queryCacheKey)\n\n    if (!pollingUpdateTimer) {\n      pollingUpdateTimer = setTimeout(() => {\n        // Process all pending updates in a single batch\n        for (const key of pendingPollingUpdates) {\n          updatePollingInterval({ queryCacheKey: key as any }, api)\n        }\n        pendingPollingUpdates.clear()\n        pollingUpdateTimer = null\n      }, 0)\n    }\n  }\n\n  function startNextPoll(\n    { queryCacheKey }: QuerySubstateIdentifier,\n    api: SubMiddlewareApi,\n  ) {\n    const state = api.getState()[reducerPath]\n    const querySubState = state.queries[queryCacheKey]\n    const subscriptions = currentSubscriptions.get(queryCacheKey)\n\n    if (!querySubState || querySubState.status === STATUS_UNINITIALIZED) return\n\n    const { lowestPollingInterval, skipPollingIfUnfocused } =\n      findLowestPollingInterval(subscriptions)\n    if (!Number.isFinite(lowestPollingInterval)) return\n\n    const currentPoll = currentPolls.get(queryCacheKey)\n\n    if (currentPoll?.timeout) {\n      clearTimeout(currentPoll.timeout)\n      currentPoll.timeout = undefined\n    }\n\n    const nextPollTimestamp = Date.now() + lowestPollingInterval\n\n    currentPolls.set(queryCacheKey, {\n      nextPollTimestamp,\n      pollingInterval: lowestPollingInterval,\n      timeout: setTimeout(() => {\n        if (state.config.focused || !skipPollingIfUnfocused) {\n          api.dispatch(refetchQuery(querySubState))\n        }\n        startNextPoll({ queryCacheKey }, api)\n      }, lowestPollingInterval),\n    })\n  }\n\n  function updatePollingInterval(\n    { queryCacheKey }: QuerySubstateIdentifier,\n    api: SubMiddlewareApi,\n  ) {\n    const state = api.getState()[reducerPath]\n    const querySubState = state.queries[queryCacheKey]\n    const subscriptions = currentSubscriptions.get(queryCacheKey)\n\n    if (!querySubState || querySubState.status === STATUS_UNINITIALIZED) {\n      return\n    }\n\n    const { lowestPollingInterval } = findLowestPollingInterval(subscriptions)\n\n    // HACK add extra data to track how many times this has been called in tests\n    // yes we're mutating a nonexistent field on a Map here\n    if (process.env.NODE_ENV === 'test') {\n      const updateCounters = ((currentPolls as any).pollUpdateCounters ??= {})\n      updateCounters[queryCacheKey] ??= 0\n      updateCounters[queryCacheKey]++\n    }\n\n    if (!Number.isFinite(lowestPollingInterval)) {\n      cleanupPollForKey(queryCacheKey)\n      return\n    }\n\n    const currentPoll = currentPolls.get(queryCacheKey)\n\n    const nextPollTimestamp = Date.now() + lowestPollingInterval\n\n    if (!currentPoll || nextPollTimestamp < currentPoll.nextPollTimestamp) {\n      startNextPoll({ queryCacheKey }, api)\n    }\n  }\n\n  function cleanupPollForKey(key: string) {\n    const existingPoll = currentPolls.get(key)\n    if (existingPoll?.timeout) {\n      clearTimeout(existingPoll.timeout)\n    }\n    currentPolls.delete(key)\n  }\n\n  function clearPolls() {\n    for (const key of currentPolls.keys()) {\n      cleanupPollForKey(key)\n    }\n  }\n\n  function findLowestPollingInterval(\n    subscribers: SubscribersInternal = new Map(),\n  ) {\n    let skipPollingIfUnfocused: boolean | undefined = false\n    let lowestPollingInterval = Number.POSITIVE_INFINITY\n\n    for (const entry of subscribers.values()) {\n      if (!!entry.pollingInterval) {\n        lowestPollingInterval = Math.min(\n          entry.pollingInterval!,\n          lowestPollingInterval,\n        )\n        skipPollingIfUnfocused =\n          entry.skipPollingIfUnfocused || skipPollingIfUnfocused\n      }\n    }\n\n    return {\n      lowestPollingInterval,\n      skipPollingIfUnfocused,\n    }\n  }\n\n  return handler\n}\n",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler",
+          "unitKind": "function",
+          "name": "buildPollingHandler",
+          "qualifiedName": "buildPollingHandler",
+          "parentUnitId": null,
+          "startLine": 17,
+          "endLine": 188,
+          "signature": "export const buildPollingHandler: InternalHandlerBuilder = ({ reducerPath, queryThunk, api, refetchQuery, internalState }) => ApiMiddlewareInternalHandler",
+          "parameters": [
+            {
+              "name": "{ reducerPath, queryThunk, api, refetchQuery, internalState }",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "ApiMiddlewareInternalHandler",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "`internalState` provides `currentPolls` and `currentSubscriptions` Maps",
+            "`api` supplies `internalActions`, `util.resetApiState`, and `queryThunk` with matchable action creators",
+            "`refetchQuery` is a function that can be dispatched with a query substate"
+          ],
+          "postconditions": [
+            "Returns a function of type `ApiMiddlewareInternalHandler` that reacts to actions",
+            "No polling timers are active until the returned handler processes a relevant action"
+          ],
+          "invariants": [
+            "`pendingPollingUpdates` is a closure Set used to batch keys",
+            "`pollingUpdateTimer` ensures batched updates are processed on next macrotask"
+          ],
+          "edgeCases": [
+            "On `resetApiState` action, all polls are cleared and pending timer cancelled",
+            "If computed `lowestPollingInterval` is not finite, polling for that key is cleaned up",
+            "If `querySubState` is missing or `STATUS_UNINITIALIZED`, polling functions early-return without scheduling"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates `internalState.currentPolls` (Map) by adding/updating/deleting poll entries",
+            "Mutates closure `pendingPollingUpdates` Set and `pollingUpdateTimer` handle",
+            "In test environment, mutates `currentPolls.pollUpdateCounters` object"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "schedulePollingUpdate", "source": null, "kind": "internal" },
+            { "name": "startNextPoll", "source": null, "kind": "internal" },
+            { "name": "clearPolls", "source": null, "kind": "internal" },
+            { "name": "updatePollingInterval", "source": null, "kind": "internal" },
+            { "name": "findLowestPollingInterval", "source": null, "kind": "internal" },
+            { "name": "cleanupPollForKey", "source": null, "kind": "internal" },
+            { "name": "setTimeout", "source": "global", "kind": "external" },
+            { "name": "clearTimeout", "source": "global", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "InternalHandlerBuilder",
+            "ApiMiddlewareInternalHandler",
+            "QuerySubstateIdentifier",
+            "SubMiddlewareApi",
+            "SubscribersInternal",
+            "STATUS_UNINITIALIZED",
+            "process.env.NODE_ENV"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Builds and returns a Redux middleware handler that manages query polling by batching subscription-update calculations and scheduling refetch timers based on the lowest active polling interval.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "setTimeout delay used to batch polling update processing"
+            },
+            {
+              "kind": "enum-value",
+              "value": "'test'",
+              "role": "process.env.NODE_ENV value that enables test-only poll update counters"
+            },
+            {
+              "kind": "magic-number",
+              "value": "Number.POSITIVE_INFINITY",
+              "role": "initial sentinel for lowestPollingInterval indicating no active polling"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2bc076a52aab1f164794dc005b1d82101c418f7bd416a3b63ca6814f42fe36e4"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.handler#function:buildPollingHandler.handler",
+        "unitKind": "function",
+        "name": "handler",
+        "qualifiedName": "buildPollingHandler.handler",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "startLine": 30,
+        "endLine": 61,
+        "isBehavioral": true,
+        "source": "  const handler: ApiMiddlewareInternalHandler = (action, mwApi) => {\n    if (\n      api.internalActions.updateSubscriptionOptions.match(action) ||\n      api.internalActions.unsubscribeQueryResult.match(action)\n    ) {\n      schedulePollingUpdate(action.payload.queryCacheKey, mwApi)\n    }\n\n    if (\n      queryThunk.pending.match(action) ||\n      (queryThunk.rejected.match(action) && action.meta.condition)\n    ) {\n      schedulePollingUpdate(action.meta.arg.queryCacheKey, mwApi)\n    }\n\n    if (\n      queryThunk.fulfilled.match(action) ||\n      (queryThunk.rejected.match(action) && !action.meta.condition)\n    ) {\n      startNextPoll(action.meta.arg, mwApi)\n    }\n\n    if (api.util.resetApiState.match(action)) {\n      clearPolls()\n      // Clear any pending updates\n      if (pollingUpdateTimer) {\n        clearTimeout(pollingUpdateTimer)\n        pollingUpdateTimer = null\n      }\n      pendingPollingUpdates.clear()\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.handler#function:buildPollingHandler.handler",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.handler",
+          "unitKind": "function",
+          "name": "handler",
+          "qualifiedName": "buildPollingHandler.handler",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "startLine": 30,
+          "endLine": 61,
+          "signature": "const handler: ApiMiddlewareInternalHandler = (action, mwApi) => { ... }",
+          "parameters": [
+            {
+              "name": "action",
+              "type": "AnyAction",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "mwApi",
+              "type": "MiddlewareAPI",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "action must be a valid Redux AnyAction",
+            "mwApi must be a valid MiddlewareAPI instance with a dispatch function"
+          ],
+          "postconditions": [
+            "for updateSubscriptionOptions or unsubscribeQueryResult, schedulePollingUpdate is called with the queryCacheKey",
+            "for queryThunk.pending or queryThunk.rejected with a condition, schedulePollingUpdate is called with the queryCacheKey",
+            "for queryThunk.fulfilled or queryThunk.rejected without a condition, startNextPoll is called with the arg",
+            "for api.util.resetApiState, clearPolls is called and pollingUpdateTimer is cleared if set"
+          ],
+          "invariants": [
+            "pollingUpdateTimer is set to null after being cleared",
+            "pendingPollingUpdates is cleared on resetApiState"
+          ],
+          "edgeCases": [
+            "action matches none of the handled types: handler does nothing and returns",
+            "pollingUpdateTimer is null at reset: clearTimeout is not called",
+            "queryThunk.rejected has meta.condition set: routed to schedulePollingUpdate instead of startNextPoll"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "null", "returnsOnError": "null" },
+          "stateMutations": ["pollingUpdateTimer", "pendingPollingUpdates"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "schedulePollingUpdate", "source": "buildPollingHandler", "kind": "internal" },
+            { "name": "startNextPoll", "source": "buildPollingHandler", "kind": "internal" },
+            { "name": "clearPolls", "source": "buildPollingHandler", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "api.internalActions.updateSubscriptionOptions",
+            "api.internalActions.unsubscribeQueryResult",
+            "queryThunk.pending",
+            "queryThunk.rejected",
+            "queryThunk.fulfilled",
+            "api.util.resetApiState",
+            "pollingUpdateTimer",
+            "pendingPollingUpdates"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Consumes a Redux AnyAction and a MiddlewareAPI; performs side effects on internal polling state and timers; returns void",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Redux middleware handler that routes incoming actions to the appropriate polling lifecycle step: scheduling updates, starting the next poll, or clearing all polls on reset.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handler is invoked with a valid mwApi",
+              "then": "schedulePollingUpdate is called with 'testKey' and mwApi",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handler is invoked",
+              "then": "clearPolls is called, pollingUpdateTimer is cleared and set to null, and pendingPollingUpdates is emptied",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handler is invoked",
+              "then": "no polling functions are called and no state is mutated",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "bfa440292e2827fc48bcf491a6040389189d6b22fd15d347a83e66e207d3eaf6"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.schedulePollingUpdate#function:buildPollingHandler.schedulePollingUpdate",
+        "unitKind": "function",
+        "name": "schedulePollingUpdate",
+        "qualifiedName": "buildPollingHandler.schedulePollingUpdate",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "startLine": 63,
+        "endLine": 76,
+        "isBehavioral": true,
+        "source": "  function schedulePollingUpdate(queryCacheKey: string, api: SubMiddlewareApi) {\n    pendingPollingUpdates.add(queryCacheKey)\n\n    if (!pollingUpdateTimer) {\n      pollingUpdateTimer = setTimeout(() => {\n        // Process all pending updates in a single batch\n        for (const key of pendingPollingUpdates) {\n          updatePollingInterval({ queryCacheKey: key as any }, api)\n        }\n        pendingPollingUpdates.clear()\n        pollingUpdateTimer = null\n      }, 0)\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.schedulePollingUpdate#function:buildPollingHandler.schedulePollingUpdate",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.schedulePollingUpdate",
+          "unitKind": "function",
+          "name": "schedulePollingUpdate",
+          "qualifiedName": "buildPollingHandler.schedulePollingUpdate",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "startLine": 63,
+          "endLine": 76,
+          "signature": "function schedulePollingUpdate(queryCacheKey: string, api: SubMiddlewareApi)",
+          "parameters": [
+            {
+              "name": "queryCacheKey",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "api",
+              "type": "SubMiddlewareApi",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "queryCacheKey is a string",
+            "api conforms to SubMiddlewareApi",
+            "closure variables pendingPollingUpdates (Set) and pollingUpdateTimer (timeout handle | null) are initialized"
+          ],
+          "postconditions": [
+            "queryCacheKey is added to pendingPollingUpdates",
+            "if pollingUpdateTimer was null before call, a new setTimeout with delay 0 is created and assigned to pollingUpdateTimer",
+            "if pollingUpdateTimer was non-null, no new timer is created"
+          ],
+          "invariants": [
+            "at most one pollingUpdateTimer is active at any time",
+            "pendingPollingUpdates accumulates keys until the timer fires"
+          ],
+          "edgeCases": [
+            "repeated calls with same key before timer fires: Set deduplicates, key present once",
+            "calls while timer pending: only first call sets timer",
+            "timer callback processes all accumulated keys, then clears set and resets timer to null"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "pendingPollingUpdates.add(queryCacheKey)",
+            "pollingUpdateTimer = setTimeout(...) when null",
+            "within timer: pendingPollingUpdates.clear()",
+            "pollingUpdateTimer = null after execution"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "updatePollingInterval",
+              "source": "buildPollingHandler.updatePollingInterval",
+              "kind": "internal"
+            },
+            { "name": "setTimeout", "source": "global", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "SubMiddlewareApi",
+            "pendingPollingUpdates",
+            "pollingUpdateTimer",
+            "updatePollingInterval"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Schedules a polling interval update for a query cache key, batching multiple pending keys into a single deferred timer callback that invokes updatePollingInterval for each.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "setTimeout delay used to batch pending updates in a macrotask"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "schedulePollingUpdate('k', api) is invoked",
+              "then": "pendingPollingUpdates contains 'k' and a timer is scheduled; after delay 0 the callback calls updatePollingInterval({queryCacheKey:'k'}, api), clears pendingPollingUpdates, and sets pollingUpdateTimer to null",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "736edc01d643cfc5c7f2f120381109ecc248839bfb78d4c355543133f7eb50d5"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.startNextPoll#function:buildPollingHandler.startNextPoll",
+        "unitKind": "function",
+        "name": "startNextPoll",
+        "qualifiedName": "buildPollingHandler.startNextPoll",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "startLine": 78,
+        "endLine": 111,
+        "isBehavioral": true,
+        "source": "  function startNextPoll(\n    { queryCacheKey }: QuerySubstateIdentifier,\n    api: SubMiddlewareApi,\n  ) {\n    const state = api.getState()[reducerPath]\n    const querySubState = state.queries[queryCacheKey]\n    const subscriptions = currentSubscriptions.get(queryCacheKey)\n\n    if (!querySubState || querySubState.status === STATUS_UNINITIALIZED) return\n\n    const { lowestPollingInterval, skipPollingIfUnfocused } =\n      findLowestPollingInterval(subscriptions)\n    if (!Number.isFinite(lowestPollingInterval)) return\n\n    const currentPoll = currentPolls.get(queryCacheKey)\n\n    if (currentPoll?.timeout) {\n      clearTimeout(currentPoll.timeout)\n      currentPoll.timeout = undefined\n    }\n\n    const nextPollTimestamp = Date.now() + lowestPollingInterval\n\n    currentPolls.set(queryCacheKey, {\n      nextPollTimestamp,\n      pollingInterval: lowestPollingInterval,\n      timeout: setTimeout(() => {\n        if (state.config.focused || !skipPollingIfUnfocused) {\n          api.dispatch(refetchQuery(querySubState))\n        }\n        startNextPoll({ queryCacheKey }, api)\n      }, lowestPollingInterval),\n    })\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.startNextPoll#function:buildPollingHandler.startNextPoll",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.startNextPoll",
+          "unitKind": "function",
+          "name": "startNextPoll",
+          "qualifiedName": "buildPollingHandler.startNextPoll",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "startLine": 78,
+          "endLine": 111,
+          "signature": "function startNextPoll({ queryCacheKey }: QuerySubstateIdentifier, api: SubMiddlewareApi)",
+          "parameters": [
+            {
+              "name": "{ queryCacheKey }",
+              "type": "QuerySubstateIdentifier",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "api",
+              "type": "SubMiddlewareApi",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "api.getState() returns redux state containing the reducerPath slice with queries map",
+            "currentSubscriptions and currentPolls maps are initialized in closure scope",
+            "findLowestPollingInterval is accessible"
+          ],
+          "postconditions": [
+            "If querySubState missing or status STATUS_UNINITIALIZED, returns early with no scheduling",
+            "If computed lowestPollingInterval is not finite, returns early",
+            "Otherwise clears any existing timeout for key and sets a new setTimeout in currentPolls with nextPollTimestamp = Date.now() + lowestPollingInterval",
+            "On timeout fire, dispatches refetchQuery if state.config.focused or not skipPollingIfUnfocused, then recursively calls startNextPoll"
+          ],
+          "invariants": [
+            "For a scheduled poll, pollingInterval equals the lowest finite interval among subscriptions",
+            "nextPollTimestamp is strictly greater than scheduling time by lowestPollingInterval"
+          ],
+          "edgeCases": [
+            "querySubState undefined or STATUS_UNINITIALIZED => no poll scheduled",
+            "lowestPollingInterval NaN/Infinite => early return",
+            "existing currentPoll.timeout present => cleared via clearTimeout before new set",
+            "skipPollingIfUnfocused true and state.config.focused false => timeout fires but refetch omitted, only reschedule"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Silently returns without scheduling if query key missing or query uninitialized",
+            "returnsOnError": "undefined"
+          },
+          "stateMutations": [
+            "Clears existing timeout property on currentPolls entry for queryCacheKey",
+            "Sets new entry in currentPolls map with nextPollTimestamp, pollingInterval, timeout",
+            "Via callback may dispatch refetchQuery causing redux state update"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "api.getState", "source": null, "kind": "external" },
+            { "name": "findLowestPollingInterval", "source": null, "kind": "internal" },
+            { "name": "currentSubscriptions.get", "source": null, "kind": "internal" },
+            { "name": "currentPolls.get", "source": null, "kind": "internal" },
+            { "name": "clearTimeout", "source": null, "kind": "external" },
+            { "name": "currentPolls.set", "source": null, "kind": "internal" },
+            { "name": "Date.now", "source": null, "kind": "external" },
+            { "name": "setTimeout", "source": null, "kind": "external" },
+            { "name": "api.dispatch", "source": null, "kind": "external" },
+            { "name": "refetchQuery", "source": null, "kind": "external" },
+            { "name": "startNextPoll", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "QuerySubstateIdentifier",
+            "SubMiddlewareApi",
+            "STATUS_UNINITIALIZED",
+            "reducerPath",
+            "currentSubscriptions",
+            "currentPolls",
+            "refetchQuery"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Schedules the next polling timeout for a query cache key using the lowest active subscription interval, dispatching a refetch on fire unless unfocused skip applies, and recursively reschedules.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "STATUS_UNINITIALIZED",
+              "role": "Status constant checked to bypass scheduling for uninitialized queries"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "startNextPoll called",
+              "then": "returns immediately and currentPolls has no new timeout for key",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "startNextPoll invoked",
+              "then": "currentPolls entry set with timeout and nextPollTimestamp ≈ Date.now()+1000; on fire refetchQuery dispatched",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b119e5e13461521e7db557dd47d930e4343bd32f573d575efd93455fd349ddfb"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.updatePollingInterval#function:buildPollingHandler.updatePollingInterval",
+        "unitKind": "function",
+        "name": "updatePollingInterval",
+        "qualifiedName": "buildPollingHandler.updatePollingInterval",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "startLine": 113,
+        "endLine": 147,
+        "isBehavioral": true,
+        "source": "  function updatePollingInterval(\n    { queryCacheKey }: QuerySubstateIdentifier,\n    api: SubMiddlewareApi,\n  ) {\n    const state = api.getState()[reducerPath]\n    const querySubState = state.queries[queryCacheKey]\n    const subscriptions = currentSubscriptions.get(queryCacheKey)\n\n    if (!querySubState || querySubState.status === STATUS_UNINITIALIZED) {\n      return\n    }\n\n    const { lowestPollingInterval } = findLowestPollingInterval(subscriptions)\n\n    // HACK add extra data to track how many times this has been called in tests\n    // yes we're mutating a nonexistent field on a Map here\n    if (process.env.NODE_ENV === 'test') {\n      const updateCounters = ((currentPolls as any).pollUpdateCounters ??= {})\n      updateCounters[queryCacheKey] ??= 0\n      updateCounters[queryCacheKey]++\n    }\n\n    if (!Number.isFinite(lowestPollingInterval)) {\n      cleanupPollForKey(queryCacheKey)\n      return\n    }\n\n    const currentPoll = currentPolls.get(queryCacheKey)\n\n    const nextPollTimestamp = Date.now() + lowestPollingInterval\n\n    if (!currentPoll || nextPollTimestamp < currentPoll.nextPollTimestamp) {\n      startNextPoll({ queryCacheKey }, api)\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.updatePollingInterval#function:buildPollingHandler.updatePollingInterval",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.updatePollingInterval",
+          "unitKind": "function",
+          "name": "updatePollingInterval",
+          "qualifiedName": "buildPollingHandler.updatePollingInterval",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "startLine": 113,
+          "endLine": 147,
+          "signature": "function updatePollingInterval({ queryCacheKey }: QuerySubstateIdentifier, api: SubMiddlewareApi)",
+          "parameters": [
+            {
+              "name": "{ queryCacheKey }",
+              "type": "QuerySubstateIdentifier",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "api",
+              "type": "SubMiddlewareApi",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "api.getState() returns state containing the reducerPath slice",
+            "currentSubscriptions and currentPolls are accessible closure-scoped Maps"
+          ],
+          "postconditions": [
+            "If querySubState is missing or status === STATUS_UNINITIALIZED, returns without further action",
+            "If lowestPollingInterval is not finite, cleanupPollForKey is called and returns",
+            "Otherwise startNextPoll is called when no current poll exists or computed next timestamp is earlier"
+          ],
+          "invariants": ["Poll update counters are mutated only when process.env.NODE_ENV === 'test'"],
+          "edgeCases": [
+            "querySubState undefined or status === STATUS_UNINITIALIZED -> early return with no side effects",
+            "lowestPollingInterval not finite -> cleanupPollForKey invoked, no new poll scheduled",
+            "no existing currentPoll or nextPollTimestamp < currentPoll.nextPollTimestamp -> startNextPoll invoked",
+            "process.env.NODE_ENV === 'test' -> increments (currentPolls as any).pollUpdateCounters[queryCacheKey]"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "In test env, increments (currentPolls as any).pollUpdateCounters[queryCacheKey]",
+            "Indirectly triggers cleanupPollForKey / startNextPoll which mutate polling schedules"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "api.getState", "source": null, "kind": "internal" },
+            { "name": "findLowestPollingInterval", "source": null, "kind": "internal" },
+            { "name": "cleanupPollForKey", "source": null, "kind": "internal" },
+            { "name": "startNextPoll", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "QuerySubstateIdentifier",
+            "SubMiddlewareApi",
+            "STATUS_UNINITIALIZED",
+            "currentSubscriptions",
+            "currentPolls",
+            "process.env.NODE_ENV"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Recomputes the lowest polling interval for a query key from its subscriptions and ensures the poll is (re)scheduled if sooner or absent; no-ops for uninitialized queries or non-finite intervals.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updatePollingInterval({ queryCacheKey }, api) is called",
+              "then": "startNextPoll is invoked with { queryCacheKey } and api",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "8d42b4ba3160ca3302de7d4481612b425ef7a706d98bf3ab660b3d72c49012de"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.cleanupPollForKey#function:buildPollingHandler.cleanupPollForKey",
+        "unitKind": "function",
+        "name": "cleanupPollForKey",
+        "qualifiedName": "buildPollingHandler.cleanupPollForKey",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "startLine": 149,
+        "endLine": 155,
+        "isBehavioral": true,
+        "source": "  function cleanupPollForKey(key: string) {\n    const existingPoll = currentPolls.get(key)\n    if (existingPoll?.timeout) {\n      clearTimeout(existingPoll.timeout)\n    }\n    currentPolls.delete(key)\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.cleanupPollForKey#function:buildPollingHandler.cleanupPollForKey",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.cleanupPollForKey",
+          "unitKind": "function",
+          "name": "cleanupPollForKey",
+          "qualifiedName": "buildPollingHandler.cleanupPollForKey",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "startLine": 149,
+          "endLine": 155,
+          "signature": "function cleanupPollForKey(key: string)",
+          "parameters": [
+            { "name": "key", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["currentPolls is a Map in closure scope", "key is a string usable as map key"],
+          "postconditions": [
+            "Entry for key is deleted from currentPolls",
+            "If the entry had a truthy timeout property, clearTimeout was invoked on it"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Key absent from currentPolls: delete is a no-op and no timeout cleared",
+            "Entry present but timeout is null/undefined: clearTimeout not called",
+            "Entry present with timeout: timeout cleared and entry removed"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Deletes key from currentPolls map",
+            "Cancels pending timer via clearTimeout if existingPoll.timeout is truthy"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "clearTimeout", "source": null, "kind": "external" },
+            { "name": "currentPolls.get", "source": null, "kind": "internal" },
+            { "name": "currentPolls.delete", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["currentPolls", "clearTimeout"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Removes the polling entry for a given key from the internal map and clears any scheduled timeout to cancel pending polling work.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "cleanupPollForKey('k')",
+              "then": "clearTimeout invoked with that timer and currentPolls.get('k') returns undefined",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "077322ad6ac74a846d85151768ccfb7d02a4045ab54eff652281a5d7b9bfa319"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.clearPolls#function:buildPollingHandler.clearPolls",
+        "unitKind": "function",
+        "name": "clearPolls",
+        "qualifiedName": "buildPollingHandler.clearPolls",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "startLine": 157,
+        "endLine": 161,
+        "isBehavioral": true,
+        "source": "  function clearPolls() {\n    for (const key of currentPolls.keys()) {\n      cleanupPollForKey(key)\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.clearPolls#function:buildPollingHandler.clearPolls",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.clearPolls",
+          "unitKind": "function",
+          "name": "clearPolls",
+          "qualifiedName": "buildPollingHandler.clearPolls",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "startLine": 157,
+          "endLine": 161,
+          "signature": "function clearPolls()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "currentPolls is an iterable Map-like structure holding active poll keys",
+            "cleanupPollForKey is defined in closure scope and safely handles each key"
+          ],
+          "postconditions": [
+            "cleanupPollForKey has been called exactly once for each key present at start of call",
+            "All polls tracked in currentPolls are terminated and removed"
+          ],
+          "invariants": [],
+          "edgeCases": ["When currentPolls is empty, the function performs no cleanup calls and returns immediately"],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Indirectly clears currentPolls by invoking cleanupPollForKey which removes entries",
+            "Cancels timers or observers associated with each poll key"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "cleanupPollForKey", "source": "buildPollingHandler.cleanupPollForKey", "kind": "internal" }
+          ],
+          "symbolReferences": ["currentPolls", "cleanupPollForKey"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Clears all active polls by iterating over tracked poll keys and invoking cleanup for each, ensuring no polls remain scheduled.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "clearPolls() is invoked",
+              "then": "cleanupPollForKey is called exactly twice with arguments 'k1' and 'k2' and currentPolls becomes empty",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "bf60c9665592c1638d85a2ba48f10889aec695c2f9c08a40d92dbbbb047be9db"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.findLowestPollingInterval#function:buildPollingHandler.findLowestPollingInterval",
+        "unitKind": "function",
+        "name": "findLowestPollingInterval",
+        "qualifiedName": "buildPollingHandler.findLowestPollingInterval",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+        "startLine": 163,
+        "endLine": 184,
+        "isBehavioral": true,
+        "source": "  function findLowestPollingInterval(\n    subscribers: SubscribersInternal = new Map(),\n  ) {\n    let skipPollingIfUnfocused: boolean | undefined = false\n    let lowestPollingInterval = Number.POSITIVE_INFINITY\n\n    for (const entry of subscribers.values()) {\n      if (!!entry.pollingInterval) {\n        lowestPollingInterval = Math.min(\n          entry.pollingInterval!,\n          lowestPollingInterval,\n        )\n        skipPollingIfUnfocused =\n          entry.skipPollingIfUnfocused || skipPollingIfUnfocused\n      }\n    }\n\n    return {\n      lowestPollingInterval,\n      skipPollingIfUnfocused,\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.findLowestPollingInterval#function:buildPollingHandler.findLowestPollingInterval",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler.findLowestPollingInterval",
+          "unitKind": "function",
+          "name": "findLowestPollingInterval",
+          "qualifiedName": "buildPollingHandler.findLowestPollingInterval",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/polling.ts__buildPollingHandler#function:buildPollingHandler",
+          "startLine": 163,
+          "endLine": 184,
+          "signature": "function findLowestPollingInterval(subscribers: SubscribersInternal = new Map())",
+          "parameters": [
+            {
+              "name": "subscribers",
+              "type": "SubscribersInternal",
+              "default": "new Map()",
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["subscribers is a Map of subscriber entries (defaults to empty Map)"],
+          "postconditions": [
+            "Returns object with lowestPollingInterval as number (Number.POSITIVE_INFINITY if none set) and skipPollingIfUnfocused as boolean (true if any entry had truthy skipPollingIfUnfocused)"
+          ],
+          "invariants": [
+            "lowestPollingInterval is monotonic non-increasing during iteration",
+            "skipPollingIfUnfocused is logical OR of entry flags"
+          ],
+          "edgeCases": [
+            "empty subscribers map -> returns { lowestPollingInterval: Infinity, skipPollingIfUnfocused: false }",
+            "entries without pollingInterval -> ignored for min calculation",
+            "multiple entries with pollingInterval -> minimum selected",
+            "entry.skipPollingIfUnfocused undefined -> treated as false"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["SubscribersInternal", "Map", "Number.POSITIVE_INFINITY", "Math.min"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes the minimum polling interval across all subscribers that define one, and aggregates the skipPollingIfUnfocused flag, returning both as an object.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "Number.POSITIVE_INFINITY",
+              "role": "Initial and fallback value for lowestPollingInterval when no subscriber defines a pollingInterval"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findLowestPollingInterval(subscribers) is called",
+              "then": "returns { lowestPollingInterval: 500, skipPollingIfUnfocused: true }",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findLowestPollingInterval() is called",
+              "then": "returns { lowestPollingInterval: Infinity, skipPollingIfUnfocused: false }",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "add8061af9e719b7fffe5a3ffb1dc454072e0c04207ce8985ac55ff9cad90513"
+        }
+      }
+    ]
+  },
+  "out": ["packages/toolkit/src/query/core/buildMiddleware/types.ts", "packages/toolkit/src/query/core/apiState.ts"],
+  "in": ["packages/toolkit/src/query/core/buildMiddleware/index.ts"],
+  "externals": [],
+  "impact": { "seeds": 8, "callers": 0, "impactedFiles": [] }
+}

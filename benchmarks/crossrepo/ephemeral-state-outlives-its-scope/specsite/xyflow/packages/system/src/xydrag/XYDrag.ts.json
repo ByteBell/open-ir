@@ -1,0 +1,1588 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "xyflow",
+  "commitHash": "360f5b13e2bc6899ea06b4be1a49b068d86926cf",
+  "generatedAt": "2026-08-03T07:44:04.757Z",
+  "file": {
+    "relativePath": "packages/system/src/xydrag/XYDrag.ts",
+    "language": "typescript",
+    "sizeBytes": 13214,
+    "tokenCount": 3110,
+    "model": "openai/gpt-5.6-luna",
+    "analysedAt": "2026-08-03T07:37:46.801Z",
+    "module": {
+      "purpose": "Implements the interactive node and selection dragging lifecycle for an XY graph, including snapping, constrained positioning, auto-pan, callbacks, and cleanup.",
+      "summary": "This module binds d3-drag to a graph container and coordinates pointer events with graph state. It selects draggable nodes, tracks drag thresholds and multitouch cancellation, calculates snapped and extent-constrained positions, updates internal node coordinates, auto-pans near container edges, and invokes node, selection, and generic drag callbacks at start, movement, and completion.",
+      "businessContext": "Supports graph-editor node manipulation and selection movement. Failure would prevent users from repositioning nodes, moving selections, snapping layouts, or receiving drag lifecycle notifications.",
+      "classes": [],
+      "functions": [
+        "XYDrag (~L102-418): Creates and manages graph node and selection dragging behavior",
+        "update (~L122-408): Binds d3-drag behavior and configures draggable container interactions",
+        "updateNodes (~L131-230): Calculates constrained positions and publishes changed node coordinates",
+        "autoPan (~L232-256): Repeatedly pans the graph while dragging near container boundaries",
+        "startDrag (~L258-300): Initializes dragged items and emits drag-start callbacks",
+        "destroy (~L410-412): Removes the installed d3 drag event handlers"
+      ],
+      "keywords": [
+        "d3-drag",
+        "auto-pan",
+        "snap-to-grid",
+        "node-extent",
+        "multitouch-abort",
+        "drag-threshold",
+        "selection-drag",
+        "nodeLookup",
+        "pointer-position",
+        "updateNodePositions"
+      ],
+      "ontologyConcepts": [
+        "direct manipulation",
+        "spatial constraint",
+        "gesture recognition",
+        "selection management",
+        "coordinate transformation",
+        "event lifecycle",
+        "animation scheduling"
+      ],
+      "businessEntities": ["Node", "Edge", "Selection", "DragItem", "Graph", "SnapGrid", "Transform"],
+      "systemCapabilities": [
+        "Move graph nodes interactively",
+        "Drag multiple selected nodes",
+        "Snap positions to a grid",
+        "Constrain nodes to extents",
+        "Auto-pan during edge dragging",
+        "Emit drag lifecycle callbacks"
+      ],
+      "configDependencies": [
+        "noDragClassName",
+        "handleSelector",
+        "isSelectable",
+        "nodeClickDistance",
+        "nodeDragThreshold",
+        "autoPanOnNodeDrag",
+        "autoPanSpeed",
+        "snapToGrid",
+        "snapGrid",
+        "nodesDraggable",
+        "selectNodesOnDrag"
+      ],
+      "importsInternal": [
+        {
+          "spec": "../utils",
+          "symbols": [
+            "calcAutoPan",
+            "getEventPosition",
+            "getPointerPosition",
+            "calculateNodePosition",
+            "snapPosition",
+            "getInternalNodesBounds",
+            "rectToBox"
+          ],
+          "anchor": { "startLine": 4, "endLine": 12 },
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts",
+          "resolvedHint": null
+        },
+        {
+          "spec": "./utils",
+          "symbols": ["calculateSnapOffset", "getDragItems", "getEventHandlerParams", "hasSelector"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/system/src/xydrag/utils.ts",
+          "resolvedFileId": "packages/system/src/xydrag/utils.ts",
+          "resolvedHint": "packages/system/src/xydrag/utils.ts"
+        },
+        {
+          "spec": "../types",
+          "symbols": [
+            "NodeBase",
+            "NodeDragItem",
+            "UseDragEvent",
+            "XYPosition",
+            "EdgeBase",
+            "CoordinateExtent",
+            "NodeOrigin",
+            "OnError",
+            "SnapGrid",
+            "Transform",
+            "PanBy",
+            "OnSelectionDrag",
+            "UpdateNodePositions",
+            "InternalNodeBase"
+          ],
+          "anchor": { "startLine": 14, "endLine": 29 },
+          "resolvedRelativePath": "packages/system/src/types/index.ts",
+          "resolvedFileId": "packages/system/src/types/index.ts",
+          "resolvedHint": null
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "d3-drag",
+          "symbols": ["drag"],
+          "package": "d3-drag",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "d3-selection",
+          "symbols": ["select", "Selection"],
+          "package": "d3-selection",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": ["Mutates each dragged item's position and internals.positionAbsolute during movement."]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "OnDrag",
+          "shape": "export type OnDrag<NodeType extends NodeBase = NodeBase> = (event: MouseEvent, dragItems: Map<string, NodeDragItem>, node: NodeType, nodes: NodeType[]) => void;",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "XYDragParams",
+          "shape": "export type XYDragParams<NodeType extends NodeBase = NodeBase, EdgeType extends EdgeBase = EdgeBase> = { getStoreItems: () => StoreItems<NodeType, EdgeType>; onDragStart?: OnDrag<NodeType>; onDrag?: OnDrag<NodeType>; onDragStop?: OnDrag<NodeType>; onNodeMouseDown?: (id: string) => void; autoPanSpeed?: number; };",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "XYDragInstance",
+          "shape": "export type XYDragInstance = { update: (params: DragUpdateParams) => void; destroy: () => void; };",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "DragUpdateParams",
+          "shape": "export type DragUpdateParams = { noDragClassName?: string; handleSelector?: string; isSelectable?: boolean; nodeId?: string; domNode: Element; nodeClickDistance?: number; };",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "XYDrag",
+          "shape": "export function XYDrag<NodeType extends NodeBase = NodeBase, EdgeType extends EdgeBase = EdgeBase>({ onNodeMouseDown, getStoreItems, onDragStart, onDrag, onDragStop, }: XYDragParams<NodeType, EdgeType>): XYDragInstance",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "drag", "shape": "drag()", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "select", "shape": "select(domNode)", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "calcAutoPan",
+          "shape": "calcAutoPan(mousePosition, containerBounds, autoPanSpeed)",
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts"
+        },
+        {
+          "name": "getEventPosition",
+          "shape": "getEventPosition(event.sourceEvent, containerBounds)",
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts"
+        },
+        {
+          "name": "getPointerPosition",
+          "shape": "getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds })",
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts"
+        },
+        {
+          "name": "calculateNodePosition",
+          "shape": "calculateNodePosition({ nodeId, nextPosition, nodeLookup, nodeExtent, nodeOrigin, onError })",
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts"
+        },
+        {
+          "name": "snapPosition",
+          "shape": "snapPosition(nextPosition, snapGrid)",
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts"
+        },
+        {
+          "name": "getInternalNodesBounds",
+          "shape": "getInternalNodesBounds(dragItems)",
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts"
+        },
+        {
+          "name": "rectToBox",
+          "shape": "rectToBox(rect)",
+          "resolvedRelativePath": "packages/system/src/utils/index.ts",
+          "resolvedFileId": "packages/system/src/utils/index.ts"
+        },
+        {
+          "name": "calculateSnapOffset",
+          "shape": "calculateSnapOffset({ dragItems, snapGrid, x, y })",
+          "resolvedRelativePath": "packages/system/src/xydrag/utils.ts",
+          "resolvedFileId": "packages/system/src/xydrag/utils.ts"
+        },
+        {
+          "name": "getDragItems",
+          "shape": "getDragItems(nodeLookup, nodesDraggable, pointerPos, nodeId)",
+          "resolvedRelativePath": "packages/system/src/xydrag/utils.ts",
+          "resolvedFileId": "packages/system/src/xydrag/utils.ts"
+        },
+        {
+          "name": "getEventHandlerParams",
+          "shape": "getEventHandlerParams({ nodeId, dragItems, nodeLookup, dragging })",
+          "resolvedRelativePath": "packages/system/src/xydrag/utils.ts",
+          "resolvedFileId": "packages/system/src/xydrag/utils.ts"
+        },
+        {
+          "name": "hasSelector",
+          "shape": "hasSelector(target, selector, domNode)",
+          "resolvedRelativePath": "packages/system/src/xydrag/utils.ts",
+          "resolvedFileId": "packages/system/src/xydrag/utils.ts"
+        },
+        {
+          "name": "updateNodePositions",
+          "shape": "updateNodePositions(dragItems, dragging)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "panBy", "shape": "panBy({ x, y })", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "drag-update-binding",
+          "intent": "Binds configured d3 drag handlers to the supplied DOM node.",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 122, "endLine": 408 }
+        },
+        {
+          "name": "position-update-loop",
+          "intent": "Processes every active drag item and computes its next constrained position.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 158, "endLine": 207 }
+        },
+        {
+          "name": "auto-pan-loop",
+          "intent": "Schedules repeated viewport movement while pointer movement reaches container edges.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 232, "endLine": 256 }
+        },
+        {
+          "name": "drag-start-initialization",
+          "intent": "Selects draggable items, captures pointer position, and emits start callbacks.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 258, "endLine": 300 }
+        },
+        {
+          "name": "drag-event-filter",
+          "intent": "Rejects buttons, excluded classes, and targets outside an optional handle.",
+          "structureKind": "branch",
+          "predicate": "!event.button &&\n          (!noDragClassName || !hasSelector(target, `.${noDragClassName}`, domNode)) &&\n          (!handleSelector || hasSelector(target, handleSelector, domNode))",
+          "branchOutcomes": ["draggable target accepted", "target rejected"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 398, "endLine": 405 }
+        },
+        {
+          "name": "drag-abort-guard",
+          "intent": "Cancels processing for multitouch gestures or deleted dragged nodes.",
+          "structureKind": "branch",
+          "predicate": "(event.sourceEvent.type === 'touchmove' && event.sourceEvent.touches.length > 1) ||\n          (nodeId && !nodeLookup.has(nodeId))",
+          "branchOutcomes": ["abort drag", "continue drag"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 326, "endLine": 336 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type",
+          "name": "OnDrag",
+          "signature": "export type OnDrag<NodeType extends NodeBase = NodeBase> = (",
+          "generics": "<NodeType extends NodeBase = NodeBase>",
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 33, "endLine": 38 }
+        },
+        {
+          "kind": "type",
+          "name": "XYDragParams",
+          "signature": "export type XYDragParams<NodeType extends NodeBase = NodeBase, EdgeType extends EdgeBase = EdgeBase> = {",
+          "generics": "<NodeType extends NodeBase = NodeBase, EdgeType extends EdgeBase = EdgeBase>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 79, "endLine": 86 }
+        },
+        {
+          "kind": "type",
+          "name": "XYDragInstance",
+          "signature": "export type XYDragInstance = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 88, "endLine": 91 }
+        },
+        {
+          "kind": "type",
+          "name": "DragUpdateParams",
+          "signature": "export type DragUpdateParams = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 93, "endLine": 100 }
+        },
+        {
+          "kind": "function",
+          "name": "XYDrag",
+          "signature": "export function XYDrag<NodeType extends NodeBase = NodeBase, EdgeType extends EdgeBase = EdgeBase>({",
+          "generics": "<NodeType extends NodeBase = NodeBase, EdgeType extends EdgeBase = EdgeBase>",
+          "decorators": [],
+          "returnType": "XYDragInstance",
+          "exported": true,
+          "anchor": { "startLine": 102, "endLine": 107 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "OnDrag",
+          "shape": "(event: MouseEvent,\n  dragItems: Map<string, NodeDragItem>,\n  node: NodeType,\n  nodes: NodeType[]\n) => void",
+          "discriminant": null,
+          "anchor": { "startLine": 33, "endLine": 38 }
+        },
+        {
+          "kind": "type",
+          "name": "OnNodeDrag",
+          "shape": "(e: MouseEvent | TouchEvent,\n  node: NodeType,\n  nodes: NodeType[]\n) => void | undefined",
+          "discriminant": null,
+          "anchor": { "startLine": 40, "endLine": 44 }
+        },
+        {
+          "kind": "type",
+          "name": "FlowGraph",
+          "shape": "{\n  nodes: NodeType[];\n  edges: EdgeType[];\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 46, "endLine": 49 }
+        },
+        {
+          "kind": "type",
+          "name": "StoreItems",
+          "shape": "{\n  nodes: NodeType[];\n  nodeLookup: Map<string, InternalNodeBase<NodeType>>;\n  edges: EdgeType[];\n  nodeExtent: CoordinateExtent;\n  snapGrid: SnapGrid;\n  snapToGrid: boolean;\n  nodeOrigin: NodeOrigin;\n  multiSelectionActive: boolean;\n  domNode?: Element | null;\n  transform: Transform;\n  autoPanOnNodeDrag: boolean;\n  nodesDraggable: boolean;\n  selectNodesOnDrag: boolean;\n  nodeDragThreshold: number;\n  panBy: PanBy;\n  unselectNodesAndEdges: (params?: Partial<FlowGraph<NodeType, EdgeType>>) => void;\n  onError?: OnError;\n  onNodeDragStart?: OnNodeDrag<NodeType>;\n  onNodeDrag?: OnNodeDrag<NodeType>;\n  onNodeDragStop?: OnNodeDrag<NodeType>;\n  onSelectionDragStart?: OnSelectionDrag<NodeType>;\n  onSelectionDrag?: OnSelectionDrag<NodeType>;\n  onSelectionDragStop?: OnSelectionDrag<NodeType>;\n  updateNodePositions: UpdateNodePositions<InternalNodeBase<NodeType>>;\n  autoPanSpeed?: number;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 51, "endLine": 77 }
+        },
+        {
+          "kind": "type",
+          "name": "XYDragParams",
+          "shape": "{\n  getStoreItems: () => StoreItems<NodeType, EdgeType>;\n  onDragStart?: OnDrag<NodeType>;\n  onDrag?: OnDrag<NodeType>;\n  onDragStop?: OnDrag<NodeType>;\n  onNodeMouseDown?: (id: string) => void;\n  autoPanSpeed?: number;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 79, "endLine": 86 }
+        },
+        {
+          "kind": "type",
+          "name": "XYDragInstance",
+          "shape": "{\n  update: (params: DragUpdateParams) => void;\n  destroy: () => void;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 88, "endLine": 91 }
+        },
+        {
+          "kind": "type",
+          "name": "DragUpdateParams",
+          "shape": "{\n  noDragClassName?: string;\n  handleSelector?: string;\n  isSelectable?: boolean;\n  nodeId?: string;\n  domNode: Element;\n  nodeClickDistance?: number;\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 93, "endLine": 100 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Multitouch move with more than one touch",
+          "handled": true,
+          "behavior": "Sets abortDrag and ignores subsequent drag processing.",
+          "anchor": { "startLine": 326, "endLine": 335 }
+        },
+        {
+          "inputShape": "Dragged node deleted during interaction",
+          "handled": true,
+          "behavior": "Aborts the drag; existing drag items are flushed without finalizing callbacks.",
+          "anchor": { "startLine": 328, "endLine": 365 }
+        },
+        {
+          "inputShape": "No node movement after snapping or constrained calculation",
+          "handled": true,
+          "behavior": "Skips position publication and movement callbacks.",
+          "anchor": { "startLine": 211, "endLine": 213 }
+        },
+        {
+          "inputShape": "Empty drag item set",
+          "handled": true,
+          "behavior": "Start and stop callbacks requiring dragged items are not emitted.",
+          "anchor": { "startLine": 288, "endLine": 300 }
+        },
+        {
+          "inputShape": "No container bounds during auto-pan",
+          "handled": true,
+          "behavior": "Returns immediately without scheduling auto-pan.",
+          "anchor": { "startLine": 233, "endLine": 235 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "dragItems.size",
+          "right": "1",
+          "inclusive": false,
+          "intent": "Treats more than one item as a multi-node drag.",
+          "anchor": { "startLine": 147, "endLine": 148 }
+        },
+        {
+          "operator": "==",
+          "left": "xMovement",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Pans only when horizontal movement is nonzero.",
+          "anchor": { "startLine": 247, "endLine": 252 }
+        },
+        {
+          "operator": "==",
+          "left": "yMovement",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Pans only when vertical movement is nonzero.",
+          "anchor": { "startLine": 247, "endLine": 252 }
+        },
+        {
+          "operator": "==",
+          "left": "nodeDragThreshold",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Starts dragging immediately when no threshold is configured.",
+          "anchor": { "startLine": 313, "endLine": 315 }
+        },
+        {
+          "operator": ">",
+          "left": "dragItems.size",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Emits drag-start callbacks only when items are selected.",
+          "anchor": { "startLine": 288, "endLine": 300 }
+        },
+        {
+          "operator": ">",
+          "left": "event.sourceEvent.touches.length",
+          "right": "1",
+          "inclusive": false,
+          "intent": "Aborts touch dragging when multiple touches are present.",
+          "anchor": { "startLine": 326, "endLine": 327 }
+        },
+        {
+          "operator": "==",
+          "left": "lastPos.x",
+          "right": "pointerPos.xSnapped",
+          "inclusive": false,
+          "intent": "Detects horizontal movement before updating nodes.",
+          "anchor": { "startLine": 356, "endLine": 358 }
+        },
+        {
+          "operator": "==",
+          "left": "lastPos.y",
+          "right": "pointerPos.ySnapped",
+          "inclusive": false,
+          "intent": "Detects vertical movement before updating nodes.",
+          "anchor": { "startLine": 356, "endLine": 358 }
+        },
+        {
+          "operator": ">",
+          "left": "distance",
+          "right": "nodeDragThreshold",
+          "inclusive": false,
+          "intent": "Begins a thresholded drag after exceeding client-coordinate distance.",
+          "anchor": { "startLine": 351, "endLine": 352 }
+        },
+        {
+          "operator": ">",
+          "left": "dragItems.size",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Finalizes updates and stop callbacks only for nonempty drags.",
+          "anchor": { "startLine": 373, "endLine": 394 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Skips deleted drag items rather than calculating positions for them.",
+          "fallback": null,
+          "anchor": { "startLine": 162, "endLine": 164 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Marks the interaction aborted when its explicitly dragged node disappears.",
+          "fallback": "Returns from the drag handler.",
+          "anchor": { "startLine": 328, "endLine": 335 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Only dragged items still present in nodeLookup receive position updates.",
+          "anchor": { "startLine": 162, "endLine": 164 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Position updates occur before movement callbacks are emitted.",
+          "anchor": { "startLine": 215, "endLine": 228 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Node position change notifications are emitted only when coordinates actually change.",
+          "anchor": { "startLine": 202, "endLine": 212 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Completed drags cancel the scheduled auto-pan animation.",
+          "anchor": { "startLine": 369, "endLine": 371 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller supplies a valid DOM element and invokes update before expecting drag behavior.",
+          "anchor": { "startLine": 122, "endLine": 130 }
+        },
+        {
+          "kind": "caller",
+          "description": "The store provides coordinate, selection, callback, and position-update operations compatible with the imported graph types.",
+          "anchor": { "startLine": 132, "endLine": 142 }
+        },
+        {
+          "kind": "platform",
+          "description": "The runtime provides DOM events, DOMRect, requestAnimationFrame, and cancelAnimationFrame.",
+          "anchor": { "startLine": 232, "endLine": 256 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What external store implementation defines the precise semantics of updateNodePositions and panBy?",
+          "affects": "side_effects and position-update behaviour",
+          "anchor": { "startLine": 49, "endLine": 77 },
+          "resolution": null
+        },
+        {
+          "question": "What error behavior does calculateNodePosition apply through the supplied onError callback?",
+          "affects": "error_handling and constrained-position behaviour",
+          "anchor": { "startLine": 192, "endLine": 200 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "mixed",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Uses synchronous d3 event callbacks with an asynchronous auto-pan function and requestAnimationFrame scheduling."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "updates-dragged-node-positions",
+          "scenario": "A draggable node is moved to a new pointer position.",
+          "given": ["dragItems.size > 0", "dragStarted"],
+          "when": "updateNodes(pointerPos)",
+          "then": "updateNodePositions(dragItems, true) is called and registered drag callbacks receive the updated nodes.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the core position-update and callback contract for an active drag."
+        },
+        {
+          "testId": "aborts-multitouch-drag",
+          "scenario": "A second touch point appears while a node is being dragged.",
+          "given": ["event.sourceEvent.type === 'touchmove'", "event.sourceEvent.touches.length > 1"],
+          "when": "the drag handler processes the event",
+          "then": "abortDrag is set to true and no node movement is applied.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents unintended node movement during multitouch interaction."
+        },
+        {
+          "testId": "commits-final-node-positions",
+          "scenario": "A drag ends after node positions changed.",
+          "given": ["dragStarted", "nodePositionsChanged", "dragItems.size > 0"],
+          "when": "the drag end handler runs",
+          "then": "updateNodePositions(dragItems, false) is called and drag-stop callbacks are invoked.",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the finalization semantics distinguishing live updates from the committed drag result."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "d3-drag and d3-selection imports",
+        "graph utility imports",
+        "graph type imports",
+        "exported drag callback type",
+        "local callback and store types",
+        "exported drag parameter and instance types",
+        "exported XYDrag factory",
+        "factory-local drag state",
+        "factory-local update, autoPan, startDrag, and destroy functions",
+        "returned drag instance"
+      ],
+      "moduleLevelCode": "import { drag } from 'd3-drag';\nimport { select, type Selection } from 'd3-selection';\n\nimport {\n  calcAutoPan,\n  getEventPosition,\n  getPointerPosition,\n  calculateNodePosition,\n  snapPosition,\n  getInternalNodesBounds,\n  rectToBox,\n} from '../utils';\nimport { calculateSnapOffset, getDragItems, getEventHandlerParams, hasSelector } from './utils';\nimport type {\n  NodeBase,\n  NodeDragItem,\n  UseDragEvent,\n  XYPosition,\n  EdgeBase,\n  CoordinateExtent,\n  NodeOrigin,\n  OnError,\n  SnapGrid,\n  Transform,\n  PanBy,\n  OnSelectionDrag,\n  UpdateNodePositions,\n  InternalNodeBase,\n} from '../types';",
+      "exports": [
+        { "name": "OnDrag", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "XYDragParams", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "XYDragInstance", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "DragUpdateParams", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "XYDrag", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "drag", "module": "d3-drag", "alias": null, "kind": "external" },
+        { "symbol": "select", "module": "d3-selection", "alias": null, "kind": "external" },
+        { "symbol": "Selection", "module": "d3-selection", "alias": null, "kind": "external" },
+        { "symbol": "calcAutoPan", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "getEventPosition", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "getPointerPosition", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "calculateNodePosition", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "snapPosition", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "getInternalNodesBounds", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "rectToBox", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "calculateSnapOffset", "module": "./utils", "alias": null, "kind": "internal" },
+        { "symbol": "getDragItems", "module": "./utils", "alias": null, "kind": "internal" },
+        { "symbol": "getEventHandlerParams", "module": "./utils", "alias": null, "kind": "internal" },
+        { "symbol": "hasSelector", "module": "./utils", "alias": null, "kind": "internal" },
+        { "symbol": "NodeBase", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "NodeDragItem", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "UseDragEvent", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "XYPosition", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "EdgeBase", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "CoordinateExtent", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "NodeOrigin", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "OnError", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "SnapGrid", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "Transform", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "PanBy", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "OnSelectionDrag", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "UpdateNodePositions", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "InternalNodeBase", "module": "../types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag#function:XYDrag",
+        "unitKind": "function",
+        "name": "XYDrag",
+        "qualifiedName": "XYDrag",
+        "parentUnitId": null,
+        "startLine": 102,
+        "endLine": 418,
+        "isBehavioral": true,
+        "source": "  getStoreItems,\n  onDragStart,\n  onDrag,\n  onDragStop,\n}: XYDragParams<NodeType, EdgeType>): XYDragInstance {\n  let lastPos: { x: number | null; y: number | null } = { x: null, y: null };\n  let autoPanId = 0;\n  let dragItems = new Map<string, NodeDragItem>();\n  let autoPanStarted = false;\n  let mousePosition: XYPosition = { x: 0, y: 0 };\n  let containerBounds: DOMRect | null = null;\n  let dragStarted = false;\n  let d3Selection: Selection<Element, unknown, null, undefined> | null = null;\n  let abortDrag = false; // prevents unintentional dragging on multitouch\n  let nodePositionsChanged = false;\n  // we store the last drag event to be able to use it in the update function\n  let dragEvent: MouseEvent | null = null;\n\n  // public functions\n  function update({\n    noDragClassName,\n    handleSelector,\n    domNode,\n    isSelectable,\n    nodeId,\n    nodeClickDistance = 0,\n  }: DragUpdateParams) {\n    d3Selection = select(domNode);\n    function updateNodes({ x, y }: XYPosition) {\n      const {\n        nodeLookup,\n        nodeExtent,\n        snapGrid,\n        snapToGrid,\n        nodeOrigin,\n        onNodeDrag,\n        onSelectionDrag,\n        onError,\n        updateNodePositions,\n      } = getStoreItems();\n\n      lastPos = { x, y };\n      let hasChange = false;\n\n      const isMultiDrag = dragItems.size > 1;\n      const nodesBox = isMultiDrag && nodeExtent ? rectToBox(getInternalNodesBounds(dragItems)) : null;\n      const multiDragSnapOffset =\n        isMultiDrag && snapToGrid\n          ? calculateSnapOffset({\n              dragItems,\n              snapGrid,\n              x,\n              y,\n            })\n          : null;\n\n      for (const [id, dragItem] of dragItems) {\n        /*\n         * if the node is not in the nodeLookup anymore, it was probably deleted while dragging\n         */\n        if (!nodeLookup.has(id)) {\n          continue;\n        }\n\n        let nextPosition = { x: x - dragItem.distance.x, y: y - dragItem.distance.y };\n        if (snapToGrid) {\n          nextPosition = multiDragSnapOffset\n            ? {\n                x: Math.round(nextPosition.x + multiDragSnapOffset.x),\n                y: Math.round(nextPosition.y + multiDragSnapOffset.y),\n              }\n            : snapPosition(nextPosition, snapGrid);\n        }\n\n        let adjustedNodeExtent: CoordinateExtent | null = null;\n\n        if (isMultiDrag && nodeExtent && !dragItem.extent && nodesBox) {\n          const { positionAbsolute } = dragItem.internals;\n          const x1 = positionAbsolute.x - nodesBox.x + nodeExtent[0][0];\n          const x2 = positionAbsolute.x + dragItem.measured.width - nodesBox.x2 + nodeExtent[1][0];\n\n          const y1 = positionAbsolute.y - nodesBox.y + nodeExtent[0][1];\n          const y2 = positionAbsolute.y + dragItem.measured.height - nodesBox.y2 + nodeExtent[1][1];\n\n          adjustedNodeExtent = [\n            [x1, y1],\n            [x2, y2],\n          ];\n        }\n\n        const { position, positionAbsolute } = calculateNodePosition({\n          nodeId: id,\n          nextPosition,\n          nodeLookup,\n          nodeExtent: adjustedNodeExtent ? adjustedNodeExtent : nodeExtent,\n          nodeOrigin,\n          onError,\n        });\n\n        // we want to make sure that we only fire a change event when there is a change\n        hasChange = hasChange || dragItem.position.x !== position.x || dragItem.position.y !== position.y;\n\n        dragItem.position = position;\n        dragItem.internals.positionAbsolute = positionAbsolute;\n      }\n\n      nodePositionsChanged = nodePositionsChanged || hasChange;\n\n      if (!hasChange) {\n        return;\n      }\n\n      updateNodePositions(dragItems, true);\n\n      if (dragEvent && (onDrag || onNodeDrag || (!nodeId && onSelectionDrag))) {\n        const [currentNode, currentNodes] = getEventHandlerParams({\n          nodeId,\n          dragItems,\n          nodeLookup,\n        });\n\n        onDrag?.(dragEvent, dragItems, currentNode, currentNodes);\n        onNodeDrag?.(dragEvent, currentNode, currentNodes);\n\n        if (!nodeId) {\n          onSelectionDrag?.(dragEvent, currentNodes);\n        }\n      }\n    }\n\n    async function autoPan() {\n      if (!containerBounds) {\n        return;\n      }\n\n      const { transform, panBy, autoPanSpeed, autoPanOnNodeDrag } = getStoreItems();\n\n      if (!autoPanOnNodeDrag) {\n        autoPanStarted = false;\n        cancelAnimationFrame(autoPanId);\n        return;\n      }\n\n      const [xMovement, yMovement] = calcAutoPan(mousePosition, containerBounds, autoPanSpeed);\n\n      if (xMovement !== 0 || yMovement !== 0) {\n        lastPos.x = (lastPos.x ?? 0) - xMovement / transform[2];\n        lastPos.y = (lastPos.y ?? 0) - yMovement / transform[2];\n\n        if (await panBy({ x: xMovement, y: yMovement })) {\n          updateNodes(lastPos as XYPosition);\n        }\n      }\n\n      autoPanId = requestAnimationFrame(autoPan);\n    }\n\n    function startDrag(event: UseDragEvent) {\n      const {\n        nodeLookup,\n        multiSelectionActive,\n        nodesDraggable,\n        transform,\n        snapGrid,\n        snapToGrid,\n        selectNodesOnDrag,\n        onNodeDragStart,\n        onSelectionDragStart,\n        unselectNodesAndEdges,\n      } = getStoreItems();\n\n      dragStarted = true;\n\n      if ((!selectNodesOnDrag || !isSelectable) && !multiSelectionActive && nodeId) {\n        if (!nodeLookup.get(nodeId)?.selected) {\n          // we need to reset selected nodes when selectNodesOnDrag=false\n          unselectNodesAndEdges();\n        }\n      }\n\n      if (isSelectable && selectNodesOnDrag && nodeId) {\n        onNodeMouseDown?.(nodeId);\n      }\n\n      const pointerPos = getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds });\n      lastPos = pointerPos;\n      dragItems = getDragItems(nodeLookup, nodesDraggable, pointerPos, nodeId);\n\n      if (dragItems.size > 0 && (onDragStart || onNodeDragStart || (!nodeId && onSelectionDragStart))) {\n        const [currentNode, currentNodes] = getEventHandlerParams({\n          nodeId,\n          dragItems,\n          nodeLookup,\n        });\n\n        onDragStart?.(event.sourceEvent as MouseEvent, dragItems, currentNode, currentNodes);\n        onNodeDragStart?.(event.sourceEvent as MouseEvent, currentNode, currentNodes);\n\n        if (!nodeId) {\n          onSelectionDragStart?.(event.sourceEvent as MouseEvent, currentNodes);\n        }\n      }\n    }\n\n    const d3DragInstance = drag()\n      .clickDistance(nodeClickDistance)\n      .on('start', (event: UseDragEvent) => {\n        const { domNode, nodeDragThreshold, transform, snapGrid, snapToGrid } = getStoreItems();\n        containerBounds = domNode?.getBoundingClientRect() || null;\n\n        abortDrag = false;\n        nodePositionsChanged = false;\n        dragEvent = event.sourceEvent;\n\n        if (nodeDragThreshold === 0) {\n          startDrag(event);\n        }\n\n        const pointerPos = getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds });\n        lastPos = pointerPos;\n        mousePosition = getEventPosition(event.sourceEvent, containerBounds!);\n      })\n      .on('drag', (event: UseDragEvent) => {\n        const { autoPanOnNodeDrag, transform, snapGrid, snapToGrid, nodeDragThreshold, nodeLookup } = getStoreItems();\n        const pointerPos = getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds });\n        dragEvent = event.sourceEvent;\n\n        if (\n          (event.sourceEvent.type === 'touchmove' && event.sourceEvent.touches.length > 1) ||\n          // if user deletes a node while dragging, we need to abort the drag to prevent errors\n          (nodeId && !nodeLookup.has(nodeId))\n        ) {\n          abortDrag = true;\n        }\n\n        if (abortDrag) {\n          return;\n        }\n\n        if (!autoPanStarted && autoPanOnNodeDrag && dragStarted) {\n          autoPanStarted = true;\n          autoPan();\n        }\n\n        if (!dragStarted) {\n          // Calculate distance in client coordinates for consistent drag threshold behavior across zoom levels\n          const currentMousePosition = getEventPosition(event.sourceEvent, containerBounds!);\n          const x = currentMousePosition.x - mousePosition.x;\n          const y = currentMousePosition.y - mousePosition.y;\n          const distance = Math.sqrt(x * x + y * y);\n\n          if (distance > nodeDragThreshold) {\n            startDrag(event);\n          }\n        }\n\n        // skip events without movement\n        if ((lastPos.x !== pointerPos.xSnapped || lastPos.y !== pointerPos.ySnapped) && dragItems && dragStarted) {\n          mousePosition = getEventPosition(event.sourceEvent, containerBounds!);\n          updateNodes(pointerPos);\n        }\n      })\n      .on('end', (event: UseDragEvent) => {\n        if (!dragStarted || abortDrag) {\n          if (abortDrag && dragItems.size > 0) {\n            getStoreItems().updateNodePositions(dragItems, false);\n          }\n          return;\n        }\n\n        autoPanStarted = false;\n        dragStarted = false;\n        cancelAnimationFrame(autoPanId);\n\n        if (dragItems.size > 0) {\n          const { nodeLookup, updateNodePositions, onNodeDragStop, onSelectionDragStop } = getStoreItems();\n\n          if (nodePositionsChanged) {\n            updateNodePositions(dragItems, false);\n            nodePositionsChanged = false;\n          }\n\n          if (onDragStop || onNodeDragStop || (!nodeId && onSelectionDragStop)) {\n            const [currentNode, currentNodes] = getEventHandlerParams({\n              nodeId,\n              dragItems,\n              nodeLookup,\n              dragging: false,\n            });\n\n            onDragStop?.(event.sourceEvent as MouseEvent, dragItems, currentNode, currentNodes);\n            onNodeDragStop?.(event.sourceEvent as MouseEvent, currentNode, currentNodes);\n\n            if (!nodeId) {\n              onSelectionDragStop?.(event.sourceEvent as MouseEvent, currentNodes);\n            }\n          }\n        }\n      })\n      .filter((event: MouseEvent) => {\n        const target = event.target;\n        const isDraggable =\n          !event.button &&\n          (!noDragClassName || !hasSelector(target, `.${noDragClassName}`, domNode)) &&\n          (!handleSelector || hasSelector(target, handleSelector, domNode));\n\n        return isDraggable;\n      });\n\n    d3Selection.call(d3DragInstance);\n  }\n\n  function destroy() {\n    d3Selection?.on('.drag', null);\n  }\n\n  return {",
+        "detail": {
+          "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag#function:XYDrag",
+          "fileId": "packages/system/src/xydrag/XYDrag.ts__XYDrag",
+          "unitKind": "function",
+          "name": "XYDrag",
+          "qualifiedName": "XYDrag",
+          "parentUnitId": null,
+          "startLine": 102,
+          "endLine": 418,
+          "signature": "function XYDrag<NodeType, EdgeType>({ getStoreItems, onDragStart, onDrag, onDragStop }: XYDragParams<NodeType, EdgeType>): XYDragInstance",
+          "parameters": [
+            {
+              "name": "getStoreItems",
+              "type": "verbatim or null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "onDragStart",
+              "type": "verbatim or null",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "onDrag",
+              "type": "verbatim or null",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "onDragStop",
+              "type": "verbatim or null",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "XYDragInstance",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["NodeType", "EdgeType"],
+          "logicOutline": [],
+          "preconditions": [
+            "The supplied getStoreItems function returns the store state and operations required by the drag lifecycle.",
+            "update must be called with a DOM node before drag events can be handled.",
+            "Drag event targets must satisfy the configured button, no-drag-class, and handle-selector filters to begin a drag."
+          ],
+          "postconditions": [
+            "The returned instance exposes update and destroy operations.",
+            "A completed drag commits changed node positions and invokes applicable drag-stop callbacks.",
+            "Destroy removes the installed .drag behavior from the currently selected DOM node."
+          ],
+          "invariants": [
+            "Node positions are updated only when the computed position differs from the current position.",
+            "Node positions are constrained through calculateNodePosition and optionally snapped to the configured grid.",
+            "A drag involving multiple nodes preserves the multi-node drag and snapping behavior as a group.",
+            "Drag lifecycle callbacks receive the current dragged node or selection and the current dragged-node collection.",
+            "Multi-touch continuation and dragging a node that has been deleted are aborted without continuing position updates."
+          ],
+          "edgeCases": [
+            "When nodeDragThreshold is zero, dragging starts on the initial drag-start event; otherwise movement must exceed the threshold before drag items are initialized.",
+            "A touchmove event with more than one touch aborts the drag; if items were already collected, their positions are sent to updateNodePositions with the non-final flag.",
+            "If the dragged node is removed from nodeLookup during dragging, further drag updates are aborted.",
+            "If no nodes are draggable or selected for the drag, position and lifecycle callbacks that require drag items are not invoked.",
+            "If auto-pan is disabled while an auto-pan loop is active, the animation frame is cancelled and auto-pan state is reset.",
+            "If a drag produces no position change, updateNodePositions and movement callbacks are not invoked for that movement.",
+            "If the container has no bounding rectangle, auto-pan performs no movement.",
+            "If a node in the active drag collection is deleted, it is skipped during position calculation."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Invalid drag targets are rejected by the configured event filter. Aborted or threshold-incomplete drags return without applying drag updates; no explicit exception or fallback error is produced.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "The controller's private drag state: last pointer position, auto-pan animation id and state, dragged-node map, mouse position, container bounds, drag-start and abort flags, D3 selection, changed-position flag, and last drag event.",
+            "The store's dragged node positions through updateNodePositions.",
+            "The store's node and edge selection through unselectNodesAndEdges and applicable selection callbacks."
+          ],
+          "eventsEmitted": [
+            "onDragStart",
+            "onNodeDragStart",
+            "onSelectionDragStart",
+            "onDrag",
+            "onNodeDrag",
+            "onSelectionDrag",
+            "onDragStop",
+            "onNodeDragStop",
+            "onSelectionDragStop"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "getStoreItems", "source": "XYDragParams.getStoreItems", "kind": "internal" },
+            { "name": "select", "source": "d3-selection", "kind": "external" },
+            { "name": "drag", "source": "d3-drag", "kind": "external" },
+            { "name": "requestAnimationFrame", "source": "DOM", "kind": "external" },
+            { "name": "cancelAnimationFrame", "source": "DOM", "kind": "external" },
+            { "name": "getPointerPosition", "source": null, "kind": "internal" },
+            { "name": "getDragItems", "source": null, "kind": "internal" },
+            { "name": "calculateNodePosition", "source": null, "kind": "internal" },
+            { "name": "calculateSnapOffset", "source": null, "kind": "internal" },
+            { "name": "snapPosition", "source": null, "kind": "internal" },
+            { "name": "calcAutoPan", "source": null, "kind": "internal" },
+            { "name": "panBy", "source": "store", "kind": "internal" },
+            { "name": "updateNodePositions", "source": "store", "kind": "internal" },
+            { "name": "getEventHandlerParams", "source": null, "kind": "internal" },
+            { "name": "unselectNodesAndEdges", "source": "store", "kind": "internal" },
+            { "name": "onNodeMouseDown", "source": "store", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "XYDragParams",
+            "XYDragInstance",
+            "NodeDragItem",
+            "XYPosition",
+            "CoordinateExtent",
+            "DOMRect",
+            "UseDragEvent"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a drag controller that binds node and selection drag behavior to a DOM element through its update method and removes that behavior through destroy. Dragging updates node positions, supports selection, snapping, thresholds, auto-pan, and drag lifecycle callbacks.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "A zero node-drag threshold starts dragging immediately; zero is also the default click distance when nodeClickDistance is omitted."
+            },
+            {
+              "kind": "format-string",
+              "value": ".drag",
+              "role": "The D3 event namespace removed from the bound selection by destroy."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "A drag-start event is dispatched and then a movement event changes the pointer position.",
+              "then": "The node drag starts immediately, changed node positions are submitted with the intermediate-update flag, and applicable start and movement callbacks receive the drag.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The drag event is processed.",
+              "then": "The drag is aborted; no further movement update is applied, and the current drag items are submitted once with the non-final update flag when the drag ends.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The drag-end event is processed.",
+              "then": "The changed positions are submitted with the final-update flag and applicable drag-stop callbacks are invoked with dragging set to false.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "dc684e0d6373169e8e41df8c746510e1fe09b2bfd34354e625efa4b774616209"
+        }
+      },
+      {
+        "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+        "unitKind": "function",
+        "name": "update",
+        "qualifiedName": "XYDrag.update",
+        "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag#function:XYDrag",
+        "startLine": 122,
+        "endLine": 408,
+        "isBehavioral": true,
+        "source": "    noDragClassName,\n    handleSelector,\n    domNode,\n    isSelectable,\n    nodeId,\n    nodeClickDistance = 0,\n  }: DragUpdateParams) {\n    d3Selection = select(domNode);\n    function updateNodes({ x, y }: XYPosition) {\n      const {\n        nodeLookup,\n        nodeExtent,\n        snapGrid,\n        snapToGrid,\n        nodeOrigin,\n        onNodeDrag,\n        onSelectionDrag,\n        onError,\n        updateNodePositions,\n      } = getStoreItems();\n\n      lastPos = { x, y };\n      let hasChange = false;\n\n      const isMultiDrag = dragItems.size > 1;\n      const nodesBox = isMultiDrag && nodeExtent ? rectToBox(getInternalNodesBounds(dragItems)) : null;\n      const multiDragSnapOffset =\n        isMultiDrag && snapToGrid\n          ? calculateSnapOffset({\n              dragItems,\n              snapGrid,\n              x,\n              y,\n            })\n          : null;\n\n      for (const [id, dragItem] of dragItems) {\n        /*\n         * if the node is not in the nodeLookup anymore, it was probably deleted while dragging\n         */\n        if (!nodeLookup.has(id)) {\n          continue;\n        }\n\n        let nextPosition = { x: x - dragItem.distance.x, y: y - dragItem.distance.y };\n        if (snapToGrid) {\n          nextPosition = multiDragSnapOffset\n            ? {\n                x: Math.round(nextPosition.x + multiDragSnapOffset.x),\n                y: Math.round(nextPosition.y + multiDragSnapOffset.y),\n              }\n            : snapPosition(nextPosition, snapGrid);\n        }\n\n        let adjustedNodeExtent: CoordinateExtent | null = null;\n\n        if (isMultiDrag && nodeExtent && !dragItem.extent && nodesBox) {\n          const { positionAbsolute } = dragItem.internals;\n          const x1 = positionAbsolute.x - nodesBox.x + nodeExtent[0][0];\n          const x2 = positionAbsolute.x + dragItem.measured.width - nodesBox.x2 + nodeExtent[1][0];\n\n          const y1 = positionAbsolute.y - nodesBox.y + nodeExtent[0][1];\n          const y2 = positionAbsolute.y + dragItem.measured.height - nodesBox.y2 + nodeExtent[1][1];\n\n          adjustedNodeExtent = [\n            [x1, y1],\n            [x2, y2],\n          ];\n        }\n\n        const { position, positionAbsolute } = calculateNodePosition({\n          nodeId: id,\n          nextPosition,\n          nodeLookup,\n          nodeExtent: adjustedNodeExtent ? adjustedNodeExtent : nodeExtent,\n          nodeOrigin,\n          onError,\n        });\n\n        // we want to make sure that we only fire a change event when there is a change\n        hasChange = hasChange || dragItem.position.x !== position.x || dragItem.position.y !== position.y;\n\n        dragItem.position = position;\n        dragItem.internals.positionAbsolute = positionAbsolute;\n      }\n\n      nodePositionsChanged = nodePositionsChanged || hasChange;\n\n      if (!hasChange) {\n        return;\n      }\n\n      updateNodePositions(dragItems, true);\n\n      if (dragEvent && (onDrag || onNodeDrag || (!nodeId && onSelectionDrag))) {\n        const [currentNode, currentNodes] = getEventHandlerParams({\n          nodeId,\n          dragItems,\n          nodeLookup,\n        });\n\n        onDrag?.(dragEvent, dragItems, currentNode, currentNodes);\n        onNodeDrag?.(dragEvent, currentNode, currentNodes);\n\n        if (!nodeId) {\n          onSelectionDrag?.(dragEvent, currentNodes);\n        }\n      }\n    }\n\n    async function autoPan() {\n      if (!containerBounds) {\n        return;\n      }\n\n      const { transform, panBy, autoPanSpeed, autoPanOnNodeDrag } = getStoreItems();\n\n      if (!autoPanOnNodeDrag) {\n        autoPanStarted = false;\n        cancelAnimationFrame(autoPanId);\n        return;\n      }\n\n      const [xMovement, yMovement] = calcAutoPan(mousePosition, containerBounds, autoPanSpeed);\n\n      if (xMovement !== 0 || yMovement !== 0) {\n        lastPos.x = (lastPos.x ?? 0) - xMovement / transform[2];\n        lastPos.y = (lastPos.y ?? 0) - yMovement / transform[2];\n\n        if (await panBy({ x: xMovement, y: yMovement })) {\n          updateNodes(lastPos as XYPosition);\n        }\n      }\n\n      autoPanId = requestAnimationFrame(autoPan);\n    }\n\n    function startDrag(event: UseDragEvent) {\n      const {\n        nodeLookup,\n        multiSelectionActive,\n        nodesDraggable,\n        transform,\n        snapGrid,\n        snapToGrid,\n        selectNodesOnDrag,\n        onNodeDragStart,\n        onSelectionDragStart,\n        unselectNodesAndEdges,\n      } = getStoreItems();\n\n      dragStarted = true;\n\n      if ((!selectNodesOnDrag || !isSelectable) && !multiSelectionActive && nodeId) {\n        if (!nodeLookup.get(nodeId)?.selected) {\n          // we need to reset selected nodes when selectNodesOnDrag=false\n          unselectNodesAndEdges();\n        }\n      }\n\n      if (isSelectable && selectNodesOnDrag && nodeId) {\n        onNodeMouseDown?.(nodeId);\n      }\n\n      const pointerPos = getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds });\n      lastPos = pointerPos;\n      dragItems = getDragItems(nodeLookup, nodesDraggable, pointerPos, nodeId);\n\n      if (dragItems.size > 0 && (onDragStart || onNodeDragStart || (!nodeId && onSelectionDragStart))) {\n        const [currentNode, currentNodes] = getEventHandlerParams({\n          nodeId,\n          dragItems,\n          nodeLookup,\n        });\n\n        onDragStart?.(event.sourceEvent as MouseEvent, dragItems, currentNode, currentNodes);\n        onNodeDragStart?.(event.sourceEvent as MouseEvent, currentNode, currentNodes);\n\n        if (!nodeId) {\n          onSelectionDragStart?.(event.sourceEvent as MouseEvent, currentNodes);\n        }\n      }\n    }\n\n    const d3DragInstance = drag()\n      .clickDistance(nodeClickDistance)\n      .on('start', (event: UseDragEvent) => {\n        const { domNode, nodeDragThreshold, transform, snapGrid, snapToGrid } = getStoreItems();\n        containerBounds = domNode?.getBoundingClientRect() || null;\n\n        abortDrag = false;\n        nodePositionsChanged = false;\n        dragEvent = event.sourceEvent;\n\n        if (nodeDragThreshold === 0) {\n          startDrag(event);\n        }\n\n        const pointerPos = getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds });\n        lastPos = pointerPos;\n        mousePosition = getEventPosition(event.sourceEvent, containerBounds!);\n      })\n      .on('drag', (event: UseDragEvent) => {\n        const { autoPanOnNodeDrag, transform, snapGrid, snapToGrid, nodeDragThreshold, nodeLookup } = getStoreItems();\n        const pointerPos = getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds });\n        dragEvent = event.sourceEvent;\n\n        if (\n          (event.sourceEvent.type === 'touchmove' && event.sourceEvent.touches.length > 1) ||\n          // if user deletes a node while dragging, we need to abort the drag to prevent errors\n          (nodeId && !nodeLookup.has(nodeId))\n        ) {\n          abortDrag = true;\n        }\n\n        if (abortDrag) {\n          return;\n        }\n\n        if (!autoPanStarted && autoPanOnNodeDrag && dragStarted) {\n          autoPanStarted = true;\n          autoPan();\n        }\n\n        if (!dragStarted) {\n          // Calculate distance in client coordinates for consistent drag threshold behavior across zoom levels\n          const currentMousePosition = getEventPosition(event.sourceEvent, containerBounds!);\n          const x = currentMousePosition.x - mousePosition.x;\n          const y = currentMousePosition.y - mousePosition.y;\n          const distance = Math.sqrt(x * x + y * y);\n\n          if (distance > nodeDragThreshold) {\n            startDrag(event);\n          }\n        }\n\n        // skip events without movement\n        if ((lastPos.x !== pointerPos.xSnapped || lastPos.y !== pointerPos.ySnapped) && dragItems && dragStarted) {\n          mousePosition = getEventPosition(event.sourceEvent, containerBounds!);\n          updateNodes(pointerPos);\n        }\n      })\n      .on('end', (event: UseDragEvent) => {\n        if (!dragStarted || abortDrag) {\n          if (abortDrag && dragItems.size > 0) {\n            getStoreItems().updateNodePositions(dragItems, false);\n          }\n          return;\n        }\n\n        autoPanStarted = false;\n        dragStarted = false;\n        cancelAnimationFrame(autoPanId);\n\n        if (dragItems.size > 0) {\n          const { nodeLookup, updateNodePositions, onNodeDragStop, onSelectionDragStop } = getStoreItems();\n\n          if (nodePositionsChanged) {\n            updateNodePositions(dragItems, false);\n            nodePositionsChanged = false;\n          }\n\n          if (onDragStop || onNodeDragStop || (!nodeId && onSelectionDragStop)) {\n            const [currentNode, currentNodes] = getEventHandlerParams({\n              nodeId,\n              dragItems,\n              nodeLookup,\n              dragging: false,\n            });\n\n            onDragStop?.(event.sourceEvent as MouseEvent, dragItems, currentNode, currentNodes);\n            onNodeDragStop?.(event.sourceEvent as MouseEvent, currentNode, currentNodes);\n\n            if (!nodeId) {\n              onSelectionDragStop?.(event.sourceEvent as MouseEvent, currentNodes);\n            }\n          }\n        }\n      })\n      .filter((event: MouseEvent) => {\n        const target = event.target;\n        const isDraggable =\n          !event.button &&\n          (!noDragClassName || !hasSelector(target, `.${noDragClassName}`, domNode)) &&\n          (!handleSelector || hasSelector(target, handleSelector, domNode));\n\n        return isDraggable;",
+        "detail": {
+          "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+          "fileId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update",
+          "unitKind": "function",
+          "name": "update",
+          "qualifiedName": "XYDrag.update",
+          "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag#function:XYDrag",
+          "startLine": 122,
+          "endLine": 408,
+          "signature": "update({ noDragClassName, handleSelector, domNode, isSelectable, nodeId, nodeClickDistance = 0 }: DragUpdateParams)",
+          "parameters": [
+            {
+              "name": "noDragClassName",
+              "type": "string | undefined",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "handleSelector",
+              "type": "string | undefined",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 1
+            },
+            { "name": "domNode", "type": "Element", "default": null, "optional": false, "variadic": false, "order": 2 },
+            {
+              "name": "isSelectable",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "nodeId",
+              "type": "string | null",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            },
+            {
+              "name": "nodeClickDistance",
+              "type": "number",
+              "default": "0",
+              "optional": true,
+              "variadic": false,
+              "order": 5
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The supplied domNode is the DOM container on which the drag behavior can be installed.",
+            "Store access used by the drag lifecycle returns the node lookup, transform, drag configuration, and update callbacks required by the operation."
+          ],
+          "postconditions": [
+            "The configured D3 drag behavior is applied to the supplied DOM node.",
+            "Drag start, movement, auto-pan, and end events update drag state and invoke the applicable store and user callbacks.",
+            "Node positions are committed only when at least one dragged node position changes, and the final drag state is committed on drag end."
+          ],
+          "invariants": [
+            "Nodes absent from nodeLookup are skipped during position updates.",
+            "Position-change notifications are not emitted when calculated positions equal the existing positions.",
+            "When snapToGrid is enabled, calculated positions are snapped using the configured snap grid.",
+            "Dragging is filtered by the primary-button condition, no-drag class, and optional handle selector.",
+            "A drag is aborted for multi-touch touchmove events or when the dragged node is deleted during the drag."
+          ],
+          "edgeCases": [
+            "When nodeClickDistance is omitted, the D3 drag click distance is configured as 0.",
+            "When the drag threshold is nonzero, dragging does not start until client-coordinate movement is greater than nodeDragThreshold.",
+            "When no draggable items are found, drag-start callbacks and position updates are not invoked.",
+            "When a node is deleted while dragging, subsequent movement is ignored and any existing drag items are reverted through updateNodePositions with a false commit flag on drag end handling.",
+            "When auto-pan is disabled, any active auto-pan animation is cancelled and auto-pan state is reset.",
+            "When the container bounds are unavailable, auto-pan performs no work.",
+            "When a multi-node drag uses an extent and grid snapping, a shared snap offset and adjusted extent are used to preserve group movement constraints."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Invalid or non-draggable pointer targets are rejected by the D3 filter; deleted dragged nodes and multi-touch movement abort the drag without continuing position updates.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Replaces the closure's d3Selection with a selection of domNode.",
+            "Mutates drag lifecycle state including dragStarted, abortDrag, dragEvent, lastPos, mousePosition, dragItems, containerBounds, autoPanStarted, autoPanId, and nodePositionsChanged.",
+            "Mutates each active drag item's position and internals.positionAbsolute.",
+            "Updates store node positions through updateNodePositions."
+          ],
+          "eventsEmitted": [
+            "User drag-start callbacks: onDragStart, onNodeDragStart, and onSelectionDragStart when applicable.",
+            "User drag-move callbacks: onDrag, onNodeDrag, and onSelectionDrag when applicable.",
+            "User drag-stop callbacks: onDragStop, onNodeDragStop, and onSelectionDragStop when applicable.",
+            "D3 drag start, drag, and end lifecycle events."
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "select", "source": "d3-selection", "kind": "external" },
+            { "name": "drag", "source": "d3-drag", "kind": "external" },
+            { "name": "getStoreItems", "source": "XYDrag closure", "kind": "internal" },
+            { "name": "getPointerPosition", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "getEventPosition", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "getDragItems", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "calculateNodePosition", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "calculateSnapOffset", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "snapPosition", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "getInternalNodesBounds", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "rectToBox", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "getEventHandlerParams", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "calcAutoPan", "source": "XYDrag dependencies", "kind": "internal" },
+            { "name": "panBy", "source": "store", "kind": "internal" },
+            { "name": "requestAnimationFrame", "source": "DOM", "kind": "external" },
+            { "name": "cancelAnimationFrame", "source": "DOM", "kind": "external" },
+            { "name": "hasSelector", "source": "XYDrag dependencies", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "DragUpdateParams",
+            "XYPosition",
+            "CoordinateExtent",
+            "UseDragEvent",
+            "nodeLookup",
+            "nodeExtent",
+            "snapGrid",
+            "snapToGrid",
+            "nodeOrigin",
+            "nodeDragThreshold",
+            "nodesDraggable",
+            "selectNodesOnDrag",
+            "multiSelectionActive",
+            "autoPanOnNodeDrag"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Configures the D3 drag behavior for a node or selection and updates dragged node positions, selection callbacks, and auto-pan state in response to pointer movement.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "Default D3 click distance and zero-movement comparison boundary."
+            },
+            {
+              "kind": "enum-value",
+              "value": "touchmove",
+              "role": "Identifies multi-touch movement events that abort dragging."
+            },
+            {
+              "kind": "format-string",
+              "value": ".${noDragClassName}",
+              "role": "Selector shape used to reject pointer targets within the configured no-drag class."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "A drag movement is processed at that same effective position.",
+              "then": "No node-position update or drag-move callback is emitted.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The subsequent drag movement is processed.",
+              "then": "The drag is aborted and no further node movement is applied.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The auto-pan routine runs.",
+              "then": "autoPanStarted is reset, the scheduled animation frame is cancelled, and no panBy call is made.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "5e4cdd10c8428c496a37dfdb5fd56e0fd69996088529c023fe31116b07eb5899"
+        }
+      },
+      {
+        "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.updateNodes#function:XYDrag.update.updateNodes",
+        "unitKind": "function",
+        "name": "updateNodes",
+        "qualifiedName": "XYDrag.update.updateNodes",
+        "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+        "startLine": 131,
+        "endLine": 230,
+        "isBehavioral": true,
+        "source": "      const {\n        nodeLookup,\n        nodeExtent,\n        snapGrid,\n        snapToGrid,\n        nodeOrigin,\n        onNodeDrag,\n        onSelectionDrag,\n        onError,\n        updateNodePositions,\n      } = getStoreItems();\n\n      lastPos = { x, y };\n      let hasChange = false;\n\n      const isMultiDrag = dragItems.size > 1;\n      const nodesBox = isMultiDrag && nodeExtent ? rectToBox(getInternalNodesBounds(dragItems)) : null;\n      const multiDragSnapOffset =\n        isMultiDrag && snapToGrid\n          ? calculateSnapOffset({\n              dragItems,\n              snapGrid,\n              x,\n              y,\n            })\n          : null;\n\n      for (const [id, dragItem] of dragItems) {\n        /*\n         * if the node is not in the nodeLookup anymore, it was probably deleted while dragging\n         */\n        if (!nodeLookup.has(id)) {\n          continue;\n        }\n\n        let nextPosition = { x: x - dragItem.distance.x, y: y - dragItem.distance.y };\n        if (snapToGrid) {\n          nextPosition = multiDragSnapOffset\n            ? {\n                x: Math.round(nextPosition.x + multiDragSnapOffset.x),\n                y: Math.round(nextPosition.y + multiDragSnapOffset.y),\n              }\n            : snapPosition(nextPosition, snapGrid);\n        }\n\n        let adjustedNodeExtent: CoordinateExtent | null = null;\n\n        if (isMultiDrag && nodeExtent && !dragItem.extent && nodesBox) {\n          const { positionAbsolute } = dragItem.internals;\n          const x1 = positionAbsolute.x - nodesBox.x + nodeExtent[0][0];\n          const x2 = positionAbsolute.x + dragItem.measured.width - nodesBox.x2 + nodeExtent[1][0];\n\n          const y1 = positionAbsolute.y - nodesBox.y + nodeExtent[0][1];\n          const y2 = positionAbsolute.y + dragItem.measured.height - nodesBox.y2 + nodeExtent[1][1];\n\n          adjustedNodeExtent = [\n            [x1, y1],\n            [x2, y2],\n          ];\n        }\n\n        const { position, positionAbsolute } = calculateNodePosition({\n          nodeId: id,\n          nextPosition,\n          nodeLookup,\n          nodeExtent: adjustedNodeExtent ? adjustedNodeExtent : nodeExtent,\n          nodeOrigin,\n          onError,\n        });\n\n        // we want to make sure that we only fire a change event when there is a change\n        hasChange = hasChange || dragItem.position.x !== position.x || dragItem.position.y !== position.y;\n\n        dragItem.position = position;\n        dragItem.internals.positionAbsolute = positionAbsolute;\n      }\n\n      nodePositionsChanged = nodePositionsChanged || hasChange;\n\n      if (!hasChange) {\n        return;\n      }\n\n      updateNodePositions(dragItems, true);\n\n      if (dragEvent && (onDrag || onNodeDrag || (!nodeId && onSelectionDrag))) {\n        const [currentNode, currentNodes] = getEventHandlerParams({\n          nodeId,\n          dragItems,\n          nodeLookup,\n        });\n\n        onDrag?.(dragEvent, dragItems, currentNode, currentNodes);\n        onNodeDrag?.(dragEvent, currentNode, currentNodes);\n\n        if (!nodeId) {\n          onSelectionDrag?.(dragEvent, currentNodes);\n        }\n      }\n    }",
+        "detail": {
+          "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.updateNodes#function:XYDrag.update.updateNodes",
+          "fileId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.updateNodes",
+          "unitKind": "function",
+          "name": "updateNodes",
+          "qualifiedName": "XYDrag.update.updateNodes",
+          "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+          "startLine": 131,
+          "endLine": 230,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The drag state, including dragItems and the store items returned by getStoreItems(), is initialized.",
+            "The x and y coordinates used for the update represent the current drag position.",
+            "Each drag item provides the distance, position, internals, measured dimensions, and extent data expected by the position calculation."
+          ],
+          "postconditions": [
+            "lastPos is set to the supplied x and y coordinates.",
+            "Each drag item still present in nodeLookup has its position and internals.positionAbsolute updated from calculateNodePosition.",
+            "nodePositionsChanged is set to true if any processed drag item changed position, and otherwise retains its prior truthy state.",
+            "When at least one node position changes, updateNodePositions is called with the drag items and true.",
+            "When at least one node position changes and a drag event plus an applicable callback exist, the applicable drag callbacks receive the current node information."
+          ],
+          "invariants": [
+            "Nodes deleted from nodeLookup during the drag are skipped and are not updated.",
+            "Drag callbacks and updateNodePositions are not invoked when no processed node changes position.",
+            "For multi-node drags with grid snapping, a shared multi-drag snap offset is used.",
+            "Position changes are detected by comparing each drag item's prior and calculated x and y coordinates."
+          ],
+          "edgeCases": [
+            "A drag item whose id is absent from nodeLookup is ignored.",
+            "When dragItems contains more than one item and nodeExtent is available, group bounds are used to derive adjusted extents for items without their own extent.",
+            "When snapToGrid is enabled, positions are snapped using the shared multi-drag offset for multi-node drags or snapPosition for other drags.",
+            "When no node position changes, the function returns without synchronizing positions or invoking drag callbacks.",
+            "When a drag event is present but no applicable onDrag, onNodeDrag, or selection-drag callback exists, no event callback is invoked."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Position calculation errors are delegated to calculateNodePosition through the supplied onError handler; no local invalid-input fallback is defined.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Updates the closure variable lastPos to { x, y }.",
+            "Mutates each existing drag item's position.",
+            "Mutates each existing drag item's internals.positionAbsolute.",
+            "Updates the closure variable nodePositionsChanged.",
+            "Calls updateNodePositions to synchronize changed drag-item positions."
+          ],
+          "eventsEmitted": [
+            "Invokes onDrag when configured and applicable.",
+            "Invokes onNodeDrag when configured and applicable.",
+            "Invokes onSelectionDrag for selection drags when configured and applicable."
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "getStoreItems", "source": null, "kind": "internal" },
+            { "name": "getInternalNodesBounds", "source": null, "kind": "internal" },
+            { "name": "rectToBox", "source": null, "kind": "internal" },
+            { "name": "calculateSnapOffset", "source": null, "kind": "internal" },
+            { "name": "snapPosition", "source": null, "kind": "internal" },
+            { "name": "calculateNodePosition", "source": null, "kind": "internal" },
+            { "name": "updateNodePositions", "source": null, "kind": "internal" },
+            { "name": "getEventHandlerParams", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "CoordinateExtent",
+            "nodeLookup",
+            "nodeExtent",
+            "snapGrid",
+            "snapToGrid",
+            "nodeOrigin",
+            "onNodeDrag",
+            "onSelectionDrag",
+            "onError",
+            "dragItems"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates the positions of the nodes participating in a drag, applying grid snapping and extent constraints when configured. It synchronizes changed positions and invokes the applicable drag callbacks only when a position change occurs.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateNodes is called without a position change.",
+              "then": "It does not call updateNodePositions or any drag callback.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateNodes processes the drag items.",
+              "then": "That item is skipped and its position and internals.positionAbsolute are not updated.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateNodes is called.",
+              "then": "It calls updateNodePositions with the drag items and true, then supplies the current node data to the applicable drag callback(s).",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "05b8fe0541973e61def0537c2584bf0092968549ce493615b8aaa0ed9b72810e"
+        }
+      },
+      {
+        "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.autoPan#function:XYDrag.update.autoPan",
+        "unitKind": "function",
+        "name": "autoPan",
+        "qualifiedName": "XYDrag.update.autoPan",
+        "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+        "startLine": 232,
+        "endLine": 256,
+        "isBehavioral": true,
+        "source": "    async function autoPan() {\n      if (!containerBounds) {\n        return;\n      }\n\n      const { transform, panBy, autoPanSpeed, autoPanOnNodeDrag } = getStoreItems();\n\n      if (!autoPanOnNodeDrag) {\n        autoPanStarted = false;\n        cancelAnimationFrame(autoPanId);\n        return;\n      }\n\n      const [xMovement, yMovement] = calcAutoPan(mousePosition, containerBounds, autoPanSpeed);\n\n      if (xMovement !== 0 || yMovement !== 0) {\n        lastPos.x = (lastPos.x ?? 0) - xMovement / transform[2];\n        lastPos.y = (lastPos.y ?? 0) - yMovement / transform[2];\n\n        if (await panBy({ x: xMovement, y: yMovement })) {\n          updateNodes(lastPos as XYPosition);\n        }\n      }\n\n      autoPanId = requestAnimationFrame(autoPan);",
+        "detail": {
+          "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.autoPan#function:XYDrag.update.autoPan",
+          "fileId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.autoPan",
+          "unitKind": "function",
+          "name": "autoPan",
+          "qualifiedName": "XYDrag.update.autoPan",
+          "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+          "startLine": 232,
+          "endLine": 256,
+          "signature": "async function autoPan()",
+          "parameters": [],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The surrounding drag state and referenced callbacks are initialized.",
+            "When auto-pan calculations are performed, containerBounds, mousePosition, and the store values used by calcAutoPan are available."
+          ],
+          "postconditions": [
+            "If containerBounds is absent, the function returns without changing auto-pan state or scheduling another frame.",
+            "If autoPanOnNodeDrag is false, autoPanStarted is false, the existing animation frame is cancelled, and no new frame is scheduled.",
+            "Otherwise, another animation-frame invocation of autoPan is scheduled unless an awaited panBy call rejects."
+          ],
+          "invariants": [
+            "Node position is updated only after panBy resolves truthy.",
+            "The last position is adjusted by the inverse transformed movement before updateNodes is called.",
+            "A nonzero movement is required before lastPos or the dragged node position is updated."
+          ],
+          "edgeCases": [
+            "When containerBounds is falsy, the function exits immediately.",
+            "When autoPanOnNodeDrag is false, autoPanStarted is reset, the current animation frame is cancelled, and the function exits without scheduling a replacement frame.",
+            "When calcAutoPan returns zero movement on both axes, no position update or panBy call occurs, but the next animation frame is still scheduled.",
+            "When panBy resolves falsy after nonzero movement, lastPos has already been adjusted but updateNodes is not called.",
+            "When panBy rejects, the rejection propagates and the trailing requestAnimationFrame call is not reached."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "autoPanStarted is set to false when auto-pan on node drag is disabled.",
+            "autoPanId is replaced with the identifier returned by requestAnimationFrame when scheduling continues.",
+            "lastPos.x and lastPos.y are adjusted by the calculated movement divided by transform[2] when movement is nonzero.",
+            "The dragged node position may be updated through updateNodes after panBy resolves truthy.",
+            "The pending animation frame may be cancelled through cancelAnimationFrame."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getStoreItems", "source": null, "kind": "internal" },
+            { "name": "calcAutoPan", "source": null, "kind": "internal" },
+            { "name": "cancelAnimationFrame", "source": null, "kind": "external" },
+            { "name": "panBy", "source": null, "kind": "internal" },
+            { "name": "updateNodes", "source": "XYDrag.update.updateNodes", "kind": "internal" },
+            { "name": "requestAnimationFrame", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["XYPosition"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Automatically pans the drag container when the pointer reaches an auto-pan region, updating the dragged node position when panning succeeds. It continues scheduling animation-frame updates while auto-pan remains active.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "Zero movement is used to determine whether panning and position adjustment are required."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "autoPan() is invoked.",
+              "then": "It resolves without calling store accessors, panBy, updateNodes, or requestAnimationFrame.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "autoPan() is invoked.",
+              "then": "autoPanStarted becomes false, cancelAnimationFrame is called with the current autoPanId, and no new animation frame is scheduled.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "autoPan() is invoked.",
+              "then": "lastPos is adjusted by the inverse transformed movement, updateNodes is called with the adjusted position, and a subsequent autoPan animation frame is scheduled.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "0791b409baf83daaa38612d86fad2fbbc8c6192345fbc59b5e76db5719a4a959"
+        }
+      },
+      {
+        "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.startDrag#function:XYDrag.update.startDrag",
+        "unitKind": "function",
+        "name": "startDrag",
+        "qualifiedName": "XYDrag.update.startDrag",
+        "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+        "startLine": 258,
+        "endLine": 300,
+        "isBehavioral": true,
+        "source": "\n    function startDrag(event: UseDragEvent) {\n      const {\n        nodeLookup,\n        multiSelectionActive,\n        nodesDraggable,\n        transform,\n        snapGrid,\n        snapToGrid,\n        selectNodesOnDrag,\n        onNodeDragStart,\n        onSelectionDragStart,\n        unselectNodesAndEdges,\n      } = getStoreItems();\n\n      dragStarted = true;\n\n      if ((!selectNodesOnDrag || !isSelectable) && !multiSelectionActive && nodeId) {\n        if (!nodeLookup.get(nodeId)?.selected) {\n          // we need to reset selected nodes when selectNodesOnDrag=false\n          unselectNodesAndEdges();\n        }\n      }\n\n      if (isSelectable && selectNodesOnDrag && nodeId) {\n        onNodeMouseDown?.(nodeId);\n      }\n\n      const pointerPos = getPointerPosition(event.sourceEvent, { transform, snapGrid, snapToGrid, containerBounds });\n      lastPos = pointerPos;\n      dragItems = getDragItems(nodeLookup, nodesDraggable, pointerPos, nodeId);\n\n      if (dragItems.size > 0 && (onDragStart || onNodeDragStart || (!nodeId && onSelectionDragStart))) {\n        const [currentNode, currentNodes] = getEventHandlerParams({\n          nodeId,\n          dragItems,\n          nodeLookup,\n        });\n\n        onDragStart?.(event.sourceEvent as MouseEvent, dragItems, currentNode, currentNodes);\n        onNodeDragStart?.(event.sourceEvent as MouseEvent, currentNode, currentNodes);\n\n        if (!nodeId) {",
+        "detail": {
+          "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.startDrag#function:XYDrag.update.startDrag",
+          "fileId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update.startDrag",
+          "unitKind": "function",
+          "name": "startDrag",
+          "qualifiedName": "XYDrag.update.startDrag",
+          "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.update#function:XYDrag.update",
+          "startLine": 258,
+          "endLine": 300,
+          "signature": "function startDrag(event: UseDragEvent)",
+          "parameters": [
+            {
+              "name": "event",
+              "type": "UseDragEvent",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The drag context and store items required by the function are initialized.",
+            "event is a valid UseDragEvent."
+          ],
+          "postconditions": [
+            "dragStarted is set to true.",
+            "lastPos is set to the pointer position derived from the source event and current transform and snapping settings.",
+            "dragItems is replaced with the draggable items resolved for the pointer position and current node selection context.",
+            "Applicable drag-start callbacks are invoked when draggable items exist and a drag-start handler is configured."
+          ],
+          "invariants": [
+            "Selection reset and node mouse-down handling occur before pointer position and drag-item resolution.",
+            "Drag-start callbacks receive the source MouseEvent, resolved drag items, current node, and current nodes."
+          ],
+          "edgeCases": [
+            "When selectNodesOnDrag is false or the node is not selectable, multi-selection is inactive, and nodeId identifies an unselected node, existing node and edge selections are cleared.",
+            "When the node is selectable, selection-on-drag is enabled, and nodeId is present, the node mouse-down callback is invoked if configured.",
+            "When no draggable items are resolved, drag-start callbacks are not invoked.",
+            "When nodeId is absent, the selection drag-start callback is eligible only if draggable items exist and a drag-start handler is configured."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Sets dragStarted to true.",
+            "Sets lastPos to the calculated pointer position.",
+            "Sets dragItems to the resolved draggable item collection.",
+            "May clear node and edge selection through unselectNodesAndEdges()."
+          ],
+          "eventsEmitted": [
+            "onNodeMouseDown callback may be invoked.",
+            "onDragStart callback may be invoked.",
+            "onNodeDragStart callback may be invoked.",
+            "onSelectionDragStart callback may be invoked when no nodeId is present."
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "getStoreItems", "source": null, "kind": "internal" },
+            { "name": "unselectNodesAndEdges", "source": null, "kind": "internal" },
+            { "name": "onNodeMouseDown", "source": null, "kind": "internal" },
+            { "name": "getPointerPosition", "source": null, "kind": "external" },
+            { "name": "getDragItems", "source": null, "kind": "internal" },
+            { "name": "getEventHandlerParams", "source": null, "kind": "internal" },
+            { "name": "onDragStart", "source": null, "kind": "internal" },
+            { "name": "onNodeDragStart", "source": null, "kind": "internal" },
+            { "name": "onSelectionDragStart", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "UseDragEvent",
+            "nodeLookup",
+            "multiSelectionActive",
+            "nodesDraggable",
+            "transform",
+            "snapGrid",
+            "snapToGrid",
+            "selectNodesOnDrag",
+            "isSelectable",
+            "nodeId",
+            "containerBounds"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes drag state from a drag event, computes the pointer position and draggable items, and invokes applicable drag-start callbacks.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "startDrag(event) is called.",
+              "then": "dragStarted becomes true, lastPos is updated, dragItems is empty, and no drag-start callback is invoked.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "startDrag(event) is called.",
+              "then": "The handler receives the source MouseEvent, resolved drag items, the current node, and the current nodes.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "907c688aa43b3c4284b5cfc8ce9475ef850280fe83bf24cc4d51020821540e06"
+        }
+      },
+      {
+        "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.destroy#function:XYDrag.destroy",
+        "unitKind": "function",
+        "name": "destroy",
+        "qualifiedName": "XYDrag.destroy",
+        "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag#function:XYDrag",
+        "startLine": 410,
+        "endLine": 412,
+        "isBehavioral": true,
+        "source": "\n    d3Selection.call(d3DragInstance);\n  }",
+        "detail": {
+          "unitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.destroy#function:XYDrag.destroy",
+          "fileId": "packages/system/src/xydrag/XYDrag.ts__XYDrag.destroy",
+          "unitKind": "function",
+          "name": "destroy",
+          "qualifiedName": "XYDrag.destroy",
+          "parentUnitId": "packages/system/src/xydrag/XYDrag.ts__XYDrag#function:XYDrag",
+          "startLine": 410,
+          "endLine": 412,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Represents the XYDrag destruction operation and its associated resource-cleanup boundary.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "ba192547004b6c498d581b7933492c582b704b51b0b11e4c1163ce98f9065837"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/system/src/types/index.ts",
+    "packages/system/src/xydrag/utils.ts",
+    "packages/system/src/utils/index.ts"
+  ],
+  "in": [],
+  "externals": ["d3-drag", "d3-selection"],
+  "impact": { "seeds": 6, "callers": 0, "impactedFiles": [] }
+}

@@ -1,0 +1,1406 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "query",
+  "commitHash": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+  "generatedAt": "2026-08-03T12:01:51.879Z",
+  "file": {
+    "relativePath": "packages/query-core/src/retryer.ts",
+    "language": "typescript",
+    "sizeBytes": 5858,
+    "tokenCount": 1419,
+    "model": "tencent/hy3",
+    "analysedAt": "2026-07-28T19:55:40.055Z",
+    "module": {
+      "purpose": "Implements a retryer factory that wraps an async function with retry, cancellation, and pause/resume based on focus and network state for a data-fetching library.",
+      "summary": "The module provides a createRetryer factory returning an object that manages a promise with configurable retry count and delay, cancellation, and pausing when the document is hidden or offline. It defines a CancelledError class and a deprecated type guard. The retry loop executes the supplied function, catches failures, and either retries with backoff or rejects. External managers for focus, online status, and environment are consulted to decide if work can start or continue.",
+      "businessContext": "Core resilience logic for query execution in a client-side data cache. If broken, queries will not retry, cancel, or pause correctly, degrading UX under flaky networks.",
+      "classes": ["CancelledError (~L59-67): Error subclass carrying revert and silent cancellation flags"],
+      "functions": [
+        "defaultRetryDelay (~L49-51): Computes exponential backoff capped at 30 seconds",
+        "canFetch (~L53-57): Determines if fetch permitted under given network mode",
+        "isCancelledError (~L72-74): Deprecated type guard for CancelledError instances",
+        "createRetryer (~L76-229): Builds retryer with retry, cancel, and pause logic"
+      ],
+      "keywords": [
+        "retry",
+        "cancellation",
+        "backoff",
+        "pause-resume",
+        "focusManager",
+        "onlineManager",
+        "thenable",
+        "networkMode"
+      ],
+      "ontologyConcepts": ["retry policy", "cancellation token", "async state machine", "environment awareness"],
+      "businessEntities": ["Query", "Retryer", "CancelledError"],
+      "systemCapabilities": [
+        "retry failed async operations",
+        "cancel in-flight queries",
+        "pause and resume based on visibility",
+        "configurable retry delay"
+      ],
+      "configDependencies": ["config.retry", "config.retryDelay", "config.networkMode", "config.canRun"],
+      "importsInternal": [
+        {
+          "spec": "./focusManager",
+          "symbols": ["focusManager"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/query-core/src/focusManager.ts",
+          "resolvedFileId": "packages/query-core/src/focusManager.ts",
+          "resolvedHint": "packages/query-core/src/focusManager.ts"
+        },
+        {
+          "spec": "./onlineManager",
+          "symbols": ["onlineManager"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/query-core/src/onlineManager.ts",
+          "resolvedFileId": "packages/query-core/src/onlineManager.ts",
+          "resolvedHint": "packages/query-core/src/onlineManager.ts"
+        },
+        {
+          "spec": "./thenable",
+          "symbols": ["pendingThenable", "Thenable"],
+          "anchor": { "startLine": 3, "endLine": 6 },
+          "resolvedRelativePath": "packages/query-core/src/thenable.ts",
+          "resolvedFileId": "packages/query-core/src/thenable.ts",
+          "resolvedHint": "packages/query-core/src/thenable.ts"
+        },
+        {
+          "spec": "./environmentManager",
+          "symbols": ["environmentManager"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/query-core/src/environmentManager.ts",
+          "resolvedFileId": "packages/query-core/src/environmentManager.ts",
+          "resolvedHint": "packages/query-core/src/environmentManager.ts"
+        },
+        {
+          "spec": "./utils",
+          "symbols": ["sleep"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/query-core/src/utils.ts",
+          "resolvedFileId": "packages/query-core/src/utils.ts",
+          "resolvedHint": "packages/query-core/src/utils.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": ["CancelOptions", "DefaultError", "NetworkMode"],
+          "anchor": { "startLine": 7, "endLine": 7 },
+          "resolvedRelativePath": "packages/query-core/src/types.ts",
+          "resolvedFileId": "packages/query-core/src/types.ts",
+          "resolvedHint": "packages/query-core/src/types.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": [
+          "reads onlineManager.isOnline() to decide fetch/continue",
+          "reads focusManager.isFocused() to decide continue"
+        ],
+        "env": ["reads environmentManager.isServer() to choose default retry count"],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "mutates closure variables failureCount, isRetryCancelled, continueFn",
+          "calls thenable.resolve/reject which mutate thenable internal state"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "Retryer",
+          "shape": "interface Retryer<TData = unknown> { promise: Promise<TData>; cancel: (cancelOptions?: CancelOptions) => void; continue: () => Promise<unknown>; cancelRetry: () => void; continueRetry: () => void; canStart: () => boolean; start: () => Promise<TData>; status: () => 'pending' | 'resolved' | 'rejected' }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "RetryValue",
+          "shape": "type RetryValue<TError> = boolean | number | ShouldRetryFunction<TError>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "RetryDelayValue",
+          "shape": "type RetryDelayValue<TError> = number | RetryDelayFunction<TError>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "canFetch",
+          "shape": "function canFetch(networkMode: NetworkMode | undefined): boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CancelledError",
+          "shape": "class CancelledError extends Error { revert?: boolean; silent?: boolean; constructor(options?: CancelOptions) }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isCancelledError",
+          "shape": "function isCancelledError(value: any): value is CancelledError",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "createRetryer",
+          "shape": "function createRetryer<TData = unknown, TError = DefaultError>(config: RetryerConfig<TData, TError>): Retryer<TData>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "focusManager.isFocused",
+          "shape": "() => boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "onlineManager.isOnline",
+          "shape": "() => boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "pendingThenable",
+          "shape": "<T>() => Thenable<T>",
+          "resolvedRelativePath": "packages/query-core/src/thenable.ts",
+          "resolvedFileId": "packages/query-core/src/thenable.ts"
+        },
+        {
+          "name": "environmentManager.isServer",
+          "shape": "() => boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "sleep",
+          "shape": "(delay: number) => Promise<void>",
+          "resolvedRelativePath": "packages/query-core/src/utils.ts",
+          "resolvedFileId": "packages/query-core/src/utils.ts"
+        },
+        {
+          "name": "CancelOptions",
+          "shape": "type CancelOptions",
+          "resolvedRelativePath": "packages/query-core/src/types.ts",
+          "resolvedFileId": "packages/query-core/src/types.ts"
+        },
+        {
+          "name": "DefaultError",
+          "shape": "type DefaultError",
+          "resolvedRelativePath": "packages/query-core/src/types.ts",
+          "resolvedFileId": "packages/query-core/src/types.ts"
+        },
+        {
+          "name": "NetworkMode",
+          "shape": "type NetworkMode",
+          "resolvedRelativePath": "packages/query-core/src/types.ts",
+          "resolvedFileId": "packages/query-core/src/types.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "defaultRetryDelay",
+          "intent": "Compute exponential backoff with 30s cap",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 49, "endLine": 51 }
+        },
+        {
+          "name": "canFetch",
+          "intent": "Return true if network mode permits fetch",
+          "structureKind": "branch",
+          "predicate": "(networkMode ?? 'online') === 'online'",
+          "branchOutcomes": ["onlineManager.isOnline()", "true"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 53, "endLine": 57 }
+        },
+        {
+          "name": "createRetryer-setup",
+          "intent": "Initialize closure state and helper functions",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 76, "endLine": 139 }
+        },
+        {
+          "name": "run-loop",
+          "intent": "Execute fn and recursively retry on failure",
+          "structureKind": "recursion",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": "isResolved() or !shouldRetry",
+          "anchor": { "startLine": 142, "endLine": 206 }
+        },
+        {
+          "name": "pause",
+          "intent": "Suspend until continue or conditions met",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 125, "endLine": 139 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "Retryer",
+          "signature": "export interface Retryer<TData = unknown> {",
+          "generics": "<TData = unknown>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 24, "endLine": 33 }
+        },
+        {
+          "kind": "type",
+          "name": "RetryValue",
+          "signature": "export type RetryValue<TError> = boolean | number | ShouldRetryFunction<TError>",
+          "generics": "<TError>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 35, "endLine": 35 }
+        },
+        {
+          "kind": "type",
+          "name": "RetryDelayValue",
+          "signature": "export type RetryDelayValue<TError> = number | RetryDelayFunction<TError>",
+          "generics": "<TError>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 42, "endLine": 42 }
+        },
+        {
+          "kind": "function",
+          "name": "defaultRetryDelay",
+          "signature": "function defaultRetryDelay(failureCount: number) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 49, "endLine": 51 }
+        },
+        {
+          "kind": "function",
+          "name": "canFetch",
+          "signature": "export function canFetch(networkMode: NetworkMode | undefined): boolean {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 53, "endLine": 57 }
+        },
+        {
+          "kind": "class",
+          "name": "CancelledError",
+          "signature": "export class CancelledError extends Error {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 59, "endLine": 67 }
+        },
+        {
+          "kind": "function",
+          "name": "isCancelledError",
+          "signature": "export function isCancelledError(value: any): value is CancelledError {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "value is CancelledError",
+          "exported": true,
+          "anchor": { "startLine": 72, "endLine": 74 }
+        },
+        {
+          "kind": "function",
+          "name": "createRetryer",
+          "signature": "export function createRetryer<TData = unknown, TError = DefaultError>(\n  config: RetryerConfig<TData, TError>,\n): Retryer<TData> {",
+          "generics": "<TData = unknown, TError = DefaultError>",
+          "decorators": [],
+          "returnType": "Retryer<TData>",
+          "exported": true,
+          "anchor": { "startLine": 76, "endLine": 229 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "RetryerConfig",
+          "shape": "interface RetryerConfig<TData = unknown, TError = DefaultError> {\n  fn: () => TData | Promise<TData>\n  initialPromise?: Promise<TData>\n  onCancel?: (error: TError) => void\n  onFail?: (failureCount: number, error: TError) => void\n  onPause?: () => void\n  onContinue?: () => void\n  retry?: RetryValue<TError>\n  retryDelay?: RetryDelayValue<TError>\n  networkMode: NetworkMode | undefined\n  canRun: () => boolean\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 11, "endLine": 22 }
+        },
+        {
+          "kind": "interface",
+          "name": "Retryer",
+          "shape": "export interface Retryer<TData = unknown> {\n  promise: Promise<TData>\n  cancel: (cancelOptions?: CancelOptions) => void\n  continue: () => Promise<unknown>\n  cancelRetry: () => void\n  continueRetry: () => void\n  canStart: () => boolean\n  start: () => Promise<TData>\n  status: () => 'pending' | 'resolved' | 'rejected'\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 24, "endLine": 33 }
+        },
+        {
+          "kind": "type",
+          "name": "RetryValue",
+          "shape": "export type RetryValue<TError> = boolean | number | ShouldRetryFunction<TError>",
+          "discriminant": null,
+          "anchor": { "startLine": 35, "endLine": 35 }
+        },
+        {
+          "kind": "type",
+          "name": "ShouldRetryFunction",
+          "shape": "type ShouldRetryFunction<TError = DefaultError> = (\n  failureCount: number,\n  error: TError,\n) => boolean",
+          "discriminant": null,
+          "anchor": { "startLine": 37, "endLine": 40 }
+        },
+        {
+          "kind": "type",
+          "name": "RetryDelayValue",
+          "shape": "export type RetryDelayValue<TError> = number | RetryDelayFunction<TError>",
+          "discriminant": null,
+          "anchor": { "startLine": 42, "endLine": 42 }
+        },
+        {
+          "kind": "type",
+          "name": "RetryDelayFunction",
+          "shape": "type RetryDelayFunction<TError = DefaultError> = (\n  failureCount: number,\n  error: TError,\n) => number",
+          "discriminant": null,
+          "anchor": { "startLine": 44, "endLine": 47 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "config.retry omitted",
+          "handled": true,
+          "behavior": "defaults to 0 on server, 3 on client",
+          "anchor": { "startLine": 170, "endLine": 170 }
+        },
+        {
+          "inputShape": "config.initialPromise provided",
+          "handled": true,
+          "behavior": "used only on first run (failureCount === 0)",
+          "anchor": { "startLine": 151, "endLine": 152 }
+        },
+        {
+          "inputShape": "fn throws synchronously",
+          "handled": true,
+          "behavior": "caught and converted to rejected promise",
+          "anchor": { "startLine": 155, "endLine": 159 }
+        },
+        {
+          "inputShape": "retry = 0",
+          "handled": true,
+          "behavior": "shouldRetry false, error rejected immediately",
+          "anchor": { "startLine": 177, "endLine": 179 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "(networkMode ?? 'online')",
+          "right": "'online'",
+          "inclusive": false,
+          "intent": "treat undefined network mode as online",
+          "anchor": { "startLine": 54, "endLine": 54 }
+        },
+        {
+          "operator": "==",
+          "left": "config.networkMode",
+          "right": "'always'",
+          "inclusive": false,
+          "intent": "allow continue regardless of online state",
+          "anchor": { "startLine": 106, "endLine": 106 }
+        },
+        {
+          "operator": "==",
+          "left": "failureCount",
+          "right": "0",
+          "inclusive": false,
+          "intent": "select initialPromise only on first attempt",
+          "anchor": { "startLine": 152, "endLine": 152 }
+        },
+        {
+          "operator": "<",
+          "left": "failureCount",
+          "right": "retry",
+          "inclusive": false,
+          "intent": "stop retrying after reaching numeric retry limit",
+          "anchor": { "startLine": 178, "endLine": 178 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "error from config.fn() or promise rejection",
+          "action": "enter catch block, decide retry or reject with error",
+          "fallback": null,
+          "anchor": { "startLine": 163, "endLine": 205 }
+        },
+        {
+          "thrown": "CancelledError",
+          "caught": null,
+          "action": "created and passed to reject and onCancel",
+          "fallback": null,
+          "anchor": { "startLine": 90, "endLine": 91 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "non-null",
+          "description": "thenable is only resolved/rejected once (guarded by isResolved)",
+          "anchor": { "startLine": 85, "endLine": 86 }
+        },
+        {
+          "kind": "ordering",
+          "description": "cancel has no effect after promise is resolved",
+          "anchor": { "startLine": 88, "endLine": 95 }
+        },
+        {
+          "kind": "invariant",
+          "description": "failureCount starts at 0 and increments only on retry path",
+          "anchor": { "startLine": 80, "endLine": 80 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "caller provides config.fn that returns value or promise",
+          "anchor": { "startLine": 11, "endLine": 12 }
+        },
+        {
+          "kind": "env",
+          "description": "onlineManager and focusManager are initialized before use",
+          "anchor": { "startLine": 105, "endLine": 106 }
+        },
+        {
+          "kind": "config",
+          "description": "config.canRun reflects external eligibility",
+          "anchor": { "startLine": 21, "endLine": 21 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What is exact contract of pendingThenable status values?",
+          "affects": "isResolved guard logic",
+          "anchor": { "startLine": 85, "endLine": 86 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Single retry loop per retryer instance; pause/resume mediated by promise chaining"
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "can-fetch-online-mode",
+          "scenario": "canFetch returns true when networkMode is online and onlineManager reports online",
+          "given": ["onlineManager.isOnline() === true", "networkMode = 'online'"],
+          "when": "canFetch(networkMode)",
+          "then": "returns true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures fetch allowed only when online in default mode"
+        },
+        {
+          "testId": "cancelled-error-options",
+          "scenario": "CancelledError carries revert and silent flags from options",
+          "given": ["options = { revert: true, silent: false }"],
+          "when": "new CancelledError(options)",
+          "then": "error.revert === true and error.silent === false",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves cancellation semantics for callers"
+        },
+        {
+          "testId": "retryer-resolves-on-success",
+          "scenario": "createRetryer resolves promise when fn returns value",
+          "given": ["config.fn = () => 'ok'", "config.canRun = () => true", "config.networkMode = 'online'"],
+          "when": "const r = createRetryer(config); r.start()",
+          "then": "r.promise resolves to 'ok'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Core happy-path contract"
+        },
+        {
+          "testId": "retryer-cancel-before-resolve",
+          "scenario": "Calling cancel before resolution triggers onCancel and rejects with CancelledError",
+          "given": ["config.fn = () => new Promise(() => {})", "config.onCancel called with error"],
+          "when": "r.cancel();",
+          "then": "r.promise rejects with CancelledError and onCancel invoked",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Cancellation must stop pending work"
+        },
+        {
+          "testId": "retryer-retries-up-to-limit",
+          "scenario": "Retryer retries failed fn up to retry count then rejects",
+          "given": ["config.fn throws error first 2 times then succeeds", "config.retry = 2", "config.retryDelay = 0"],
+          "when": "r.start()",
+          "then": "fn called 3 times and promise resolves on third",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Retry budget must be honored"
+        },
+        {
+          "testId": "is-cancelled-error-typeguard",
+          "scenario": "isCancelledError identifies CancelledError instances",
+          "given": ["err = new CancelledError()"],
+          "when": "isCancelledError(err)",
+          "then": "returns true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Deprecated helper must remain correct"
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "interface RetryerConfig",
+        "export interface Retryer",
+        "export type RetryValue",
+        "type ShouldRetryFunction",
+        "export type RetryDelayValue",
+        "type RetryDelayFunction",
+        "function defaultRetryDelay",
+        "export function canFetch",
+        "export class CancelledError",
+        "export function isCancelledError",
+        "export function createRetryer"
+      ],
+      "moduleLevelCode": "import statements and type declarations only; no top-level execution",
+      "exports": [
+        { "name": "Retryer", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "RetryValue", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "RetryDelayValue", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "canFetch", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "CancelledError", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "isCancelledError", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "createRetryer", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "focusManager", "module": "./focusManager", "alias": null, "kind": "internal" },
+        { "symbol": "onlineManager", "module": "./onlineManager", "alias": null, "kind": "internal" },
+        { "symbol": "pendingThenable", "module": "./thenable", "alias": null, "kind": "internal" },
+        { "symbol": "Thenable", "module": "./thenable", "alias": null, "kind": "internal" },
+        { "symbol": "environmentManager", "module": "./environmentManager", "alias": null, "kind": "internal" },
+        { "symbol": "sleep", "module": "./utils", "alias": null, "kind": "internal" },
+        { "symbol": "CancelOptions", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "DefaultError", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "NetworkMode", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/query-core/src/retryer.ts__defaultRetryDelay#function:defaultRetryDelay",
+        "unitKind": "function",
+        "name": "defaultRetryDelay",
+        "qualifiedName": "defaultRetryDelay",
+        "parentUnitId": null,
+        "startLine": 49,
+        "endLine": 51,
+        "isBehavioral": true,
+        "source": "function defaultRetryDelay(failureCount: number) {\n  return Math.min(1000 * 2 ** failureCount, 30000)\n}",
+        "detail": {
+          "unitId": "packages/query-core/src/retryer.ts__defaultRetryDelay#function:defaultRetryDelay",
+          "fileId": "packages/query-core/src/retryer.ts__defaultRetryDelay",
+          "unitKind": "function",
+          "name": "defaultRetryDelay",
+          "qualifiedName": "defaultRetryDelay",
+          "parentUnitId": null,
+          "startLine": 49,
+          "endLine": 51,
+          "signature": "function defaultRetryDelay(failureCount: number)",
+          "parameters": [
+            {
+              "name": "failureCount",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["failureCount is a number"],
+          "postconditions": [
+            "returns a number equal to Math.min(1000 * 2 ** failureCount, 30000)",
+            "returned value is <= 30000 for any failureCount >= 0"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "failureCount = 0 returns 1000",
+            "failureCount = 5 returns 30000 (1000*2^5=32000 exceeds cap)",
+            "failureCount negative returns fractional value < 1000 (e.g., -1 -> 500)",
+            "failureCount >= 5 always returns 30000"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["Math"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes a retry delay that grows exponentially with the failure count, capped at 30000 ms, providing deterministic backoff for the retryer.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "1000",
+              "role": "base delay in milliseconds multiplied by exponential factor"
+            },
+            { "kind": "magic-number", "value": "2", "role": "exponential base for backoff growth" },
+            { "kind": "magic-number", "value": "30000", "role": "maximum delay cap in milliseconds" }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "defaultRetryDelay(0) is called",
+              "then": "returns 1000",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "defaultRetryDelay(1) is called",
+              "then": "returns 2000",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "defaultRetryDelay(5) is called",
+              "then": "returns 30000",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c7314c60d97726ca30a401da8dc19a3e1254c8873d207dc0a29af6389889467c"
+        }
+      },
+      {
+        "unitId": "packages/query-core/src/retryer.ts__canFetch#function:canFetch",
+        "unitKind": "function",
+        "name": "canFetch",
+        "qualifiedName": "canFetch",
+        "parentUnitId": null,
+        "startLine": 53,
+        "endLine": 57,
+        "isBehavioral": true,
+        "source": "export function canFetch(networkMode: NetworkMode | undefined): boolean {\n  return (networkMode ?? 'online') === 'online'\n    ? onlineManager.isOnline()\n    : true\n}",
+        "detail": {
+          "unitId": "packages/query-core/src/retryer.ts__canFetch#function:canFetch",
+          "fileId": "packages/query-core/src/retryer.ts__canFetch",
+          "unitKind": "function",
+          "name": "canFetch",
+          "qualifiedName": "canFetch",
+          "parentUnitId": null,
+          "startLine": 53,
+          "endLine": 57,
+          "signature": "export function canFetch(networkMode: NetworkMode | undefined): boolean",
+          "parameters": [
+            {
+              "name": "networkMode",
+              "type": "NetworkMode | undefined",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "boolean",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "If networkMode is undefined or 'online', returns the result of onlineManager.isOnline()",
+            "If networkMode is any value other than 'online', returns true"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "networkMode undefined: treated as 'online' and delegates to onlineManager.isOnline()",
+            "networkMode 'online': returns onlineManager.isOnline()",
+            "networkMode not 'online' (e.g., 'always', 'offline'): returns true unconditionally"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "onlineManager.isOnline", "source": null, "kind": "external" }],
+          "symbolReferences": ["NetworkMode", "onlineManager"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether a fetch may proceed given a network mode, defaulting to 'online' and consulting onlineManager when online, otherwise permitting fetches.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "online",
+              "role": "Default network mode and compared value; when equal, fetch capability is delegated to onlineManager.isOnline()"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "canFetch(undefined) is invoked",
+              "then": "returns the boolean result of onlineManager.isOnline()",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "canFetch('online') is invoked",
+              "then": "returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "canFetch('always') is invoked",
+              "then": "returns true",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "b7430a63c4e67012a4d91671fceffd450439fd5659a6c130f26f28fa878a8a8d"
+        }
+      },
+      {
+        "unitId": "packages/query-core/src/retryer.ts__CancelledError#class:CancelledError",
+        "unitKind": "class",
+        "name": "CancelledError",
+        "qualifiedName": "CancelledError",
+        "parentUnitId": null,
+        "startLine": 59,
+        "endLine": 67,
+        "isBehavioral": false,
+        "source": "export class CancelledError extends Error {\n  revert?: boolean\n  silent?: boolean\n  constructor(options?: CancelOptions) {\n    super('CancelledError')\n    this.revert = options?.revert\n    this.silent = options?.silent\n  }\n}",
+        "detail": {
+          "unitId": "packages/query-core/src/retryer.ts__CancelledError#class:CancelledError",
+          "fileId": "packages/query-core/src/retryer.ts__CancelledError",
+          "unitKind": "class",
+          "name": "CancelledError",
+          "qualifiedName": "CancelledError",
+          "parentUnitId": null,
+          "startLine": 59,
+          "endLine": 67,
+          "signature": "export class CancelledError extends Error",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["CancelOptions", "Error"],
+          "baseTypes": ["Error"],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "revert",
+              "kind": "property",
+              "type": "boolean | undefined",
+              "default": "undefined",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "silent",
+              "kind": "property",
+              "type": "boolean | undefined",
+              "default": "undefined",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Represents a cancellation error that preserves optional revert and silent flags supplied via CancelOptions.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "903c81dac39f6e4387d9698f43087d455a9a8ab776c0f9a274921be6b8c13bcb"
+        }
+      },
+      {
+        "unitId": "packages/query-core/src/retryer.ts__isCancelledError#function:isCancelledError",
+        "unitKind": "function",
+        "name": "isCancelledError",
+        "qualifiedName": "isCancelledError",
+        "parentUnitId": null,
+        "startLine": 72,
+        "endLine": 74,
+        "isBehavioral": true,
+        "source": "export function isCancelledError(value: any): value is CancelledError {\n  return value instanceof CancelledError\n}",
+        "detail": {
+          "unitId": "packages/query-core/src/retryer.ts__isCancelledError#function:isCancelledError",
+          "fileId": "packages/query-core/src/retryer.ts__isCancelledError",
+          "unitKind": "function",
+          "name": "isCancelledError",
+          "qualifiedName": "isCancelledError",
+          "parentUnitId": null,
+          "startLine": 72,
+          "endLine": 74,
+          "signature": "export function isCancelledError(value: any): value is CancelledError",
+          "parameters": [
+            { "name": "value", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "value is CancelledError",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns true if and only if value is an instance of CancelledError",
+            "Narrows the type of value to CancelledError when returning true"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "value is null: returns false",
+            "value is undefined: returns false",
+            "value is an instance of a subclass of CancelledError: returns true"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["CancelledError"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns true if the given value is an instance of CancelledError, acting as a type guard to narrow cancellation errors.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "9c7a7ec14c0aa33e5bac4c9b4fef1b973823593fab412d2bce3e427ff1857397"
+        }
+      },
+      {
+        "unitId": "packages/query-core/src/retryer.ts__createRetryer#function:createRetryer",
+        "unitKind": "function",
+        "name": "createRetryer",
+        "qualifiedName": "createRetryer",
+        "parentUnitId": null,
+        "startLine": 76,
+        "endLine": 229,
+        "isBehavioral": true,
+        "source": "export function createRetryer<TData = unknown, TError = DefaultError>(\n  config: RetryerConfig<TData, TError>,\n): Retryer<TData> {\n  let isRetryCancelled = false\n  let failureCount = 0\n  let continueFn: ((value?: unknown) => void) | undefined\n\n  const thenable = pendingThenable<TData>()\n\n  const isResolved = () =>\n    (thenable.status as Thenable<TData>['status']) !== 'pending'\n\n  const cancel = (cancelOptions?: CancelOptions): void => {\n    if (!isResolved()) {\n      const error = new CancelledError(cancelOptions) as TError\n      reject(error)\n\n      config.onCancel?.(error)\n    }\n  }\n  const cancelRetry = () => {\n    isRetryCancelled = true\n  }\n\n  const continueRetry = () => {\n    isRetryCancelled = false\n  }\n\n  const canContinue = () =>\n    focusManager.isFocused() &&\n    (config.networkMode === 'always' || onlineManager.isOnline()) &&\n    config.canRun()\n\n  const canStart = () => canFetch(config.networkMode) && config.canRun()\n\n  const resolve = (value: any) => {\n    if (!isResolved()) {\n      continueFn?.()\n      thenable.resolve(value)\n    }\n  }\n\n  const reject = (value: any) => {\n    if (!isResolved()) {\n      continueFn?.()\n      thenable.reject(value)\n    }\n  }\n\n  const pause = () => {\n    return new Promise((continueResolve) => {\n      continueFn = (value) => {\n        if (isResolved() || canContinue()) {\n          continueResolve(value)\n        }\n      }\n      config.onPause?.()\n    }).then(() => {\n      continueFn = undefined\n      if (!isResolved()) {\n        config.onContinue?.()\n      }\n    })\n  }\n\n  // Create loop function\n  const run = () => {\n    // Do nothing if already resolved\n    if (isResolved()) {\n      return\n    }\n\n    let promiseOrValue: any\n\n    // we can re-use config.initialPromise on the first call of run()\n    const initialPromise =\n      failureCount === 0 ? config.initialPromise : undefined\n\n    // Execute query\n    try {\n      promiseOrValue = initialPromise ?? config.fn()\n    } catch (error) {\n      promiseOrValue = Promise.reject(error)\n    }\n\n    Promise.resolve(promiseOrValue)\n      .then(resolve)\n      .catch((error) => {\n        // Stop if the fetch is already resolved\n        if (isResolved()) {\n          return\n        }\n\n        // Do we need to retry the request?\n        const retry = config.retry ?? (environmentManager.isServer() ? 0 : 3)\n        const retryDelay = config.retryDelay ?? defaultRetryDelay\n        const delay =\n          typeof retryDelay === 'function'\n            ? retryDelay(failureCount, error)\n            : retryDelay\n        const shouldRetry =\n          retry === true ||\n          (typeof retry === 'number' && failureCount < retry) ||\n          (typeof retry === 'function' && retry(failureCount, error))\n\n        if (isRetryCancelled || !shouldRetry) {\n          // We are done if the query does not need to be retried\n          reject(error)\n          return\n        }\n\n        failureCount++\n\n        // Notify on fail\n        config.onFail?.(failureCount, error)\n\n        // Delay\n        sleep(delay)\n          // Pause if the document is not visible or when the device is offline\n          .then(() => {\n            return canContinue() ? undefined : pause()\n          })\n          .then(() => {\n            if (isRetryCancelled) {\n              reject(error)\n            } else {\n              run()\n            }\n          })\n      })\n  }\n\n  return {\n    promise: thenable,\n    status: () => thenable.status,\n    cancel,\n    continue: () => {\n      continueFn?.()\n      return thenable\n    },\n    cancelRetry,\n    continueRetry,\n    canStart,\n    start: () => {\n      // Start loop\n      if (canStart()) {\n        run()\n      } else {\n        pause().then(run)\n      }\n      return thenable\n    },\n  }\n}",
+        "detail": {
+          "unitId": "packages/query-core/src/retryer.ts__createRetryer#function:createRetryer",
+          "fileId": "packages/query-core/src/retryer.ts__createRetryer",
+          "unitKind": "function",
+          "name": "createRetryer",
+          "qualifiedName": "createRetryer",
+          "parentUnitId": null,
+          "startLine": 76,
+          "endLine": 229,
+          "signature": "export function createRetryer<TData = unknown, TError = DefaultError>(config: RetryerConfig<TData, TError>): Retryer<TData>",
+          "parameters": [
+            {
+              "name": "config",
+              "type": "RetryerConfig<TData, TError>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "Retryer<TData>",
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["TData = unknown", "TError = DefaultError"],
+          "logicOutline": [],
+          "preconditions": [
+            "config is a RetryerConfig with a callable fn (or initialPromise on first run) and canRun()",
+            "focusManager, onlineManager, environmentManager, sleep, pendingThenable, defaultRetryDelay, CancelledError are accessible in scope"
+          ],
+          "postconditions": [
+            "Returns an object exposing promise, status, cancel, continue, cancelRetry, continueRetry, canStart, start",
+            "The returned promise resolves with the successful value or rejects with the last error after retries or cancellation"
+          ],
+          "invariants": [
+            "thenable.status is 'pending' until resolved or rejected",
+            "failureCount increments exactly once per failed attempt that triggers a retry",
+            "isRetryCancelled prevents further retries when set"
+          ],
+          "edgeCases": [
+            "initialPromise used only when failureCount === 0",
+            "retry true => infinite retries until success or cancel",
+            "retry number => limited retries (failureCount < retry)",
+            "retry function => dynamic decision per error",
+            "offline/non-focused => pauses via pause() until canContinue",
+            "cancel before resolution => rejects with CancelledError and calls onCancel"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "CancelledError (cast as TError) on cancel",
+              "rejection error from fn after retries exhausted or retry disabled"
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Closure state: isRetryCancelled, failureCount, continueFn",
+            "thenable resolve/reject internal state",
+            "Side-effect calls to config.onCancel, config.onFail, config.onPause, config.onContinue"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "pendingThenable", "source": null, "kind": "internal" },
+            { "name": "focusManager.isFocused", "source": null, "kind": "internal" },
+            { "name": "onlineManager.isOnline", "source": null, "kind": "internal" },
+            { "name": "config.canRun", "source": null, "kind": "internal" },
+            { "name": "canFetch", "source": null, "kind": "internal" },
+            { "name": "environmentManager.isServer", "source": null, "kind": "internal" },
+            { "name": "defaultRetryDelay", "source": null, "kind": "internal" },
+            { "name": "sleep", "source": null, "kind": "internal" },
+            { "name": "CancelledError", "source": null, "kind": "internal" },
+            { "name": "config.fn", "source": null, "kind": "internal" },
+            { "name": "config.onCancel", "source": null, "kind": "internal" },
+            { "name": "config.onFail", "source": null, "kind": "internal" },
+            { "name": "config.onPause", "source": null, "kind": "internal" },
+            { "name": "config.onContinue", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "RetryerConfig",
+            "Retryer",
+            "DefaultError",
+            "CancelledError",
+            "focusManager",
+            "onlineManager",
+            "environmentManager",
+            "sleep",
+            "defaultRetryDelay",
+            "pendingThenable",
+            "canFetch"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a retryer that executes a provided function with configurable retry, delay, cancellation, and pause/resume behavior, returning a controllable promise-like object.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "default retry count when environmentManager.isServer() is true"
+            },
+            { "kind": "magic-number", "value": "3", "role": "default retry count when not on server" },
+            {
+              "kind": "enum-value",
+              "value": "'always'",
+              "role": "networkMode value that skips offline check in canContinue"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "start() is called",
+              "then": "promise rejects immediately with the error and no retry occurs",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "cancel is called before resolution",
+              "then": "promise rejects with CancelledError and config.onCancel is called",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "start() is called",
+              "then": "promise resolves with the returned value without pausing for focus/online",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "186ac8f5ea60a6c5314f2d26e457b0474745b8a432b59480abbc6b66366cda02"
+        }
+      },
+      {
+        "unitId": "packages/query-core/src/retryer.ts__createRetryer.run#function:createRetryer.run",
+        "unitKind": "function",
+        "name": "run",
+        "qualifiedName": "createRetryer.run",
+        "parentUnitId": "packages/query-core/src/retryer.ts__createRetryer#function:createRetryer",
+        "startLine": 142,
+        "endLine": 206,
+        "isBehavioral": true,
+        "source": "  const run = () => {\n    // Do nothing if already resolved\n    if (isResolved()) {\n      return\n    }\n\n    let promiseOrValue: any\n\n    // we can re-use config.initialPromise on the first call of run()\n    const initialPromise =\n      failureCount === 0 ? config.initialPromise : undefined\n\n    // Execute query\n    try {\n      promiseOrValue = initialPromise ?? config.fn()\n    } catch (error) {\n      promiseOrValue = Promise.reject(error)\n    }\n\n    Promise.resolve(promiseOrValue)\n      .then(resolve)\n      .catch((error) => {\n        // Stop if the fetch is already resolved\n        if (isResolved()) {\n          return\n        }\n\n        // Do we need to retry the request?\n        const retry = config.retry ?? (environmentManager.isServer() ? 0 : 3)\n        const retryDelay = config.retryDelay ?? defaultRetryDelay\n        const delay =\n          typeof retryDelay === 'function'\n            ? retryDelay(failureCount, error)\n            : retryDelay\n        const shouldRetry =\n          retry === true ||\n          (typeof retry === 'number' && failureCount < retry) ||\n          (typeof retry === 'function' && retry(failureCount, error))\n\n        if (isRetryCancelled || !shouldRetry) {\n          // We are done if the query does not need to be retried\n          reject(error)\n          return\n        }\n\n        failureCount++\n\n        // Notify on fail\n        config.onFail?.(failureCount, error)\n\n        // Delay\n        sleep(delay)\n          // Pause if the document is not visible or when the device is offline\n          .then(() => {\n            return canContinue() ? undefined : pause()\n          })\n          .then(() => {\n            if (isRetryCancelled) {\n              reject(error)\n            } else {\n              run()\n            }\n          })\n      })\n  }",
+        "detail": {
+          "unitId": "packages/query-core/src/retryer.ts__createRetryer.run#function:createRetryer.run",
+          "fileId": "packages/query-core/src/retryer.ts__createRetryer.run",
+          "unitKind": "function",
+          "name": "run",
+          "qualifiedName": "createRetryer.run",
+          "parentUnitId": "packages/query-core/src/retryer.ts__createRetryer#function:createRetryer",
+          "startLine": 142,
+          "endLine": 206,
+          "signature": "const run = () => void",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "isResolved() returns false (otherwise run returns immediately doing nothing)",
+            "config.fn is a callable returning promise or value, or config.initialPromise provided when failureCount === 0",
+            "closure variables resolve, reject, failureCount, isRetryCancelled, sleep, canContinue, pause are initialized"
+          ],
+          "postconditions": [
+            "On successful resolution of promiseOrValue, resolve(value) is called and run completes",
+            "On failure with shouldRetry false or isRetryCancelled true, reject(error) is called",
+            "On failure with shouldRetry true, failureCount is incremented, config.onFail invoked, delay scheduled, and run is recursed after pause check"
+          ],
+          "invariants": [
+            "failureCount increases by exactly 1 per retry attempt",
+            "isResolved remains false until resolve or reject is invoked",
+            "retry decision uses current failureCount before increment"
+          ],
+          "edgeCases": [
+            "failureCount === 0 uses config.initialPromise if provided else config.fn()",
+            "config.fn throws synchronously -> caught and wrapped as Promise.reject(error)",
+            "config.retry undefined -> environmentManager.isServer() ? 0 : 3",
+            "config.retryDelay undefined -> defaultRetryDelay function",
+            "retryDelay may be number or function; function called with (failureCount, error)",
+            "retry true always retries; number retries while failureCount < retry; function retries if returns true",
+            "isRetryCancelled set externally forces immediate reject on next catch",
+            "if resolved during async chain, subsequent then/catch steps become no-ops",
+            "when document not visible or offline, pause() is awaited before next run"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "rejects the enclosing promise with the captured error via reject(error)"
+          },
+          "stateMutations": [
+            "failureCount incremented by 1 when a retry is scheduled",
+            "resolve or reject called to settle the retryer",
+            "config.onFail invoked with new failureCount and error",
+            "sleep(delay) schedules a timer; pause() may suspend"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isResolved", "source": null, "kind": "internal" },
+            { "name": "config.fn", "source": null, "kind": "internal" },
+            { "name": "Promise.resolve", "source": "global", "kind": "external" },
+            { "name": "resolve", "source": null, "kind": "internal" },
+            { "name": "reject", "source": null, "kind": "internal" },
+            { "name": "environmentManager.isServer", "source": "environmentManager", "kind": "external" },
+            { "name": "defaultRetryDelay", "source": "./retryer", "kind": "internal" },
+            { "name": "sleep", "source": null, "kind": "internal" },
+            { "name": "canContinue", "source": null, "kind": "internal" },
+            { "name": "pause", "source": null, "kind": "internal" },
+            { "name": "config.onFail", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Promise", "environmentManager", "defaultRetryDelay", "sleep", "canContinue", "pause"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Executes the retryable query function, resolving on success or applying the configured/default retry policy with delay on failure, and rejecting once retries are exhausted or disabled.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "default retry count when environmentManager.isServer() is true"
+            },
+            {
+              "kind": "magic-number",
+              "value": "3",
+              "role": "default retry count when environmentManager.isServer() is false (client)"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "run() is called",
+              "then": "Promise.resolve(config.fn()).then(resolve) causes resolve('v') and no retry scheduled",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "run() catch handler processes the rejection",
+              "then": "shouldRetry evaluates false, reject(err) is called, failureCount is not incremented for retry",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "catch handler runs and shouldRetry true",
+              "then": "failureCount becomes 1, config.onFail(1, error) invoked, sleep(delay) then run() recursed; after second failure failureCount 2 then reject",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "021b7256bb2f0d9af6e781448f6c378109f1d9a81b6a0b2b7cadd2137f66ef7a"
+        }
+      },
+      {
+        "unitId": "packages/query-core/src/retryer.ts__createRetryer.pause#function:createRetryer.pause",
+        "unitKind": "function",
+        "name": "pause",
+        "qualifiedName": "createRetryer.pause",
+        "parentUnitId": "packages/query-core/src/retryer.ts__createRetryer#function:createRetryer",
+        "startLine": 125,
+        "endLine": 139,
+        "isBehavioral": true,
+        "source": "  const pause = () => {\n    return new Promise((continueResolve) => {\n      continueFn = (value) => {\n        if (isResolved() || canContinue()) {\n          continueResolve(value)\n        }\n      }\n      config.onPause?.()\n    }).then(() => {\n      continueFn = undefined\n      if (!isResolved()) {\n        config.onContinue?.()\n      }\n    })\n  }",
+        "detail": {
+          "unitId": "packages/query-core/src/retryer.ts__createRetryer.pause#function:createRetryer.pause",
+          "fileId": "packages/query-core/src/retryer.ts__createRetryer.pause",
+          "unitKind": "function",
+          "name": "pause",
+          "qualifiedName": "createRetryer.pause",
+          "parentUnitId": "packages/query-core/src/retryer.ts__createRetryer#function:createRetryer",
+          "startLine": 125,
+          "endLine": 139,
+          "signature": "const pause = () => Promise<any>",
+          "parameters": [],
+          "returnType": "Promise<any>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Closure variables continueFn, isResolved, canContinue, config are defined",
+            "config may have optional onPause and onContinue callbacks"
+          ],
+          "postconditions": [
+            "Returns a Promise that resolves with the value passed to continueFn when invoked and (isResolved() || canContinue())",
+            "After promise resolution, continueFn is set to undefined",
+            "config.onContinue is invoked if promise resolved and isResolved() is false"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "continueFn called when neither isResolved nor canContinue: promise remains pending",
+            "config.onPause or config.onContinue undefined: optional chaining skips call",
+            "continueFn called multiple times: first call resolving promise clears continueFn, subsequent calls no-op"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "continueFn assigned to a new function during pause, then set to undefined on resolve",
+            "Side effects from config.onPause and config.onContinue callbacks"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "isResolved", "source": null, "kind": "internal" },
+            { "name": "canContinue", "source": null, "kind": "internal" },
+            { "name": "config.onPause", "source": null, "kind": "internal" },
+            { "name": "config.onContinue", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["continueFn", "config", "isResolved", "canContinue"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Pauses the retryer by invoking optional config.onPause and returning a promise that resolves when continueFn is called with a value while isResolved() or canContinue() holds, then clears continueFn and invokes config.onContinue if still unresolved.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "pause() is called",
+              "then": "config.onPause is invoked synchronously and a pending Promise is returned",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "pause() then continueFn('val')",
+              "then": "returned promise resolves to 'val', continueFn is set to undefined, config.onContinue is not called",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a3ebe60739de2090cd987b8f5a384f006d94d66e156a2746c8cbf13d75cd6737"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/query-core/src/focusManager.ts",
+    "packages/query-core/src/onlineManager.ts",
+    "packages/query-core/src/thenable.ts",
+    "packages/query-core/src/environmentManager.ts",
+    "packages/query-core/src/utils.ts"
+  ],
+  "in": ["packages/query-core/src/mutation.ts", "packages/query-core/src/query.ts"],
+  "externals": [],
+  "impact": { "seeds": 7, "callers": 2, "impactedFiles": [] }
+}

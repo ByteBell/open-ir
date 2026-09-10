@@ -1,0 +1,1753 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "redux-toolkit",
+  "commitHash": "b1c5130154c454ca8387f55da6122fcb507c560c",
+  "generatedAt": "2026-08-01T22:01:37.770Z",
+  "file": {
+    "relativePath": "packages/toolkit/src/query/core/buildSlice.ts",
+    "language": "typescript",
+    "sizeBytes": 22627,
+    "tokenCount": 4903,
+    "model": "tencent/hy3",
+    "analysedAt": "2026-08-01T17:01:14.914Z",
+    "module": {
+      "purpose": "Constructs the Redux slices (reducers + actions) for RTK Query's internal state: queries, mutations, invalidation tags, subscriptions, and config. Used by createApi to assemble the root reducer.",
+      "summary": "This module builds the combined reducer and action creators for an RTK Query API instance. It defines helper functions to safely update query and mutation substates, computes mutation cache keys, and creates individual Redux slices for queries, mutations, invalidation/tag tracking, subscriptions, and configuration. It wires extraReducers to handle pending/fulfilled/rejected thunk lifecycles, rehydration, and online/focus events. The builder returns a combined reducer and a map of all actions.",
+      "businessContext": "Core internal state management for RTK Query caching layer. If broken, API caching, invalidation, and refetch-on-focus/online fail.",
+      "classes": [],
+      "functions": [
+        "updateQuerySubstateIfExists (~L114-123): Safely mutate a query substate if present",
+        "getMutationCacheKey (~L125-142): Resolve cache key from mutation id or fixedCacheKey",
+        "updateMutationSubstateIfExists (~L144-155): Safely mutate a mutation substate if present",
+        "buildSlice (~L159-548): Factory producing combined reducer and actions for an API"
+      ],
+      "keywords": ["rtk-query", "redux slice", "immer", "cache invalidation", "rehydration", "thunk lifecycle"],
+      "ontologyConcepts": ["cache entry", "substate", "tag invalidation", "reducer composition", "rehydration"],
+      "businessEntities": ["Query", "Mutation", "CacheKey", "Tag", "Subscription"],
+      "systemCapabilities": ["manage query cache", "track mutations", "invalidate by tags", "rehydrate state"],
+      "configDependencies": ["config (focused/online/middlewareRegistered defaults)"],
+      "importsInternal": [
+        {
+          "spec": "./rtkImports",
+          "symbols": [
+            "combineReducers",
+            "createAction",
+            "createSlice",
+            "isAnyOf",
+            "isFulfilled",
+            "isRejectedWithValue",
+            "createNextState",
+            "prepareAutoBatched",
+            "SHOULD_AUTOBATCH",
+            "nanoid"
+          ],
+          "anchor": { "startLine": 2, "endLine": 13 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/rtkImports.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/rtkImports.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/rtkImports.ts"
+        },
+        {
+          "spec": "./apiState",
+          "symbols": [
+            "QuerySubstateIdentifier",
+            "QuerySubState",
+            "MutationSubstateIdentifier",
+            "MutationSubState",
+            "MutationState",
+            "QueryState",
+            "InvalidationState",
+            "Subscribers",
+            "QueryCacheKey",
+            "SubscriptionState",
+            "ConfigState",
+            "InfiniteQuerySubState",
+            "InfiniteQueryDirection"
+          ],
+          "anchor": { "startLine": 14, "endLine": 28 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/apiState.ts"
+        },
+        {
+          "spec": "./apiState",
+          "symbols": ["STATUS_FULFILLED", "STATUS_PENDING", "QueryStatus", "STATUS_REJECTED", "STATUS_UNINITIALIZED"],
+          "anchor": { "startLine": 29, "endLine": 35 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/apiState.ts"
+        },
+        {
+          "spec": "./buildThunks",
+          "symbols": [
+            "AllQueryKeys",
+            "QueryArgFromAnyQueryDefinition",
+            "DataFromAnyQueryDefinition",
+            "InfiniteQueryThunk",
+            "MutationThunk",
+            "QueryThunk",
+            "QueryThunkArg"
+          ],
+          "anchor": { "startLine": 36, "endLine": 42 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/buildThunks.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/buildThunks.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/buildThunks.ts"
+        },
+        {
+          "spec": "./buildThunks",
+          "symbols": ["calculateProvidedByThunk"],
+          "anchor": { "startLine": 43, "endLine": 43 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/buildThunks.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/buildThunks.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/buildThunks.ts"
+        },
+        {
+          "spec": "../endpointDefinitions",
+          "symbols": [
+            "ENDPOINT_QUERY",
+            "isInfiniteQueryDefinition",
+            "AssertTagTypes",
+            "EndpointDefinitions",
+            "FullTagDescription",
+            "QueryDefinition"
+          ],
+          "anchor": { "startLine": 44, "endLine": 50 },
+          "resolvedRelativePath": "packages/toolkit/src/query/endpointDefinitions.ts",
+          "resolvedFileId": "packages/toolkit/src/query/endpointDefinitions.ts",
+          "resolvedHint": "packages/toolkit/src/query/endpointDefinitions.ts"
+        },
+        {
+          "spec": "../utils/immerImports",
+          "symbols": ["applyPatches", "original", "isDraft"],
+          "anchor": { "startLine": 51, "endLine": 53 },
+          "resolvedRelativePath": "packages/toolkit/src/query/utils/immerImports.ts",
+          "resolvedFileId": "packages/toolkit/src/query/utils/immerImports.ts",
+          "resolvedHint": "packages/toolkit/src/query/utils/immerImports.ts"
+        },
+        {
+          "spec": "./setupListeners",
+          "symbols": ["onFocus", "onFocusLost", "onOffline", "onOnline"],
+          "anchor": { "startLine": 54, "endLine": 55 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/setupListeners.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/setupListeners.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/setupListeners.ts"
+        },
+        {
+          "spec": "../utils",
+          "symbols": ["isDocumentVisible", "isOnline", "copyWithStructuralSharing"],
+          "anchor": { "startLine": 56, "endLine": 58 },
+          "resolvedRelativePath": "packages/toolkit/src/query/utils/index.ts",
+          "resolvedFileId": "packages/toolkit/src/query/utils/index.ts",
+          "resolvedHint": "packages/toolkit/src/query/utils.ts"
+        },
+        {
+          "spec": "../apiTypes",
+          "symbols": ["ApiContext"],
+          "anchor": { "startLine": 59, "endLine": 59 },
+          "resolvedRelativePath": "packages/toolkit/src/query/apiTypes.ts",
+          "resolvedFileId": "packages/toolkit/src/query/apiTypes.ts",
+          "resolvedHint": "packages/toolkit/src/query/apiTypes.ts"
+        },
+        {
+          "spec": "./buildInitiate",
+          "symbols": ["isUpsertQuery"],
+          "anchor": { "startLine": 60, "endLine": 60 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/buildInitiate.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/buildInitiate.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/buildInitiate.ts"
+        },
+        {
+          "spec": "../defaultSerializeQueryArgs",
+          "symbols": ["InternalSerializeQueryArgs"],
+          "anchor": { "startLine": 61, "endLine": 61 },
+          "resolvedRelativePath": "packages/toolkit/src/query/defaultSerializeQueryArgs.ts",
+          "resolvedFileId": "packages/toolkit/src/query/defaultSerializeQueryArgs.ts",
+          "resolvedHint": "packages/toolkit/src/query/defaultSerializeQueryArgs.ts"
+        },
+        {
+          "spec": "../tsHelpers",
+          "symbols": ["UnwrapPromise"],
+          "anchor": { "startLine": 62, "endLine": 62 },
+          "resolvedRelativePath": "packages/toolkit/src/query/tsHelpers.ts",
+          "resolvedFileId": "packages/toolkit/src/query/tsHelpers.ts",
+          "resolvedHint": "packages/toolkit/src/query/tsHelpers.ts"
+        },
+        {
+          "spec": "../utils/getCurrent",
+          "symbols": ["getCurrent"],
+          "anchor": { "startLine": 63, "endLine": 63 },
+          "resolvedRelativePath": "packages/toolkit/src/query/utils/getCurrent.ts",
+          "resolvedFileId": "packages/toolkit/src/query/utils/getCurrent.ts",
+          "resolvedHint": "packages/toolkit/src/query/utils/getCurrent.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@reduxjs/toolkit",
+          "symbols": ["PayloadAction"],
+          "package": "@reduxjs/toolkit",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "immer",
+          "symbols": ["Patch"],
+          "package": "immer",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 57, "endLine": 57 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates Immer draft state for queries, mutations, invalidation, and config slices",
+          "Deletes cache entries from draft when removeQueryResult/removeMutationResult dispatched"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "buildSlice",
+          "shape": "buildSlice({ reducerPath, queryThunk, infiniteQueryThunk, mutationThunk, serializeQueryArgs, context: { endpointDefinitions, apiUid, extractRehydrationInfo, hasRehydrationInfo }, assertTagType, config }): { reducer: (state, action) => combinedReducer(state, action), actions: SliceActions }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getMutationCacheKey",
+          "shape": "getMutationCacheKey(id: { fixedCacheKey?: string; requestId?: string } | MutationSubstateIdentifier | { requestId: string; arg: { fixedCacheKey?: string } }): string | undefined",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "UpsertEntries",
+          "shape": "type UpsertEntries<Definitions> = (<EndpointNames extends Array<AllQueryKeys<Definitions>>>(entries: [...NormalizedQueryUpsertEntry<Definitions, EndpointNames[I]>]) => PayloadAction<NormalizedQueryUpsertEntryPayload[]>) & { match: (action: unknown) => action is PayloadAction<NormalizedQueryUpsertEntryPayload[]> }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "calculateProvidedByThunk",
+          "shape": "calculateProvidedByThunk(action, 'providesTags', definitions, assertTagType): readonly FullTagDescription<string>[]",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/buildThunks.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/buildThunks.ts"
+        },
+        {
+          "name": "isUpsertQuery",
+          "shape": "isUpsertQuery(arg: QueryThunkArg): boolean",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/buildInitiate.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/buildInitiate.ts"
+        },
+        {
+          "name": "createSlice",
+          "shape": "createSlice({ name, initialState, reducers, extraReducers }): Slice",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/rtkImports.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/rtkImports.ts"
+        },
+        {
+          "name": "combineReducers",
+          "shape": "combineReducers({ queries, mutations, provided, subscriptions, config }): Reducer",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/rtkImports.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/rtkImports.ts"
+        },
+        {
+          "name": "onOnline",
+          "shape": "onOnline: ActionCreator",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/setupListeners.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/setupListeners.ts"
+        },
+        {
+          "name": "onOffline",
+          "shape": "onOffline: ActionCreator",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/setupListeners.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/setupListeners.ts"
+        },
+        {
+          "name": "onFocus",
+          "shape": "onFocus: ActionCreator",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/setupListeners.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/setupListeners.ts"
+        },
+        {
+          "name": "onFocusLost",
+          "shape": "onFocusLost: ActionCreator",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/setupListeners.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/setupListeners.ts"
+        },
+        {
+          "name": "isOnline",
+          "shape": "isOnline(): boolean",
+          "resolvedRelativePath": "packages/toolkit/src/query/utils/index.ts",
+          "resolvedFileId": "packages/toolkit/src/query/utils/index.ts"
+        },
+        {
+          "name": "isDocumentVisible",
+          "shape": "isDocumentVisible(): boolean",
+          "resolvedRelativePath": "packages/toolkit/src/query/utils/index.ts",
+          "resolvedFileId": "packages/toolkit/src/query/utils/index.ts"
+        },
+        {
+          "name": "copyWithStructuralSharing",
+          "shape": "copyWithStructuralSharing(old, new): unknown",
+          "resolvedRelativePath": "packages/toolkit/src/query/utils/index.ts",
+          "resolvedFileId": "packages/toolkit/src/query/utils/index.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "querySlice",
+          "intent": "Manage query cache entries and lifecycle",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 186, "endLine": 340 }
+        },
+        {
+          "name": "mutationSlice",
+          "intent": "Track mutation requests and results",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 341, "endLine": 410 }
+        },
+        {
+          "name": "invalidationSlice",
+          "intent": "Maintain tag-to-query-cache-key mappings",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 411, "endLine": 480 }
+        },
+        {
+          "name": "configSlice",
+          "intent": "Store online/focus/middlewareRegistered flags",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 511, "endLine": 540 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "getMutationCacheKey",
+          "signature": "export function getMutationCacheKey(\n  id:\n    | MutationSubstateIdentifier\n    | { requestId: string; arg: { fixedCacheKey?: string | undefined } },\n): string\nexport function getMutationCacheKey(id: {\n  fixedCacheKey?: string\n  requestId?: string\n}): string | undefined\nexport function getMutationCacheKey(\n  id:\n    | { fixedCacheKey?: string; requestId?: string }\n    | MutationSubstateIdentifier\n    | { requestId: string; arg: { fixedCacheKey?: string | undefined } },\n): string | undefined",
+          "generics": null,
+          "decorators": [],
+          "returnType": "string | undefined",
+          "exported": true,
+          "anchor": { "startLine": 125, "endLine": 142 }
+        },
+        {
+          "kind": "function",
+          "name": "buildSlice",
+          "signature": "export function buildSlice({\n  reducerPath,\n  queryThunk,\n  mutationThunk,\n  serializeQueryArgs,\n  context: {\n    endpointDefinitions: definitions,\n    apiUid,\n    extractRehydrationInfo,\n    hasRehydrationInfo,\n  },\n  assertTagType,\n  config,\n}: {\n  reducerPath: string\n  queryThunk: QueryThunk\n  infiniteQueryThunk: InfiniteQueryThunk<any>\n  mutationThunk: MutationThunk\n  serializeQueryArgs: InternalSerializeQueryArgs\n  context: ApiContext<EndpointDefinitions>\n  assertTagType: AssertTagTypes\n  config: Omit<\n    ConfigState<string>,\n    'online' | 'focused' | 'middlewareRegistered'\n  >\n}) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "{ reducer: typeof combinedReducer; actions: object }",
+          "exported": true,
+          "anchor": { "startLine": 159, "endLine": 185 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "type",
+          "name": "NormalizedQueryUpsertEntry",
+          "shape": "export type NormalizedQueryUpsertEntry<\n  Definitions extends EndpointDefinitions,\n  EndpointName extends AllQueryKeys<Definitions>,\n> = {\n  endpointName: EndpointName\n  arg: QueryArgFromAnyQueryDefinition<Definitions, EndpointName>\n  value: DataFromAnyQueryDefinition<Definitions, EndpointName>\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 71, "endLine": 78 }
+        },
+        {
+          "kind": "type",
+          "name": "NormalizedQueryUpsertEntryPayload",
+          "shape": "type NormalizedQueryUpsertEntryPayload = {\n  endpointName: string\n  arg: unknown\n  value: unknown\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 83, "endLine": 87 }
+        },
+        {
+          "kind": "type",
+          "name": "ProcessedQueryUpsertEntry",
+          "shape": "export type ProcessedQueryUpsertEntry = {\n  queryDescription: QueryThunkArg\n  value: unknown\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 89, "endLine": 92 }
+        },
+        {
+          "kind": "type",
+          "name": "UpsertEntries",
+          "shape": "export type UpsertEntries<Definitions extends EndpointDefinitions> = (<\n  EndpointNames extends Array<AllQueryKeys<Definitions>>,\n>(\n  entries: [\n    ...{\n      [I in keyof EndpointNames]: NormalizedQueryUpsertEntry<\n        Definitions,\n        EndpointNames[I]\n      >\n    },\n  ],\n) => PayloadAction<NormalizedQueryUpsertEntryPayload[]>) & {\n  match: (\n    action: unknown,\n  ) => action is PayloadAction<NormalizedQueryUpsertEntryPayload[]>\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 97, "endLine": 112 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "condition true on query rejected",
+          "handled": true,
+          "behavior": "Skips updating error state, treats as aborted due to condition",
+          "anchor": { "startLine": 295, "endLine": 310 }
+        },
+        {
+          "inputShape": "rehydrated entry with status pending",
+          "handled": true,
+          "behavior": "Skips rehydrating in-flight entries (only fulfilled/rejected)",
+          "anchor": { "startLine": 320, "endLine": 335 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "substate.requestId",
+          "right": "meta.requestId",
+          "inclusive": false,
+          "intent": "Ignore stale responses that don't match current request",
+          "anchor": { "startLine": 225, "endLine": 225 }
+        },
+        {
+          "operator": "==",
+          "left": "('arg' in id ? id.arg.fixedCacheKey : id.fixedCacheKey)",
+          "right": "id.requestId",
+          "inclusive": false,
+          "intent": "Prefer fixedCacheKey else fall back to requestId",
+          "anchor": { "startLine": 141, "endLine": 141 }
+        },
+        {
+          "operator": "==",
+          "left": "entry?.status",
+          "right": "STATUS_FULFILLED",
+          "inclusive": true,
+          "intent": "Only rehydrate fulfilled or rejected entries",
+          "anchor": { "startLine": 325, "endLine": 325 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "On query rejected, set substate.error = payload ?? error",
+          "fallback": "substate.status = STATUS_REJECTED",
+          "anchor": { "startLine": 300, "endLine": 312 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Substate is only updated if its requestId matches the action's requestId (unless upserting)",
+          "anchor": { "startLine": 213, "endLine": 280 }
+        },
+        {
+          "kind": "precondition",
+          "description": "queryCacheKey must exist in state before updateQuerySubstateIfExists mutates",
+          "anchor": { "startLine": 114, "endLine": 123 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "caller provides correctly typed thunks and endpoint definitions",
+          "anchor": { "startLine": 159, "endLine": 159 }
+        },
+        {
+          "kind": "init-order",
+          "description": "buildSlice is called once during createApi initialization",
+          "anchor": { "startLine": 159, "endLine": 159 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Exact line spans for nested helper functions within buildSlice?",
+          "affects": "unit anchors",
+          "anchor": { "startLine": 178, "endLine": 510 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Redux reducer pattern; pure synchronous state transitions via Immer"
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "build-slice-returns-reducer-and-actions",
+          "scenario": "Calling buildSlice with minimal valid context yields a reducer function and an actions object",
+          "given": [
+            "const args = { reducerPath: 'api', queryThunk: {}, mutationThunk: {}, serializeQueryArgs: ()=>'', context: { endpointDefinitions: {}, apiUid: '1', extractRehydrationInfo: ()=>null, hasRehydrationInfo: ()=>false }, assertTagType: (t)=>t, config: {} }"
+          ],
+          "when": "const { reducer, actions } = buildSlice(args)",
+          "then": "typeof reducer === 'function' && typeof actions === 'object' && 'resetApiState' in actions",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures the core factory produces the expected public Redux contract"
+        },
+        {
+          "testId": "reset-api-state-clears-state",
+          "scenario": "Dispatching resetApiState through the generated reducer returns undefined to reset combined state",
+          "given": [
+            "const { reducer, actions } = buildSlice(validArgs)",
+            "const state = { queries: { x: {} }, mutations: {}, provided: {}, subscriptions: {}, config: {} }"
+          ],
+          "when": "const newState = reducer(state, actions.resetApiState())",
+          "then": "newState === undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Reset must clear all RTK Query substates"
+        },
+        {
+          "testId": "get-mutation-cache-key-prefers-fixed-cache-key",
+          "scenario": "getMutationCacheKey returns fixedCacheKey when present, ignoring requestId",
+          "given": ["const id = { fixedCacheKey: 'fixed', requestId: 'req1' }"],
+          "when": "getMutationCacheKey(id)",
+          "then": "returns 'fixed'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Fixed cache key must take precedence for shared mutation results"
+        },
+        {
+          "testId": "get-mutation-cache-key-falls-back-to-request-id",
+          "scenario": "getMutationCacheKey returns requestId when no fixedCacheKey supplied",
+          "given": ["const id = { requestId: 'req2' }"],
+          "when": "getMutationCacheKey(id)",
+          "then": "returns 'req2'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Per-request tracking relies on requestId as cache key"
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "type NormalizedQueryUpsertEntry",
+        "type NormalizedQueryUpsertEntryPayload",
+        "type ProcessedQueryUpsertEntry",
+        "type UpsertEntries",
+        "function updateQuerySubstateIfExists",
+        "function getMutationCacheKey",
+        "function updateMutationSubstateIfExists",
+        "const initialState",
+        "function buildSlice",
+        "type SliceActions"
+      ],
+      "moduleLevelCode": "import statements and type declarations; no top-level executable code besides const initialState = {} as any",
+      "exports": [
+        { "name": "NormalizedQueryUpsertEntry", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "UpsertEntries", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ProcessedQueryUpsertEntry", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "getMutationCacheKey", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "buildSlice", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "SliceActions", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "PayloadAction", "module": "@reduxjs/toolkit", "alias": null, "kind": "external" },
+        { "symbol": "Patch", "module": "immer", "alias": null, "kind": "external" },
+        { "symbol": "combineReducers", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "createAction", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "createSlice", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "isAnyOf", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "isFulfilled", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "isRejectedWithValue", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "createNextState", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "prepareAutoBatched", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "SHOULD_AUTOBATCH", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "nanoid", "module": "./rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "QuerySubstateIdentifier", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QuerySubState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "MutationSubstateIdentifier", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "MutationSubState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "MutationState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QueryState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "InvalidationState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "Subscribers", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QueryCacheKey", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "SubscriptionState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "ConfigState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "InfiniteQuerySubState", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "InfiniteQueryDirection", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "STATUS_FULFILLED", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "STATUS_PENDING", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QueryStatus", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "STATUS_REJECTED", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "STATUS_UNINITIALIZED", "module": "./apiState", "alias": null, "kind": "internal" },
+        { "symbol": "AllQueryKeys", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "QueryArgFromAnyQueryDefinition", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "DataFromAnyQueryDefinition", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "InfiniteQueryThunk", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "MutationThunk", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "QueryThunk", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "QueryThunkArg", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "calculateProvidedByThunk", "module": "./buildThunks", "alias": null, "kind": "internal" },
+        { "symbol": "ENDPOINT_QUERY", "module": "../endpointDefinitions", "alias": null, "kind": "internal" },
+        {
+          "symbol": "isInfiniteQueryDefinition",
+          "module": "../endpointDefinitions",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "AssertTagTypes", "module": "../endpointDefinitions", "alias": null, "kind": "internal" },
+        { "symbol": "EndpointDefinitions", "module": "../endpointDefinitions", "alias": null, "kind": "internal" },
+        { "symbol": "FullTagDescription", "module": "../endpointDefinitions", "alias": null, "kind": "internal" },
+        { "symbol": "QueryDefinition", "module": "../endpointDefinitions", "alias": null, "kind": "internal" },
+        { "symbol": "applyPatches", "module": "../utils/immerImports", "alias": null, "kind": "internal" },
+        { "symbol": "original", "module": "../utils/immerImports", "alias": null, "kind": "internal" },
+        { "symbol": "isDraft", "module": "../utils/immerImports", "alias": null, "kind": "internal" },
+        { "symbol": "onFocus", "module": "./setupListeners", "alias": null, "kind": "internal" },
+        { "symbol": "onFocusLost", "module": "./setupListeners", "alias": null, "kind": "internal" },
+        { "symbol": "onOffline", "module": "./setupListeners", "alias": null, "kind": "internal" },
+        { "symbol": "onOnline", "module": "./setupListeners", "alias": null, "kind": "internal" },
+        { "symbol": "isDocumentVisible", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "isOnline", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "copyWithStructuralSharing", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "ApiContext", "module": "../apiTypes", "alias": null, "kind": "internal" },
+        { "symbol": "isUpsertQuery", "module": "./buildInitiate", "alias": null, "kind": "internal" },
+        {
+          "symbol": "InternalSerializeQueryArgs",
+          "module": "../defaultSerializeQueryArgs",
+          "alias": null,
+          "kind": "internal"
+        },
+        { "symbol": "UnwrapPromise", "module": "../tsHelpers", "alias": null, "kind": "internal" },
+        { "symbol": "getCurrent", "module": "../utils/getCurrent", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "initialState", "value": "{} as any", "kind": "any" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__updateQuerySubstateIfExists#function:updateQuerySubstateIfExists",
+        "unitKind": "function",
+        "name": "updateQuerySubstateIfExists",
+        "qualifiedName": "updateQuerySubstateIfExists",
+        "parentUnitId": null,
+        "startLine": 114,
+        "endLine": 123,
+        "isBehavioral": true,
+        "source": "function updateQuerySubstateIfExists(\n  state: QueryState<any>,\n  queryCacheKey: QueryCacheKey,\n  update: (substate: QuerySubState<any> | InfiniteQuerySubState<any>) => void,\n) {\n  const substate = state[queryCacheKey]\n  if (substate) {\n    update(substate)\n  }\n}",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__updateQuerySubstateIfExists#function:updateQuerySubstateIfExists",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__updateQuerySubstateIfExists",
+          "unitKind": "function",
+          "name": "updateQuerySubstateIfExists",
+          "qualifiedName": "updateQuerySubstateIfExists",
+          "parentUnitId": null,
+          "startLine": 114,
+          "endLine": 123,
+          "signature": "function updateQuerySubstateIfExists(state: QueryState<any>, queryCacheKey: QueryCacheKey, update: (substate: QuerySubState<any> | InfiniteQuerySubState<any>) => void)",
+          "parameters": [
+            {
+              "name": "state",
+              "type": "QueryState<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "queryCacheKey",
+              "type": "QueryCacheKey",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "update",
+              "type": "(substate: QuerySubState<any> | InfiniteQuerySubState<any>) => void",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "state is a QueryState<any> object",
+            "queryCacheKey is a property key of state or absent",
+            "update is a callable function accepting the substate"
+          ],
+          "postconditions": [
+            "If state[queryCacheKey] is truthy, update is invoked exactly once with that substate",
+            "If state[queryCacheKey] is falsy, update is not invoked",
+            "The function returns undefined and does not replace state"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "When state[queryCacheKey] is undefined/null/falsy, update is skipped",
+            "When substate exists, the exact reference is passed to update"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "update", "source": null, "kind": "internal" }],
+          "symbolReferences": ["QueryState", "QueryCacheKey", "QuerySubState", "InfiniteQuerySubState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Given a query state map, a cache key, and an update callback, applies the callback to the existing substate for that key if present, otherwise performs no action.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateQuerySubstateIfExists(state, 'absent', update)",
+              "then": "update is not called",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateQuerySubstateIfExists(state, 'k', update)",
+              "then": "update called exactly once with state['k']",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "8f063572c3b272f16fbfe6e4f9ec36b771074fcce75d7fa598f4b3ecd4ba0807"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__getMutationCacheKey#function:getMutationCacheKey",
+        "unitKind": "function",
+        "name": "getMutationCacheKey",
+        "qualifiedName": "getMutationCacheKey",
+        "parentUnitId": null,
+        "startLine": 125,
+        "endLine": 142,
+        "isBehavioral": true,
+        "source": "export function getMutationCacheKey(\n  id:\n    | MutationSubstateIdentifier\n    | { requestId: string; arg: { fixedCacheKey?: string | undefined } },\n): string\nexport function getMutationCacheKey(id: {\n  fixedCacheKey?: string\n  requestId?: string\n}): string | undefined\n\nexport function getMutationCacheKey(\n  id:\n    | { fixedCacheKey?: string; requestId?: string }\n    | MutationSubstateIdentifier\n    | { requestId: string; arg: { fixedCacheKey?: string | undefined } },\n): string | undefined {\n  return ('arg' in id ? id.arg.fixedCacheKey : id.fixedCacheKey) ?? id.requestId\n}",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__getMutationCacheKey#function:getMutationCacheKey",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__getMutationCacheKey",
+          "unitKind": "function",
+          "name": "getMutationCacheKey",
+          "qualifiedName": "getMutationCacheKey",
+          "parentUnitId": null,
+          "startLine": 125,
+          "endLine": 142,
+          "signature": "export function getMutationCacheKey(id: MutationSubstateIdentifier | { requestId: string; arg: { fixedCacheKey?: string | undefined } }): string\nexport function getMutationCacheKey(id: { fixedCacheKey?: string; requestId?: string }): string | undefined",
+          "parameters": [
+            {
+              "name": "id",
+              "type": "MutationSubstateIdentifier | { fixedCacheKey?: string; requestId?: string } | { requestId: string; arg: { fixedCacheKey?: string | undefined } }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "string | undefined",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "pure",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The id argument must be an object whose shape matches one of the three union members: a MutationSubstateIdentifier, an object with optional fixedCacheKey and requestId, or an object with a required requestId and an arg sub-object containing optional fixedCacheKey."
+          ],
+          "postconditions": [
+            "Returns a string when at least one of fixedCacheKey (from either the top-level or the arg sub-object) or requestId is defined.",
+            "Returns undefined when both fixedCacheKey and requestId resolve to undefined.",
+            "The return value is never null or any other type; it is strictly string or undefined."
+          ],
+          "invariants": [
+            "The return value is either a string or undefined, never null.",
+            "The function is deterministic: identical input always produces identical output.",
+            "The 'arg' in id discriminant check determines whether fixedCacheKey is read from the top-level id or from id.arg.",
+            "Nullish coalescing (??) is used for fallback, meaning only null and undefined trigger the requestId fallback, not empty strings."
+          ],
+          "edgeCases": [
+            "id has an arg property with a defined arg.fixedCacheKey: returns arg.fixedCacheKey.",
+            "id has an arg property with undefined arg.fixedCacheKey but a defined requestId: returns requestId.",
+            "id has an arg property with both arg.fixedCacheKey and requestId undefined: returns undefined (but the first overload contract says requestId is required, so this combination only occurs under the second overload).",
+            "id has no arg property but a defined top-level fixedCacheKey: returns fixedCacheKey.",
+            "id has no arg property, undefined fixedCacheKey, but a defined requestId: returns requestId.",
+            "id has no arg property and both fixedCacheKey and requestId undefined: returns undefined.",
+            "id.arg.fixedCacheKey is an empty string (\"\"): returns the empty string, because ?? does not fall back on falsy non-nullish values."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["MutationSubstateIdentifier"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Generates a mutation cache key from a substate identifier, preferring a defined fixedCacheKey and falling back to the requestId when fixedCacheKey is absent or undefined.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getMutationCacheKey is called with this id",
+              "then": "returns 'my-key'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getMutationCacheKey is called with this id",
+              "then": "returns 'req-2'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getMutationCacheKey is called with this id",
+              "then": "returns undefined",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e1ea23747dc21f500c4735513564e568ded43152b9cc48b5f63421749dda2974"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__updateMutationSubstateIfExists#function:updateMutationSubstateIfExists",
+        "unitKind": "function",
+        "name": "updateMutationSubstateIfExists",
+        "qualifiedName": "updateMutationSubstateIfExists",
+        "parentUnitId": null,
+        "startLine": 144,
+        "endLine": 155,
+        "isBehavioral": true,
+        "source": "function updateMutationSubstateIfExists(\n  state: MutationState<any>,\n  id:\n    | MutationSubstateIdentifier\n    | { requestId: string; arg: { fixedCacheKey?: string | undefined } },\n  update: (substate: MutationSubState<any>) => void,\n) {\n  const substate = state[getMutationCacheKey(id)]\n  if (substate) {\n    update(substate)\n  }\n}",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__updateMutationSubstateIfExists#function:updateMutationSubstateIfExists",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__updateMutationSubstateIfExists",
+          "unitKind": "function",
+          "name": "updateMutationSubstateIfExists",
+          "qualifiedName": "updateMutationSubstateIfExists",
+          "parentUnitId": null,
+          "startLine": 144,
+          "endLine": 155,
+          "signature": "function updateMutationSubstateIfExists(state: MutationState<any>, id: MutationSubstateIdentifier | { requestId: string; arg: { fixedCacheKey?: string | undefined } }, update: (substate: MutationSubState<any>) => void)",
+          "parameters": [
+            {
+              "name": "state",
+              "type": "MutationState<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "id",
+              "type": "MutationSubstateIdentifier | { requestId: string; arg: { fixedCacheKey?: string | undefined } }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "update",
+              "type": "(substate: MutationSubState<any>) => void",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "state is a MutationState<any> object",
+            "id is a valid MutationSubstateIdentifier or object with requestId and arg",
+            "update is a function that accepts a MutationSubState<any>"
+          ],
+          "postconditions": [
+            "If a substate existed for the key derived from id, it has been passed to update",
+            "If no substate existed, state is unchanged"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "id maps to a cache key not present in state: update is not invoked",
+            "substate exists: update is invoked with that substate reference",
+            "id includes fixedCacheKey undefined: key resolution delegated to getMutationCacheKey"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "The mutation substate object within state may be mutated by the update callback when present"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "getMutationCacheKey", "source": null, "kind": "internal" }],
+          "symbolReferences": [
+            "MutationState",
+            "MutationSubstateIdentifier",
+            "MutationSubState",
+            "getMutationCacheKey"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Given a mutation state and an identifier, applies the provided update function to the corresponding mutation substate if it exists, otherwise does nothing.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateMutationSubstateIfExists(state, id, update)",
+              "then": "update is called exactly once with that substate as argument",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateMutationSubstateIfExists(state, id, update)",
+              "then": "update is not called and state is unchanged",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "8edcf63310307d32e86f60d7c3ff98f96f53b79b5ef0e789b49502210bb8b367"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+        "unitKind": "function",
+        "name": "buildSlice",
+        "qualifiedName": "buildSlice",
+        "parentUnitId": null,
+        "startLine": 159,
+        "endLine": 548,
+        "isBehavioral": true,
+        "source": "export function buildSlice({\n  reducerPath,\n  queryThunk,\n  mutationThunk,\n  serializeQueryArgs,\n  context: {\n    endpointDefinitions: definitions,\n    apiUid,\n    extractRehydrationInfo,\n    hasRehydrationInfo,\n  },\n  assertTagType,\n  config,\n}: {\n  reducerPath: string\n  queryThunk: QueryThunk\n  infiniteQueryThunk: InfiniteQueryThunk<any>\n  mutationThunk: MutationThunk\n  serializeQueryArgs: InternalSerializeQueryArgs\n  context: ApiContext<EndpointDefinitions>\n  assertTagType: AssertTagTypes\n  config: Omit<\n    ConfigState<string>,\n    'online' | 'focused' | 'middlewareRegistered'\n  >\n}) {\n  const resetApiState = createAction(`${reducerPath}/resetApiState`)\n\n  function writePendingCacheEntry(\n    draft: QueryState<any>,\n    arg: QueryThunkArg,\n    upserting: boolean,\n    meta: {\n      arg: QueryThunkArg\n      requestId: string\n      // requestStatus: 'pending'\n    } & { startedTimeStamp: number },\n  ) {\n    draft[arg.queryCacheKey] ??= {\n      status: STATUS_UNINITIALIZED,\n      endpointName: arg.endpointName,\n    }\n\n    updateQuerySubstateIfExists(draft, arg.queryCacheKey, (substate) => {\n      substate.status = STATUS_PENDING\n\n      substate.requestId =\n        upserting && substate.requestId\n          ? // for `upsertQuery` **updates**, keep the current `requestId`\n            substate.requestId\n          : // for normal queries or `upsertQuery` **inserts** always update the `requestId`\n            meta.requestId\n      if (arg.originalArgs !== undefined) {\n        substate.originalArgs = arg.originalArgs\n      }\n      substate.startedTimeStamp = meta.startedTimeStamp\n\n      const endpointDefinition = definitions[meta.arg.endpointName]\n\n      if (isInfiniteQueryDefinition(endpointDefinition) && 'direction' in arg) {\n        ;(substate as InfiniteQuerySubState<any>).direction =\n          arg.direction as InfiniteQueryDirection\n      }\n    })\n  }\n\n  function writeFulfilledCacheEntry(\n    draft: QueryState<any>,\n    meta: { arg: QueryThunkArg; requestId: string } & {\n      fulfilledTimeStamp: number\n      baseQueryMeta: unknown\n    },\n    payload: unknown,\n    upserting: boolean,\n  ) {\n    updateQuerySubstateIfExists(draft, meta.arg.queryCacheKey, (substate) => {\n      if (substate.requestId !== meta.requestId && !upserting) return\n      const { merge } = definitions[meta.arg.endpointName] as QueryDefinition<\n        any,\n        any,\n        any,\n        any\n      >\n      substate.status = STATUS_FULFILLED\n\n      if (merge) {\n        if (substate.data !== undefined) {\n          const { fulfilledTimeStamp, arg, baseQueryMeta, requestId } = meta\n          // There's existing cache data. Let the user merge it in themselves.\n          // We're already inside an Immer-powered reducer, and the user could just mutate `substate.data`\n          // themselves inside of `merge()`. But, they might also want to return a new value.\n          // Try to let Immer figure that part out, save the result, and assign it to `substate.data`.\n          let newData = createNextState(substate.data, (draftSubstateData) => {\n            // As usual with Immer, you can mutate _or_ return inside here, but not both\n            return merge(draftSubstateData, payload, {\n              arg: arg.originalArgs,\n              baseQueryMeta,\n              fulfilledTimeStamp,\n              requestId,\n            })\n          })\n          substate.data = newData\n        } else {\n          // Presumably a fresh request. Just cache the response data.\n          substate.data = payload\n        }\n      } else {\n        // Assign or safely update the cache data.\n        substate.data =\n          (definitions[meta.arg.endpointName].structuralSharing ?? true)\n            ? copyWithStructuralSharing(\n                isDraft(substate.data)\n                  ? original(substate.data)\n                  : substate.data,\n                payload,\n              )\n            : payload\n      }\n\n      delete substate.error\n      substate.fulfilledTimeStamp = meta.fulfilledTimeStamp\n    })\n  }\n\n  const querySlice = createSlice({\n    name: `${reducerPath}/queries`,\n    initialState: initialState as QueryState<any>,\n    reducers: {\n      removeQueryResult: {\n        reducer(\n          draft,\n          {\n            payload: { queryCacheKey },\n          }: PayloadAction<QuerySubstateIdentifier>,\n        ) {\n          delete draft[queryCacheKey]\n        },\n        prepare: prepareAutoBatched<QuerySubstateIdentifier>(),\n      },\n      cacheEntriesUpserted: {\n        reducer(\n          draft,\n          action: PayloadAction<\n            ProcessedQueryUpsertEntry[],\n            string,\n            { RTK_autoBatch: boolean; requestId: string; timestamp: number }\n          >,\n        ) {\n          for (const entry of action.payload) {\n            const { queryDescription: arg, value } = entry\n            writePendingCacheEntry(draft, arg, true, {\n              arg,\n              requestId: action.meta.requestId,\n              startedTimeStamp: action.meta.timestamp,\n            })\n\n            writeFulfilledCacheEntry(\n              draft,\n              {\n                arg,\n                requestId: action.meta.requestId,\n                fulfilledTimeStamp: action.meta.timestamp,\n                baseQueryMeta: {},\n              },\n              value,\n              // We know we're upserting here\n              true,\n            )\n          }\n        },\n        prepare: (payload: NormalizedQueryUpsertEntryPayload[]) => {\n          const queryDescriptions: ProcessedQueryUpsertEntry[] = payload.map(\n            (entry) => {\n              const { endpointName, arg, value } = entry\n              const endpointDefinition = definitions[endpointName]\n              const queryDescription: QueryThunkArg = {\n                type: ENDPOINT_QUERY as 'query',\n                endpointName,\n                originalArgs: entry.arg,\n                queryCacheKey: serializeQueryArgs({\n                  queryArgs: arg,\n                  endpointDefinition,\n                  endpointName,\n                }),\n              }\n              return { queryDescription, value }\n            },\n          )\n\n          const result = {\n            payload: queryDescriptions,\n            meta: {\n              [SHOULD_AUTOBATCH]: true,\n              requestId: nanoid(),\n              timestamp: Date.now(),\n            },\n          }\n          return result\n        },\n      },\n      queryResultPatched: {\n        reducer(\n          draft,\n          {\n            payload: { queryCacheKey, patches },\n          }: PayloadAction<\n            QuerySubstateIdentifier & { patches: readonly Patch[] }\n          >,\n        ) {\n          updateQuerySubstateIfExists(draft, queryCacheKey, (substate) => {\n            substate.data = applyPatches(substate.data as any, patches.concat())\n          })\n        },\n        prepare: prepareAutoBatched<\n          QuerySubstateIdentifier & { patches: readonly Patch[] }\n        >(),\n      },\n    },\n    extraReducers(builder) {\n      builder\n        .addCase(queryThunk.pending, (draft, { meta, meta: { arg } }) => {\n          const upserting = isUpsertQuery(arg)\n          writePendingCacheEntry(draft, arg, upserting, meta)\n        })\n        .addCase(queryThunk.fulfilled, (draft, { meta, payload }) => {\n          const upserting = isUpsertQuery(meta.arg)\n          writeFulfilledCacheEntry(draft, meta, payload, upserting)\n        })\n        .addCase(\n          queryThunk.rejected,\n          (draft, { meta: { condition, arg, requestId }, error, payload }) => {\n            updateQuerySubstateIfExists(\n              draft,\n              arg.queryCacheKey,\n              (substate) => {\n                if (condition) {\n                  // request was aborted due to condition (another query already running)\n                } else {\n                  // request failed\n                  if (substate.requestId !== requestId) return\n                  substate.status = STATUS_REJECTED\n                  substate.error = (payload ?? error) as any\n                }\n              },\n            )\n          },\n        )\n        .addMatcher(hasRehydrationInfo, (draft, action) => {\n          const { queries } = extractRehydrationInfo(action)!\n          for (const [key, entry] of Object.entries(queries)) {\n            if (\n              // do not rehydrate entries that were currently in flight.\n              entry?.status === STATUS_FULFILLED ||\n              entry?.status === STATUS_REJECTED\n            ) {\n              draft[key] = entry\n            }\n          }\n        })\n    },\n  })\n  const mutationSlice = createSlice({\n    name: `${reducerPath}/mutations`,\n    initialState: initialState as MutationState<any>,\n    reducers: {\n      removeMutationResult: {\n        reducer(draft, { payload }: PayloadAction<MutationSubstateIdentifier>) {\n          const cacheKey = getMutationCacheKey(payload)\n          if (cacheKey in draft) {\n            delete draft[cacheKey]\n          }\n        },\n        prepare: prepareAutoBatched<MutationSubstateIdentifier>(),\n      },\n    },\n    extraReducers(builder) {\n      builder\n        .addCase(\n          mutationThunk.pending,\n          (draft, { meta, meta: { requestId, arg, startedTimeStamp } }) => {\n            if (!arg.track) return\n\n            draft[getMutationCacheKey(meta)] = {\n              requestId,\n              status: STATUS_PENDING,\n              endpointName: arg.endpointName,\n              startedTimeStamp,\n            }\n          },\n        )\n        .addCase(mutationThunk.fulfilled, (draft, { payload, meta }) => {\n          if (!meta.arg.track) return\n\n          updateMutationSubstateIfExists(draft, meta, (substate) => {\n            if (substate.requestId !== meta.requestId) return\n            substate.status = STATUS_FULFILLED\n            substate.data = payload\n            substate.fulfilledTimeStamp = meta.fulfilledTimeStamp\n          })\n        })\n        .addCase(mutationThunk.rejected, (draft, { payload, error, meta }) => {\n          if (!meta.arg.track) return\n\n          updateMutationSubstateIfExists(draft, meta, (substate) => {\n            if (substate.requestId !== meta.requestId) return\n\n            substate.status = STATUS_REJECTED\n            substate.error = (payload ?? error) as any\n          })\n        })\n        .addMatcher(hasRehydrationInfo, (draft, action) => {\n          const { mutations } = extractRehydrationInfo(action)!\n          for (const [key, entry] of Object.entries(mutations)) {\n            if (\n              // do not rehydrate entries that were currently in flight.\n              (entry?.status === STATUS_FULFILLED ||\n                entry?.status === STATUS_REJECTED) &&\n              // only rehydrate endpoints that were persisted using a `fixedCacheKey`\n              key !== entry?.requestId\n            ) {\n              draft[key] = entry\n            }\n          }\n        })\n    },\n  })\n\n  type CalculateProvidedByAction = UnwrapPromise<\n    | ReturnType<ReturnType<QueryThunk>>\n    | ReturnType<ReturnType<InfiniteQueryThunk<any>>>\n  >\n\n  const initialInvalidationState: InvalidationState<string> = {\n    tags: {},\n    keys: {},\n  }\n\n  const invalidationSlice = createSlice({\n    name: `${reducerPath}/invalidation`,\n    initialState: initialInvalidationState,\n    reducers: {\n      updateProvidedBy: {\n        reducer(\n          draft,\n          action: PayloadAction<\n            Array<{\n              queryCacheKey: QueryCacheKey\n              providedTags: readonly FullTagDescription<string>[]\n            }>\n          >,\n        ) {\n          for (const { queryCacheKey, providedTags } of action.payload) {\n            removeCacheKeyFromTags(draft, queryCacheKey)\n\n            for (const { type, id } of providedTags) {\n              const subscribedQueries = ((draft.tags[type] ??= {})[\n                id || '__internal_without_id'\n              ] ??= [])\n              const alreadySubscribed =\n                subscribedQueries.includes(queryCacheKey)\n              if (!alreadySubscribed) {\n                subscribedQueries.push(queryCacheKey)\n              }\n            }\n\n            // Remove readonly from the providedTags array\n            draft.keys[queryCacheKey] =\n              providedTags as FullTagDescription<string>[]\n          }\n        },\n        prepare: prepareAutoBatched<\n          Array<{\n            queryCacheKey: QueryCacheKey\n            providedTags: readonly FullTagDescription<string>[]\n          }>\n        >(),\n      },\n    },\n    extraReducers(builder) {\n      builder\n        .addCase(\n          querySlice.actions.removeQueryResult,\n          (draft, { payload: { queryCacheKey } }) => {\n            removeCacheKeyFromTags(draft, queryCacheKey)\n          },\n        )\n        .addMatcher(hasRehydrationInfo, (draft, action) => {\n          const { provided } = extractRehydrationInfo(action)!\n          for (const [type, incomingTags] of Object.entries(\n            provided.tags ?? {},",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice",
+          "unitKind": "function",
+          "name": "buildSlice",
+          "qualifiedName": "buildSlice",
+          "parentUnitId": null,
+          "startLine": 159,
+          "endLine": 548,
+          "signature": "export function buildSlice({ reducerPath, queryThunk, mutationThunk, serializeQueryArgs, context: { endpointDefinitions: definitions, apiUid, extractRehydrationInfo, hasRehydrationInfo }, assertTagType, config }: { reducerPath: string; queryThunk: QueryThunk; infiniteQueryThunk: InfiniteQueryThunk<any>; mutationThunk: MutationThunk; serializeQueryArgs: InternalSerializeQueryArgs; context: ApiContext<EndpointDefinitions>; assertTagType: AssertTagTypes; config: Omit<ConfigState<string>, 'online' | 'focused' | 'middlewareRegistered'> })",
+          "parameters": [
+            {
+              "name": "reducerPath",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "queryThunk",
+              "type": "QueryThunk",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "infiniteQueryThunk",
+              "type": "InfiniteQueryThunk<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "mutationThunk",
+              "type": "MutationThunk",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "serializeQueryArgs",
+              "type": "InternalSerializeQueryArgs",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            },
+            {
+              "name": "context",
+              "type": "ApiContext<EndpointDefinitions>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 5
+            },
+            {
+              "name": "assertTagType",
+              "type": "AssertTagTypes",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 6
+            },
+            {
+              "name": "config",
+              "type": "Omit<ConfigState<string>, 'online' | 'focused' | 'middlewareRegistered'>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 7
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "reducerPath must be a non-empty string used to namespace all generated action types",
+            "context.endpointDefinitions must contain endpoint definitions keyed by endpoint name",
+            "serializeQueryArgs must be a callable function that produces stable query cache keys from query arguments",
+            "assertTagType must be provided for tag type validation at the slice level",
+            "config must be a ConfigState<string> object that omits the 'online', 'focused', and 'middlewareRegistered' keys"
+          ],
+          "postconditions": [
+            "A querySlice is created with name {reducerPath}/queries, initialState derived from initialState, and reducers removeQueryResult, cacheEntriesUpserted, queryResultPatched",
+            "A mutationSlice is created with name {reducerPath}/mutations, initialState derived from initialState, and reducer removeMutationResult",
+            "An invalidationSlice is created with name {reducerPath}/invalidation, initialState { tags: {}, keys: {} }, and reducer updateProvidedBy",
+            "A resetApiState action creator is created whose action type is {reducerPath}/resetApiState",
+            "All action types across all slices are consistently namespaced under {reducerPath}/{sliceName}"
+          ],
+          "invariants": [
+            "Action type prefixes consistently follow the pattern {reducerPath}/{sliceName} for all generated slices and actions",
+            "In-flight (pending) query and mutation entries are never rehydrated — only FULFILLED and REJECTED entries are restored from persisted state",
+            "Mutation substates are only tracked when the mutation thunk arg has track === true",
+            "Upsert query updates preserve the existing requestId on the substate; inserts always assign a new requestId from the request meta",
+            "Query cache keys are always derived via serializeQueryArgs for consistency, never constructed ad hoc",
+            "Rehydration never restores entries whose status differs from FULFILLED or REJECTED, preventing stale in-flight data from overwriting active requests"
+          ],
+          "edgeCases": [
+            "Upsert query insert vs update: writePendingCacheEntry keeps the current requestId when upserting an existing entry (update) but replaces it for new entries (insert)",
+            "Infinite queries with a 'direction' property on the thunk arg: direction is stored on the InfiniteQuerySubState as InfiniteQueryDirection",
+            "Endpoint definition with structuralSharing === false: cached data is assigned directly without copyWithStructuralSharing",
+            "Endpoint definition with a custom merge function and existing cached data: merge callback receives the existing draft data and payload, with Immer handling the returned value assignment",
+            "Endpoint definition with no merge function and no existing data: fresh response data is cached directly via copyWithStructuralSharing or direct assignment",
+            "Mutation thunk arg with track === false: mutation substate is not created, updated, or cleaned up",
+            "Query result cleanup via removeQueryResult: cache key is deleted from both the query state and the invalidation tag registry",
+            "Tag without an explicit id: stored under the '__internal_without_id' key in the invalidation tags state",
+            "Rehydration of persisted state: entries with pending status are skipped; only fulfilled or rejected entries are restored"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "buildSlice does not validate configuration at creation time; individual reducers within the slices use conditional guards (requestId matching, upserting flag, track flag, status checks) to silently skip stale or irrelevant state updates without throwing",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Creates and returns three Redux Toolkit slices whose Immer-powered reducers mutate draft QueryState, MutationState, and InvalidationState objects",
+            "querySlice reducers mutate draft state: removeQueryResult deletes cache entries; cacheEntriesUpserted writes pending then fulfilled entries; queryResultPatched applies Immer patches to existing data",
+            "mutationSlice reducers mutate draft state: removeMutationResult deletes mutation cache entries; pending/fulfilled/rejected cases create, update, or error mutation substates",
+            "invalidationSlice reducers mutate draft state: updateProvidedBy registers query cache keys under tags and keys; removeQueryResult cascades cache key removal from tags",
+            "resetApiState action creator is created as a standalone action with no payload, dispatched to signal full state reset to the apiSlice middleware"
+          ],
+          "eventsEmitted": [
+            "${reducerPath}/resetApiState",
+            "${reducerPath}/queries/removeQueryResult",
+            "${reducerPath}/queries/cacheEntriesUpserted",
+            "${reducerPath}/queries/queryResultPatched",
+            "${reducerPath}/mutations/removeMutationResult",
+            "${reducerPath}/invalidation/updateProvidedBy"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "createAction", "source": "redux-toolkit", "kind": "external" },
+            { "name": "createSlice", "source": "redux-toolkit", "kind": "external" },
+            {
+              "name": "updateQuerySubstateIfExists",
+              "source": "packages/toolkit/src/query/core/buildSlice.ts",
+              "kind": "internal"
+            },
+            {
+              "name": "getMutationCacheKey",
+              "source": "packages/toolkit/src/query/core/buildSlice.ts",
+              "kind": "internal"
+            },
+            {
+              "name": "updateMutationSubstateIfExists",
+              "source": "packages/toolkit/src/query/core/buildSlice.ts",
+              "kind": "internal"
+            },
+            {
+              "name": "removeCacheKeyFromTags",
+              "source": "packages/toolkit/src/query/core/buildSlice.ts",
+              "kind": "internal"
+            },
+            { "name": "isInfiniteQueryDefinition", "source": null, "kind": "external" },
+            { "name": "copyWithStructuralSharing", "source": "packages/toolkit/src/query", "kind": "external" },
+            { "name": "isDraft", "source": "immer", "kind": "external" },
+            { "name": "original", "source": "immer", "kind": "external" },
+            { "name": "createNextState", "source": "immer", "kind": "external" },
+            { "name": "applyPatches", "source": "immer", "kind": "external" },
+            { "name": "isUpsertQuery", "source": null, "kind": "external" },
+            { "name": "prepareAutoBatched", "source": "packages/toolkit/src/query", "kind": "external" },
+            { "name": "nanoid", "source": "nanoid", "kind": "external" },
+            { "name": "serializeQueryArgs", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "QueryThunk",
+            "InfiniteQueryThunk",
+            "MutationThunk",
+            "InternalSerializeQueryArgs",
+            "ApiContext",
+            "EndpointDefinitions",
+            "AssertTagTypes",
+            "ConfigState",
+            "QueryState",
+            "MutationState",
+            "QueryThunkArg",
+            "QuerySubstateIdentifier",
+            "ProcessedQueryUpsertEntry",
+            "PayloadAction",
+            "Patch",
+            "QueryDefinition",
+            "InfiniteQuerySubState",
+            "InfiniteQueryDirection",
+            "QueryCacheKey",
+            "FullTagDescription",
+            "InvalidationState",
+            "STATUS_UNINITIALIZED",
+            "STATUS_PENDING",
+            "STATUS_FULFILLED",
+            "STATUS_REJECTED",
+            "SHOULD_AUTOBATCH",
+            "ENDPOINT_QUERY"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Redux state tree with three slices: queries (QueryState<any>), mutations (MutationState<any>), and invalidation (InvalidationState<string> with { tags: {}, keys: {} }). Action types follow the pattern {reducerPath}/{slice}/{reducer} for slice reducers and {reducerPath}/resetApiState for the reset action. Auto-batched actions carry meta with SHOULD_AUTOBATCH=true, requestId (nanoid), and timestamp (Date.now()) keys. Rehydration actions carry { queries, mutations, provided } extracted via extractRehydrationInfo.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Factory function that constructs three Redux Toolkit slices (query, mutation, and invalidation state) plus a resetApiState action creator, all namespaced under the provided reducerPath; returns the slices and action creator for integration into the RTK Query API reducer.",
+          "specLiterals": [
+            {
+              "kind": "abi-fragment",
+              "value": "${reducerPath}/resetApiState",
+              "role": "Action type string for the resetApiState action creator, prefixed by reducerPath"
+            },
+            {
+              "kind": "abi-fragment",
+              "value": "${reducerPath}/queries",
+              "role": "Name/namespace prefix for the query slice's reducers and action types"
+            },
+            {
+              "kind": "abi-fragment",
+              "value": "${reducerPath}/mutations",
+              "role": "Name/namespace prefix for the mutation slice's reducers and action types"
+            },
+            {
+              "kind": "abi-fragment",
+              "value": "${reducerPath}/invalidation",
+              "role": "Name/namespace prefix for the invalidation slice's reducers and action types"
+            },
+            {
+              "kind": "magic-number",
+              "value": "__internal_without_id",
+              "role": "Default tag ID key in invalidation state used when a provided tag has no explicit id"
+            }
+          ],
+          "declaredConstants": [
+            { "name": "initialInvalidationState", "value": "{ tags: {}, keys: {} }", "kind": "initial-state" },
+            {
+              "name": "resetApiState",
+              "value": "createAction(`${reducerPath}/resetApiState`)",
+              "kind": "action-creator"
+            }
+          ],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "the resetApiState action creator is invoked",
+              "then": "the resulting action .type equals 'api/resetApiState'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "the returned querySlice is accessed",
+              "then": "querySlice.name equals 'api/queries'",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "the returned invalidationSlice is accessed",
+              "then": "invalidationSlice.name equals 'api/invalidation' and initialState has shape { tags: {}, keys: {} }",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "247c2378002b6c9937c7ebec45274d4880d443a7af7700e67721ed997084d65a"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writePendingCacheEntry#function:buildSlice.writePendingCacheEntry",
+        "unitKind": "function",
+        "name": "writePendingCacheEntry",
+        "qualifiedName": "buildSlice.writePendingCacheEntry",
+        "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+        "startLine": 178,
+        "endLine": 212,
+        "isBehavioral": true,
+        "source": "  context: ApiContext<EndpointDefinitions>\n  assertTagType: AssertTagTypes\n  config: Omit<\n    ConfigState<string>,\n    'online' | 'focused' | 'middlewareRegistered'\n  >\n}) {\n  const resetApiState = createAction(`${reducerPath}/resetApiState`)\n\n  function writePendingCacheEntry(\n    draft: QueryState<any>,\n    arg: QueryThunkArg,\n    upserting: boolean,\n    meta: {\n      arg: QueryThunkArg\n      requestId: string\n      // requestStatus: 'pending'\n    } & { startedTimeStamp: number },\n  ) {\n    draft[arg.queryCacheKey] ??= {\n      status: STATUS_UNINITIALIZED,\n      endpointName: arg.endpointName,\n    }\n\n    updateQuerySubstateIfExists(draft, arg.queryCacheKey, (substate) => {\n      substate.status = STATUS_PENDING\n\n      substate.requestId =\n        upserting && substate.requestId\n          ? // for `upsertQuery` **updates**, keep the current `requestId`\n            substate.requestId\n          : // for normal queries or `upsertQuery` **inserts** always update the `requestId`\n            meta.requestId\n      if (arg.originalArgs !== undefined) {\n        substate.originalArgs = arg.originalArgs",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writePendingCacheEntry#function:buildSlice.writePendingCacheEntry",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writePendingCacheEntry",
+          "unitKind": "function",
+          "name": "writePendingCacheEntry",
+          "qualifiedName": "buildSlice.writePendingCacheEntry",
+          "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+          "startLine": 178,
+          "endLine": 212,
+          "signature": "function writePendingCacheEntry(draft: QueryState<any>, arg: QueryThunkArg, upserting: boolean, meta: { arg: QueryThunkArg; requestId: string; startedTimeStamp: number })",
+          "parameters": [
+            {
+              "name": "draft",
+              "type": "QueryState<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "arg",
+              "type": "QueryThunkArg",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "upserting",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "meta",
+              "type": "{ arg: QueryThunkArg; requestId: string; startedTimeStamp: number }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The draft object must be a valid QueryState<any> (a record-style object where keys map to substate entries).",
+            "The arg parameter must contain a string property queryCacheKey used to identify the cache entry.",
+            "The meta parameter must contain a string property requestId and a numeric startedTimeStamp.",
+            "The upserting flag must reflect whether this call is part of an upsertQuery operation.",
+            "If arg.originalArgs is defined, the entry's originalArgs will be overwritten with its value."
+          ],
+          "postconditions": [
+            "draft[arg.queryCacheKey] exists and is an object with status STATUS_PENDING after execution.",
+            "If the entry did not previously exist, it is initialized with status STATUS_UNINITIALIZED before being set to STATUS_PENDING.",
+            "The requestId on the substate is set as follows: - If upserting is true AND a requestId already exists on the substate, the existing requestId is preserved. - Otherwise, the requestId is set to meta.requestId.",
+            "If arg.originalArgs is defined, substate.originalArgs is set to arg.originalArgs."
+          ],
+          "invariants": [
+            "The substate.status is always STATUS_PENDING after this function runs, regardless of prior state.",
+            "The substate.requestId is always a string value (either the existing one or meta.requestId).",
+            "The originalArgs field is only updated when arg.originalArgs is not undefined."
+          ],
+          "edgeCases": [
+            "When draft[arg.queryCacheKey] does not exist: a new entry is created with status STATUS_UNINITIALIZED and endpointName derived from arg, then updated to STATUS_PENDING.",
+            "When upserting is true and an existing requestId is present: the existing requestId is kept rather than replaced with meta.requestId.",
+            "When upserting is true but no existing requestId exists: the entry behaves like a new insert and uses meta.requestId.",
+            "When arg.originalArgs is undefined: the originalArgs field on the substate is left unchanged.",
+            "When the key already exists with a different status: the status is overwritten to STATUS_PENDING."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates draft[arg.queryCacheKey] by initializing it if absent and setting its status to STATUS_PENDING.",
+            "Mutates substate.status to STATUS_PENDING via updateQuerySubstateIfExists.",
+            "Mutates substate.requestId conditionally based on upserting flag and existing value.",
+            "Mutates substate.originalArgs when arg.originalArgs is defined."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "updateQuerySubstateIfExists",
+              "source": "packages/toolkit/src/query/core/buildSlice.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["STATUS_UNINITIALIZED", "STATUS_PENDING", "QueryState", "QueryThunkArg"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Mutates the draft QueryState to set the cache entry for the given queryCacheKey into STATUS_PENDING, assigning the requestId based on whether the entry already exists or is being upserted, and preserving originalArgs if defined.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6395343b0738befe207abd3f57d39552ed3ead67934705c0f409da302a5beaed"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writeFulfilledCacheEntry#function:buildSlice.writeFulfilledCacheEntry",
+        "unitKind": "function",
+        "name": "writeFulfilledCacheEntry",
+        "qualifiedName": "buildSlice.writeFulfilledCacheEntry",
+        "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+        "startLine": 213,
+        "endLine": 280,
+        "isBehavioral": true,
+        "source": "      }\n      substate.startedTimeStamp = meta.startedTimeStamp\n\n      const endpointDefinition = definitions[meta.arg.endpointName]\n\n      if (isInfiniteQueryDefinition(endpointDefinition) && 'direction' in arg) {\n        ;(substate as InfiniteQuerySubState<any>).direction =\n          arg.direction as InfiniteQueryDirection\n      }\n    })\n  }\n\n  function writeFulfilledCacheEntry(\n    draft: QueryState<any>,\n    meta: { arg: QueryThunkArg; requestId: string } & {\n      fulfilledTimeStamp: number\n      baseQueryMeta: unknown\n    },\n    payload: unknown,\n    upserting: boolean,\n  ) {\n    updateQuerySubstateIfExists(draft, meta.arg.queryCacheKey, (substate) => {\n      if (substate.requestId !== meta.requestId && !upserting) return\n      const { merge } = definitions[meta.arg.endpointName] as QueryDefinition<\n        any,\n        any,\n        any,\n        any\n      >\n      substate.status = STATUS_FULFILLED\n\n      if (merge) {\n        if (substate.data !== undefined) {\n          const { fulfilledTimeStamp, arg, baseQueryMeta, requestId } = meta\n          // There's existing cache data. Let the user merge it in themselves.\n          // We're already inside an Immer-powered reducer, and the user could just mutate `substate.data`\n          // themselves inside of `merge()`. But, they might also want to return a new value.\n          // Try to let Immer figure that part out, save the result, and assign it to `substate.data`.\n          let newData = createNextState(substate.data, (draftSubstateData) => {\n            // As usual with Immer, you can mutate _or_ return inside here, but not both\n            return merge(draftSubstateData, payload, {\n              arg: arg.originalArgs,\n              baseQueryMeta,\n              fulfilledTimeStamp,\n              requestId,\n            })\n          })\n          substate.data = newData\n        } else {\n          // Presumably a fresh request. Just cache the response data.\n          substate.data = payload\n        }\n      } else {\n        // Assign or safely update the cache data.\n        substate.data =\n          (definitions[meta.arg.endpointName].structuralSharing ?? true)\n            ? copyWithStructuralSharing(\n                isDraft(substate.data)\n                  ? original(substate.data)\n                  : substate.data,\n                payload,\n              )\n            : payload\n      }\n\n      delete substate.error\n      substate.fulfilledTimeStamp = meta.fulfilledTimeStamp\n    })",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writeFulfilledCacheEntry#function:buildSlice.writeFulfilledCacheEntry",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writeFulfilledCacheEntry",
+          "unitKind": "function",
+          "name": "writeFulfilledCacheEntry",
+          "qualifiedName": "buildSlice.writeFulfilledCacheEntry",
+          "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+          "startLine": 213,
+          "endLine": 280,
+          "signature": "function writeFulfilledCacheEntry(draft: QueryState<any>, meta: { arg: QueryThunkArg; requestId: string } & { fulfilledTimeStamp: number; baseQueryMeta: unknown }, payload: unknown, upserting: boolean)",
+          "parameters": [
+            {
+              "name": "draft",
+              "type": "QueryState<any>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "meta",
+              "type": "{ arg: QueryThunkArg; requestId: string } & { fulfilledTimeStamp: number; baseQueryMeta: unknown }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            { "name": "payload", "type": "unknown", "default": null, "optional": false, "variadic": false, "order": 2 },
+            {
+              "name": "upserting",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "draft is a QueryState (or Immer draft of it)",
+            "meta.arg.queryCacheKey corresponds to a substate or updateQuerySubstateIfExists handles absence",
+            "meta.arg.endpointName exists in closure definitions",
+            "if upserting is false, substate.requestId must equal meta.requestId for write to occur"
+          ],
+          "postconditions": [
+            "For targeted substate, status set to STATUS_FULFILLED",
+            "substate.data assigned per merge or structural sharing rules",
+            "substate.error deleted",
+            "substate.fulfilledTimeStamp set to meta.fulfilledTimeStamp",
+            "If requestId mismatch and not upserting, substate left unchanged"
+          ],
+          "invariants": [
+            "Mutations occur inside Immer draft via updateQuerySubstateIfExists",
+            "structuralSharing defaults to true when not specified by endpoint definition"
+          ],
+          "edgeCases": [
+            "upserting true bypasses requestId match check",
+            "merge defined and prior substate.data exists: user merge invoked with (draftData, payload, meta-like)",
+            "merge defined and no prior data: substate.data = payload",
+            "no merge: data assigned via copyWithStructuralSharing unless structuralSharing false",
+            "substate.data is Immer draft: original() used before structural sharing"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["draft query substate status, data, error, fulfilledTimeStamp"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "updateQuerySubstateIfExists",
+              "source": "packages/toolkit/src/query/core/buildSlice.ts",
+              "kind": "internal"
+            },
+            { "name": "createNextState", "source": "immer", "kind": "external" },
+            { "name": "copyWithStructuralSharing", "source": null, "kind": "internal" },
+            { "name": "isDraft", "source": "immer", "kind": "external" },
+            { "name": "original", "source": "immer", "kind": "external" }
+          ],
+          "symbolReferences": ["QueryState", "QueryThunkArg", "QueryDefinition", "STATUS_FULFILLED", "definitions"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates a query substate to fulfilled by writing response payload into cache, using endpoint-defined merge or structural sharing, and clearing error.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "writeFulfilledCacheEntry called with payload",
+              "then": "substate.data is structurally shared with payload, status fulfilled, error removed",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "writeFulfilledCacheEntry called",
+              "then": "substate is not modified (early return)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "writeFulfilledCacheEntry called with payload",
+              "then": "merge invoked with current data and payload, result assigned to substate.data",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "23307d98321ae36ead90dd71f701185402f989a22530f2bbd49368d99723fc74"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.removeCacheKeyFromTags#function:buildSlice.removeCacheKeyFromTags",
+        "unitKind": "function",
+        "name": "removeCacheKeyFromTags",
+        "qualifiedName": "buildSlice.removeCacheKeyFromTags",
+        "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+        "startLine": 470,
+        "endLine": 490,
+        "isBehavioral": true,
+        "source": "          const { mutations } = extractRehydrationInfo(action)!\n          for (const [key, entry] of Object.entries(mutations)) {\n            if (\n              // do not rehydrate entries that were currently in flight.\n              (entry?.status === STATUS_FULFILLED ||\n                entry?.status === STATUS_REJECTED) &&\n              // only rehydrate endpoints that were persisted using a `fixedCacheKey`\n              key !== entry?.requestId\n            ) {\n              draft[key] = entry\n            }\n          }\n        })\n    },\n  })\n\n  type CalculateProvidedByAction = UnwrapPromise<\n    | ReturnType<ReturnType<QueryThunk>>\n    | ReturnType<ReturnType<InfiniteQueryThunk<any>>>\n  >\n",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.removeCacheKeyFromTags#function:buildSlice.removeCacheKeyFromTags",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.removeCacheKeyFromTags",
+          "unitKind": "function",
+          "name": "removeCacheKeyFromTags",
+          "qualifiedName": "buildSlice.removeCacheKeyFromTags",
+          "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+          "startLine": 470,
+          "endLine": 490,
+          "signature": "function removeCacheKeyFromTags(draft: Draft<{ [cacheKey: string]: any }>, cacheKey: string, tags: string[]): void",
+          "parameters": [
+            {
+              "name": "draft",
+              "type": "Draft<{ [cacheKey: string]: any }>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "cacheKey", "type": "string", "default": null, "optional": false, "variadic": false, "order": 1 },
+            { "name": "tags", "type": "string[]", "default": null, "optional": false, "variadic": false, "order": 2 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "draft must be a mutable Immer draft object",
+            "cacheKey must be a non-empty string",
+            "tags must be an array of strings"
+          ],
+          "postconditions": [
+            "For every tag in tags, if the tag maps to an array containing cacheKey, cacheKey is removed from that array",
+            "The tag arrays are left intact for other cacheKeys",
+            "No tag is deleted entirely when cacheKey is present"
+          ],
+          "invariants": [
+            "Tags unrelated to cacheKey are not mutated",
+            "Each tag's cacheKey array remains a valid array after mutation"
+          ],
+          "edgeCases": [
+            "If cacheKey is not present in a tag's cacheKey array, that tag is left unchanged",
+            "If a tag does not exist in the draft, it is created as an array containing only cacheKey before removal",
+            "If tags is an empty array, no mutations occur"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "draft[tag] is mutated for each tag that contains cacheKey, with cacheKey removed from the array",
+            "new arrays may be created for tags that don't yet exist"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Removes the given cacheKey from all provided tags within the current query cache draft. It iterates the provided tags, locates any entries referencing the cacheKey via the tag's associated cacheKey array, and removes the cacheKey from that array, leaving the tag intact for other cacheKeys.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "undefined",
+              "role": "Represents the value returned by indexOf when cacheKey is not found, used to conditionally remove cacheKey from tag arrays"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "5880bf863a90eb389fc3cbfa0a9a4d3f30fafe7d29bb910c28a18869d37c6aa1"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writeProvidedTagsForQueries#function:buildSlice.writeProvidedTagsForQueries",
+        "unitKind": "function",
+        "name": "writeProvidedTagsForQueries",
+        "qualifiedName": "buildSlice.writeProvidedTagsForQueries",
+        "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+        "startLine": 492,
+        "endLine": 510,
+        "isBehavioral": true,
+        "source": "    tags: {},\n    keys: {},\n  }\n\n  const invalidationSlice = createSlice({\n    name: `${reducerPath}/invalidation`,\n    initialState: initialInvalidationState,\n    reducers: {\n      updateProvidedBy: {\n        reducer(\n          draft,\n          action: PayloadAction<\n            Array<{\n              queryCacheKey: QueryCacheKey\n              providedTags: readonly FullTagDescription<string>[]\n            }>\n          >,\n        ) {\n          for (const { queryCacheKey, providedTags } of action.payload) {",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writeProvidedTagsForQueries#function:buildSlice.writeProvidedTagsForQueries",
+          "fileId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice.writeProvidedTagsForQueries",
+          "unitKind": "function",
+          "name": "writeProvidedTagsForQueries",
+          "qualifiedName": "buildSlice.writeProvidedTagsForQueries",
+          "parentUnitId": "packages/toolkit/src/query/core/buildSlice.ts__buildSlice#function:buildSlice",
+          "startLine": 492,
+          "endLine": 510,
+          "signature": "function writeProvidedTagsForQueries(state: InvalidationState, actions: Array<{ queryCacheKey: QueryCacheKey; providedTags: readonly FullTagDescription<string>[] }>): void",
+          "parameters": [
+            {
+              "name": "state",
+              "type": "InvalidationState",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "actions",
+              "type": "Array<{ queryCacheKey: QueryCacheKey; providedTags: readonly FullTagDescription<string>[] }>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The `state` argument must be a valid InvalidationState with a `providedTags` map.",
+            "Each entry in `actions` must contain a `queryCacheKey` and a `providedTags` array of `FullTagDescription<string>`."
+          ],
+          "postconditions": [
+            "For every action, the `state.providedTags` map is updated so that the entry for `queryCacheKey` contains the provided tags.",
+            "Existing tags for the same cache key are merged with new tags rather than overwritten."
+          ],
+          "invariants": [
+            "The `providedTags` map always maps `QueryCacheKey` values to arrays of `FullTagDescription<string>`.",
+            "No cache key in `actions` is `undefined` or `null`."
+          ],
+          "edgeCases": [
+            "If `actions` is empty, no mutation occurs to `state`.",
+            "If a `queryCacheKey` already has associated tags, the new tags are merged into the existing set.",
+            "If `providedTags` is an empty array for a given key, that key may be set to an empty tag array."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": "none", "returnsOnError": "null" },
+          "stateMutations": ["state.providedTags[queryCacheKey] is updated or created for each action"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["QueryCacheKey", "FullTagDescription"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes a list of query cache actions and writes the provided tags into the invalidation state, mapping each cache key to its associated tag descriptions.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "ec534c45c1bb872a0fab93dd2bb5221c94ccc9d297adbc0806ebc4452b0270ff"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/toolkit/src/query/tsHelpers.ts",
+    "packages/toolkit/src/query/apiTypes.ts",
+    "packages/toolkit/src/query/utils/index.ts",
+    "packages/toolkit/src/query/defaultSerializeQueryArgs.ts",
+    "packages/toolkit/src/query/core/apiState.ts",
+    "packages/toolkit/src/query/core/buildThunks.ts",
+    "packages/toolkit/src/query/core/buildInitiate.ts",
+    "packages/toolkit/src/query/core/rtkImports.ts",
+    "packages/toolkit/src/query/utils/immerImports.ts",
+    "packages/toolkit/src/query/core/setupListeners.ts",
+    "packages/toolkit/src/query/utils/getCurrent.ts"
+  ],
+  "in": [
+    "packages/toolkit/src/query/core/buildSelectors.ts",
+    "packages/toolkit/src/query/core/buildMiddleware/cacheLifecycle.ts",
+    "packages/toolkit/src/query/core/module.ts"
+  ],
+  "externals": ["@reduxjs/toolkit", "immer"],
+  "impact": { "seeds": 8, "callers": 4, "impactedFiles": [] }
+}

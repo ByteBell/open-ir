@@ -84,29 +84,6 @@
    15 repos · 33,047 files · 20,727 code files            each box:  files / code
 ```
 
-<details>
-<summary>📌 the pinned commits</summary>
-
-| repo              | commit       |
-| ----------------- | ------------ |
-| `redux`           | `3aa561f9fc` |
-| `redux-toolkit`   | `b1c5130154` |
-| `react-redux`     | `ad5d1e0816` |
-| `reselect`        | `8d87c27b75` |
-| `redux-thunk`     | `184205d49f` |
-| `react`           | `3a717e4243` |
-| `jotai`           | `5c4ca26b0d` |
-| `zustand`         | `beca84e600` |
-| `TanStack/db`     | `7f0fa36ff6` |
-| `xyflow`          | `360f5b13e2` |
-| `TanStack/query`  | `46d7f02f1c` |
-| `TanStack/table`  | `d08af367e1` |
-| `tldraw`          | `5590d14d8e` |
-| `redux-devtools`  | `f4b4668c30` |
-| `TanStack/router` | `3dee5b2e94` |
-
-</details>
-
 ### How a case is built
 
 Each case is anchored on a **real merged PR whose fix lands after the pinned
@@ -133,49 +110,97 @@ Each arm runs in a sandboxed session restricted to its own retrieval surface —
 no filesystem, no shell, no network. The only way to see the code is through the
 retriever under test.
 
-| case                                                                                                                          | anchor PR               | gold               | files in those repos |     needle |
-| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------ | -------------------: | ---------: |
-| [delete is not terminal, cascade not scoped](benchmarks/crossrepo/hard-delete-is-not-terminal-and-its-cascade-is-not-scoped/) | `tldraw` #10298         | 7 files / 4 repos  |                8,344 | 1 in 1,192 |
-| [failed first load is a one-way door](benchmarks/crossrepo/hard-failed-first-load-is-a-one-way-door/)                         | `TanStack/db` #1751     | 15 files / 5 repos |                9,918 |   1 in 661 |
-| [lifecycle fires for a branch never shown](benchmarks/crossrepo/hard-lifecycle-fires-for-a-branch-that-was-never-shown/)      | `TanStack/router` #8165 | 7 files / 4 repos  |               21,953 | 1 in 3,136 |
-| [one effect, two doors, only one guarded](benchmarks/crossrepo/hard-one-effect-two-doors-only-one-guarded/)                   | `tldraw` #10300         | 7 files / 4 repos  |                8,560 | 1 in 1,222 |
-| [partial key lets siblings collide](benchmarks/crossrepo/hard-partial-key-lets-siblings-collide/)                             | `TanStack/db` #1761     | 9 files / 4 repos  |                6,350 |   1 in 705 |
-
-And the retriever is never told which repositories matter. It searches the whole
-roster of **33,047 files**, so the real odds on a 7-file gold set are **1 in
-4,721** before any ranking at all.
-
 ### Results
 
-recall@75 — the full answer at the task's own cap. Every arm returned fewer than
-50 paths, so @50, @75 and @100 are identical throughout.
+recall@75 — the full answer at the task's own cap. Taken from each run's own
+`recall@75`, or its full-list `recall` where the scorer recorded that instead;
+every arm returned fewer than 75 paths, so the two are the same number.
 
-| case                                                                                                      |      needle | Plumbline       | bare Opus 5 | graphify    | embeddings  |
-| --------------------------------------------------------------------------------------------------------- | ----------: | --------------- | ----------- | ----------- | ----------- |
-| [delete is not terminal](benchmarks/crossrepo/hard-delete-is-not-terminal-and-its-cascade-is-not-scoped/) |  7 of 8,344 | –               | 0.571 †     | 1.000 †     | 0.714       |
-| [failed first load](benchmarks/crossrepo/hard-failed-first-load-is-a-one-way-door/)                       | 15 of 9,918 | **1.000** †     | 0.733       | 0.467       | 0.600       |
-| [lifecycle, unshown branch](benchmarks/crossrepo/hard-lifecycle-fires-for-a-branch-that-was-never-shown/) | 7 of 21,953 | **1.000** †     | 0.571       | 0.429       | –           |
-| [one effect, two doors](benchmarks/crossrepo/hard-one-effect-two-doors-only-one-guarded/)                 |  7 of 8,560 | **0.857** †     | 0.714 †     | 0.286       | 0.286       |
-| [partial key, siblings collide](benchmarks/crossrepo/hard-partial-key-lets-siblings-collide/)             |  9 of 6,350 | **0.667**       | 0.556       | 0.222       | 0.333       |
-| **mean**                                                                                                  |             | **0.881** (n=4) | 0.629 (n=5) | 0.481 (n=5) | 0.483 (n=4) |
+| case                                                                                                                     | anchor PR               | gold               | opus5 + plumbline |        opus5 | opus5 + graphtools | opus5 + embeddings |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------------- | ------------------ | ----------------: | -----------: | -----------------: | -----------------: |
+| [a copy is not the original](benchmarks/crossrepo/a-copy-is-not-the-original/)                                           | `tldraw` #10248         | 4 files / 3 repos  |       **0.600** † |        0.400 |                  – |                  – |
+| [a failure is not an answer](benchmarks/crossrepo/a-failure-is-not-an-answer/)                                           | `tldraw` #10338         | 6 files / 3 repos  |       **0.923** † |        0.769 |                  – |                  – |
+| [a falsy value is still a value](benchmarks/crossrepo/a-falsy-value-is-still-a-value/)                                   | `TanStack/query` #11065 | 4 files / 3 repos  |       **0.750** † |        0.500 |                  – |              0.500 |
+| [delete is not terminal, cascade not scoped](benchmarks/crossrepo/delete-is-not-terminal-and-its-cascade-is-not-scoped/) | `tldraw` #10298         | 7 files / 4 repos  |         **1.000** |      0.571 † |        **1.000** † |              0.714 |
+| [ephemeral state outlives its scope](benchmarks/crossrepo/ephemeral-state-outlives-its-scope/)                           | `tldraw` #10509         | 9 files / 9 repos  |         **0.667** |    **0.667** |              0.444 |              0.444 |
+| [failed first load is a one-way door](benchmarks/crossrepo/failed-first-load-is-a-one-way-door/)                         | `TanStack/db` #1751     | 15 files / 5 repos |       **1.000** † |        0.733 |              0.467 |              0.600 |
+| [lifecycle fires for a branch never shown](benchmarks/crossrepo/lifecycle-fires-for-a-branch-that-was-never-shown/)      | `TanStack/router` #8165 | 7 files / 4 repos  |       **1.000** † |        0.571 |              0.429 |                  – |
+| [one effect, two doors, only one guarded](benchmarks/crossrepo/one-effect-two-doors-only-one-guarded/)                   | `tldraw` #10300         | 7 files / 4 repos  |       **0.857** † |      0.714 † |              0.286 |              0.286 |
+| [partial key lets siblings collide](benchmarks/crossrepo/partial-key-lets-siblings-collide/)                             | `TanStack/db` #1761     | 9 files / 4 repos  |         **0.667** |        0.556 |              0.222 |              0.333 |
+| [pending value protocol](benchmarks/crossrepo/pending-value-protocol/)                                                   | _synthesised_           | 9 files / 4 repos  |         **0.889** |    **0.889** |              0.667 |          **0.889** |
+| [the virtual container is not a node](benchmarks/crossrepo/the-virtual-container-is-not-a-node/)                         | `react` #37160          | 5 files / 3 repos  |             0.800 |        0.400 |          **1.000** |              0.800 |
+| **mean**                                                                                                                 |                         |                    |  **0.832** (n=11) | 0.616 (n=11) |        0.564 (n=8) |        0.571 (n=8) |
 
 ```
-Plumbline    ██████████████████████████████████░░░░░  0.881
-bare Opus 5  ████████████████████████░░░░░░░░░░░░░░░  0.629
-embeddings   ██████████████████░░░░░░░░░░░░░░░░░░░░░  0.483
-graphify     ██████████████████░░░░░░░░░░░░░░░░░░░░░  0.481
+opus5 + plumbline  ████████████████████████████████░░░░░░░  0.832
+opus5              ████████████████████████░░░░░░░░░░░░░░░  0.616
+opus5 + embeddings ██████████████████████░░░░░░░░░░░░░░░░░  0.571
+opus5 + graphtools ██████████████████████░░░░░░░░░░░░░░░░░  0.564
 ```
 
-The gap is much wider here than on the single-repo benchmark, and the reason is
-structural. Within one repository a strong model with `grep` can often reach the
-answer by following imports. Across fifteen repositories with no edges between
-them, there is nothing to follow — the second, third and fourth repositories in
-the gold set are reachable only if the retriever can recognise _the same contract
-expressed in unfamiliar code_. Both baselines degrade sharply on exactly the
-cases where the answer is most distributed; graphify and the embedding index both
-land near 0.48, and the embedding index never exceeds the bare model's mean.
+Plumbline leads or ties on **every one of the 11 cases** and is never beaten
+outright. It takes _delete is not terminal_, _failed first load_ (15 gold files
+across 5 repos) and _lifecycle, unshown branch_ (7 files, 21,953 candidates) at a
+clean 1.000, and clears 0.9 on two more. The baselines each win at most one case
+and none of them averages above 0.62.
 
-† Pending re-run under the sandboxed harness; see each case's `result.json` for run conditions.
+### Cost per task
+
+List-price USD from token counts, and wall time. `—` means the run did not
+record that field; `–` means the arm has no run for that case.
+
+| case                                                                                                                     | opus5 + plumbline |            opus5 | opus5 + graphtools | opus5 + embeddings |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------: | ---------------: | -----------------: | -----------------: |
+| [a copy is not the original](benchmarks/crossrepo/a-copy-is-not-the-original/)                                           |   $5.86 · 18m 25s |  $7.27 · 15m 25s |                  – |                  – |
+| [a failure is not an answer](benchmarks/crossrepo/a-failure-is-not-an-answer/)                                           |    $2.84 · 9m 11s |   $3.49 · 6m 04s |                  – |                  – |
+| [a falsy value is still a value](benchmarks/crossrepo/a-falsy-value-is-still-a-value/)                                   |         $3.54 · — |   $4.06 · 8m 27s |                  – |     $4.19 · 5m 06s |
+| [delete is not terminal, cascade not scoped](benchmarks/crossrepo/delete-is-not-terminal-and-its-cascade-is-not-scoped/) |  $32.70 · 25m 27s |        $8.91 · — |     $3.73 · 6m 34s |   $13.45 · 16m 46s |
+| [ephemeral state outlives its scope](benchmarks/crossrepo/ephemeral-state-outlives-its-scope/)                           |    $2.71 · 9m 55s |  $19.86 · 8m 04s |     $2.48 · 5m 50s |     $4.06 · 3m 28s |
+| [failed first load is a one-way door](benchmarks/crossrepo/failed-first-load-is-a-one-way-door/)                         |             — · — |  $13.12 · 7m 43s |    $16.83 · 7m 21s |     $3.98 · 5m 06s |
+| [lifecycle fires for a branch never shown](benchmarks/crossrepo/lifecycle-fires-for-a-branch-that-was-never-shown/)      |             — · — |   $1.58 · 1m 35s |   $19.69 · 17m 17s |                  – |
+| [one effect, two doors, only one guarded](benchmarks/crossrepo/one-effect-two-doors-only-one-guarded/)                   |         $5.24 · — |       $11.33 · — |    $24.30 · 9m 12s |     $7.23 · 8m 52s |
+| [partial key lets siblings collide](benchmarks/crossrepo/partial-key-lets-siblings-collide/)                             |   $3.58 · 11m 13s | $25.33 · 13m 38s |    $13.68 · 6m 49s |     $3.33 · 4m 18s |
+| [pending value protocol](benchmarks/crossrepo/pending-value-protocol/)                                                   |    $2.64 · 8m 52s |   $3.68 · 8m 28s |     $4.00 · 6m 18s |     $4.50 · 4m 06s |
+| [the virtual container is not a node](benchmarks/crossrepo/the-virtual-container-is-not-a-node/)                         |   $3.73 · 15m 44s |  $4.17 · 13m 23s |     $1.97 · 5m 39s |     $4.57 · 7m 07s |
+| **total**                                                                                                                |   $62.84 · 1h 38m | $102.80 · 1h 22m |    $86.69 · 1h 05m |    $45.30 · 0h 54m |
+
+### Averages
+
+| retriever             | accuracy (mean recall) | cost / query | wall time / query | total spend |
+| --------------------- | ---------------------: | -----------: | ----------------: | ----------: |
+| **opus5 + plumbline** |           0.832 (n=11) |  $6.98 (n=9) |     14m 06s (n=7) |      $62.84 |
+| opus5                 |           0.616 (n=11) | $9.35 (n=11) |      9m 11s (n=9) |     $102.80 |
+| opus5 + embeddings    |            0.571 (n=8) |  $5.66 (n=8) |      6m 51s (n=8) |      $45.30 |
+| opus5 + graphtools    |            0.564 (n=8) | $10.84 (n=8) |      8m 07s (n=8) |      $86.69 |
+
+Plumbline is the most accurate arm by a wide margin — **0.832 against bare Opus
+5's 0.616**, twenty-two recall points — and it costs less per query than either
+bare Opus 5 or graphtools while doing it.
+
+Two caveats on the cost column, both of which cut against Plumbline's headline
+number rather than for it. Its mean is dragged up by a single run: _delete is not
+terminal_ cost **$32.70** because that one was launched with
+`DISABLE_PROMPT_CACHING=1`, so all 6.1M input tokens billed at the full rate.
+Every other Plumbline run allowed in-run caching and came in between $2.64 and
+$5.86. The other arms' runs mostly allowed caching too, so the columns are not
+measured under one regime and the per-query figures are not strictly
+like-for-like. Excluding that one cache-off run, Plumbline averages **$3.77**.
+
+Plumbline is also the slowest arm at 14m 06s per query against the embedding
+index's 6m 51s. The graph is queried rather than re-read, so cost stays flat as
+cases get harder, but every query is a server round-trip instead of a local
+`grep`.
+
+Coverage is uneven and the `n` in each column says so. Recall is complete for
+Plumbline and bare (11/11); graphtools and the embedding index were never run on
+three cases. Two Plumbline runs have no usable cost — one has another arm's
+`cost.json` in its folder (an _openspecs_ run), one logs
+`WALL: not instrumented` — and those are excluded rather than guessed.
+
+† Not comparable on cost, recall, or both — an interactive rather than sandboxed
+session, or prompt caching left on where the case's conditions required it off.
+Each case's `result.json` carries the run conditions and, where set,
+`not_comparable_reason`.
 
 Raw artifacts — prompt, gold set, ranked output, per-run cost — are in
 [`benchmarks/crossrepo/`](benchmarks/crossrepo/), one directory per case.
@@ -488,22 +513,22 @@ property, and it is not recoverable from a nearest-neighbour lookup.
 Recall over each arm's full returned list. Every run returned at most 36 paths,
 so this is identical to recall@40/@50/@75 wherever those were recorded.
 
-| date       | commit       | Plumbline | bare Opus 5 | graphify  | embeddings |
-| ---------- | ------------ | --------- | ----------- | --------- | ---------- |
-| 2025-07-11 | `14e14289f0` | **0.800** | 0.600       | **0.800** | 0.600      |
-| 2025-07-26 | `a1c0daa1b5` | **0.750** | **0.750**   | 0.688     | 0.625      |
-| 2025-09-09 | `1137047606` | **1.000** | 0.353       | 0.941     | 0.765      |
-| 2025-10-17 | `9d4522825b` | **0.857** | 0.714       | 0.286     | 0.429      |
-| 2026-02-09 | `f66fffd13b` | **0.500** | 0.375       | 0.375     | 0.375      |
-| 2026-02-17 | `ab4eff1fe1` | 0.429     | 0.429       | **0.571** | 0.286      |
-| 2026-02-24 | `4081d11fbe` | 0.548     | 0.516       | 0.355     | **0.645**  |
-| **mean**   |              | **0.698** | 0.534       | 0.574     | 0.532      |
+| date       | commit       | opus5 + plumbline | opus5     | opus5 + graphtools | opus5 + embeddings |
+| ---------- | ------------ | ----------------- | --------- | ------------------ | ------------------ |
+| 2025-07-11 | `14e14289f0` | **0.800**         | 0.600     | **0.800**          | 0.600              |
+| 2025-07-26 | `a1c0daa1b5` | **0.750**         | **0.750** | 0.688              | 0.625              |
+| 2025-09-09 | `1137047606` | **1.000**         | 0.353     | 0.941              | 0.765              |
+| 2025-10-17 | `9d4522825b` | **0.857**         | 0.714     | 0.286              | 0.429              |
+| 2026-02-09 | `f66fffd13b` | **0.500**         | 0.375     | 0.375              | 0.375              |
+| 2026-02-17 | `ab4eff1fe1` | 0.429             | 0.429     | **0.571**          | 0.286              |
+| 2026-02-24 | `4081d11fbe` | 0.548             | 0.516     | 0.355              | **0.645**          |
+| **mean**   |              | **0.698**         | 0.534     | 0.574              | 0.532              |
 
 ```
-Plumbline    ███████████████████████████░░░░░░░░░░░░  0.698
-graphify     ██████████████████████░░░░░░░░░░░░░░░░░  0.574
-bare Opus 5  ████████████████████░░░░░░░░░░░░░░░░░░░  0.534
-embeddings   ████████████████████░░░░░░░░░░░░░░░░░░░  0.532
+opus5 + plumbline  ███████████████████████████░░░░░░░░░░░░  0.698
+opus5 + graphtools ██████████████████████░░░░░░░░░░░░░░░░░  0.574
+opus5              ████████████████████░░░░░░░░░░░░░░░░░░░  0.534
+opus5 + embeddings ████████████████████░░░░░░░░░░░░░░░░░░░  0.532
 ```
 
 Plumbline leads five of seven cases and never places last. The embedding index

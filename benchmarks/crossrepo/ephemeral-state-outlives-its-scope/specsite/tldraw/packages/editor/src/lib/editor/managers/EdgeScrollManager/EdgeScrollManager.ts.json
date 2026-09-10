@@ -1,0 +1,1120 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts",
+    "language": "typescript",
+    "sizeBytes": 4409,
+    "tokenCount": 1103,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:21:19.787Z",
+    "module": {
+      "purpose": "Provides edge-based camera scrolling for the editor when the pointer approaches viewport boundaries.",
+      "summary": "This manager tracks whether edge scrolling is active, applies a configurable delay and easing period, computes pointer proximity to each viewport edge, and translates the camera accordingly. It accounts for coarse pointers, viewport insets, zoom level, viewport size, and editor-configured scroll speed while avoiding movement when the camera is locked.",
+      "businessContext": "Supports intuitive canvas navigation on desktop and touch-oriented screens. If it fails, users cannot reliably pan the editor by approaching viewport edges.",
+      "classes": [
+        "EdgeScrollManager (~L10-115): Coordinates pointer proximity detection and automatic editor camera movement"
+      ],
+      "functions": [
+        "constructor (~L11-11): Stores the associated editor instance",
+        "getIsEdgeScrolling (~L16-17): Reports whether edge scrolling is currently active",
+        "updateEdgeScrolling (~L20-48): Advances edge-scroll timing and moves the camera",
+        "getEdgeProximityFactors (~L51-72): Calculates directional proximity to one viewport axis edge",
+        "getEdgeScroll (~L74-86): Computes two-axis proximity from current editor input state",
+        "moveCameraWhenCloseToEdge (~L89-114): Applies scaled edge-scroll movement to the camera"
+      ],
+      "keywords": [
+        "edge scrolling",
+        "camera movement",
+        "viewport insets",
+        "coarse pointer",
+        "pointer proximity",
+        "zoom compensation",
+        "easeInCubic",
+        "editor navigation"
+      ],
+      "ontologyConcepts": [
+        "viewport navigation",
+        "pointer interaction",
+        "camera transformation",
+        "time-based easing",
+        "responsive interaction",
+        "state tracking"
+      ],
+      "businessEntities": ["Editor", "Camera", "Viewport", "Pointer"],
+      "systemCapabilities": [
+        "Detect viewport-edge pointer proximity",
+        "Automatically pan the editor camera",
+        "Support coarse touch pointers",
+        "Apply delayed eased scrolling",
+        "Respect camera lock state",
+        "Scale movement for zoom and screen size"
+      ],
+      "configDependencies": [
+        "edgeScrollDistance",
+        "coarsePointerWidth",
+        "edgeScrollDelay",
+        "edgeScrollEaseDuration",
+        "edgeScrollSpeed"
+      ],
+      "importsInternal": [
+        {
+          "spec": "../../../primitives/easings",
+          "symbols": ["EASINGS"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/easings.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/easings.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/easings.ts"
+        },
+        {
+          "spec": "../../../primitives/Vec",
+          "symbols": ["Vec"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/Vec.ts"
+        },
+        {
+          "spec": "../../Editor",
+          "symbols": ["Editor"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/Editor.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Updates private scrolling state fields on the manager.",
+          "Writes a new camera position through the editor."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "EdgeScrollManager",
+          "shape": "export class EdgeScrollManager",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EdgeScrollManager.getIsEdgeScrolling",
+          "shape": "getIsEdgeScrolling()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "EdgeScrollManager.updateEdgeScrolling",
+          "shape": "updateEdgeScrolling(elapsed: number)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Editor",
+          "shape": "Editor",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts"
+        },
+        {
+          "name": "EASINGS.easeInCubic",
+          "shape": "EASINGS.easeInCubic(Math.min(1, this._edgeScrollDuration / (editor.options.edgeScrollDelay + editor.options.edgeScrollEaseDuration)))",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Vec",
+          "shape": "new Vec(x + scrollDeltaX, y + scrollDeltaY, z)",
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Vec.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "edge-scroll update",
+          "intent": "Checks lock state, tracks active scrolling, applies delay and easing, then requests camera movement.",
+          "structureKind": "branch",
+          "predicate": "edgeScrollProximityFactor.x === 0 && edgeScrollProximityFactor.y === 0",
+          "branchOutcomes": ["pointer is not near an edge", "pointer is near an edge"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 20, "endLine": 48 }
+        },
+        {
+          "name": "scroll delay and easing",
+          "intent": "Delays movement and eases acceleration according to configured timing.",
+          "structureKind": "branch",
+          "predicate": "this._edgeScrollDuration > editor.options.edgeScrollDelay",
+          "branchOutcomes": ["delay has not elapsed", "delay has elapsed"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 32, "endLine": 46 }
+        },
+        {
+          "name": "axis proximity calculation",
+          "intent": "Determines signed normalized proximity when a pointer crosses either axis boundary.",
+          "structureKind": "branch",
+          "predicate": "pMin < min",
+          "branchOutcomes": ["near start edge", "near end edge", "inside edge-safe region"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 59, "endLine": 72 }
+        },
+        {
+          "name": "viewport proximity acquisition",
+          "intent": "Combines pointer coordinates, viewport dimensions, pointer type, and insets into two factors.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 74, "endLine": 86 }
+        },
+        {
+          "name": "camera movement",
+          "intent": "Scales directional movement by screen size, configured speed, and zoom before updating camera state.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 89, "endLine": 114 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "class",
+          "name": "EdgeScrollManager",
+          "signature": "export class EdgeScrollManager {",
+          "generics": null,
+          "decorators": ["/** @public */"],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 9, "endLine": 10 }
+        },
+        {
+          "kind": "method",
+          "name": "getIsEdgeScrolling",
+          "signature": "getIsEdgeScrolling()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        },
+        {
+          "kind": "method",
+          "name": "updateEdgeScrolling",
+          "signature": "updateEdgeScrolling(elapsed: number)",
+          "generics": null,
+          "decorators": [
+            "/**\n\t * Update the camera position when the mouse is close to the edge of the screen.\n\t * Run this on every tick when in a state where edge scrolling is enabled.\n\t *\n\t * @public\n\t */"
+          ],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 19, "endLine": 20 }
+        },
+        {
+          "kind": "method",
+          "name": "getEdgeProximityFactors",
+          "signature": "private getEdgeProximityFactors(\n\t\tposition: number,\n\t\tdimension: number,\n\t\tisCoarse: boolean,\n\t\tinsetStart: boolean,\n\t\tinsetEnd: boolean\n\t)",
+          "generics": null,
+          "decorators": [
+            "/**\n\t * Helper function to get the scroll proximity factor for a given position.\n\t * @param position - The mouse position on the axis.\n\t * @param dimension - The component dimension on the axis.\n\t * @param isCoarse - Whether the pointer is coarse.\n\t * @param insetStart - Whether the pointer is inset at the start of the axis.\n\t * @param insetEnd - Whether the pointer is inset at the end of the axis.\n\t * @internal\n\t */"
+          ],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 50, "endLine": 58 }
+        },
+        {
+          "kind": "method",
+          "name": "getEdgeScroll",
+          "signature": "private getEdgeScroll()",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 74, "endLine": 74 }
+        },
+        {
+          "kind": "method",
+          "name": "moveCameraWhenCloseToEdge",
+          "signature": "private moveCameraWhenCloseToEdge(proximityFactor: { x: number; y: number })",
+          "generics": null,
+          "decorators": [
+            "/**\n\t * Moves the camera when the mouse is close to the edge of the screen.\n\t * @public\n\t */"
+          ],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 88, "endLine": 89 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Camera options report a locked camera",
+          "handled": true,
+          "behavior": "Returns immediately without changing scrolling state or camera position.",
+          "anchor": { "startLine": 23, "endLine": 24 }
+        },
+        {
+          "inputShape": "Pointer is outside all edge proximity zones",
+          "handled": true,
+          "behavior": "Stops active scrolling and resets accumulated duration to zero.",
+          "anchor": { "startLine": 26, "endLine": 30 }
+        },
+        {
+          "inputShape": "Pointer is near an edge before configured delay elapses",
+          "handled": true,
+          "behavior": "Accumulates duration but does not move the camera.",
+          "anchor": { "startLine": 27, "endLine": 33 }
+        },
+        {
+          "inputShape": "edgeScrollEaseDuration is non-positive",
+          "handled": true,
+          "behavior": "Uses an easing factor of one after the delay.",
+          "anchor": { "startLine": 34, "endLine": 42 }
+        },
+        {
+          "inputShape": "Coarse pointer input",
+          "handled": true,
+          "behavior": "Expands the effective pointer range by coarsePointerWidth.",
+          "anchor": { "startLine": 61, "endLine": 63 }
+        },
+        {
+          "inputShape": "Inset viewport edge",
+          "handled": true,
+          "behavior": "Uses the viewport boundary directly instead of applying edgeScrollDistance on that side.",
+          "anchor": { "startLine": 64, "endLine": 65 }
+        },
+        {
+          "inputShape": "Viewport dimension below small-screen threshold",
+          "handled": true,
+          "behavior": "Reduces movement speed by the configured small-screen factor.",
+          "anchor": { "startLine": 96, "endLine": 103 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "edgeScrollProximityFactor.x",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Detects zero horizontal edge proximity.",
+          "anchor": { "startLine": 26, "endLine": 26 }
+        },
+        {
+          "operator": "==",
+          "left": "edgeScrollProximityFactor.y",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Detects zero vertical edge proximity.",
+          "anchor": { "startLine": 26, "endLine": 26 }
+        },
+        {
+          "operator": ">",
+          "left": "this._edgeScrollDuration",
+          "right": "editor.options.edgeScrollDelay",
+          "inclusive": false,
+          "intent": "Starts movement only after the configured delay.",
+          "anchor": { "startLine": 33, "endLine": 33 }
+        },
+        {
+          "operator": ">",
+          "left": "editor.options.edgeScrollEaseDuration",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Selects time-based easing only for positive easing duration.",
+          "anchor": { "startLine": 35, "endLine": 35 }
+        },
+        {
+          "operator": "<",
+          "left": "pMin",
+          "right": "min",
+          "inclusive": false,
+          "intent": "Detects proximity beyond the start-side threshold.",
+          "anchor": { "startLine": 66, "endLine": 66 }
+        },
+        {
+          "operator": ">",
+          "left": "pMax",
+          "right": "max",
+          "inclusive": false,
+          "intent": "Detects proximity beyond the end-side threshold.",
+          "anchor": { "startLine": 68, "endLine": 68 }
+        },
+        {
+          "operator": "==",
+          "left": "proximityFactor.x",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Avoids camera updates for zero horizontal movement.",
+          "anchor": { "startLine": 90, "endLine": 90 }
+        },
+        {
+          "operator": "==",
+          "left": "proximityFactor.y",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Avoids camera updates for zero vertical movement.",
+          "anchor": { "startLine": 90, "endLine": 90 }
+        },
+        {
+          "operator": "<",
+          "left": "screenBounds.w",
+          "right": "EDGE_SCROLL_SMALL_SCREEN_THRESHOLD_PX",
+          "inclusive": false,
+          "intent": "Applies reduced horizontal speed on narrow viewports.",
+          "anchor": { "startLine": 96, "endLine": 96 }
+        },
+        {
+          "operator": "<",
+          "left": "screenBounds.h",
+          "right": "EDGE_SCROLL_SMALL_SCREEN_THRESHOLD_PX",
+          "inclusive": false,
+          "intent": "Applies reduced vertical speed on short viewports.",
+          "anchor": { "startLine": 100, "endLine": 100 }
+        }
+      ],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Camera movement is skipped when the camera is locked.",
+          "anchor": { "startLine": 23, "endLine": 24 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Zero proximity on both axes produces no camera movement.",
+          "anchor": { "startLine": 90, "endLine": 90 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Edge-scroll delay is accumulated before movement is requested.",
+          "anchor": { "startLine": 32, "endLine": 46 }
+        },
+        {
+          "kind": "invariant",
+          "description": "The camera z coordinate is preserved while x and y are translated.",
+          "anchor": { "startLine": 112, "endLine": 113 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Proximity factors are capped at magnitude one.",
+          "anchor": { "startLine": 67, "endLine": 69 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The caller invokes the update method on every tick while edge scrolling is enabled.",
+          "anchor": { "startLine": 19, "endLine": 20 }
+        },
+        {
+          "kind": "schema",
+          "description": "The associated editor provides camera, viewport, input, instance-state, options, and user APIs used here.",
+          "anchor": { "startLine": 21, "endLine": 23 }
+        },
+        {
+          "kind": "config",
+          "description": "Configured edgeScrollDistance is expected to be suitable for division and proximity calculations.",
+          "anchor": { "startLine": 59, "endLine": 67 }
+        },
+        {
+          "kind": "config",
+          "description": "The zoom level is expected to be nonzero before movement is divided by it.",
+          "anchor": { "startLine": 106, "endLine": 109 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What concrete return types are inferred for the manager methods by the project compiler configuration?",
+          "affects": "public_signatures",
+          "anchor": { "startLine": 16, "endLine": 89 },
+          "resolution": null
+        },
+        {
+          "question": "Is a zero or negative zoom level prevented by editor invariants outside this file?",
+          "affects": "invariants and camera movement",
+          "anchor": { "startLine": 106, "endLine": 109 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "All operations are synchronous and update manager state in call order."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "does-not-scroll-when-camera-locked",
+          "scenario": "When the camera is locked, updating edge scrolling leaves the camera unchanged.",
+          "given": ["editor.getCameraOptions().isLocked"],
+          "when": "manager.updateEdgeScrolling(elapsed)",
+          "then": "editor.getCamera() is unchanged",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Locked cameras must not respond to edge-scroll updates."
+        },
+        {
+          "testId": "starts-scrolling-after-edge-delay",
+          "scenario": "When the pointer is near an edge, camera movement begins only after the configured delay.",
+          "given": [
+            "edgeScrollProximityFactor.x !== 0 || edgeScrollProximityFactor.y !== 0",
+            "this._edgeScrollDuration <= editor.options.edgeScrollDelay"
+          ],
+          "when": "manager.updateEdgeScrolling(elapsed)",
+          "then": "editor.setCamera is not called before the edge-scroll delay expires",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "The delay prevents immediate camera movement when entering the edge region."
+        },
+        {
+          "testId": "stops-scrolling-away-from-edge",
+          "scenario": "When the pointer leaves all edge regions, edge scrolling stops and its duration resets.",
+          "given": ["edgeScrollProximityFactor.x === 0 && edgeScrollProximityFactor.y === 0", "this._isEdgeScrolling"],
+          "when": "manager.updateEdgeScrolling(elapsed)",
+          "then": "manager.getIsEdgeScrolling() === false",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Leaving the edge must clear the active scrolling state."
+        },
+        {
+          "testId": "clamps-edge-proximity-factor",
+          "scenario": "When the pointer is beyond an edge, the proximity factor is capped at magnitude one.",
+          "given": ["pMin < min"],
+          "when": "getEdgeProximityFactors(position, dimension, isCoarse, insetStart, insetEnd)",
+          "then": "the returned factor is Math.min(1, (min - pMin) / dist)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Scroll intensity must remain bounded regardless of pointer distance."
+        },
+        {
+          "testId": "accounts-for-coarse-pointer-width",
+          "scenario": "When the pointer is coarse, the edge proximity region includes the configured pointer width.",
+          "given": [
+            "const pw = isCoarse ? editor.options.coarsePointerWidth : 0",
+            "const pMin = position - pw",
+            "const pMax = position + pw"
+          ],
+          "when": "getEdgeProximityFactors(position, dimension, isCoarse, insetStart, insetEnd)",
+          "then": "proximity is computed using pMin and pMax expanded by the coarse pointer width",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Touch pointers need an expanded effective region near screen edges."
+        },
+        {
+          "testId": "preserves-camera-depth",
+          "scenario": "When edge scrolling moves the camera, its depth coordinate remains unchanged.",
+          "given": ["const { x, y, z } = editor.getCamera()"],
+          "when": "editor.setCamera(new Vec(x + scrollDeltaX, y + scrollDeltaY, z))",
+          "then": "the resulting camera has the original z value",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Edge scrolling translates the camera position without changing zoom/depth."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": ["imports", "small-screen edge-scroll constants", "EdgeScrollManager class"],
+      "moduleLevelCode": "import { EASINGS } from '../../../primitives/easings'\nimport { Vec } from '../../../primitives/Vec'\nimport type { Editor } from '../../Editor'\n\n// Tuned for touch/small-screen feel; adjust together with coarsePointerWidth.\nconst EDGE_SCROLL_SMALL_SCREEN_THRESHOLD_PX = 1000\nconst EDGE_SCROLL_SMALL_SCREEN_SPEED_FACTOR = 0.612",
+      "exports": [{ "name": "EdgeScrollManager", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "EASINGS", "module": "../../../primitives/easings", "alias": null, "kind": "internal" },
+        { "symbol": "Vec", "module": "../../../primitives/Vec", "alias": null, "kind": "internal" },
+        { "symbol": "Editor", "module": "../../Editor", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "EDGE_SCROLL_SMALL_SCREEN_THRESHOLD_PX", "value": "1000", "kind": "number" },
+        { "name": "EDGE_SCROLL_SMALL_SCREEN_SPEED_FACTOR", "value": "0.612", "kind": "number" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+        "unitKind": "class",
+        "name": "EdgeScrollManager",
+        "qualifiedName": "EdgeScrollManager",
+        "parentUnitId": null,
+        "startLine": 9,
+        "endLine": 115,
+        "isBehavioral": true,
+        "source": "/** @public */\nexport class EdgeScrollManager {\n\tconstructor(public editor: Editor) {}\n\n\tprivate _isEdgeScrolling = false\n\tprivate _edgeScrollDuration = -1\n\n\tgetIsEdgeScrolling() {\n\t\treturn this._isEdgeScrolling\n\t}\n\n\t/**\n\t * Update the camera position when the mouse is close to the edge of the screen.\n\t * Run this on every tick when in a state where edge scrolling is enabled.\n\t *\n\t * @public\n\t */\n\tupdateEdgeScrolling(elapsed: number) {\n\t\tconst { editor } = this\n\n\t\tif (editor.getCameraOptions().isLocked) return\n\n\t\tconst edgeScrollProximityFactor = this.getEdgeScroll()\n\t\tif (edgeScrollProximityFactor.x === 0 && edgeScrollProximityFactor.y === 0) {\n\t\t\tif (this._isEdgeScrolling) {\n\t\t\t\tthis._isEdgeScrolling = false\n\t\t\t\tthis._edgeScrollDuration = 0\n\t\t\t}\n\t\t} else {\n\t\t\tif (!this._isEdgeScrolling) {\n\t\t\t\tthis._isEdgeScrolling = true\n\t\t\t\tthis._edgeScrollDuration = 0\n\t\t\t}\n\t\t\tthis._edgeScrollDuration += elapsed\n\t\t\tif (this._edgeScrollDuration > editor.options.edgeScrollDelay) {\n\t\t\t\tconst eased =\n\t\t\t\t\teditor.options.edgeScrollEaseDuration > 0\n\t\t\t\t\t\t? EASINGS.easeInCubic(\n\t\t\t\t\t\t\t\tMath.min(\n\t\t\t\t\t\t\t\t\t1,\n\t\t\t\t\t\t\t\t\tthis._edgeScrollDuration /\n\t\t\t\t\t\t\t\t\t\t(editor.options.edgeScrollDelay + editor.options.edgeScrollEaseDuration)\n\t\t\t\t\t\t\t\t)\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\t: 1\n\t\t\t\tthis.moveCameraWhenCloseToEdge({\n\t\t\t\t\tx: edgeScrollProximityFactor.x * eased,\n\t\t\t\t\ty: edgeScrollProximityFactor.y * eased,\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Helper function to get the scroll proximity factor for a given position.\n\t * @param position - The mouse position on the axis.\n\t * @param dimension - The component dimension on the axis.\n\t * @param isCoarse - Whether the pointer is coarse.\n\t * @param insetStart - Whether the pointer is inset at the start of the axis.\n\t * @param insetEnd - Whether the pointer is inset at the end of the axis.\n\t * @internal\n\t */\n\tprivate getEdgeProximityFactors(\n\t\tposition: number,\n\t\tdimension: number,\n\t\tisCoarse: boolean,\n\t\tinsetStart: boolean,\n\t\tinsetEnd: boolean\n\t) {\n\t\tconst { editor } = this\n\t\tconst dist = editor.options.edgeScrollDistance\n\t\tconst pw = isCoarse ? editor.options.coarsePointerWidth : 0 // pointer width\n\t\tconst pMin = position - pw\n\t\tconst pMax = position + pw\n\t\tconst min = insetStart ? 0 : dist\n\t\tconst max = insetEnd ? dimension : dimension - dist\n\t\tif (pMin < min) {\n\t\t\treturn Math.min(1, (min - pMin) / dist)\n\t\t} else if (pMax > max) {\n\t\t\treturn -Math.min(1, (pMax - max) / dist)\n\t\t}\n\t\treturn 0\n\t}\n\n\tprivate getEdgeScroll() {\n\t\tconst { editor } = this\n\t\tconst { x, y } = editor.inputs.getCurrentScreenPoint()\n\t\tconst screenBounds = editor.getViewportScreenBounds()\n\n\t\tconst {\n\t\t\tisCoarsePointer,\n\t\t\tinsets: [t, r, b, l],\n\t\t} = editor.getInstanceState()\n\t\tconst proximityFactorX = this.getEdgeProximityFactors(x, screenBounds.w, isCoarsePointer, l, r)\n\t\tconst proximityFactorY = this.getEdgeProximityFactors(y, screenBounds.h, isCoarsePointer, t, b)\n\n\t\treturn {\n\t\t\tx: proximityFactorX,\n\t\t\ty: proximityFactorY,\n\t\t}\n\t}\n\n\t/**\n\t * Moves the camera when the mouse is close to the edge of the screen.\n\t * @public\n\t */\n\tprivate moveCameraWhenCloseToEdge(proximityFactor: { x: number; y: number }) {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+          "fileId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager",
+          "unitKind": "class",
+          "name": "EdgeScrollManager",
+          "qualifiedName": "EdgeScrollManager",
+          "parentUnitId": null,
+          "startLine": 9,
+          "endLine": 115,
+          "signature": "export class EdgeScrollManager",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "editor",
+              "kind": "property",
+              "type": "Editor",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "_isEdgeScrolling",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_edgeScrollDuration",
+              "kind": "property",
+              "type": "number",
+              "default": "-1",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": "constructor(public editor: Editor)",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getIsEdgeScrolling",
+              "kind": "method",
+              "type": "() => boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "updateEdgeScrolling",
+              "kind": "method",
+              "type": "(elapsed: number) => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getEdgeProximityFactors",
+              "kind": "method",
+              "type": "(position: number, dimension: number, isCoarse: boolean, insetStart: boolean, insetEnd: boolean) => number",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "getEdgeScroll",
+              "kind": "method",
+              "type": "() => { x: number; y: number }",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "moveCameraWhenCloseToEdge",
+              "kind": "method",
+              "type": "(proximityFactor: { x: number; y: number }) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Manages camera edge-scrolling state for an editor instance and exposes whether edge scrolling is active.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1c227306c31cf367cf1c359772ad921d0aa7d31492984c0f213585044abed044"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.updateEdgeScrolling#method:EdgeScrollManager.updateEdgeScrolling",
+        "unitKind": "method",
+        "name": "updateEdgeScrolling",
+        "qualifiedName": "EdgeScrollManager.updateEdgeScrolling",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+        "startLine": 19,
+        "endLine": 48,
+        "isBehavioral": true,
+        "source": "\n\t/**\n\t * Update the camera position when the mouse is close to the edge of the screen.\n\t * Run this on every tick when in a state where edge scrolling is enabled.\n\t *\n\t * @public\n\t */\n\tupdateEdgeScrolling(elapsed: number) {\n\t\tconst { editor } = this\n\n\t\tif (editor.getCameraOptions().isLocked) return\n\n\t\tconst edgeScrollProximityFactor = this.getEdgeScroll()\n\t\tif (edgeScrollProximityFactor.x === 0 && edgeScrollProximityFactor.y === 0) {\n\t\t\tif (this._isEdgeScrolling) {\n\t\t\t\tthis._isEdgeScrolling = false\n\t\t\t\tthis._edgeScrollDuration = 0\n\t\t\t}\n\t\t} else {\n\t\t\tif (!this._isEdgeScrolling) {\n\t\t\t\tthis._isEdgeScrolling = true\n\t\t\t\tthis._edgeScrollDuration = 0\n\t\t\t}\n\t\t\tthis._edgeScrollDuration += elapsed\n\t\t\tif (this._edgeScrollDuration > editor.options.edgeScrollDelay) {\n\t\t\t\tconst eased =\n\t\t\t\t\teditor.options.edgeScrollEaseDuration > 0\n\t\t\t\t\t\t? EASINGS.easeInCubic(\n\t\t\t\t\t\t\t\tMath.min(\n\t\t\t\t\t\t\t\t\t1,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.updateEdgeScrolling#method:EdgeScrollManager.updateEdgeScrolling",
+          "fileId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.updateEdgeScrolling",
+          "unitKind": "method",
+          "name": "updateEdgeScrolling",
+          "qualifiedName": "EdgeScrollManager.updateEdgeScrolling",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+          "startLine": 19,
+          "endLine": 48,
+          "signature": "updateEdgeScrolling(elapsed: number)",
+          "parameters": [
+            { "name": "elapsed", "type": "number", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The manager has an editor reference exposing camera options and edge-scroll configuration.",
+            "elapsed is a numeric tick duration."
+          ],
+          "postconditions": [
+            "If the camera is locked, no edge-scrolling state or camera position is changed.",
+            "When neither edge-scroll proximity factor is nonzero, active edge scrolling is stopped and its duration is reset to zero.",
+            "When edge scrolling is active, its accumulated duration is increased by elapsed.",
+            "Camera movement is considered only after the accumulated edge-scroll duration exceeds editor.options.edgeScrollDelay."
+          ],
+          "invariants": [
+            "_edgeScrollDuration is reset to zero whenever edge scrolling transitions to inactive.",
+            "_edgeScrollDuration is reset to zero when edge scrolling transitions from inactive to active.",
+            "Edge-scroll easing is used only when editor.options.edgeScrollEaseDuration is greater than zero."
+          ],
+          "edgeCases": [
+            "When editor.getCameraOptions().isLocked is true, the method returns immediately without evaluating edge proximity.",
+            "When both edge-scroll proximity factors are zero while edge scrolling is active, _isEdgeScrolling becomes false and _edgeScrollDuration becomes zero.",
+            "When either edge-scroll proximity factor is nonzero while edge scrolling is inactive, _isEdgeScrolling becomes true and duration accumulation starts from zero.",
+            "When accumulated duration is equal to or below editor.options.edgeScrollDelay, delayed camera movement is not performed.",
+            "When edgeScrollEaseDuration is non-positive, the eased progress uses the non-eased path."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "_isEdgeScrolling",
+            "_edgeScrollDuration",
+            "editor camera position indirectly through edge-scroll camera movement"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "editor.getCameraOptions", "source": "editor", "kind": "external" },
+            { "name": "getEdgeScroll", "source": "EdgeScrollManager", "kind": "internal" },
+            { "name": "EASINGS.easeInCubic", "source": "EASINGS", "kind": "external" },
+            { "name": "moveCameraWhenCloseToEdge", "source": "EdgeScrollManager", "kind": "internal" }
+          ],
+          "symbolReferences": ["EASINGS"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates edge-scrolling state and camera movement for a tick when the pointer is near a screen edge. Camera updates are skipped while camera movement is locked, and edge scrolling begins only after the configured delay.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateEdgeScrolling is called with an elapsed duration.",
+              "then": "The method returns without changing edge-scroll state or camera position.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateEdgeScrolling is called.",
+              "then": "_isEdgeScrolling becomes false and _edgeScrollDuration becomes 0.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateEdgeScrolling is called.",
+              "then": "Edge scrolling is active and camera movement is performed using the edge-scroll factor and configured easing behavior.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "7d5c6425cce2a1f316bc53c0b234fec75b923ae18a448db2c12cba90825c9f09"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.getEdgeProximityFactors#method:EdgeScrollManager.getEdgeProximityFactors",
+        "unitKind": "method",
+        "name": "getEdgeProximityFactors",
+        "qualifiedName": "EdgeScrollManager.getEdgeProximityFactors",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+        "startLine": 50,
+        "endLine": 72,
+        "isBehavioral": true,
+        "source": "\t\t\t\t\t\t\t\t\t\t(editor.options.edgeScrollDelay + editor.options.edgeScrollEaseDuration)\n\t\t\t\t\t\t\t\t)\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\t: 1\n\t\t\t\tthis.moveCameraWhenCloseToEdge({\n\t\t\t\t\tx: edgeScrollProximityFactor.x * eased,\n\t\t\t\t\ty: edgeScrollProximityFactor.y * eased,\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * Helper function to get the scroll proximity factor for a given position.\n\t * @param position - The mouse position on the axis.\n\t * @param dimension - The component dimension on the axis.\n\t * @param isCoarse - Whether the pointer is coarse.\n\t * @param insetStart - Whether the pointer is inset at the start of the axis.\n\t * @param insetEnd - Whether the pointer is inset at the end of the axis.\n\t * @internal\n\t */\n\tprivate getEdgeProximityFactors(\n\t\tposition: number,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.getEdgeProximityFactors#method:EdgeScrollManager.getEdgeProximityFactors",
+          "fileId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.getEdgeProximityFactors",
+          "unitKind": "method",
+          "name": "getEdgeProximityFactors",
+          "qualifiedName": "EdgeScrollManager.getEdgeProximityFactors",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+          "startLine": 50,
+          "endLine": 72,
+          "signature": "private getEdgeProximityFactors(position: number, dimension: number, isCoarse: boolean, insetStart: boolean, insetEnd: boolean)",
+          "parameters": [
+            { "name": "position", "type": "number", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "dimension",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "isCoarse",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "insetStart",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            { "name": "insetEnd", "type": "boolean", "default": null, "optional": false, "variadic": false, "order": 4 }
+          ],
+          "returnType": "number",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "position and dimension are numeric values representing the pointer position and axis size.",
+            "isCoarse, insetStart, and insetEnd are boolean flags."
+          ],
+          "postconditions": [
+            "Returns a numeric proximity factor derived from the supplied position, dimension, pointer precision, and edge-inset flags.",
+            "Does not mutate manager state or its arguments."
+          ],
+          "invariants": [
+            "The calculation is limited to the supplied axis and does not depend on mutable external state."
+          ],
+          "edgeCases": [
+            "Positions near an applicable start or end edge produce the corresponding edge-proximity factor.",
+            "Positions not near an applicable edge produce the non-edge factor.",
+            "Changing isCoarse can change the proximity calculation used for the same position and dimension.",
+            "The insetStart and insetEnd flags independently affect treatment of the two axis ends."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes a numeric edge-proximity factor for a position along one axis. The factor accounts for the axis dimension, pointer precision, and whether the relevant start and end edge insets apply.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3b2d9685a1f79cd0466c13652d1ee791db33ca561fa4a209263da8af9046709d"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.getEdgeScroll#method:EdgeScrollManager.getEdgeScroll",
+        "unitKind": "method",
+        "name": "getEdgeScroll",
+        "qualifiedName": "EdgeScrollManager.getEdgeScroll",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+        "startLine": 74,
+        "endLine": 86,
+        "isBehavioral": true,
+        "source": "\t\tisCoarse: boolean,\n\t\tinsetStart: boolean,\n\t\tinsetEnd: boolean\n\t) {\n\t\tconst { editor } = this\n\t\tconst dist = editor.options.edgeScrollDistance\n\t\tconst pw = isCoarse ? editor.options.coarsePointerWidth : 0 // pointer width\n\t\tconst pMin = position - pw\n\t\tconst pMax = position + pw\n\t\tconst min = insetStart ? 0 : dist\n\t\tconst max = insetEnd ? dimension : dimension - dist\n\t\tif (pMin < min) {\n\t\t\treturn Math.min(1, (min - pMin) / dist)",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.getEdgeScroll#method:EdgeScrollManager.getEdgeScroll",
+          "fileId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.getEdgeScroll",
+          "unitKind": "method",
+          "name": "getEdgeScroll",
+          "qualifiedName": "EdgeScrollManager.getEdgeScroll",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+          "startLine": 74,
+          "endLine": 86,
+          "signature": "getEdgeScroll(position: number, dimension: number, isCoarse: boolean, insetStart: boolean, insetEnd: boolean): number",
+          "parameters": [
+            { "name": "position", "type": "number", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "dimension",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "isCoarse",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "insetStart",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            { "name": "insetEnd", "type": "boolean", "default": null, "optional": false, "variadic": false, "order": 4 }
+          ],
+          "returnType": "number",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "position and dimension are numeric axis coordinates and extents.",
+            "editor.options.edgeScrollDistance is available and numeric.",
+            "editor.options.coarsePointerWidth is available when isCoarse is true."
+          ],
+          "postconditions": [
+            "Returns a number representing edge-scroll proximity.",
+            "Returns a positive value when the pointer region is before the effective start threshold.",
+            "Returns a negative value when the pointer region is beyond the effective end threshold.",
+            "The returned edge factor is capped at magnitude 1."
+          ],
+          "invariants": [
+            "The coarse-pointer adjustment expands the tested region on both sides by coarsePointerWidth when isCoarse is true.",
+            "The start threshold is 0 when insetStart is true; otherwise it is edgeScrollDistance.",
+            "The end threshold is dimension when insetEnd is true; otherwise it is dimension minus edgeScrollDistance.",
+            "A position within the effective thresholds produces no edge-scroll factor."
+          ],
+          "edgeCases": [
+            "When isCoarse is false, the pointer-width adjustment is zero.",
+            "When insetStart is true, the start edge is evaluated from coordinate 0 rather than from the configured distance.",
+            "When insetEnd is true, the end edge is evaluated at dimension rather than at dimension minus the configured distance.",
+            "When the adjusted position exceeds the configured scroll range, the corresponding factor is clamped to magnitude 1."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [
+            "this.editor",
+            "editor.options.edgeScrollDistance",
+            "editor.options.coarsePointerWidth",
+            "Math.min"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes a normalized edge-scroll factor from an axis position relative to the configured scroll thresholds. The result indicates proximity to the start or end edge and is capped at magnitude one.",
+          "specLiterals": [
+            { "kind": "magic-number", "value": "1", "role": "Upper bound used to clamp the edge-scroll factor." },
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "Default pointer-width adjustment and effective inset start boundary."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getEdgeScroll is called with isCoarse=false and the corresponding inset flags.",
+              "then": "The method returns 0.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getEdgeScroll is called.",
+              "then": "The method returns 1.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getEdgeScroll is called.",
+              "then": "The method returns the positive ratio (effectiveStart - adjustedMinimum) / edgeScrollDistance, capped at 1.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "3b2f2a0cf110960bfe145a1213555b4fdc7b14f2b8754a7d839acfb93f7d4967"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.moveCameraWhenCloseToEdge#method:EdgeScrollManager.moveCameraWhenCloseToEdge",
+        "unitKind": "method",
+        "name": "moveCameraWhenCloseToEdge",
+        "qualifiedName": "EdgeScrollManager.moveCameraWhenCloseToEdge",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+        "startLine": 88,
+        "endLine": 114,
+        "isBehavioral": true,
+        "source": "\t\t\treturn -Math.min(1, (pMax - max) / dist)\n\t\t}\n\t\treturn 0\n\t}\n\n\tprivate getEdgeScroll() {\n\t\tconst { editor } = this\n\t\tconst { x, y } = editor.inputs.getCurrentScreenPoint()\n\t\tconst screenBounds = editor.getViewportScreenBounds()\n\n\t\tconst {\n\t\t\tisCoarsePointer,\n\t\t\tinsets: [t, r, b, l],\n\t\t} = editor.getInstanceState()\n\t\tconst proximityFactorX = this.getEdgeProximityFactors(x, screenBounds.w, isCoarsePointer, l, r)\n\t\tconst proximityFactorY = this.getEdgeProximityFactors(y, screenBounds.h, isCoarsePointer, t, b)\n\n\t\treturn {\n\t\t\tx: proximityFactorX,\n\t\t\ty: proximityFactorY,\n\t\t}\n\t}\n\n\t/**\n\t * Moves the camera when the mouse is close to the edge of the screen.\n\t * @public\n\t */",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.moveCameraWhenCloseToEdge#method:EdgeScrollManager.moveCameraWhenCloseToEdge",
+          "fileId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager.moveCameraWhenCloseToEdge",
+          "unitKind": "method",
+          "name": "moveCameraWhenCloseToEdge",
+          "qualifiedName": "EdgeScrollManager.moveCameraWhenCloseToEdge",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.ts__EdgeScrollManager#class:EdgeScrollManager",
+          "startLine": 88,
+          "endLine": 114,
+          "signature": "moveCameraWhenCloseToEdge()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The manager has access to an editor instance with current pointer coordinates, viewport bounds, and camera state."
+          ],
+          "postconditions": [
+            "When edge scrolling is indicated, the editor camera is moved in the direction and amount determined by the current edge proximity.",
+            "When no edge scrolling is indicated, the editor camera remains unchanged."
+          ],
+          "invariants": [
+            "Camera movement is driven by the current screen-space pointer position relative to the viewport edges."
+          ],
+          "edgeCases": [
+            "Pointer position away from all viewport edges produces no camera movement.",
+            "Pointer position near a viewport edge produces movement toward that edge.",
+            "Pointer position near a corner may produce movement on both camera axes."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Editor camera state may be updated."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "getEdgeScroll", "source": "EdgeScrollManager", "kind": "internal" }],
+          "symbolReferences": ["editor camera state"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Moves the editor camera when the current pointer position is sufficiently close to a screen edge. It leaves the camera unchanged when edge proximity does not require scrolling.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "884d2ac4480090619bf6d2886541f6487730f120933b1bd93ae6dc87a21f0e48"
+        }
+      }
+    ]
+  },
+  "out": ["packages/editor/src/lib/primitives/easings.ts", "packages/editor/src/lib/primitives/Vec.ts"],
+  "in": ["packages/editor/src/lib/editor/managers/EdgeScrollManager/EdgeScrollManager.test.ts"],
+  "externals": [],
+  "impact": { "seeds": 5, "callers": 0, "impactedFiles": [] }
+}

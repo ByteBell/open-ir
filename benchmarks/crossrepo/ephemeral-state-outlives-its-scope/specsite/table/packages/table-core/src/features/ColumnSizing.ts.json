@@ -1,0 +1,1439 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "table",
+  "commitHash": "d08af367e11c539bb7e18c2472aa761149ef6db6",
+  "generatedAt": "2026-07-28T21:02:49.855Z",
+  "file": {
+    "relativePath": "packages/table-core/src/features/ColumnSizing.ts",
+    "language": "typescript",
+    "sizeBytes": 20800,
+    "tokenCount": 4924,
+    "model": "tencent/hy3",
+    "analysedAt": "2026-07-28T20:15:37.237Z",
+    "module": {
+      "purpose": "Implements the Column Sizing feature for TanStack Table, providing state, options, and instance/column/header methods to resize columns via mouse or touch interactions and compute aggregate sizes.",
+      "summary": "This module defines the ColumnSizing table feature. It exports TypeScript interfaces describing state, options, instance, column, and header contracts, plus default values and a TableFeature object that augments table/column/header instances with sizing logic. The feature supports mouse and touch resize handlers, clamps column sizes between min/max, tracks resize deltas, and computes total/left/center/right sizes from leaf columns. It relies on memoized getters and external document event listeners for drag interactions.",
+      "businessContext": "Powers user-resizable columns in data grids. If broken, tables cannot be resized and layout calculations fail, degrading UX in reporting and admin tools.",
+      "classes": [],
+      "functions": [
+        "getDefaultColumnSizingInfoState (~L226-233): Returns fresh default column sizing info state",
+        "passiveEventSupported (~L556-577): Detects browser support for passive event listeners",
+        "isTouchStartEvent (~L579-581): Type guard checking for touchstart event type"
+      ],
+      "keywords": [
+        "column sizing",
+        "table feature",
+        "resize handler",
+        "memoized getter",
+        "touch events",
+        "mouse events",
+        "state updater",
+        "leaf columns"
+      ],
+      "ontologyConcepts": [
+        "feature composition",
+        "derived layout measurement",
+        "user interaction state",
+        "clamping constraints"
+      ],
+      "businessEntities": ["Column", "Header", "Table", "ResizeEvent"],
+      "systemCapabilities": [
+        "resize table columns",
+        "compute total column width",
+        "track resize drag state",
+        "reset column sizes"
+      ],
+      "configDependencies": [
+        "columnResizeMode",
+        "enableColumnResizing",
+        "columnResizeDirection",
+        "onColumnSizingChange",
+        "onColumnSizingInfoChange"
+      ],
+      "importsInternal": [
+        {
+          "spec": "..",
+          "symbols": ["_getVisibleLeafColumns"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": null,
+          "resolvedFileId": null,
+          "resolvedHint": "src/index.ts"
+        },
+        {
+          "spec": "../types",
+          "symbols": ["RowData", "Column", "Header", "OnChangeFn", "Table", "Updater", "TableFeature"],
+          "anchor": { "startLine": 2, "endLine": 10 },
+          "resolvedRelativePath": "packages/table-core/src/types.ts",
+          "resolvedFileId": "packages/table-core/src/types.ts",
+          "resolvedHint": "src/types.ts"
+        },
+        {
+          "spec": "../utils",
+          "symbols": ["getMemoOptions", "makeStateUpdater", "memo"],
+          "anchor": { "startLine": 11, "endLine": 11 },
+          "resolvedRelativePath": "packages/table-core/src/utils.ts",
+          "resolvedFileId": "packages/table-core/src/utils.ts",
+          "resolvedHint": "src/utils.ts"
+        },
+        {
+          "spec": "./ColumnPinning",
+          "symbols": ["ColumnPinningPosition"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/table-core/src/features/ColumnPinning.ts",
+          "resolvedFileId": "packages/table-core/src/features/ColumnPinning.ts",
+          "resolvedHint": "src/features/ColumnPinning.ts"
+        },
+        {
+          "spec": "../utils/document",
+          "symbols": ["safelyAccessDocument"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/table-core/src/utils/document.ts",
+          "resolvedFileId": "packages/table-core/src/utils/document.ts",
+          "resolvedHint": "src/utils/document.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "column.getSize/getStart/getAfter/resetSize/getCanResize/getIsResizing assigned on column object",
+          "header.getSize/getStart/getResizeHandler assigned on header object",
+          "table.setColumnSizing/setColumnSizingInfo/resetColumnSizing/resetHeaderSizeInfo/getTotalSize etc assigned on table object",
+          "document event listeners added/removed during resize drag"
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "ColumnSizing",
+          "shape": "export const ColumnSizing: TableFeature = { getDefaultColumnDef(): ColumnSizingColumnDef; getInitialState(state): ColumnSizingTableState; getDefaultOptions(table): ColumnSizingDefaultOptions; createColumn(column, table): void; createHeader(header, table): void; createTable(table): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ColumnSizingOptions",
+          "shape": "interface ColumnSizingOptions { columnResizeMode?: 'onChange' | 'onEnd'; enableColumnResizing?: boolean; columnResizeDirection?: 'ltr' | 'rtl'; onColumnSizingChange?: OnChangeFn<ColumnSizingState>; onColumnSizingInfoChange?: OnChangeFn<ColumnSizingInfoState> }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ColumnSizingInstance",
+          "shape": "interface ColumnSizingInstance { getCenterTotalSize(): number; getLeftTotalSize(): number; getRightTotalSize(): number; getTotalSize(): number; resetColumnSizing(defaultState?): void; resetHeaderSizeInfo(defaultState?): void; setColumnSizing(updater): void; setColumnSizingInfo(updater): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ColumnSizingColumnDef",
+          "shape": "interface ColumnSizingColumnDef { enableResizing?: boolean; maxSize?: number; minSize?: number; size?: number }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ColumnSizingColumn",
+          "shape": "interface ColumnSizingColumn { getCanResize(): boolean; getIsResizing(): boolean; getSize(): number; getStart(position?): number; getAfter(position?): number; resetSize(): void }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ColumnSizingHeader",
+          "shape": "interface ColumnSizingHeader { getResizeHandler(context?): (event:unknown)=>void; getSize(): number; getStart(position?): number }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "defaultColumnSizing",
+          "shape": "{ size: 150, minSize: 20, maxSize: Number.MAX_SAFE_INTEGER }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "_getVisibleLeafColumns",
+          "shape": "from '..': _getVisibleLeafColumns(table, position?) => Column[]",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TableFeature",
+          "shape": "from '../types': interface TableFeature",
+          "resolvedRelativePath": "packages/table-core/src/types.ts",
+          "resolvedFileId": "packages/table-core/src/types.ts"
+        },
+        {
+          "name": "ColumnPinningPosition",
+          "shape": "from './ColumnPinning': type ColumnPinningPosition",
+          "resolvedRelativePath": "packages/table-core/src/features/ColumnPinning.ts",
+          "resolvedFileId": "packages/table-core/src/features/ColumnPinning.ts"
+        },
+        {
+          "name": "safelyAccessDocument",
+          "shape": "from '../utils/document': (doc?) => Document | undefined",
+          "resolvedRelativePath": "packages/table-core/src/utils/document.ts",
+          "resolvedFileId": "packages/table-core/src/utils/document.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "defaultStateFactory",
+          "intent": "Provide default column sizing info object",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 226, "endLine": 233 }
+        },
+        {
+          "name": "ColumnSizingFeatureObject",
+          "intent": "Define table feature with lifecycle hooks",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 235, "endLine": 553 }
+        },
+        {
+          "name": "createColumnSizingLogic",
+          "intent": "Attach size/start/after/reset/canResize/isResizing to column",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 258, "endLine": 314 }
+        },
+        {
+          "name": "createHeaderResizeHandler",
+          "intent": "Build event handler managing resize drag via mouse/touch",
+          "structureKind": "branch",
+          "predicate": "isTouchStartEvent(e)",
+          "branchOutcomes": ["touch branch", "mouse branch"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 343, "endLine": 515 }
+        },
+        {
+          "name": "createTableSizingMethods",
+          "intent": "Attach state setters and total size calculators to table",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 518, "endLine": 552 }
+        },
+        {
+          "name": "passiveSupportDetection",
+          "intent": "Cache whether passive event listeners are supported",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 556, "endLine": 577 }
+        }
+      ],
+      "representationFamily": "module",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "const",
+          "name": "defaultColumnSizing",
+          "signature": "export const defaultColumnSizing = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 220, "endLine": 224 }
+        },
+        {
+          "kind": "const",
+          "name": "ColumnSizing",
+          "signature": "export const ColumnSizing: TableFeature = {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "TableFeature",
+          "exported": true,
+          "anchor": { "startLine": 235, "endLine": 553 }
+        },
+        {
+          "kind": "function",
+          "name": "passiveEventSupported",
+          "signature": "export function passiveEventSupported()",
+          "generics": null,
+          "decorators": [],
+          "returnType": "boolean",
+          "exported": true,
+          "anchor": { "startLine": 556, "endLine": 577 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "ColumnSizingTableState",
+          "shape": "export interface ColumnSizingTableState {\n  columnSizing: ColumnSizingState\n  columnSizingInfo: ColumnSizingInfoState\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 17, "endLine": 20 }
+        },
+        {
+          "kind": "type",
+          "name": "ColumnSizingState",
+          "shape": "export type ColumnSizingState = Record<string, number>",
+          "discriminant": null,
+          "anchor": { "startLine": 22, "endLine": 22 }
+        },
+        {
+          "kind": "interface",
+          "name": "ColumnSizingInfoState",
+          "shape": "export interface ColumnSizingInfoState {\n  columnSizingStart: [string, number][]\n  deltaOffset: null | number\n  deltaPercentage: null | number\n  isResizingColumn: false | string\n  startOffset: null | number\n  startSize: null | number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 24, "endLine": 31 }
+        },
+        {
+          "kind": "type",
+          "name": "ColumnResizeMode",
+          "shape": "export type ColumnResizeMode = 'onChange' | 'onEnd'",
+          "discriminant": null,
+          "anchor": { "startLine": 33, "endLine": 33 }
+        },
+        {
+          "kind": "type",
+          "name": "ColumnResizeDirection",
+          "shape": "export type ColumnResizeDirection = 'ltr' | 'rtl'",
+          "discriminant": null,
+          "anchor": { "startLine": 35, "endLine": 35 }
+        },
+        {
+          "kind": "interface",
+          "name": "ColumnSizingOptions",
+          "shape": "export interface ColumnSizingOptions {\n  columnResizeMode?: ColumnResizeMode\n  enableColumnResizing?: boolean\n  columnResizeDirection?: ColumnResizeDirection\n  onColumnSizingChange?: OnChangeFn<ColumnSizingState>\n  onColumnSizingInfoChange?: OnChangeFn<ColumnSizingInfoState>\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 37, "endLine": 68 }
+        },
+        {
+          "kind": "type",
+          "name": "ColumnSizingDefaultOptions",
+          "shape": "export type ColumnSizingDefaultOptions = Pick<\n  ColumnSizingOptions,\n  | 'columnResizeMode'\n  | 'onColumnSizingChange'\n  | 'onColumnSizingInfoChange'\n  | 'columnResizeDirection'\n>",
+          "discriminant": null,
+          "anchor": { "startLine": 70, "endLine": 76 }
+        },
+        {
+          "kind": "interface",
+          "name": "ColumnSizingInstance",
+          "shape": "export interface ColumnSizingInstance {\n  getCenterTotalSize: () => number\n  getLeftTotalSize: () => number\n  getRightTotalSize: () => number\n  getTotalSize: () => number\n  resetColumnSizing: (defaultState?: boolean) => void\n  resetHeaderSizeInfo: (defaultState?: boolean) => void\n  setColumnSizing: (updater: Updater<ColumnSizingState>) => void\n  setColumnSizingInfo: (updater: Updater<ColumnSizingInfoState>) => void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 78, "endLine": 127 }
+        },
+        {
+          "kind": "interface",
+          "name": "ColumnSizingColumnDef",
+          "shape": "export interface ColumnSizingColumnDef {\n  enableResizing?: boolean\n  maxSize?: number\n  minSize?: number\n  size?: number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 129, "endLine": 154 }
+        },
+        {
+          "kind": "interface",
+          "name": "ColumnSizingColumn",
+          "shape": "export interface ColumnSizingColumn {\n  getCanResize: () => boolean\n  getIsResizing: () => boolean\n  getSize: () => number\n  getStart: (position?: ColumnPinningPosition | 'center') => number\n  getAfter: (position?: ColumnPinningPosition | 'center') => number\n  resetSize: () => void\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 156, "endLine": 191 }
+        },
+        {
+          "kind": "interface",
+          "name": "ColumnSizingHeader",
+          "shape": "export interface ColumnSizingHeader {\n  getResizeHandler: (context?: Document) => (event: unknown) => void\n  getSize: () => number\n  getStart: (position?: ColumnPinningPosition) => number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 193, "endLine": 216 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "multi-touch event (touches.length > 1)",
+          "handled": true,
+          "behavior": "resize handler returns early ignoring additional touches",
+          "anchor": { "startLine": 354, "endLine": 359 }
+        },
+        {
+          "inputShape": "clientXPos undefined in updateOffset",
+          "handled": true,
+          "behavior": "returns early without updating sizing info",
+          "anchor": { "startLine": 379, "endLine": 381 }
+        },
+        {
+          "inputShape": "header without subHeaders",
+          "handled": true,
+          "behavior": "recurse stops and sums column size directly",
+          "anchor": { "startLine": 323, "endLine": 329 }
+        },
+        {
+          "inputShape": "first header (index 0)",
+          "handled": true,
+          "behavior": "getStart returns 0",
+          "anchor": { "startLine": 335, "endLine": 342 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "header.index",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Check if header is not the first in group for start offset",
+          "anchor": { "startLine": 336, "endLine": 336 }
+        },
+        {
+          "operator": ">",
+          "left": "e.touches.length",
+          "right": "1",
+          "inclusive": false,
+          "intent": "Ignore multi-finger touch starts",
+          "anchor": { "startLine": 356, "endLine": 356 }
+        },
+        {
+          "operator": "!=",
+          "left": "typeof clientXPos",
+          "right": "'number'",
+          "inclusive": false,
+          "intent": "Skip offset update when client position missing",
+          "anchor": { "startLine": 379, "endLine": 379 }
+        },
+        {
+          "operator": "==",
+          "left": "table.getState().columnSizingInfo.isResizingColumn",
+          "right": "column.id",
+          "inclusive": true,
+          "intent": "Determine if this column is currently resizing",
+          "anchor": { "startLine": 312, "endLine": 312 }
+        },
+        {
+          "operator": "==",
+          "left": "table.options.columnResizeDirection",
+          "right": "'rtl'",
+          "inclusive": true,
+          "intent": "Set delta direction for RTL layouts",
+          "anchor": { "startLine": 385, "endLine": 385 }
+        },
+        {
+          "operator": "==",
+          "left": "table.options.columnResizeMode",
+          "right": "'onChange'",
+          "inclusive": true,
+          "intent": "Decide whether to apply sizing during drag or only on end",
+          "anchor": { "startLine": 407, "endLine": 407 }
+        },
+        {
+          "operator": "==",
+          "left": "eventType",
+          "right": "'end'",
+          "inclusive": true,
+          "intent": "Force sizing commit when drag ends",
+          "anchor": { "startLine": 409, "endLine": 409 }
+        },
+        {
+          "operator": "==",
+          "left": "typeof passiveSupported",
+          "right": "'boolean'",
+          "inclusive": true,
+          "intent": "Use cached passive support flag if already determined",
+          "anchor": { "startLine": 557, "endLine": 557 }
+        },
+        {
+          "operator": "==",
+          "left": "(e as TouchEvent).type",
+          "right": "'touchstart'",
+          "inclusive": true,
+          "intent": "Type guard for touch start events",
+          "anchor": { "startLine": 580, "endLine": 580 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "err",
+          "action": "Set supported flag to false when passive detection throws",
+          "fallback": "false",
+          "anchor": { "startLine": 572, "endLine": 574 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Column size is clamped between minSize and maxSize",
+          "anchor": { "startLine": 265, "endLine": 271 }
+        },
+        {
+          "kind": "non-null",
+          "description": "columnSizingInfo.isResizingColumn is false or a column id string",
+          "anchor": { "startLine": 28, "endLine": 28 }
+        },
+        {
+          "kind": "ordering",
+          "description": "getStart sums sizes of preceding columns in visible leaf order",
+          "anchor": { "startLine": 274, "endLine": 285 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "table.options.onColumnSizingChange/onColumnSizingInfoChange provided or internal state used",
+          "anchor": { "startLine": 519, "endLine": 522 }
+        },
+        {
+          "kind": "platform",
+          "description": "window and Document available in browser environment",
+          "anchor": { "startLine": 570, "endLine": 570 }
+        },
+        {
+          "kind": "init-order",
+          "description": "createColumn/createHeader/createTable called by table core before use",
+          "anchor": { "startLine": 258, "endLine": 261 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Is _getVisibleLeafColumns guaranteed to return columns in correct order for getStart/getAfter?",
+          "affects": "column.getStart/getAfter correctness",
+          "anchor": { "startLine": 277, "endLine": 277 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "event",
+        "reentrant": false,
+        "ordering": "non-deterministic",
+        "notes": "Resize interactions are driven by DOM event listeners added/removed per drag; state updates go through table options callbacks."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "column-size-clamped",
+          "scenario": "Column size is clamped between minSize and maxSize",
+          "given": [
+            "column.columnDef.minSize = 10",
+            "column.columnDef.maxSize = 100",
+            "table.getState().columnSizing[column.id] = 200"
+          ],
+          "when": "column.getSize()",
+          "then": "returns 100",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "ensures resize cannot exceed max"
+        },
+        {
+          "testId": "default-column-size",
+          "scenario": "Default column sizing applied when no size specified",
+          "given": ["column.columnDef.size = undefined", "table.getState().columnSizing[column.id] = undefined"],
+          "when": "column.getSize()",
+          "then": "returns 150 (defaultColumnSizing.size)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "get-start-sums-preceding",
+          "scenario": "getStart returns sum of preceding leaf column sizes",
+          "given": ["columns = [c1(size 50), c2(size 30), column(c3)]", "column.getIndex(position) = 2"],
+          "when": "column.getStart(position)",
+          "then": "returns 80",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "reset-size-removes-entry",
+          "scenario": "resetSize removes column from columnSizing state",
+          "given": ["table.getState().columnSizing = { 'col1': 100 }"],
+          "when": "column.resetSize()",
+          "then": "table.getState().columnSizing no longer has key column.id",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "resize-on-end-updates-state",
+          "scenario": "Resize handler updates column sizing on mouseup when mode onEnd",
+          "given": [
+            "table.options.columnResizeMode = 'onEnd'",
+            "header.getResizeHandler()(mousedown)",
+            "mouseup at clientX+50"
+          ],
+          "when": "header.getResizeHandler() internal onEnd",
+          "then": "table.getState().columnSizing reflects new size",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "ensures drag release commits size"
+        },
+        {
+          "testId": "passive-event-supported-caches",
+          "scenario": "passiveEventSupported returns boolean and caches result",
+          "given": ["window.addEventListener defined"],
+          "when": "passiveEventSupported() called twice",
+          "then": "returns same boolean both times and does not recompute",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "performance/correctness of feature detection"
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "interface ColumnSizingTableState",
+        "type ColumnSizingState",
+        "interface ColumnSizingInfoState",
+        "type ColumnResizeMode",
+        "type ColumnResizeDirection",
+        "interface ColumnSizingOptions",
+        "type ColumnSizingDefaultOptions",
+        "interface ColumnSizingInstance",
+        "interface ColumnSizingColumnDef",
+        "interface ColumnSizingColumn",
+        "interface ColumnSizingHeader",
+        "const defaultColumnSizing",
+        "const getDefaultColumnSizingInfoState",
+        "const ColumnSizing",
+        "let passiveSupported",
+        "function passiveEventSupported",
+        "function isTouchStartEvent"
+      ],
+      "moduleLevelCode": "import statements and module-level constant/default declarations; no top-level executable side effects besides passiveSupported lazy init.",
+      "exports": [
+        { "name": "ColumnSizingTableState", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingState", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingInfoState", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnResizeMode", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnResizeDirection", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingOptions", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingDefaultOptions", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingInstance", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingColumnDef", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingColumn", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizingHeader", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "defaultColumnSizing", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "ColumnSizing", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "passiveEventSupported", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "_getVisibleLeafColumns", "module": "..", "alias": null, "kind": "internal" },
+        { "symbol": "RowData", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "Column", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "Header", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "OnChangeFn", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "Table", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "Updater", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "TableFeature", "module": "../types", "alias": null, "kind": "internal" },
+        { "symbol": "getMemoOptions", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "makeStateUpdater", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "memo", "module": "../utils", "alias": null, "kind": "internal" },
+        { "symbol": "ColumnPinningPosition", "module": "./ColumnPinning", "alias": null, "kind": "internal" },
+        { "symbol": "safelyAccessDocument", "module": "../utils/document", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        {
+          "name": "defaultColumnSizing",
+          "value": "{ size: 150, minSize: 20, maxSize: Number.MAX_SAFE_INTEGER }",
+          "kind": "object"
+        },
+        { "name": "passiveSupported", "value": "null", "kind": "boolean | null" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.getInitialState#method:ColumnSizing.getInitialState",
+        "unitKind": "method",
+        "name": "getInitialState",
+        "qualifiedName": "ColumnSizing.getInitialState",
+        "parentUnitId": null,
+        "startLine": 239,
+        "endLine": 245,
+        "isBehavioral": false,
+        "source": "  getInitialState: (state): ColumnSizingTableState => {\n    return {\n      columnSizing: {},\n      columnSizingInfo: getDefaultColumnSizingInfoState(),\n      ...state,\n    }\n  },",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.getInitialState#method:ColumnSizing.getInitialState",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.getInitialState",
+          "unitKind": "method",
+          "name": "getInitialState",
+          "qualifiedName": "ColumnSizing.getInitialState",
+          "parentUnitId": null,
+          "startLine": 239,
+          "endLine": 245,
+          "signature": "getInitialState: (state): ColumnSizingTableState => {}",
+          "parameters": [
+            { "name": "state", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "ColumnSizingTableState",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returned object includes columnSizing defaulting to {} and columnSizingInfo from getDefaultColumnSizingInfoState(), with input state properties spread last so they override defaults."
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If state contains columnSizing or columnSizingInfo keys, those override the corresponding defaults due to object spread order.",
+            "If state is undefined or null, object spread ignores it and defaults are returned."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "getDefaultColumnSizingInfoState",
+              "source": "packages/table-core/src/features/ColumnSizing.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["ColumnSizingTableState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns the initial column sizing table state by merging caller-provided state over default columnSizing and columnSizingInfo values.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getInitialState is called with that state",
+              "then": "returned state's columnSizing equals the input columnSizing, not the default empty object",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "2a9dbec3905f0d633c3e3b9a5019b82d586647997e2cfbce5f579253846ed085"
+        }
+      },
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.getDefaultOptions#method:ColumnSizing.getDefaultOptions",
+        "unitKind": "method",
+        "name": "getDefaultOptions",
+        "qualifiedName": "ColumnSizing.getDefaultOptions",
+        "parentUnitId": null,
+        "startLine": 247,
+        "endLine": 256,
+        "isBehavioral": false,
+        "source": "  getDefaultOptions: <TData extends RowData>(\n    table: Table<TData>,\n  ): ColumnSizingDefaultOptions => {\n    return {\n      columnResizeMode: 'onEnd',\n      columnResizeDirection: 'ltr',\n      onColumnSizingChange: makeStateUpdater('columnSizing', table),\n      onColumnSizingInfoChange: makeStateUpdater('columnSizingInfo', table),\n    }\n  },",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.getDefaultOptions#method:ColumnSizing.getDefaultOptions",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.getDefaultOptions",
+          "unitKind": "method",
+          "name": "getDefaultOptions",
+          "qualifiedName": "ColumnSizing.getDefaultOptions",
+          "parentUnitId": null,
+          "startLine": 247,
+          "endLine": 256,
+          "signature": "getDefaultOptions: <TData extends RowData>(\n    table: Table<TData>,\n  ): ColumnSizingDefaultOptions => { ... }",
+          "parameters": [
+            {
+              "name": "table",
+              "type": "Table<TData>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "ColumnSizingDefaultOptions",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "view",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["TData extends RowData"],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns an object of type ColumnSizingDefaultOptions.",
+            "columnResizeMode is set to 'onEnd'.",
+            "columnResizeDirection is set to 'ltr'.",
+            "onColumnSizingChange is a state updater bound to 'columnSizing' on the provided table.",
+            "onColumnSizingInfoChange is a state updater bound to 'columnSizingInfo' on the provided table."
+          ],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "makeStateUpdater", "source": "shared/state", "kind": "internal" }],
+          "symbolReferences": ["Table", "RowData", "ColumnSizingDefaultOptions"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the default column sizing options for a given table instance, including resize mode, direction, and state updaters.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "onEnd", "role": "Default column resize mode" },
+            { "kind": "enum-value", "value": "ltr", "role": "Default column resize direction" }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "2557c3a3ae8a795887c47db7dc7fb1ccc1f66d1fb1214aeaee3f0084808ca6f9"
+        }
+      },
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createColumn#method:ColumnSizing.createColumn",
+        "unitKind": "method",
+        "name": "createColumn",
+        "qualifiedName": "ColumnSizing.createColumn",
+        "parentUnitId": null,
+        "startLine": 258,
+        "endLine": 314,
+        "isBehavioral": true,
+        "source": "  createColumn: <TData extends RowData, TValue>(\n    column: Column<TData, TValue>,\n    table: Table<TData>,\n  ): void => {\n    column.getSize = () => {\n      const columnSize = table.getState().columnSizing[column.id]\n\n      return Math.min(\n        Math.max(\n          column.columnDef.minSize ?? defaultColumnSizing.minSize,\n          columnSize ?? column.columnDef.size ?? defaultColumnSizing.size,\n        ),\n        column.columnDef.maxSize ?? defaultColumnSizing.maxSize,\n      )\n    }\n\n    column.getStart = memo(\n      (position) => [\n        position,\n        _getVisibleLeafColumns(table, position),\n        table.getState().columnSizing,\n      ],\n      (position, columns) =>\n        columns\n          .slice(0, column.getIndex(position))\n          .reduce((sum, column) => sum + column.getSize(), 0),\n      getMemoOptions(table.options, 'debugColumns', 'getStart'),\n    )\n\n    column.getAfter = memo(\n      (position) => [\n        position,\n        _getVisibleLeafColumns(table, position),\n        table.getState().columnSizing,\n      ],\n      (position, columns) =>\n        columns\n          .slice(column.getIndex(position) + 1)\n          .reduce((sum, column) => sum + column.getSize(), 0),\n      getMemoOptions(table.options, 'debugColumns', 'getAfter'),\n    )\n\n    column.resetSize = () => {\n      table.setColumnSizing(({ [column.id]: _, ...rest }) => {\n        return rest\n      })\n    }\n    column.getCanResize = () => {\n      return (\n        (column.columnDef.enableResizing ?? true) &&\n        (table.options.enableColumnResizing ?? true)\n      )\n    }\n    column.getIsResizing = () => {\n      return table.getState().columnSizingInfo.isResizingColumn === column.id\n    }\n  },",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createColumn#method:ColumnSizing.createColumn",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createColumn",
+          "unitKind": "method",
+          "name": "createColumn",
+          "qualifiedName": "ColumnSizing.createColumn",
+          "parentUnitId": null,
+          "startLine": 258,
+          "endLine": 314,
+          "signature": "<TData extends RowData, TValue>(column: Column<TData, TValue>, table: Table<TData>): void",
+          "parameters": [
+            {
+              "name": "column",
+              "type": "Column<TData, TValue>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "table",
+              "type": "Table<TData>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["TData extends RowData", "TValue"],
+          "logicOutline": [],
+          "preconditions": [
+            "column is a Column instance with columnDef",
+            "table is a Table instance with state and sizing APIs"
+          ],
+          "postconditions": [
+            "column has getSize, getStart, getAfter, resetSize, getCanResize, getIsResizing methods attached",
+            "getSize returns clamped size from state and defs"
+          ],
+          "invariants": [
+            "getSize result always within [effective min, effective max]",
+            "getStart/getAfter computed via memo on visible leaf columns"
+          ],
+          "edgeCases": [
+            "columnDef.minSize/size/maxSize undefined falls back to defaultColumnSizing",
+            "columnSizing[column.id] undefined falls back to columnDef.size then default",
+            "resetSize strips column.id from columnSizing state",
+            "enableResizing undefined treated as true"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "column object properties (adds functions)",
+            "table columnSizing state when resetSize invoked"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "_getVisibleLeafColumns", "source": null, "kind": "internal" },
+            { "name": "memo", "source": null, "kind": "internal" },
+            { "name": "getMemoOptions", "source": null, "kind": "internal" },
+            { "name": "table.getState", "source": null, "kind": "external" },
+            { "name": "table.setColumnSizing", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": [
+            "Column",
+            "Table",
+            "RowData",
+            "defaultColumnSizing",
+            "memo",
+            "getMemoOptions",
+            "_getVisibleLeafColumns"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Augments a column instance with sizing methods (getSize, getStart, getAfter, resetSize, getCanResize, getIsResizing) bound to table state, ensuring column size is clamped within min/max defaults.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "column.getSize() is called",
+              "then": "returns 50",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "column.getSize() called",
+              "then": "returns 20 (max(minSize, columnSize) clamped)",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4a895edc173745ab52b37f2df24dcf3e435ece966e1771bdc0c32029cb3e64e8"
+        }
+      },
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createHeader#method:ColumnSizing.createHeader",
+        "unitKind": "method",
+        "name": "createHeader",
+        "qualifiedName": "ColumnSizing.createHeader",
+        "parentUnitId": null,
+        "startLine": 316,
+        "endLine": 516,
+        "isBehavioral": true,
+        "source": "  createHeader: <TData extends RowData, TValue>(\n    header: Header<TData, TValue>,\n    table: Table<TData>,\n  ): void => {\n    header.getSize = () => {\n      let sum = 0\n\n      const recurse = (header: Header<TData, TValue>) => {\n        if (header.subHeaders.length) {\n          header.subHeaders.forEach(recurse)\n        } else {\n          sum += header.column.getSize() ?? 0\n        }\n      }\n\n      recurse(header)\n\n      return sum\n    }\n    header.getStart = () => {\n      if (header.index > 0) {\n        const prevSiblingHeader = header.headerGroup.headers[header.index - 1]!\n        return prevSiblingHeader.getStart() + prevSiblingHeader.getSize()\n      }\n\n      return 0\n    }\n    header.getResizeHandler = (_contextDocument) => {\n      const column = table.getColumn(header.column.id)\n      const canResize = column?.getCanResize()\n\n      return (e: unknown) => {\n        if (!column || !canResize) {\n          return\n        }\n\n        ;(e as any).persist?.()\n\n        if (isTouchStartEvent(e)) {\n          // lets not respond to multiple touches (e.g. 2 or 3 fingers)\n          if (e.touches && e.touches.length > 1) {\n            return\n          }\n        }\n\n        const startSize = header.getSize()\n\n        const columnSizingStart: [string, number][] = header\n          ? header\n              .getLeafHeaders()\n              .map((d) => [d.column.id, d.column.getSize()])\n          : [[column.id, column.getSize()]]\n\n        const clientX = isTouchStartEvent(e)\n          ? Math.round(e.touches[0]!.clientX)\n          : (e as MouseEvent).clientX\n\n        const newColumnSizing: ColumnSizingState = {}\n\n        const updateOffset = (\n          eventType: 'move' | 'end',\n          clientXPos?: number,\n        ) => {\n          if (typeof clientXPos !== 'number') {\n            return\n          }\n\n          table.setColumnSizingInfo((old) => {\n            const deltaDirection =\n              table.options.columnResizeDirection === 'rtl' ? -1 : 1\n            const deltaOffset =\n              (clientXPos - (old?.startOffset ?? 0)) * deltaDirection\n            const deltaPercentage = Math.max(\n              deltaOffset / (old?.startSize ?? 0),\n              -0.999999,\n            )\n\n            old.columnSizingStart.forEach(([columnId, headerSize]) => {\n              newColumnSizing[columnId] =\n                Math.round(\n                  Math.max(headerSize + headerSize * deltaPercentage, 0) * 100,\n                ) / 100\n            })\n\n            return {\n              ...old,\n              deltaOffset,\n              deltaPercentage,\n            }\n          })\n\n          if (\n            table.options.columnResizeMode === 'onChange' ||\n            eventType === 'end'\n          ) {\n            table.setColumnSizing((old) => ({\n              ...old,\n              ...newColumnSizing,\n            }))\n          }\n        }\n\n        const onMove = (clientXPos?: number) => updateOffset('move', clientXPos)\n\n        const onEnd = (clientXPos?: number) => {\n          updateOffset('end', clientXPos)\n\n          table.setColumnSizingInfo((old) => ({\n            ...old,\n            isResizingColumn: false,\n            startOffset: null,\n            startSize: null,\n            deltaOffset: null,\n            deltaPercentage: null,\n            columnSizingStart: [],\n          }))\n        }\n\n        const contextDocument = safelyAccessDocument(_contextDocument)\n\n        const mouseEvents = {\n          moveHandler: (e: MouseEvent) => onMove(e.clientX),\n          upHandler: (e: MouseEvent) => {\n            contextDocument?.removeEventListener(\n              'mousemove',\n              mouseEvents.moveHandler,\n            )\n            contextDocument?.removeEventListener(\n              'mouseup',\n              mouseEvents.upHandler,\n            )\n            onEnd(e.clientX)\n          },\n        }\n\n        const touchEvents = {\n          moveHandler: (e: TouchEvent) => {\n            if (e.cancelable) {\n              e.preventDefault()\n              e.stopPropagation()\n            }\n            onMove(e.touches[0]!.clientX)\n            return false\n          },\n          upHandler: (e: TouchEvent) => {\n            contextDocument?.removeEventListener(\n              'touchmove',\n              touchEvents.moveHandler,\n            )\n            contextDocument?.removeEventListener(\n              'touchend',\n              touchEvents.upHandler,\n            )\n            if (e.cancelable) {\n              e.preventDefault()\n              e.stopPropagation()\n            }\n            onEnd(e.touches[0]?.clientX)\n          },\n        }\n\n        const passiveIfSupported = passiveEventSupported()\n          ? { passive: false }\n          : false\n\n        if (isTouchStartEvent(e)) {\n          contextDocument?.addEventListener(\n            'touchmove',\n            touchEvents.moveHandler,\n            passiveIfSupported,\n          )\n          contextDocument?.addEventListener(\n            'touchend',\n            touchEvents.upHandler,\n            passiveIfSupported,\n          )\n        } else {\n          contextDocument?.addEventListener(\n            'mousemove',\n            mouseEvents.moveHandler,\n            passiveIfSupported,\n          )\n          contextDocument?.addEventListener(\n            'mouseup',\n            mouseEvents.upHandler,\n            passiveIfSupported,\n          )\n        }\n\n        table.setColumnSizingInfo((old) => ({\n          ...old,\n          startOffset: clientX,\n          startSize,\n          deltaOffset: 0,\n          deltaPercentage: 0,\n          columnSizingStart,\n          isResizingColumn: column.id,\n        }))\n      }\n    }\n  },",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createHeader#method:ColumnSizing.createHeader",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createHeader",
+          "unitKind": "method",
+          "name": "createHeader",
+          "qualifiedName": "ColumnSizing.createHeader",
+          "parentUnitId": null,
+          "startLine": 316,
+          "endLine": 516,
+          "signature": "createHeader: <TData extends RowData, TValue>(header: Header<TData, TValue>, table: Table<TData>): void =>",
+          "parameters": [
+            {
+              "name": "header",
+              "type": "Header<TData, TValue>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "table",
+              "type": "Table<TData>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["TData extends RowData", "TValue"],
+          "logicOutline": [],
+          "preconditions": [
+            "header is a Header instance with column and subHeaders",
+            "table is a Table instance exposing column sizing APIs and options"
+          ],
+          "postconditions": [
+            "header.getSize, header.getStart, header.getResizeHandler are assigned as functions",
+            "no value returned (void)"
+          ],
+          "invariants": [
+            "getSize returns sum of leaf column getSize values",
+            "getStart offset is cumulative of previous sibling headers",
+            "resize handler updates state only when column.getCanResize() is true"
+          ],
+          "edgeCases": [
+            "header.index === 0: getStart returns 0",
+            "header with no subHeaders: getSize sums own column size",
+            "touchstart with multiple touches: resize handler returns early",
+            "contextDocument undefined: safelyAccessDocument yields null and listeners not attached",
+            "clientXPos undefined in updateOffset: returns early without state change"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "If column missing or cannot resize, resize handler returns without side effects",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "header object mutated with getSize, getStart, getResizeHandler",
+            "during resize, table.setColumnSizing and table.setColumnSizingInfo called to update column sizing state"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "table.getColumn", "source": null, "kind": "internal" },
+            { "name": "table.setColumnSizing", "source": null, "kind": "internal" },
+            { "name": "table.setColumnSizingInfo", "source": null, "kind": "internal" },
+            { "name": "isTouchStartEvent", "source": null, "kind": "external" },
+            { "name": "passiveEventSupported", "source": null, "kind": "external" },
+            { "name": "safelyAccessDocument", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["Header", "Table", "RowData", "ColumnSizingState", "MouseEvent", "TouchEvent"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Attaches getSize, getStart, and getResizeHandler methods to a header, enabling computation of header dimensions and interactive resizing that mutates table column sizing state.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "rtl", "role": "columnResizeDirection causing delta sign flip" },
+            { "kind": "enum-value", "value": "onChange", "role": "columnResizeMode that applies sizing during move" },
+            { "kind": "magic-number", "value": "-0.999999", "role": "lower clamp for deltaPercentage" },
+            { "kind": "magic-number", "value": "100", "role": "factor for rounding resized sizes to two decimals" },
+            { "kind": "abi-fragment", "value": "mousemove", "role": "DOM event for mouse resize move" },
+            { "kind": "abi-fragment", "value": "mouseup", "role": "DOM event for mouse resize end" },
+            { "kind": "abi-fragment", "value": "touchmove", "role": "DOM event for touch resize move" },
+            { "kind": "abi-fragment", "value": "touchend", "role": "DOM event for touch resize end" }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "header.getSize() is called",
+              "then": "returns 150",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "header.getStart() is called",
+              "then": "returns 0",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "returned resize handler invoked with a mouse event",
+              "then": "table.setColumnSizing is not called and no state mutation occurs",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e1078eef17f606008095138911f0c11c9eb93c226164e35f0a07756ed8dcc884"
+        }
+      },
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createTable#method:ColumnSizing.createTable",
+        "unitKind": "method",
+        "name": "createTable",
+        "qualifiedName": "ColumnSizing.createTable",
+        "parentUnitId": null,
+        "startLine": 518,
+        "endLine": 552,
+        "isBehavioral": true,
+        "source": "  createTable: <TData extends RowData>(table: Table<TData>): void => {\n    table.setColumnSizing = (updater) =>\n      table.options.onColumnSizingChange?.(updater)\n    table.setColumnSizingInfo = (updater) =>\n      table.options.onColumnSizingInfoChange?.(updater)\n    table.resetColumnSizing = (defaultState) => {\n      table.setColumnSizing(\n        defaultState ? {} : (table.initialState.columnSizing ?? {}),\n      )\n    }\n    table.resetHeaderSizeInfo = (defaultState) => {\n      table.setColumnSizingInfo(\n        defaultState\n          ? getDefaultColumnSizingInfoState()\n          : (table.initialState.columnSizingInfo ??\n              getDefaultColumnSizingInfoState()),\n      )\n    }\n    table.getTotalSize = () =>\n      table.getHeaderGroups()[0]?.headers.reduce((sum, header) => {\n        return sum + header.getSize()\n      }, 0) ?? 0\n    table.getLeftTotalSize = () =>\n      table.getLeftHeaderGroups()[0]?.headers.reduce((sum, header) => {\n        return sum + header.getSize()\n      }, 0) ?? 0\n    table.getCenterTotalSize = () =>\n      table.getCenterHeaderGroups()[0]?.headers.reduce((sum, header) => {\n        return sum + header.getSize()\n      }, 0) ?? 0\n    table.getRightTotalSize = () =>\n      table.getRightHeaderGroups()[0]?.headers.reduce((sum, header) => {\n        return sum + header.getSize()\n      }, 0) ?? 0\n  },",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createTable#method:ColumnSizing.createTable",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__ColumnSizing.createTable",
+          "unitKind": "method",
+          "name": "createTable",
+          "qualifiedName": "ColumnSizing.createTable",
+          "parentUnitId": null,
+          "startLine": 518,
+          "endLine": 552,
+          "signature": "createTable: <TData extends RowData>(table: Table<TData>): void",
+          "parameters": [
+            {
+              "name": "table",
+              "type": "Table<TData>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["TData extends RowData"],
+          "logicOutline": [],
+          "preconditions": [
+            "table is a Table<TData> instance",
+            "table.options provides optional onColumnSizingChange and onColumnSizingInfoChange callbacks",
+            "table.getHeaderGroups/getLeftHeaderGroups/getCenterHeaderGroups/getRightHeaderGroups and initialState are accessible"
+          ],
+          "postconditions": [
+            "table has setColumnSizing, setColumnSizingInfo, resetColumnSizing, resetHeaderSizeInfo, getTotalSize, getLeftTotalSize, getCenterTotalSize, getRightTotalSize methods defined as functions"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "If header groups array is empty, getTotalSize/getLeftTotalSize/getCenterTotalSize/getRightTotalSize return 0 via ?? 0",
+            "resetColumnSizing(true) passes {} to setColumnSizing",
+            "resetColumnSizing(false) passes table.initialState.columnSizing ?? {}",
+            "resetHeaderSizeInfo(true) passes getDefaultColumnSizingInfoState()",
+            "resetHeaderSizeInfo(false) passes table.initialState.columnSizingInfo ?? getDefaultColumnSizingInfoState()"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "table.setColumnSizing",
+            "table.setColumnSizingInfo",
+            "table.resetColumnSizing",
+            "table.resetHeaderSizeInfo",
+            "table.getTotalSize",
+            "table.getLeftTotalSize",
+            "table.getCenterTotalSize",
+            "table.getRightTotalSize"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getDefaultColumnSizingInfoState", "source": null, "kind": "internal" },
+            { "name": "table.options.onColumnSizingChange", "source": null, "kind": "external" },
+            { "name": "table.options.onColumnSizingInfoChange", "source": null, "kind": "external" },
+            { "name": "table.getHeaderGroups", "source": null, "kind": "internal" },
+            { "name": "table.getLeftHeaderGroups", "source": null, "kind": "internal" },
+            { "name": "table.getCenterHeaderGroups", "source": null, "kind": "internal" },
+            { "name": "table.getRightHeaderGroups", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Table<TData>", "RowData", "getDefaultColumnSizingInfoState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Attaches column sizing management methods to the provided table instance, wiring option callbacks and providing aggregate size computations for header groups.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "5827df1a282c1050145942de4c654022ebb40015fa083d720964ca687059b26c"
+        }
+      },
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__getDefaultColumnSizingInfoState#function:getDefaultColumnSizingInfoState",
+        "unitKind": "function",
+        "name": "getDefaultColumnSizingInfoState",
+        "qualifiedName": "getDefaultColumnSizingInfoState",
+        "parentUnitId": null,
+        "startLine": 226,
+        "endLine": 233,
+        "isBehavioral": false,
+        "source": "const getDefaultColumnSizingInfoState = (): ColumnSizingInfoState => ({\n  startOffset: null,\n  startSize: null,\n  deltaOffset: null,\n  deltaPercentage: null,\n  isResizingColumn: false,\n  columnSizingStart: [],\n})",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__getDefaultColumnSizingInfoState#function:getDefaultColumnSizingInfoState",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__getDefaultColumnSizingInfoState",
+          "unitKind": "function",
+          "name": "getDefaultColumnSizingInfoState",
+          "qualifiedName": "getDefaultColumnSizingInfoState",
+          "parentUnitId": null,
+          "startLine": 226,
+          "endLine": 233,
+          "signature": "getDefaultColumnSizingInfoState(): ColumnSizingInfoState",
+          "parameters": [],
+          "returnType": "ColumnSizingInfoState",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns a new object of type ColumnSizingInfoState with startOffset null, startSize null, deltaOffset null, deltaPercentage null, isResizingColumn false, columnSizingStart []"
+          ],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["ColumnSizingInfoState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns a fresh default state object for column sizing info, with all offset/size fields null, isResizingColumn false, and columnSizingStart an empty array.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1b7ef395d91803ec5224bee5ae9bbdecc2bb798883e55da44b0b56e6cf87099f"
+        }
+      },
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__passiveEventSupported#function:passiveEventSupported",
+        "unitKind": "function",
+        "name": "passiveEventSupported",
+        "qualifiedName": "passiveEventSupported",
+        "parentUnitId": null,
+        "startLine": 556,
+        "endLine": 577,
+        "isBehavioral": true,
+        "source": "export function passiveEventSupported() {\n  if (typeof passiveSupported === 'boolean') return passiveSupported\n\n  let supported = false\n  try {\n    const options = {\n      get passive() {\n        supported = true\n        return false\n      },\n    }\n\n    const noop = () => {}\n\n    window.addEventListener('test', noop, options)\n    window.removeEventListener('test', noop)\n  } catch (err) {\n    supported = false\n  }\n  passiveSupported = supported\n  return passiveSupported\n}",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__passiveEventSupported#function:passiveEventSupported",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__passiveEventSupported",
+          "unitKind": "function",
+          "name": "passiveEventSupported",
+          "qualifiedName": "passiveEventSupported",
+          "parentUnitId": null,
+          "startLine": 556,
+          "endLine": 577,
+          "signature": "export function passiveEventSupported()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "Returns a boolean indicating passive event listener support.",
+            "Stores the detected boolean in the module-level `passiveSupported` variable to short-circuit future calls."
+          ],
+          "invariants": ["The returned value is stable after first evaluation within the module lifecycle."],
+          "edgeCases": [
+            "If `passiveSupported` is already a boolean, returns it immediately without probing.",
+            "If `window.addEventListener` throws during probe, catches exception and returns false.",
+            "Probe uses a temporary 'test' event with a noop listener that is removed immediately."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": "false" },
+          "stateMutations": ["Assigns module-level variable `passiveSupported` to the detected support boolean."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "window.addEventListener", "source": null, "kind": "external" },
+            { "name": "window.removeEventListener", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["passiveSupported", "window"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Detects whether the current browser environment supports passive event listeners by probing a getter on an addEventListener options object, and caches the result in a module-level variable for subsequent calls.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "passiveEventSupported() is invoked",
+              "then": "returns true and sets passiveSupported to true",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "passiveEventSupported() is invoked",
+              "then": "catches error, returns false, and sets passiveSupported to false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "passiveEventSupported() is invoked",
+              "then": "returns that boolean without calling window.addEventListener",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "9b574c0c202226c6df6fc4d0646c32a3b316ba6bb44b1c95f54d034d7ba02165"
+        }
+      },
+      {
+        "unitId": "packages/table-core/src/features/ColumnSizing.ts__isTouchStartEvent#function:isTouchStartEvent",
+        "unitKind": "function",
+        "name": "isTouchStartEvent",
+        "qualifiedName": "isTouchStartEvent",
+        "parentUnitId": null,
+        "startLine": 579,
+        "endLine": 581,
+        "isBehavioral": false,
+        "source": "function isTouchStartEvent(e: unknown): e is TouchEvent {\n  return (e as TouchEvent).type === 'touchstart'\n}",
+        "detail": {
+          "unitId": "packages/table-core/src/features/ColumnSizing.ts__isTouchStartEvent#function:isTouchStartEvent",
+          "fileId": "packages/table-core/src/features/ColumnSizing.ts__isTouchStartEvent",
+          "unitKind": "function",
+          "name": "isTouchStartEvent",
+          "qualifiedName": "isTouchStartEvent",
+          "parentUnitId": null,
+          "startLine": 579,
+          "endLine": 581,
+          "signature": "function isTouchStartEvent(e: unknown): e is TouchEvent",
+          "parameters": [
+            { "name": "e", "type": "unknown", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "e is TouchEvent",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": ["If true is returned, the argument e is a TouchEvent with type 'touchstart'."],
+          "invariants": [],
+          "edgeCases": [
+            "For null or undefined arguments, e.type is undefined, so the function returns false.",
+            "For any object lacking a type of 'touchstart', returns false."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["TouchEvent"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Type guard that returns true only when the given unknown event is a TouchEvent whose type property equals 'touchstart', enabling safe narrowing to TouchEvent.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "touchstart",
+              "role": "String compared against event.type to identify touchstart events in the type guard."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isTouchStartEvent(e) is invoked",
+              "then": "Returns true and narrows e to TouchEvent in TypeScript.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "isTouchStartEvent(e) is invoked",
+              "then": "Returns false (no throw).",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f2a21ee72799a4af2ad790c56a55fb951f02c74f42474099141cd1ae5a4b35e4"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/table-core/src/types.ts",
+    "packages/table-core/src/utils.ts",
+    "packages/table-core/src/features/ColumnPinning.ts",
+    "packages/table-core/src/utils/document.ts"
+  ],
+  "in": ["packages/table-core/src/types.ts", "packages/table-core/src/core/table.ts"],
+  "externals": [".."],
+  "impact": { "seeds": 8, "callers": 3, "impactedFiles": [] }
+}

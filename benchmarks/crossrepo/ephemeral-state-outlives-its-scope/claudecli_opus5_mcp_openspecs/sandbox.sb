@@ -1,0 +1,34 @@
+(version 1)
+(allow default)
+
+;; ---- benchmark tree: blind ALL of it, checkouts included, nothing re-opened ----
+;; This arm's surface is the plumbline MCP server, so it has no business
+;; reading anything under the benchmark root. Denying it wholesale (no allow rule
+;; follows) means golden.json, DONOTREADTHISFOLDER/, every sibling arm's
+;; ranked.json/result.json AND all fourteen checkouts fail with EPERM. A path in
+;; the answer therefore cannot have come off disk.
+(deny file-read* (subpath "/Users/sauravverma/programs/benchmarks/react-ecosystem"))
+(deny file-write* (subpath "/Users/sauravverma/programs/benchmarks/react-ecosystem"))
+
+;; ---- no session transcript is readable: not an earlier run's, not this one's ----
+(deny file-read* (subpath "/Users/sauravverma/.claude/projects"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/history.jsonl"))
+
+;; ---- the operator's customizations cannot reach the model ----
+;; claudecli_opus5_bare got this from --safe-mode. This arm cannot use --safe-mode:
+;; it disables MCP servers, which for this arm is the whole search surface. So the
+;; same guarantee is taken at the kernel instead, and the CLI's own auth files
+;; (~/.claude/.credentials.json, ~/.claude.json) are deliberately left readable.
+(deny file-read* (subpath "/Users/sauravverma/.claude/CLAUDE.md"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/skills"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/plugins"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/agents"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/commands"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/hooks"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/output-styles"))
+
+;; Network is deliberately left open: the MCP server IS the search surface and it
+;; speaks HTTP on localhost. seatbelt cannot scope a network rule to one port on
+;; this profile version, so purity of the surface is enforced by the tool
+;; allowlist (--allowedTools / --disallowedTools) and audited from the transcript
+;; by finalize.py, which fails the run on any non-MCP tool call.

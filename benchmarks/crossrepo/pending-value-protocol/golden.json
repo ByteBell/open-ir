@@ -1,0 +1,64 @@
+{
+  "id": "xrepo-v5-7-pending-value-protocol-medium",
+  "question": "React tightens what a pending value that suspends rendering must look like: any awaitable consumed during render must carry a resolved status/value/reason protocol stamped on the object itself. Which async feeders across the folder produce, shim, or throw such pending values into the renderer, and which files must be updated?",
+  "counts": {
+    "min_repos": 4,
+    "min_files": 9
+  },
+  "repo_commits": {
+    "react": "3a717e42438afac81020cdec297dadb5613a4304",
+    "jotai": "5c4ca26b0db5571114be58393e17854a771f7790",
+    "db": "7f0fa36ff6d48b0494ed5f6a1223fd18c317e41f",
+    "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76"
+  },
+  "expected": [
+    {
+      "repo": "react",
+      "knowledgeId": "2a9d1614-943b-44ad-b7cf-edda2f37ddf9",
+      "files": ["packages/react/src/ReactHooks.js", "packages/react-reconciler/src/ReactFiberThenable.js"]
+    },
+    {
+      "repo": "jotai",
+      "knowledgeId": "581a242e-3f4c-45db-8e84-c69cf159ac44",
+      "files": ["src/react/useAtomValue.ts", "src/vanilla/utils/atomWithObservable.ts"]
+    },
+    {
+      "repo": "db",
+      "knowledgeId": "659659a1-0515-4ae1-92a9-1961c8c10abe",
+      "files": ["packages/react-db/src/useLiveSuspenseQuery.ts"]
+    },
+    {
+      "repo": "query",
+      "knowledgeId": "0c574639-1088-4233-a793-3a4397e6c431",
+      "files": [
+        "packages/query-core/src/thenable.ts",
+        "packages/query-core/src/queryObserver.ts",
+        "packages/react-query/src/useBaseQuery.ts",
+        "packages/react-query/src/useQueries.ts"
+      ]
+    }
+  ],
+  "grader_notes": {
+    "why_cross_repo": "The protocol lives in react (`packages/react/src/ReactHooks.js` for `use`, `packages/react-reconciler/src/ReactFiberThenable.js` for the status tracking). jotai both consumes and shims it \u2014 `src/react/useAtomValue.ts` prefers `React.use` and stamps promises via its status-attachment helper, fed by async promises built in `src/vanilla/utils/atomWithObservable.ts`. TanStack DB throws a loading promise from its Suspense hook (`packages/react-db/src/useLiveSuspenseQuery.ts`). One react protocol change hits two async feeders that share no code. v5 additions (query repo, cloned after v4 authoring): TanStack Query is the most explicit React-thenable shim in the folder \u2014 packages/query-core/src/thenable.ts authors Thenable types 'matching React's promise shape' and pendingThenable()/tryResolveSync() fabricate stamped pending values; queryObserver.ts maintains #currentThenable and exposes it as result.promise (:591); react-query useBaseQuery.ts throws fetchOptimistic() into render (:132); useQueries.ts throws a raw unstamped Promise.all(suspensePromises) (:305). Second-order sites (retryer.ts pendingThenable producer :83, suspense.ts fetchOptimistic definition, hydration.ts tryResolveSync consumer) and the preact-query mirrors (Preact's renderer, not React's) are noted but outside the minimum set. [v5 revision: re-verified against current disk with query/table repos present; expected set updated accordingly.]",
+    "grep_resistance": "The question avoids 'thenable', 'use()', 'Suspense', and 'promise'. 'Pending value', 'awaitable', and 'stamped protocol' match nothing literally; grepping 'status' is hopeless across 10 repos. Finding the jotai shim requires reading its React entry hook; finding the db hook requires knowing its react-db package throws promises \u2014 both are structural walks from package entry points."
+  },
+  "benchmark": {
+    "model": "claude-opus-4-8",
+    "cacheAssumption": "none (no cache read/write; full context re-billed every turn)",
+    "pricingUsdPerMtok": {
+      "input": 5.0,
+      "output": 25.0
+    },
+    "retrievalMethod": "structural: per-repo listing + package entry hop + expected files",
+    "agentTurns": 7,
+    "tokens": {
+      "contentTokens": 30739,
+      "billedInput": 194386,
+      "output": 900
+    },
+    "costUsd": 0.9944,
+    "costUsdFable5": 1.9889,
+    "retrievalTimeSeconds": 0.0025,
+    "estimatedAgentSeconds": 26.5
+  }
+}

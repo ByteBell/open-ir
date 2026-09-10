@@ -1,0 +1,1373 @@
+{
+  "schema": 1,
+  "kind": "file",
+  "repoName": "redux-toolkit",
+  "commitHash": "b1c5130154c454ca8387f55da6122fcb507c560c",
+  "generatedAt": "2026-08-01T22:01:37.770Z",
+  "file": {
+    "relativePath": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts",
+    "language": "typescript",
+    "sizeBytes": 6587,
+    "tokenCount": 1542,
+    "model": "tencent/hy3",
+    "analysedAt": "2026-08-01T15:12:48.590Z",
+    "module": {
+      "purpose": "Provides RTK Query middleware builder that schedules removal of unused query cache entries after `keepUnusedDataFor` timeout, handling unsubscribe, reset, and rehydration actions.",
+      "summary": "This file implements the cache collection middleware for RTK Query. It exports a builder that creates a handler listening for unsubscribe/fulfilled/rejected/upserted actions, reset, and rehydration, then schedules cache entry removal via setTimeout with clamping to avoid 32-bit overflow. It tracks timeouts per cache key, aborts running queries, and dispatches removal when no subscriptions remain.",
+      "businessContext": "RTK Query caching layer; ensures unused data is garbage-collected after configurable delay. If broken, memory grows or data disappears prematurely.",
+      "classes": [],
+      "functions": [
+        "buildCacheCollectionHandler (~L55-204): Builds cache collection middleware handler",
+        "anySubscriptionsRemainingForKey (~L75-83): Returns whether subscriptions remain for key",
+        "abortAllPromises (~L87-93): Aborts all promises in provided map",
+        "handler (~L95-137): Middleware handler processing actions for cache cleanup",
+        "handleUnsubscribeMany (~L139-151): Processes multiple cache keys for unsubscribe",
+        "handleUnsubscribe (~L153-201): Schedules single cache entry removal with timeout"
+      ],
+      "keywords": [
+        "RTK Query",
+        "cache collection",
+        "keepUnusedDataFor",
+        "setTimeout",
+        "middleware",
+        "rehydration",
+        "unsubscribe",
+        "32-bit timer clamp"
+      ],
+      "ontologyConcepts": ["cache eviction", "subscription tracking", "middleware handler", "timeout scheduling"],
+      "businessEntities": ["QueryCacheKey", "endpoint", "cache entry", "subscription"],
+      "systemCapabilities": [
+        "schedule cache removal",
+        "abort running queries",
+        "handle rehydration",
+        "reset api state"
+      ],
+      "configDependencies": ["config.keepUnusedDataFor"],
+      "importsInternal": [
+        {
+          "spec": "../../endpointDefinitions",
+          "symbols": ["QueryDefinition"],
+          "anchor": { "startLine": 2, "endLine": 2 },
+          "resolvedRelativePath": "packages/toolkit/src/query/endpointDefinitions.ts",
+          "resolvedFileId": "packages/toolkit/src/query/endpointDefinitions.ts",
+          "resolvedHint": "packages/toolkit/src/query/endpointDefinitions.ts"
+        },
+        {
+          "spec": "../apiState",
+          "symbols": ["ConfigState", "QueryCacheKey", "QuerySubState"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/apiState.ts"
+        },
+        {
+          "spec": "../rtkImports",
+          "symbols": ["isAnyOf"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/rtkImports.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/rtkImports.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/rtkImports.ts"
+        },
+        {
+          "spec": "./types",
+          "symbols": [
+            "ApiMiddlewareInternalHandler",
+            "InternalHandlerBuilder",
+            "QueryStateMeta",
+            "SubMiddlewareApi",
+            "TimeoutId"
+          ],
+          "anchor": { "startLine": 5, "endLine": 11 },
+          "resolvedRelativePath": "packages/toolkit/src/query/core/buildMiddleware/types.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/buildMiddleware/types.ts",
+          "resolvedHint": "packages/toolkit/src/query/core/buildMiddleware/types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@internal/query/apiTypes",
+          "symbols": ["getEndpointDefinition"],
+          "package": "@internal/query",
+          "subpath": "apiTypes",
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates currentRemovalTimeouts object by setting and deleting keys per queryCacheKey",
+          "Calls abort() on pending promises in runningQueries and runningMutations maps",
+          "Dispatches removeQueryResult and running query abort actions via api/mwApi"
+        ]
+      },
+      "integrationSurface": [
+        {
+          "kind": "event",
+          "role": "consumes",
+          "address": "unsubscribeQueryResult",
+          "payloadRef": "QueryCacheKey",
+          "rawKind": null
+        },
+        { "kind": "event", "role": "consumes", "address": "cacheEntriesUpserted", "payloadRef": null, "rawKind": null },
+        { "kind": "event", "role": "consumes", "address": "queryThunk.fulfilled", "payloadRef": null, "rawKind": null },
+        { "kind": "event", "role": "consumes", "address": "queryThunk.rejected", "payloadRef": null, "rawKind": null },
+        { "kind": "event", "role": "consumes", "address": "resetApiState", "payloadRef": null, "rawKind": null },
+        { "kind": "event", "role": "consumes", "address": "REHYDRATE", "payloadRef": "queries", "rawKind": null },
+        {
+          "kind": "event",
+          "role": "provides",
+          "address": "removeQueryResult",
+          "payloadRef": "QueryCacheKey",
+          "rawKind": null
+        }
+      ],
+      "contractsProvided": [
+        {
+          "name": "ReferenceCacheCollection",
+          "shape": "type ReferenceCacheCollection = never",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "CacheCollectionQueryExtraOptions",
+          "shape": "type CacheCollectionQueryExtraOptions = { keepUnusedDataFor?: number }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "THIRTY_TWO_BIT_MAX_INT",
+          "shape": "const THIRTY_TWO_BIT_MAX_INT = 2_147_483_647",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "THIRTY_TWO_BIT_MAX_TIMER_SECONDS",
+          "shape": "const THIRTY_TWO_BIT_MAX_TIMER_SECONDS = 2_147_483_647 / 1_000 - 1",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "buildCacheCollectionHandler",
+          "shape": "const buildCacheCollectionHandler: InternalHandlerBuilder = ({ reducerPath, api, queryThunk, context, internalState, selectors: { selectQueryEntry, selectConfig }, getRunningQueryThunk, mwApi }) => ApiMiddlewareInternalHandler",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "getEndpointDefinition",
+          "shape": "(context, endpointName) => QueryDefinition<any, any, any, any>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isAnyOf",
+          "shape": "(...matchers: ActionMatcher[]) => (action: AnyAction) => boolean",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/rtkImports.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/rtkImports.ts"
+        },
+        {
+          "name": "selectQueryEntry",
+          "shape": "(state, queryCacheKey: QueryCacheKey) => { endpointName?: string, originalArgs: any } | undefined",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "selectConfig",
+          "shape": "(state) => ConfigState<string>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "removeQueryResult",
+          "shape": "({ queryCacheKey: QueryCacheKey }) => Action",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "unsubscribeQueryResult",
+          "shape": "{ match: ActionMatcher, payload: { queryCacheKey: QueryCacheKey } }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "cacheEntriesUpserted",
+          "shape": "{ match: ActionMatcher, payload: { queryDescription: { queryCacheKey: QueryCacheKey } }[] }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "queryThunk.fulfilled",
+          "shape": "ActionCreator (matched as fulfilled)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "queryThunk.rejected",
+          "shape": "ActionCreator (matched as rejected)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "resetApiState",
+          "shape": "{ match: ActionMatcher }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "getRunningQueryThunk",
+          "shape": "(endpointName: string, originalArgs: any) => { abort?: () => void } | void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "extractRehydrationInfo",
+          "shape": "(action) => { queries: Record<string, any> } | null",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "hasRehydrationInfo",
+          "shape": "(action) => boolean",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "ConfigState",
+          "shape": "type ConfigState<string> = { keepUnusedDataFor: number, ... }",
+          "resolvedRelativePath": "packages/toolkit/src/query/core/apiState.ts",
+          "resolvedFileId": "packages/toolkit/src/query/core/apiState.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "imports_and_types",
+          "intent": "Declare imports, type aliases, and timer constants",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 1, "endLine": 53 }
+        },
+        {
+          "name": "builder_setup",
+          "intent": "Define handler builder and inner helper closures",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 55, "endLine": 93 }
+        },
+        {
+          "name": "action_handling",
+          "intent": "React to unsubscribe, reset, and rehydration actions",
+          "structureKind": "branch",
+          "predicate": "canTriggerUnsubscribe(action)",
+          "branchOutcomes": [
+            "cacheEntriesUpserted.match",
+            "unsubscribeQueryResult.match",
+            "queryThunk meta",
+            "resetApiState.match",
+            "hasRehydrationInfo"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 95, "endLine": 137 }
+        },
+        {
+          "name": "schedule_removal",
+          "intent": "Schedule single cache entry removal after clamped timeout",
+          "structureKind": "branch",
+          "predicate": "!anySubscriptionsRemainingForKey(queryCacheKey)",
+          "branchOutcomes": ["schedule setTimeout", "skip if Infinity", "clear existing timeout"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 153, "endLine": 201 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "const",
+          "name": "THIRTY_TWO_BIT_MAX_INT",
+          "signature": "export const THIRTY_TWO_BIT_MAX_INT = 2_147_483_647",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 52, "endLine": 52 }
+        },
+        {
+          "kind": "const",
+          "name": "THIRTY_TWO_BIT_MAX_TIMER_SECONDS",
+          "signature": "export const THIRTY_TWO_BIT_MAX_TIMER_SECONDS = 2_147_483_647 / 1_000 - 1",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 53, "endLine": 53 }
+        },
+        {
+          "kind": "function",
+          "name": "buildCacheCollectionHandler",
+          "signature": "export const buildCacheCollectionHandler: InternalHandlerBuilder = ({\n  reducerPath,\n  api,\n  queryThunk,\n  context,\n  internalState,\n  selectors: { selectQueryEntry, selectConfig },\n  getRunningQueryThunk,\n  mwApi,\n}) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": "ApiMiddlewareInternalHandler",
+          "exported": true,
+          "anchor": { "startLine": 55, "endLine": 64 }
+        },
+        {
+          "kind": "function",
+          "name": "anySubscriptionsRemainingForKey",
+          "signature": "function anySubscriptionsRemainingForKey(queryCacheKey: string) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 75, "endLine": 75 }
+        },
+        {
+          "kind": "function",
+          "name": "abortAllPromises",
+          "signature": "function abortAllPromises<T extends { abort?: () => void }>(\n    promiseMap: Map<string, T | undefined>,\n  ): void {",
+          "generics": "<T extends { abort?: () => void }>",
+          "decorators": [],
+          "returnType": "void",
+          "exported": false,
+          "anchor": { "startLine": 87, "endLine": 89 }
+        },
+        {
+          "kind": "function",
+          "name": "handler",
+          "signature": "const handler: ApiMiddlewareInternalHandler = (action, mwApi) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 95, "endLine": 95 }
+        },
+        {
+          "kind": "function",
+          "name": "handleUnsubscribeMany",
+          "signature": "function handleUnsubscribeMany(\n    cacheKeys: QueryCacheKey[],\n    api: SubMiddlewareApi,\n    config: ConfigState<string>,\n  ) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 139, "endLine": 143 }
+        },
+        {
+          "kind": "function",
+          "name": "handleUnsubscribe",
+          "signature": "function handleUnsubscribe(\n    queryCacheKey: QueryCacheKey,\n    endpointName: string,\n    api: SubMiddlewareApi,\n    config: ConfigState<string>,\n  ) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 153, "endLine": 158 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "alias",
+          "name": "ReferenceCacheCollection",
+          "shape": "export type ReferenceCacheCollection = never",
+          "discriminant": null,
+          "anchor": { "startLine": 13, "endLine": 13 }
+        },
+        {
+          "kind": "type",
+          "name": "CacheCollectionQueryExtraOptions",
+          "shape": "export type CacheCollectionQueryExtraOptions = {\n  /**\n   * Overrides the api-wide definition of `keepUnusedDataFor` for this endpoint only. _(This value is in seconds.)_\n   *\n   * This is how long RTK Query will keep your data cached for **after** the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.\n   */\n  keepUnusedDataFor?: number\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 39, "endLine": 46 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "keepUnusedDataFor === Infinity",
+          "handled": true,
+          "behavior": "Return immediately, never schedule removal",
+          "anchor": { "startLine": 166, "endLine": 169 }
+        },
+        {
+          "inputShape": "keepUnusedDataFor exceeds 32-bit max seconds",
+          "handled": true,
+          "behavior": "Clamped to THIRTY_TWO_BIT_MAX_TIMER_SECONDS",
+          "anchor": { "startLine": 174, "endLine": 177 }
+        },
+        {
+          "inputShape": "negative keepUnusedDataFor",
+          "handled": true,
+          "behavior": "Clamped to 0 via Math.max(0, ...)",
+          "anchor": { "startLine": 174, "endLine": 177 }
+        },
+        {
+          "inputShape": "rehydration before endpoint injected",
+          "handled": true,
+          "behavior": "Uses global keepUnusedDataFor instead of endpoint-specific (noted)",
+          "anchor": { "startLine": 128, "endLine": 130 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": ">",
+          "left": "subscriptions.size",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Determine if any subscriptions exist for cache key",
+          "anchor": { "startLine": 81, "endLine": 81 }
+        },
+        {
+          "operator": "==",
+          "left": "keepUnusedDataFor",
+          "right": "Infinity",
+          "inclusive": true,
+          "intent": "Skip scheduling when infinite retention requested",
+          "anchor": { "startLine": 166, "endLine": 166 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Non-null assertion on extractRehydrationInfo result; no explicit catch",
+          "fallback": null,
+          "anchor": { "startLine": 120, "endLine": 120 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "non-null",
+          "description": "currentRemovalTimeouts holds TimeoutId per queryCacheKey and is mutated consistently",
+          "anchor": { "startLine": 85, "endLine": 85 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Cache removal occurs only after timeout and only if no subscriptions at schedule and fire time",
+          "anchor": { "startLine": 179, "endLine": 186 }
+        },
+        {
+          "kind": "precondition",
+          "description": "Endpoint definition fetched via getEndpointDefinition before reading keepUnusedDataFor",
+          "anchor": { "startLine": 159, "endLine": 164 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "internalState.currentSubscriptions map is populated by other middleware",
+          "anchor": { "startLine": 76, "endLine": 76 }
+        },
+        {
+          "kind": "config",
+          "description": "config.keepUnusedDataFor is provided by ConfigState",
+          "anchor": { "startLine": 164, "endLine": 164 }
+        },
+        {
+          "kind": "platform",
+          "description": "setTimeout delay is stored as 32-bit int in browsers",
+          "anchor": { "startLine": 48, "endLine": 53 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Exact shape of QueryStateMeta and TimeoutId types not defined here",
+          "affects": "type_shapes",
+          "anchor": { "startLine": 85, "endLine": 85 },
+          "resolution": null
+        },
+        {
+          "question": "Behavior when getEndpointDefinition returns undefined",
+          "affects": "error_handling",
+          "anchor": { "startLine": 159, "endLine": 162 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Uses setTimeout for deferred removal; aborts running queries when removing. Handler can be invoked multiple times safely."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "evicts-query-result-after-unused-timeout",
+          "scenario": "A query result with no remaining subscriptions is removed from the cache after keepUnusedDataFor elapses.",
+          "given": [
+            "a query result with queryCacheKey 'Q1' has no remaining subscriptions",
+            "endpoint/query keepUnusedDataFor is 5"
+          ],
+          "when": "cacheCollectionHandler processes unsubscribeQueryResult for 'Q1' and 5000ms elapse with no resubscription",
+          "then": "removeQueryResult is dispatched with { queryCacheKey: 'Q1' }",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "pins the core eviction contract: unused data is removed only after the configured idle window."
+        },
+        {
+          "testId": "does-not-evict-while-subscribed",
+          "scenario": "A query result that still has active subscriptions is retained when the idle timeout fires.",
+          "given": ["query result 'Q1' has 1 active subscription", "removal timeout for 'Q1' is pending"],
+          "when": "the pending removal timeout for 'Q1' fires",
+          "then": "removeQueryResult is NOT dispatched and the cache entry is retained, deleting the timeout slot",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "guards the invariant that live, subscribed data is never prematurely evicted."
+        },
+        {
+          "testId": "infinite-keep-unused-data-for-never-evicts",
+          "scenario": "An endpoint configured with keepUnusedDataFor = Infinity keeps cached data forever after unsubscribing.",
+          "given": ["endpoint keepUnusedDataFor is Infinity"],
+          "when": "unsubscribeQueryResult is processed for that endpoint",
+          "then": "handleUnsubscribe returns early and no removal timeout is scheduled",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "preserves the documented 'keep this forever' semantics."
+        },
+        {
+          "testId": "clamps-delay-to-32-bit-timer-max",
+          "scenario": "keepUnusedDataFor values exceeding the 32-bit timer max are clamped so setTimeout does not wrap around.",
+          "given": ["THIRTY_TWO_BIT_MAX_TIMER_SECONDS is exported", "keepUnusedDataFor exceeds the 32-bit max"],
+          "when": "handleUnsubscribe schedules the removal timeout",
+          "then": "the setTimeout delay is Math.max(0, Math.min(keepUnusedDataFor, THIRTY_TWO_BIT_MAX_TIMER_SECONDS))",
+          "targets": [],
+          "oracleKind": "property",
+          "rationale": "prevents the setTimeout 32-bit wrap that would otherwise evict immediately."
+        },
+        {
+          "testId": "aborts-running-query-before-removal",
+          "scenario": "Before a cache entry is removed, any in-flight query for that cache key is aborted.",
+          "given": ["a running query thunk exists for queryCacheKey 'Q1'", "no subscriptions remain for 'Q1'"],
+          "when": "the removal timeout for 'Q1' fires and no resubscription occurred",
+          "then": "getRunningQueryThunk(endpointName, originalArgs) is dispatched and the returned promise's abort() is called, then removeQueryResult is dispatched",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "ensures in-flight resources tied to a stale query are released on eviction."
+        },
+        {
+          "testId": "reset-api-state-clears-timeouts-and-aborts-all",
+          "scenario": "Dispatching resetApiState clears every pending removal timeout and aborts all running queries and mutations.",
+          "given": [
+            "currentRemovalTimeouts has pending entries",
+            "internalState.runningQueries and runningMutations are non-empty"
+          ],
+          "when": "api.util.resetApiState action is processed",
+          "then": "each timeout is cleared and deleted, and abortAllPromises is called on both runningQueries and runningMutations",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "guarantees a full state reset stops all timers and in-flight operations."
+        },
+        {
+          "testId": "rehydration-triggers-cache-cleanup",
+          "scenario": "After rehydration, the handler cleans up cache entries for the rehydrated query keys.",
+          "given": [
+            "context.hasRehydrationInfo(action) is true",
+            "context.extractRehydrationInfo(action) returns { queries: { 'Q1': ... } }"
+          ],
+          "when": "the rehydration action is processed",
+          "then": "handleUnsubscribeMany is called with Object.keys(queries) as QueryCacheKey[]",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "keeps the cache consistent across state rehydration boundaries."
+        },
+        {
+          "testId": "cache-entries-upserted-triggers-unsubscribe",
+          "scenario": "When cache entries are upserted, the handler evaluates unsubscription for each affected query cache key.",
+          "given": ["cacheEntriesUpserted action with payload [{ queryDescription: { queryCacheKey: 'Q1' } }]"],
+          "when": "the action is processed and canTriggerUnsubscribe matches",
+          "then": "handleUnsubscribeMany is called with ['Q1']",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "ensures upserted entries honor the idle eviction policy."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import statements (L1-11)",
+        "export type ReferenceCacheCollection (L13)",
+        "export type CacheCollectionQueryExtraOptions (L39-46)",
+        "export const THIRTY_TWO_BIT_MAX_INT (L52)",
+        "export const THIRTY_TWO_BIT_MAX_TIMER_SECONDS (L53)",
+        "export const buildCacheCollectionHandler (L55-204)"
+      ],
+      "moduleLevelCode": "Imports and constant/type exports; no top-level executable side effects beyond declarations.",
+      "exports": [
+        { "name": "ReferenceCacheCollection", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "CacheCollectionQueryExtraOptions", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "THIRTY_TWO_BIT_MAX_INT", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "THIRTY_TWO_BIT_MAX_TIMER_SECONDS", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "buildCacheCollectionHandler", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "getEndpointDefinition", "module": "@internal/query/apiTypes", "alias": null, "kind": "external" },
+        { "symbol": "QueryDefinition", "module": "../../endpointDefinitions", "alias": null, "kind": "internal" },
+        { "symbol": "ConfigState", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QueryCacheKey", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "QuerySubState", "module": "../apiState", "alias": null, "kind": "internal" },
+        { "symbol": "isAnyOf", "module": "../rtkImports", "alias": null, "kind": "internal" },
+        { "symbol": "ApiMiddlewareInternalHandler", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "InternalHandlerBuilder", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "QueryStateMeta", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "SubMiddlewareApi", "module": "./types", "alias": null, "kind": "internal" },
+        { "symbol": "TimeoutId", "module": "./types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        { "name": "THIRTY_TWO_BIT_MAX_INT", "value": "2_147_483_647", "kind": "number" },
+        { "name": "THIRTY_TWO_BIT_MAX_TIMER_SECONDS", "value": "2_147_483_647 / 1_000 - 1", "kind": "number" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+        "unitKind": "function",
+        "name": "buildCacheCollectionHandler",
+        "qualifiedName": "buildCacheCollectionHandler",
+        "parentUnitId": null,
+        "startLine": 55,
+        "endLine": 204,
+        "isBehavioral": true,
+        "source": "export const buildCacheCollectionHandler: InternalHandlerBuilder = ({\n  reducerPath,\n  api,\n  queryThunk,\n  context,\n  internalState,\n  selectors: { selectQueryEntry, selectConfig },\n  getRunningQueryThunk,\n  mwApi,\n}) => {\n  const { removeQueryResult, unsubscribeQueryResult, cacheEntriesUpserted } =\n    api.internalActions\n\n  const canTriggerUnsubscribe = isAnyOf(\n    unsubscribeQueryResult.match,\n    queryThunk.fulfilled,\n    queryThunk.rejected,\n    cacheEntriesUpserted.match,\n  )\n\n  function anySubscriptionsRemainingForKey(queryCacheKey: string) {\n    const subscriptions = internalState.currentSubscriptions.get(queryCacheKey)\n    if (!subscriptions) {\n      return false\n    }\n\n    const hasSubscriptions = subscriptions.size > 0\n    return hasSubscriptions\n  }\n\n  const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {}\n\n  function abortAllPromises<T extends { abort?: () => void }>(\n    promiseMap: Map<string, T | undefined>,\n  ): void {\n    for (const promise of promiseMap.values()) {\n      promise?.abort?.()\n    }\n  }\n\n  const handler: ApiMiddlewareInternalHandler = (action, mwApi) => {\n    const state = mwApi.getState()\n    const config = selectConfig(state)\n\n    if (canTriggerUnsubscribe(action)) {\n      let queryCacheKeys: QueryCacheKey[]\n\n      if (cacheEntriesUpserted.match(action)) {\n        queryCacheKeys = action.payload.map(\n          (entry) => entry.queryDescription.queryCacheKey,\n        )\n      } else {\n        const { queryCacheKey } = unsubscribeQueryResult.match(action)\n          ? action.payload\n          : action.meta.arg\n        queryCacheKeys = [queryCacheKey]\n      }\n\n      handleUnsubscribeMany(queryCacheKeys, mwApi, config)\n    }\n\n    if (api.util.resetApiState.match(action)) {\n      for (const [key, timeout] of Object.entries(currentRemovalTimeouts)) {\n        if (timeout) clearTimeout(timeout)\n        delete currentRemovalTimeouts[key]\n      }\n\n      abortAllPromises(internalState.runningQueries)\n      abortAllPromises(internalState.runningMutations)\n    }\n\n    if (context.hasRehydrationInfo(action)) {\n      const { queries } = context.extractRehydrationInfo(action)!\n      // Gotcha:\n      // If rehydrating before the endpoint has been injected,the global `keepUnusedDataFor`\n      // will be used instead of the endpoint-specific one.\n      handleUnsubscribeMany(\n        Object.keys(queries) as QueryCacheKey[],\n        mwApi,\n        config,\n      )\n    }\n  }\n\n  function handleUnsubscribeMany(\n    cacheKeys: QueryCacheKey[],\n    api: SubMiddlewareApi,\n    config: ConfigState<string>,\n  ) {\n    const state = api.getState()\n    for (const queryCacheKey of cacheKeys) {\n      const entry = selectQueryEntry(state, queryCacheKey)\n      if (entry?.endpointName) {\n        handleUnsubscribe(queryCacheKey, entry.endpointName, api, config)\n      }\n    }\n  }\n\n  function handleUnsubscribe(\n    queryCacheKey: QueryCacheKey,\n    endpointName: string,\n    api: SubMiddlewareApi,\n    config: ConfigState<string>,\n  ) {\n    const endpointDefinition = getEndpointDefinition(\n      context,\n      endpointName,\n    ) as QueryDefinition<any, any, any, any>\n    const keepUnusedDataFor =\n      endpointDefinition?.keepUnusedDataFor ?? config.keepUnusedDataFor\n\n    if (keepUnusedDataFor === Infinity) {\n      // Hey, user said keep this forever!\n      return\n    }\n    // Prevent `setTimeout` timers from overflowing a 32-bit internal int, by\n    // clamping the max value to be at most 1000ms less than the 32-bit max.\n    // Look, a 24.8-day keepalive ought to be enough for anybody, right? :)\n    // Also avoid negative values too.\n    const finalKeepUnusedDataFor = Math.max(\n      0,\n      Math.min(keepUnusedDataFor, THIRTY_TWO_BIT_MAX_TIMER_SECONDS),\n    )\n\n    if (!anySubscriptionsRemainingForKey(queryCacheKey)) {\n      const currentTimeout = currentRemovalTimeouts[queryCacheKey]\n      if (currentTimeout) {\n        clearTimeout(currentTimeout)\n      }\n\n      currentRemovalTimeouts[queryCacheKey] = setTimeout(() => {\n        if (!anySubscriptionsRemainingForKey(queryCacheKey)) {\n          // Try to abort any running query for this cache key\n          const entry = selectQueryEntry(api.getState(), queryCacheKey)\n\n          if (entry?.endpointName) {\n            const runningQuery = api.dispatch(\n              getRunningQueryThunk(entry.endpointName, entry.originalArgs),\n            )\n            runningQuery?.abort()\n          }\n          api.dispatch(removeQueryResult({ queryCacheKey }))\n        }\n        delete currentRemovalTimeouts![queryCacheKey]\n      }, finalKeepUnusedDataFor * 1000)\n    }\n  }\n\n  return handler\n}",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler",
+          "unitKind": "function",
+          "name": "buildCacheCollectionHandler",
+          "qualifiedName": "buildCacheCollectionHandler",
+          "parentUnitId": null,
+          "startLine": 55,
+          "endLine": 204,
+          "signature": "export const buildCacheCollectionHandler: InternalHandlerBuilder = ({ reducerPath, api, queryThunk, context, internalState, selectors: { selectQueryEntry, selectConfig }, getRunningQueryThunk, mwApi }) => ApiMiddlewareInternalHandler",
+          "parameters": [
+            {
+              "name": "args",
+              "type": "InternalHandlerBuilder (destructured: reducerPath, api, queryThunk, context, internalState, selectors: { selectQueryEntry, selectConfig }, getRunningQueryThunk, mwApi)",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "ApiMiddlewareInternalHandler",
+          "decorators": [],
+          "modifiersApplied": ["export", "const"],
+          "mutability": "const",
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "Builder args include api.internalActions (removeQueryResult, unsubscribeQueryResult, cacheEntriesUpserted), queryThunk, context, internalState, selectors, getRunningQueryThunk",
+            "context provides hasRehydrationInfo and extractRehydrationInfo",
+            "api.util.resetApiState exists"
+          ],
+          "postconditions": [
+            "Returns a handler function (ApiMiddlewareInternalHandler) closing over builder args",
+            "No side effects at build time beyond defining closures"
+          ],
+          "invariants": [
+            "currentRemovalTimeouts is local object keyed by queryCacheKey",
+            "anySubscriptionsRemainingForKey reads internalState.currentSubscriptions"
+          ],
+          "edgeCases": [
+            "If endpointDefinition.keepUnusedDataFor === Infinity, handleUnsubscribe returns early with no timeout",
+            "finalKeepUnusedDataFor clamped to [0, THIRTY_TWO_BIT_MAX_TIMER_SECONDS]",
+            "On resetApiState, all pending timeouts cleared and running queries/mutations aborted",
+            "If no subscriptions remain for key, setTimeout scheduled to remove query result later if still unsubscribed"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates currentRemovalTimeouts (set/delete timeout handles)",
+            "Dispatches removeQueryResult and getRunningQueryThunk via api.dispatch",
+            "Aborts promises in internalState.runningQueries and internalState.runningMutations on reset"
+          ],
+          "eventsEmitted": [
+            "Dispatches api.internalActions.removeQueryResult",
+            "Dispatches getRunningQueryThunk (may abort running query)",
+            "Clears timeouts via clearTimeout"
+          ],
+          "complexity": null,
+          "calls": [
+            { "name": "isAnyOf", "source": "external", "kind": "external" },
+            { "name": "api.internalActions.removeQueryResult", "source": "api", "kind": "internal" },
+            { "name": "api.internalActions.unsubscribeQueryResult", "source": "api", "kind": "internal" },
+            { "name": "api.internalActions.cacheEntriesUpserted", "source": "api", "kind": "internal" },
+            { "name": "queryThunk.fulfilled", "source": "queryThunk", "kind": "internal" },
+            { "name": "queryThunk.rejected", "source": "queryThunk", "kind": "internal" },
+            { "name": "context.hasRehydrationInfo", "source": "context", "kind": "internal" },
+            { "name": "context.extractRehydrationInfo", "source": "context", "kind": "internal" },
+            { "name": "selectQueryEntry", "source": "selectors", "kind": "internal" },
+            { "name": "selectConfig", "source": "selectors", "kind": "internal" },
+            { "name": "getEndpointDefinition", "source": "context", "kind": "internal" },
+            { "name": "getRunningQueryThunk", "source": "builderArg", "kind": "internal" },
+            { "name": "api.util.resetApiState.match", "source": "api", "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "InternalHandlerBuilder",
+            "ApiMiddlewareInternalHandler",
+            "QueryStateMeta",
+            "TimeoutId",
+            "QueryCacheKey",
+            "ConfigState",
+            "SubMiddlewareApi",
+            "QueryDefinition",
+            "THIRTY_TWO_BIT_MAX_TIMER_SECONDS",
+            "isAnyOf"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [
+            "buildCacheCollectionHandler.anySubscriptionsRemainingForKey",
+            "buildCacheCollectionHandler.abortAllPromises",
+            "buildCacheCollectionHandler.handler",
+            "buildCacheCollectionHandler.handleUnsubscribeMany",
+            "buildCacheCollectionHandler.handleUnsubscribe"
+          ],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Builds and returns an RTK Query middleware handler that manages cache entry removal timeouts and aborts running queries based on subscription state and endpoint keepUnusedDataFor config.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "Infinity",
+              "role": "keepUnusedDataFor value that disables scheduled removal"
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "28cd4633ec2759bba2759f5d0bc73b2c46b604bdbe166f794e706e9332144535"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.anySubscriptionsRemainingForKey#function:buildCacheCollectionHandler.anySubscriptionsRemainingForKey",
+        "unitKind": "function",
+        "name": "anySubscriptionsRemainingForKey",
+        "qualifiedName": "buildCacheCollectionHandler.anySubscriptionsRemainingForKey",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+        "startLine": 75,
+        "endLine": 83,
+        "isBehavioral": true,
+        "source": "  function anySubscriptionsRemainingForKey(queryCacheKey: string) {\n    const subscriptions = internalState.currentSubscriptions.get(queryCacheKey)\n    if (!subscriptions) {\n      return false\n    }\n\n    const hasSubscriptions = subscriptions.size > 0\n    return hasSubscriptions\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.anySubscriptionsRemainingForKey#function:buildCacheCollectionHandler.anySubscriptionsRemainingForKey",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.anySubscriptionsRemainingForKey",
+          "unitKind": "function",
+          "name": "anySubscriptionsRemainingForKey",
+          "qualifiedName": "buildCacheCollectionHandler.anySubscriptionsRemainingForKey",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+          "startLine": 75,
+          "endLine": 83,
+          "signature": "function anySubscriptionsRemainingForKey(queryCacheKey: string)",
+          "parameters": [
+            {
+              "name": "queryCacheKey",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["queryCacheKey is a string", "internalState.currentSubscriptions is initialized as a Map"],
+          "postconditions": [
+            "Returns false if no entry exists for queryCacheKey in internalState.currentSubscriptions",
+            "Returns true iff the subscriptions set for queryCacheKey has size > 0"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "Key absent from map -> returns false",
+            "Subscriptions set exists but empty (size 0) -> returns false",
+            "Subscriptions set non-empty -> returns true"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": "false" },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "internalState.currentSubscriptions.get", "source": null, "kind": "internal" }],
+          "symbolReferences": ["internalState.currentSubscriptions"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Returns whether any subscriptions remain for a given query cache key by checking the internal subscription map; returns false if the key is absent.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "anySubscriptionsRemainingForKey('missing')",
+              "then": "returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "anySubscriptionsRemainingForKey('empty')",
+              "then": "returns false",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "anySubscriptionsRemainingForKey('pop')",
+              "then": "returns true",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f78fe7a202952287265b9d4f066ddbf267cee47c72bddf0cfdc4d0c18f19e2cf"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.abortAllPromises#function:buildCacheCollectionHandler.abortAllPromises",
+        "unitKind": "function",
+        "name": "abortAllPromises",
+        "qualifiedName": "buildCacheCollectionHandler.abortAllPromises",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+        "startLine": 87,
+        "endLine": 93,
+        "isBehavioral": true,
+        "source": "  function abortAllPromises<T extends { abort?: () => void }>(\n    promiseMap: Map<string, T | undefined>,\n  ): void {\n    for (const promise of promiseMap.values()) {\n      promise?.abort?.()\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.abortAllPromises#function:buildCacheCollectionHandler.abortAllPromises",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.abortAllPromises",
+          "unitKind": "function",
+          "name": "abortAllPromises",
+          "qualifiedName": "buildCacheCollectionHandler.abortAllPromises",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+          "startLine": 87,
+          "endLine": 93,
+          "signature": "function abortAllPromises<T extends { abort?: () => void }>(promiseMap: Map<string, T | undefined>): void",
+          "parameters": [
+            {
+              "name": "promiseMap",
+              "type": "Map<string, T | undefined>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends { abort?: () => void }"],
+          "logicOutline": [],
+          "preconditions": [
+            "promiseMap is a Map instance",
+            "Values are either undefined or objects optionally possessing an abort method"
+          ],
+          "postconditions": [
+            "Each defined value with an abort function has had abort called exactly once",
+            "The promiseMap structure is unchanged (no entries added or removed)"
+          ],
+          "invariants": ["Never throws due to missing abort or undefined values"],
+          "edgeCases": [
+            "Empty map: no abort calls",
+            "Map containing undefined values: those entries are skipped",
+            "Map containing objects without abort: those entries are skipped",
+            "Map containing objects with abort: abort is invoked"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Invokes abort side-effect on map values; does not mutate the map itself"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "abort", "source": null, "kind": "internal" }],
+          "symbolReferences": ["Map"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Iterates over all entries in the provided promise map and invokes the optional abort method on each defined value, cancelling any abortable operations without modifying the map.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "abortAllPromises(map) is invoked",
+              "then": "mockAbort is called exactly once, map size remains 3, and no error is thrown",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "ca391c1347b84cf743e50b64b4e84a44fa23e0877e5dbf0e26035229244a6f34"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handler#function:buildCacheCollectionHandler.handler",
+        "unitKind": "function",
+        "name": "handler",
+        "qualifiedName": "buildCacheCollectionHandler.handler",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+        "startLine": 95,
+        "endLine": 137,
+        "isBehavioral": true,
+        "source": "  const handler: ApiMiddlewareInternalHandler = (action, mwApi) => {\n    const state = mwApi.getState()\n    const config = selectConfig(state)\n\n    if (canTriggerUnsubscribe(action)) {\n      let queryCacheKeys: QueryCacheKey[]\n\n      if (cacheEntriesUpserted.match(action)) {\n        queryCacheKeys = action.payload.map(\n          (entry) => entry.queryDescription.queryCacheKey,\n        )\n      } else {\n        const { queryCacheKey } = unsubscribeQueryResult.match(action)\n          ? action.payload\n          : action.meta.arg\n        queryCacheKeys = [queryCacheKey]\n      }\n\n      handleUnsubscribeMany(queryCacheKeys, mwApi, config)\n    }\n\n    if (api.util.resetApiState.match(action)) {\n      for (const [key, timeout] of Object.entries(currentRemovalTimeouts)) {\n        if (timeout) clearTimeout(timeout)\n        delete currentRemovalTimeouts[key]\n      }\n\n      abortAllPromises(internalState.runningQueries)\n      abortAllPromises(internalState.runningMutations)\n    }\n\n    if (context.hasRehydrationInfo(action)) {\n      const { queries } = context.extractRehydrationInfo(action)!\n      // Gotcha:\n      // If rehydrating before the endpoint has been injected,the global `keepUnusedDataFor`\n      // will be used instead of the endpoint-specific one.\n      handleUnsubscribeMany(\n        Object.keys(queries) as QueryCacheKey[],\n        mwApi,\n        config,\n      )\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handler#function:buildCacheCollectionHandler.handler",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handler",
+          "unitKind": "function",
+          "name": "handler",
+          "qualifiedName": "buildCacheCollectionHandler.handler",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+          "startLine": 95,
+          "endLine": 137,
+          "signature": "(action, mwApi) => void",
+          "parameters": [
+            { "name": "action", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "mwApi", "type": null, "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "action is a Redux action object",
+            "mwApi is a valid middleware API with getState and internal state"
+          ],
+          "postconditions": [
+            "handleUnsubscribeMany invoked for relevant query cache keys when action triggers unsubscribe",
+            "On resetApiState, all pending removal timeouts cleared and running queries/mutations aborted",
+            "On rehydration with queries, handleUnsubscribeMany invoked with rehydrated query keys"
+          ],
+          "invariants": [],
+          "edgeCases": [
+            "cacheEntriesUpserted action: maps payload entries to queryCacheKey array",
+            "unsubscribeQueryResult action: single key from payload; otherwise single key from action.meta.arg",
+            "resetApiState with falsy timeout: delete key without clearTimeout",
+            "rehydration info present: queries object keys passed as keys"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "currentRemovalTimeouts entries deleted",
+            "internalState.runningQueries and runningMutations aborted via abortAllPromises"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "canTriggerUnsubscribe", "source": null, "kind": "internal" },
+            { "name": "selectConfig", "source": null, "kind": "internal" },
+            { "name": "cacheEntriesUpserted.match", "source": null, "kind": "internal" },
+            { "name": "unsubscribeQueryResult.match", "source": null, "kind": "internal" },
+            { "name": "handleUnsubscribeMany", "source": null, "kind": "internal" },
+            { "name": "api.util.resetApiState.match", "source": null, "kind": "internal" },
+            { "name": "clearTimeout", "source": null, "kind": "external" },
+            { "name": "abortAllPromises", "source": null, "kind": "internal" },
+            { "name": "context.hasRehydrationInfo", "source": null, "kind": "internal" },
+            { "name": "context.extractRehydrationInfo", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "ApiMiddlewareInternalHandler",
+            "QueryCacheKey",
+            "selectConfig",
+            "currentRemovalTimeouts",
+            "internalState",
+            "context"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Processes Redux actions to drive cache collection: triggers unsubscribe cleanup for upsert/unsubscribe actions, resets timeouts and aborts in-flight requests on global reset, and re-applies unsubscribe for rehydrated queries.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handler is called",
+              "then": "handleUnsubscribeMany is called with array of those queryCacheKeys",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handler is called",
+              "then": "each timeout cleared if present and key deleted, and abortAllPromises called on internalState.runningQueries and runningMutations",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "5c923dcbb7312a7dc2e6c37a0af097b088300eebc81751b3d77c51306dfea2c6"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handleUnsubscribeMany#function:buildCacheCollectionHandler.handleUnsubscribeMany",
+        "unitKind": "function",
+        "name": "handleUnsubscribeMany",
+        "qualifiedName": "buildCacheCollectionHandler.handleUnsubscribeMany",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+        "startLine": 139,
+        "endLine": 151,
+        "isBehavioral": true,
+        "source": "  function handleUnsubscribeMany(\n    cacheKeys: QueryCacheKey[],\n    api: SubMiddlewareApi,\n    config: ConfigState<string>,\n  ) {\n    const state = api.getState()\n    for (const queryCacheKey of cacheKeys) {\n      const entry = selectQueryEntry(state, queryCacheKey)\n      if (entry?.endpointName) {\n        handleUnsubscribe(queryCacheKey, entry.endpointName, api, config)\n      }\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handleUnsubscribeMany#function:buildCacheCollectionHandler.handleUnsubscribeMany",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handleUnsubscribeMany",
+          "unitKind": "function",
+          "name": "handleUnsubscribeMany",
+          "qualifiedName": "buildCacheCollectionHandler.handleUnsubscribeMany",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+          "startLine": 139,
+          "endLine": 151,
+          "signature": "function handleUnsubscribeMany(cacheKeys: QueryCacheKey[], api: SubMiddlewareApi, config: ConfigState<string>)",
+          "parameters": [
+            {
+              "name": "cacheKeys",
+              "type": "QueryCacheKey[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "api",
+              "type": "SubMiddlewareApi",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "config",
+              "type": "ConfigState<string>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "mut",
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "cacheKeys is a defined array of QueryCacheKey values",
+            "api implements SubMiddlewareApi and its getState() returns a valid query cache state",
+            "config is a valid ConfigState<string> instance"
+          ],
+          "postconditions": [
+            "The loop visits every element of cacheKeys exactly once",
+            "handleUnsubscribe is invoked for each cache key whose selected entry has a truthy endpointName",
+            "No entry is unsubscribed twice by this function"
+          ],
+          "invariants": [
+            "Iteration is unconditional: an absent entry or missing endpointName skips only that key, never aborts the overall loop",
+            "Order of cacheKeys is preserved when dispatching to handleUnsubscribe"
+          ],
+          "edgeCases": [
+            "Empty cacheKeys array: the function performs no work and never throws",
+            "A cache key with no matching query entry (undefined): it is skipped via the entry?.endpointName guard",
+            "A cache key whose entry exists but has a falsy/undefined endpointName: it is skipped without invoking handleUnsubscribe"
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Returns void without throwing; malformed or undefined entries are skipped rather than rejected",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Reads middleware state via api.getState()",
+            "Delegates mutation of subscription state to handleUnsubscribe(queryCacheKey, entry.endpointName, api, config) for each valid entry"
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            {
+              "name": "selectQueryEntry",
+              "source": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts",
+              "kind": "internal"
+            },
+            {
+              "name": "handleUnsubscribe",
+              "source": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts",
+              "kind": "internal"
+            }
+          ],
+          "symbolReferences": ["QueryCacheKey", "SubMiddlewareApi", "ConfigState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Iterates over an array of query cache keys, selects each query cache entry from middleware state, and invokes handleUnsubscribe for every entry that has an endpointName, skipping keys with no entry or no endpointName.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUnsubscribeMany(cacheKeys, api, config) is called",
+              "then": "handleUnsubscribe is invoked only for keyA with endpointName 'epA'; keyB and keyC are skipped and no error is raised",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "handleUnsubscribeMany([], api, config) is called",
+              "then": "no call to handleUnsubscribe occurs and the function returns void",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "9de2216ac1d55c8c96bc6305ba5babd379da26f9e4632647e4be59b24f0a7425"
+        }
+      },
+      {
+        "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handleUnsubscribe#function:buildCacheCollectionHandler.handleUnsubscribe",
+        "unitKind": "function",
+        "name": "handleUnsubscribe",
+        "qualifiedName": "buildCacheCollectionHandler.handleUnsubscribe",
+        "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+        "startLine": 153,
+        "endLine": 201,
+        "isBehavioral": true,
+        "source": "  function handleUnsubscribe(\n    queryCacheKey: QueryCacheKey,\n    endpointName: string,\n    api: SubMiddlewareApi,\n    config: ConfigState<string>,\n  ) {\n    const endpointDefinition = getEndpointDefinition(\n      context,\n      endpointName,\n    ) as QueryDefinition<any, any, any, any>\n    const keepUnusedDataFor =\n      endpointDefinition?.keepUnusedDataFor ?? config.keepUnusedDataFor\n\n    if (keepUnusedDataFor === Infinity) {\n      // Hey, user said keep this forever!\n      return\n    }\n    // Prevent `setTimeout` timers from overflowing a 32-bit internal int, by\n    // clamping the max value to be at most 1000ms less than the 32-bit max.\n    // Look, a 24.8-day keepalive ought to be enough for anybody, right? :)\n    // Also avoid negative values too.\n    const finalKeepUnusedDataFor = Math.max(\n      0,\n      Math.min(keepUnusedDataFor, THIRTY_TWO_BIT_MAX_TIMER_SECONDS),\n    )\n\n    if (!anySubscriptionsRemainingForKey(queryCacheKey)) {\n      const currentTimeout = currentRemovalTimeouts[queryCacheKey]\n      if (currentTimeout) {\n        clearTimeout(currentTimeout)\n      }\n\n      currentRemovalTimeouts[queryCacheKey] = setTimeout(() => {\n        if (!anySubscriptionsRemainingForKey(queryCacheKey)) {\n          // Try to abort any running query for this cache key\n          const entry = selectQueryEntry(api.getState(), queryCacheKey)\n\n          if (entry?.endpointName) {\n            const runningQuery = api.dispatch(\n              getRunningQueryThunk(entry.endpointName, entry.originalArgs),\n            )\n            runningQuery?.abort()\n          }\n          api.dispatch(removeQueryResult({ queryCacheKey }))\n        }\n        delete currentRemovalTimeouts![queryCacheKey]\n      }, finalKeepUnusedDataFor * 1000)\n    }\n  }",
+        "detail": {
+          "unitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handleUnsubscribe#function:buildCacheCollectionHandler.handleUnsubscribe",
+          "fileId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler.handleUnsubscribe",
+          "unitKind": "function",
+          "name": "handleUnsubscribe",
+          "qualifiedName": "buildCacheCollectionHandler.handleUnsubscribe",
+          "parentUnitId": "packages/toolkit/src/query/core/buildMiddleware/cacheCollection.ts__buildCacheCollectionHandler#function:buildCacheCollectionHandler",
+          "startLine": 153,
+          "endLine": 201,
+          "signature": "function handleUnsubscribe(queryCacheKey: QueryCacheKey, endpointName: string, api: SubMiddlewareApi, config: ConfigState<string>): void",
+          "parameters": [
+            {
+              "name": "queryCacheKey",
+              "type": "QueryCacheKey",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "endpointName",
+              "type": "string",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "api",
+              "type": "SubMiddlewareApi",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "config",
+              "type": "ConfigState<string>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": "nonpayable",
+          "visibility": "internal",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The module-level context used by getEndpointDefinition is initialized.",
+            "api.dispatch is available and can process thunks like getRunningQueryThunk and removeQueryResult.",
+            "currentRemovalTimeouts is a mutable object mapping QueryCacheKey to timeout handles.",
+            "selectQueryEntry is available to read the current entry for queryCacheKey."
+          ],
+          "postconditions": [
+            "If keepUnusedDataFor is Infinity, the cache entry for queryCacheKey is preserved indefinitely and no timeout is scheduled.",
+            "If no active subscriptions remain for queryCacheKey, a removal timeout is scheduled for finalKeepUnusedDataFor seconds.",
+            "If a prior timeout already existed for queryCacheKey, it is cleared before scheduling a new one.",
+            "Once the timeout fires and still no subscriptions remain for queryCacheKey, the running query (if any) is aborted and removeQueryResult is dispatched to evict the entry.",
+            "After the timeout fires, the entry for queryCacheKey is deleted from currentRemovalTimeouts."
+          ],
+          "invariants": [
+            "finalKeepUnusedDataFor is always finite and clamped to the range [0, THIRTY_TWO_BIT_MAX_TIMER_SECONDS].",
+            "A timeout is only scheduled for queryCacheKey when anySubscriptionsRemainingForKey(queryCacheKey) returns false on entry.",
+            "currentRemovalTimeouts[queryCacheKey] always reflects the most recently scheduled, and at most one, pending removal timeout per cache key.",
+            "The removal logic inside the timeout only proceeds when anySubscriptionsRemainingForKey(queryCacheKey) is still false at fire time."
+          ],
+          "edgeCases": [
+            "keepUnusedDataFor is Infinity: function returns immediately, leaving the cache entry untouched.",
+            "keepUnusedDataFor is negative or exceeds THIRTY_TWO_BIT_MAX_TIMER_SECONDS: finalKeepUnusedDataFor is clamped to [0, THIRTY_TWO_BIT_MAX_TIMER_SECONDS].",
+            "keepUnusedDataFor is 0: finalKeepUnusedDataFor is 0, scheduling immediate removal on the next tick.",
+            "A subscription is re-added between scheduling and firing of the timeout: the in-timeout guard (anySubscriptionsRemainingForKey) prevents removal, and the timeout handle is still deleted.",
+            "No existing timeout for queryCacheKey when a new unsubscribe occurs: no clearTimeout call is made.",
+            "selectQueryEntry returns an entry without endpointName: no running query is aborted.",
+            "No running query to abort: the optional chaining on runningQuery?.abort() safely no-ops."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "currentRemovalTimeouts[queryCacheKey] may be set to a new timeout handle.",
+            "currentRemovalTimeouts[queryCacheKey] may be deleted when the scheduled timeout fires.",
+            "An existing currentRemovalTimeouts[queryCacheKey] timeout may be cleared via clearTimeout.",
+            "api.dispatch is called with removeQueryResult to remove the cached query result.",
+            "api.dispatch is called with getRunningQueryThunk to obtain a running query whose abort method is invoked."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getEndpointDefinition", "source": "context", "kind": "internal" },
+            { "name": "anySubscriptionsRemainingForKey", "source": "buildCacheCollectionHandler", "kind": "internal" },
+            { "name": "selectQueryEntry", "source": "api.getState", "kind": "external" },
+            { "name": "api.dispatch(getRunningQueryThunk(...))", "source": "api.dispatch", "kind": "internal" },
+            { "name": "api.dispatch(removeQueryResult(...))", "source": "api.dispatch", "kind": "internal" },
+            { "name": "setTimeout", "source": "global", "kind": "external" },
+            { "name": "clearTimeout", "source": "global", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "QueryCacheKey",
+            "QueryDefinition",
+            "SubMiddlewareApi",
+            "ConfigState",
+            "THIRTY_TWO_BIT_MAX_TIMER_SECONDS",
+            "currentRemovalTimeouts",
+            "selectQueryEntry",
+            "getRunningQueryThunk",
+            "removeQueryResult"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Unsubscribes from a cached query by scheduling its removal after the configured keep-unused timeout, unless the user configured infinite retention, in which case the cache entry is kept permanently.",
+          "specLiterals": [
+            {
+              "kind": "magic-number",
+              "value": "THIRTY_TWO_BIT_MAX_TIMER_SECONDS",
+              "role": "Upper bound (in seconds) for scheduled removal timeouts to prevent 32-bit timer overflow when multiplying to ms."
+            },
+            {
+              "kind": "magic-number",
+              "value": "0",
+              "role": "Lower clamp for finalKeepUnusedDataFor to avoid negative timeout durations."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "0efac7f547d6a498027993da99036e677cc8831acbe7ff09842c92e4e921a5fa"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/toolkit/src/query/core/buildMiddleware/types.ts",
+    "packages/toolkit/src/query/core/apiState.ts",
+    "packages/toolkit/src/query/core/rtkImports.ts"
+  ],
+  "in": [
+    "packages/toolkit/src/query/core/buildMiddleware/index.ts",
+    "packages/toolkit/src/query/tests/cacheCollection.test.ts"
+  ],
+  "externals": ["@internal/query/apiTypes"],
+  "impact": { "seeds": 6, "callers": 0, "impactedFiles": [] }
+}

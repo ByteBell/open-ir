@@ -1,0 +1,2023 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts",
+    "language": "typescript",
+    "sizeBytes": 10294,
+    "tokenCount": 2573,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:21:37.286Z",
+    "module": {
+      "purpose": "Provides transactional undo, redo, batching, marking, rollback, and history-stack management for a tldraw record store.",
+      "summary": "This module implements history recording around a store interceptor. It accumulates record diffs, preserves or clears redo history according to batching mode, converts changes into persistent undo and redo stacks, and replays diffs atomically while suppressing recursive recording. It also supports marks for targeted rollback and squashing, exposes debugging and stack counts, and uses immutable linked stacks plus reactive atoms for state tracking.",
+      "businessContext": "Supports editor undo/redo behavior for document and shape editing workflows. Failure would corrupt user history, rollback behavior, or recovery after editing errors.",
+      "classes": [
+        "HistoryManager (~L22-319): Coordinates recording, batching, replay, rollback, and history stack state.",
+        "PendingDiff (~L327-367): Accumulates and tracks whether store record changes remain pending.",
+        "EmptyStackItem (~L380-387): Represents the immutable empty endpoint of a history stack.",
+        "StackItem (~L391-403): Represents one immutable linked node in a history stack."
+      ],
+      "functions": [
+        "constructor (~L42-66): Registers the store history interceptor and configures error annotation.",
+        "flushPendingDiff (~L68-76): Converts accumulated changes into an undo-stack diff entry.",
+        "getNumUndos (~L78-80): Returns committed and pending undo entry count.",
+        "getNumRedos (~L82-84): Returns the redo-stack entry count.",
+        "isReplaying (~L90-92): Reports whether history replay is currently active.",
+        "batch (~L97-121): Runs transactional work under a selected history recording mode.",
+        "_undo (~L124-195): Reverses changes back to a mark or the previous undo boundary.",
+        "undo (~L197-200): Performs an undo while preserving the undone entry for redo.",
+        "redo (~L202-242): Reapplies the next redo sequence atomically.",
+        "bail (~L244-247): Reverts changes without adding them to the redo stack.",
+        "bailToMark (~L249-254): Reverts changes without redo preservation up to a specified mark.",
+        "squashToMark (~L256-283): Combines diffs above a mark into one undo entry.",
+        "_mark (~L286-291): Flushes pending changes and appends a history stop marker.",
+        "clear (~L293-296): Removes all undo, redo, and pending history state.",
+        "getMarkIdMatching (~L299-308): Finds the newest undo mark containing a substring.",
+        "debug (~L311-318): Returns serializable diagnostic views of history state.",
+        "clear (~L331-337): Extracts and resets the accumulated pending diff.",
+        "restore (~L339-342): Restores a previously cleared pending diff.",
+        "isEmpty (~L344-346): Reads whether the pending diff is empty.",
+        "apply (~L348-362): Merges a store diff and updates pending emptiness efficiently.",
+        "debug (~L364-366): Returns the pending diff and its emptiness state.",
+        "hasAnyKey (~L369-372): Tests whether an object contains at least one enumerable key.",
+        "stack (~L376-378): Returns the shared immutable empty stack sentinel.",
+        "push (~L384-386): Prepends an item to the empty stack.",
+        "constructor (~L393-398): Initializes a linked stack item and its cumulative length.",
+        "push (~L400-403): Prepends an item to the linked stack.",
+        "stackToArray (~L405-415): Converts a linked stack into an array in head-first order."
+      ],
+      "keywords": [
+        "undo redo history",
+        "RecordsDiff",
+        "history interceptor",
+        "transactional batching",
+        "redo stack",
+        "history marks",
+        "ephemeral keys",
+        "reactive atom",
+        "immutable linked stack",
+        "store replay"
+      ],
+      "ontologyConcepts": [
+        "transaction",
+        "event sourcing",
+        "rollback",
+        "checkpoint",
+        "state machine",
+        "diff composition",
+        "reactive state",
+        "immutable stack"
+      ],
+      "businessEntities": [
+        "record",
+        "store",
+        "history entry",
+        "undo stack",
+        "redo stack",
+        "history mark",
+        "record diff"
+      ],
+      "systemCapabilities": [
+        "Record editor changes",
+        "Undo and redo store mutations",
+        "Batch transactional history updates",
+        "Rollback changes to marks",
+        "Squash adjacent history diffs",
+        "Inspect and clear history state"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../../types/history-types",
+          "symbols": ["TLHistoryBatchOptions", "TLHistoryEntry"],
+          "anchor": { "startLine": 12, "endLine": 12 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/types/history-types.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/types/history-types.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/types/history-types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["atom", "EMPTY_ARRAY", "transact"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/store",
+          "symbols": [
+            "createEmptyRecordsDiff",
+            "isRecordsDiffEmpty",
+            "RecordsDiff",
+            "reverseRecordsDiff",
+            "squashRecordDiffsMutable",
+            "Store",
+            "UnknownRecord"
+          ],
+          "package": "@tldraw/store",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 10 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["exhaustiveSwitchError", "noop"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 11, "endLine": 11 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Logs an error to the console when a requested squash mark cannot be found."],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": ["Mutates accumulated record-diff objects through squashRecordDiffsMutable."]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "HistoryManager",
+          "shape": "export class HistoryManager<R extends UnknownRecord>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "HistoryManager.batch",
+          "shape": "batch(fn: () => void, opts?: TLHistoryBatchOptions)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "HistoryManager.undo", "shape": "undo()", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "HistoryManager.redo", "shape": "redo()", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "HistoryManager.bail", "shape": "bail()", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "HistoryManager.bailToMark",
+          "shape": "bailToMark(id: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "HistoryManager.squashToMark",
+          "shape": "squashToMark(id: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "HistoryManager.clear", "shape": "clear()", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "HistoryManager.dispose",
+          "shape": "readonly dispose: () => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "Store", "shape": "Store<R>", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "Store.addHistoryInterceptor",
+          "shape": "addHistoryInterceptor((entry, source) => void)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Store.applyDiff",
+          "shape": "applyDiff(diffToUndo, { ignoreEphemeralKeys: true })",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "Store.ensureStoreIsUsable",
+          "shape": "ensureStoreIsUsable()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLHistoryBatchOptions",
+          "shape": "TLHistoryBatchOptions",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/types/history-types.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/types/history-types.ts"
+        },
+        {
+          "name": "TLHistoryEntry",
+          "shape": "TLHistoryEntry<R>",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/types/history-types.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/types/history-types.ts"
+        },
+        { "name": "RecordsDiff", "shape": "RecordsDiff<R>", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "history interceptor",
+          "intent": "Routes user store changes according to recording, redo-preserving, or paused state.",
+          "structureKind": "branch",
+          "predicate": "source !== 'user'",
+          "branchOutcomes": [
+            "non-user source ignored",
+            "recording accumulates and clears redo",
+            "preserve-redo recording accumulates only",
+            "paused ignores changes",
+            "unknown state raises exhaustive error"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 45, "endLine": 65 }
+        },
+        {
+          "name": "batch transaction",
+          "intent": "Executes callback transactionally while temporarily selecting history behavior.",
+          "structureKind": "try",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 97, "endLine": 121 }
+        },
+        {
+          "name": "undo collection",
+          "intent": "Collects pending and stacked entries until the requested undo boundary.",
+          "structureKind": "loop",
+          "predicate": "undos.head",
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 142, "endLine": 179 }
+        },
+        {
+          "name": "redo collection",
+          "intent": "Collects redo entries and combines consecutive diffs for atomic replay.",
+          "structureKind": "loop",
+          "predicate": "redos.head",
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 224, "endLine": 232 }
+        },
+        {
+          "name": "mark search",
+          "intent": "Searches undo history for a mark containing the requested substring.",
+          "structureKind": "loop",
+          "predicate": "top.head",
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 299, "endLine": 307 }
+        },
+        {
+          "name": "pending diff optimization",
+          "intent": "Updates emptiness reactively without full recomputation for update-only diffs.",
+          "structureKind": "branch",
+          "predicate": "hasAnyKey(diff.added) || hasAnyKey(diff.removed)",
+          "branchOutcomes": [
+            "added or removed records trigger full emptiness computation",
+            "update-only diff marks non-empty when previously empty"
+          ],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 357, "endLine": 360 }
+        },
+        {
+          "name": "linked stack conversion",
+          "intent": "Traverses immutable stack nodes from newest item to oldest item.",
+          "structureKind": "loop",
+          "predicate": "stack.length",
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 405, "endLine": 415 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "class",
+          "name": "HistoryManager",
+          "signature": "export class HistoryManager<R extends UnknownRecord> {",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 22, "endLine": 22 }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "constructor(opts: { store: Store<R>; annotateError?(error: unknown): void }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 42, "endLine": 42 }
+        },
+        {
+          "kind": "method",
+          "name": "batch",
+          "signature": "batch(fn: () => void, opts?: TLHistoryBatchOptions) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 97, "endLine": 97 }
+        },
+        {
+          "kind": "method",
+          "name": "_undo",
+          "signature": "_undo({ pushToRedoStack, toMark = undefined }: { pushToRedoStack: boolean; toMark?: string }) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 124, "endLine": 124 }
+        },
+        {
+          "kind": "method",
+          "name": "undo",
+          "signature": "undo() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 197, "endLine": 197 }
+        },
+        {
+          "kind": "method",
+          "name": "redo",
+          "signature": "redo() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 202, "endLine": 202 }
+        },
+        {
+          "kind": "method",
+          "name": "bailToMark",
+          "signature": "bailToMark(id: string) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 249, "endLine": 249 }
+        },
+        {
+          "kind": "method",
+          "name": "squashToMark",
+          "signature": "squashToMark(id: string) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 256, "endLine": 256 }
+        },
+        {
+          "kind": "class",
+          "name": "PendingDiff",
+          "signature": "class PendingDiff<R extends UnknownRecord> {",
+          "generics": "<R extends UnknownRecord>",
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 327, "endLine": 327 }
+        },
+        {
+          "kind": "function",
+          "name": "hasAnyKey",
+          "signature": "function hasAnyKey(obj: object) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 369, "endLine": 369 }
+        },
+        {
+          "kind": "function",
+          "name": "stack",
+          "signature": "function stack<T>(): Stack<T> {",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": "Stack<T>",
+          "exported": false,
+          "anchor": { "startLine": 376, "endLine": 376 }
+        },
+        {
+          "kind": "class",
+          "name": "StackItem",
+          "signature": "class StackItem<T> {",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 391, "endLine": 391 }
+        },
+        {
+          "kind": "function",
+          "name": "stackToArray",
+          "signature": "function stackToArray<T>(stack: Stack<T>) {",
+          "generics": "<T>",
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 405, "endLine": 405 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "alias",
+          "name": "HistoryRecorderState",
+          "shape": "(typeof HistoryRecorderState)[keyof typeof HistoryRecorderState]",
+          "discriminant": null,
+          "anchor": { "startLine": 19, "endLine": 19 }
+        },
+        {
+          "kind": "alias",
+          "name": "Stack",
+          "shape": "StackItem<T> | EmptyStackItem<T>",
+          "discriminant": null,
+          "anchor": { "startLine": 374, "endLine": 374 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Empty pending diff during undo",
+          "handled": true,
+          "behavior": "Skips pending replay and removes intermediate stop markers before finding an undo diff.",
+          "anchor": { "startLine": 134, "endLine": 155 }
+        },
+        {
+          "inputShape": "Requested mark absent during targeted undo",
+          "handled": true,
+          "behavior": "Restores the pending diff and returns without applying or committing the attempted undo.",
+          "anchor": { "startLine": 181, "endLine": 185 }
+        },
+        {
+          "inputShape": "Empty redo stack",
+          "handled": true,
+          "behavior": "Returns without applying a diff.",
+          "anchor": { "startLine": 210, "endLine": 213 }
+        },
+        {
+          "inputShape": "Missing squash mark",
+          "handled": true,
+          "behavior": "Logs an error and leaves history unchanged.",
+          "anchor": { "startLine": 265, "endLine": 268 }
+        },
+        {
+          "inputShape": "Empty squash range",
+          "handled": true,
+          "behavior": "Returns without modifying the stacks.",
+          "anchor": { "startLine": 270, "endLine": 272 }
+        },
+        {
+          "inputShape": "Empty linked stack",
+          "handled": true,
+          "behavior": "Returns the shared empty array sentinel.",
+          "anchor": { "startLine": 406, "endLine": 408 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "==",
+          "left": "a.undos",
+          "right": "b.undos",
+          "inclusive": true,
+          "intent": "Treats stacks as equal when their undo stack references match.",
+          "anchor": { "startLine": 36, "endLine": 36 }
+        },
+        {
+          "operator": "==",
+          "left": "a.redos",
+          "right": "b.redos",
+          "inclusive": true,
+          "intent": "Treats stacks as equal when their redo stack references match.",
+          "anchor": { "startLine": 36, "endLine": 36 }
+        },
+        {
+          "operator": "==",
+          "left": "source",
+          "right": "'user'",
+          "inclusive": false,
+          "intent": "Ignores non-user store changes.",
+          "anchor": { "startLine": 46, "endLine": 46 }
+        },
+        {
+          "operator": "==",
+          "left": "previousState",
+          "right": "HistoryRecorderState.Paused",
+          "inclusive": false,
+          "intent": "Prevents batch options from overriding an explicitly paused recorder.",
+          "anchor": { "startLine": 100, "endLine": 100 }
+        },
+        {
+          "operator": ">",
+          "left": "this.stacks.get().redos.length",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Clears redo history only when redo entries exist.",
+          "anchor": { "startLine": 53, "endLine": 53 }
+        },
+        {
+          "operator": "==",
+          "left": "mark.id",
+          "right": "toMark",
+          "inclusive": true,
+          "intent": "Detects the requested mark while removing intermediate markers.",
+          "anchor": { "startLine": 151, "endLine": 151 }
+        },
+        {
+          "operator": "==",
+          "left": "undo.id",
+          "right": "toMark",
+          "inclusive": true,
+          "intent": "Stops undo accumulation at the requested mark.",
+          "anchor": { "startLine": 170, "endLine": 170 }
+        },
+        {
+          "operator": "==",
+          "left": "redos.length",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Returns early when no redo entries are available.",
+          "anchor": { "startLine": 211, "endLine": 211 }
+        },
+        {
+          "operator": "==",
+          "left": "redo.type",
+          "right": "'diff'",
+          "inclusive": true,
+          "intent": "Combines only diff entries during redo replay.",
+          "anchor": { "startLine": 228, "endLine": 228 }
+        },
+        {
+          "operator": "==",
+          "left": "top.head.type",
+          "right": "'stop'",
+          "inclusive": true,
+          "intent": "Recognizes a stop marker while locating a squash target.",
+          "anchor": { "startLine": 261, "endLine": 261 }
+        },
+        {
+          "operator": "==",
+          "left": "top.head.id",
+          "right": "id",
+          "inclusive": true,
+          "intent": "Identifies the requested mark for squashing.",
+          "anchor": { "startLine": 261, "endLine": 261 }
+        },
+        {
+          "operator": "==",
+          "left": "top.head?.id",
+          "right": "id",
+          "inclusive": false,
+          "intent": "Rejects a missing or mismatched squash mark.",
+          "anchor": { "startLine": 266, "endLine": 266 }
+        },
+        {
+          "operator": "==",
+          "left": "popped.length",
+          "right": "0",
+          "inclusive": true,
+          "intent": "Avoids replacing history when no diffs need squashing.",
+          "anchor": { "startLine": 270, "endLine": 270 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "error",
+          "action": "Annotates the batch error and rethrows it.",
+          "fallback": null,
+          "anchor": { "startLine": 110, "endLine": 117 }
+        },
+        {
+          "thrown": "exhaustiveSwitchError(this.state)",
+          "caught": null,
+          "action": "Raises an exhaustive-switch failure for an invalid recorder state.",
+          "fallback": null,
+          "anchor": { "startLine": 62, "endLine": 63 }
+        },
+        {
+          "thrown": "exhaustiveSwitchError(undo)",
+          "caught": null,
+          "action": "Raises an exhaustive-switch failure for an invalid history entry.",
+          "fallback": null,
+          "anchor": { "startLine": 175, "endLine": 176 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Only user-originated store changes are recorded by the history interceptor.",
+          "anchor": { "startLine": 45, "endLine": 46 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Pending changes are flushed into undo history before marks and redo replay.",
+          "anchor": { "startLine": 68, "endLine": 76 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Undo and redo replay pause recording and set replay state until completion.",
+          "anchor": { "startLine": 127, "endLine": 129 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Successful replay applies its accumulated diff and verifies the store remains usable.",
+          "anchor": { "startLine": 186, "endLine": 188 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A stack node length equals its tail length plus one.",
+          "anchor": { "startLine": 397, "endLine": 397 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Batch callbacks are expected to perform synchronous store mutations.",
+          "anchor": { "startLine": 97, "endLine": 111 }
+        },
+        {
+          "kind": "caller",
+          "description": "Store history entries provide user source metadata and compatible record diffs.",
+          "anchor": { "startLine": 45, "endLine": 50 }
+        },
+        {
+          "kind": "schema",
+          "description": "History entries are expected to be either diff entries or stop markers.",
+          "anchor": { "startLine": 164, "endLine": 177 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What external store guarantees govern applyDiff failure and ensureStoreIsUsable behavior?",
+          "affects": "error_handling and replay invariants",
+          "anchor": { "startLine": 186, "endLine": 187 },
+          "resolution": null
+        },
+        {
+          "question": "Which callers rely on each history batch mode and mark naming convention?",
+          "affects": "assumptions and orchestration",
+          "anchor": { "startLine": 100, "endLine": 101 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "Operations are synchronous and use transaction boundaries; nested batches reuse the active transaction, while replay pauses interception."
+      },
+      "stateModel": {
+        "states": ["recording", "recordingPreserveRedoStack", "paused"],
+        "initialState": "recording",
+        "finalStates": [],
+        "transitions": [
+          {
+            "from": "recording",
+            "to": "recording",
+            "trigger": "batch(fn, { history: 'record' })",
+            "guard": "previousState !== HistoryRecorderState.Paused && opts?.history",
+            "effect": "this.state = modeToState[opts.history]",
+            "anchor": { "startLine": 96, "endLine": 102 }
+          },
+          {
+            "from": "recording",
+            "to": "recordingPreserveRedoStack",
+            "trigger": "batch(fn, { history: 'record-preserveRedoStack' })",
+            "guard": "previousState !== HistoryRecorderState.Paused && opts?.history",
+            "effect": "this.state = modeToState[opts.history]",
+            "anchor": { "startLine": 96, "endLine": 102 }
+          },
+          {
+            "from": "recording",
+            "to": "paused",
+            "trigger": "batch(fn, { history: 'ignore' })",
+            "guard": "previousState !== HistoryRecorderState.Paused && opts?.history",
+            "effect": "this.state = modeToState[opts.history]",
+            "anchor": { "startLine": 96, "endLine": 102 }
+          },
+          {
+            "from": "recordingPreserveRedoStack",
+            "to": "paused",
+            "trigger": "_undo(...) or redo()",
+            "guard": "always",
+            "effect": "this.state = HistoryRecorderState.Paused",
+            "anchor": { "startLine": 126, "endLine": 131 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "undo-user-change",
+          "scenario": "A user-originated store change is recorded and then undone.",
+          "given": ["historyManager = new HistoryManager({ store })", "store change source is 'user'"],
+          "when": "historyManager.undo()",
+          "then": "the user change is reversed and getNumUndos() decreases while getNumRedos() increases",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins reversal of recorded user diffs and movement between undo and redo stacks."
+        },
+        {
+          "testId": "redo-undone-change",
+          "scenario": "An undone change is reapplied through the redo operation.",
+          "given": ["historyManager.undo()", "getNumRedos() > 0"],
+          "when": "historyManager.redo()",
+          "then": "the previously undone change is reapplied and the redo entry is removed",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards redo stack consumption and atomic reapplication."
+        },
+        {
+          "testId": "new-change-clears-redos",
+          "scenario": "A new user change occurs after an undo.",
+          "given": ["historyManager.undo()", "getNumRedos() > 0"],
+          "when": "a new store change is intercepted with source 'user'",
+          "then": "the redo stack is cleared",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins standard branching-history behavior."
+        },
+        {
+          "testId": "preserve-redo-during-batch",
+          "scenario": "A batch records changes while explicitly preserving the existing redo stack.",
+          "given": ["historyManager.undo()", "getNumRedos() > 0"],
+          "when": "historyManager.batch(fn, { history: 'record-preserveRedoStack' })",
+          "then": "the batch changes are recorded without clearing the existing redo stack",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Guards the special batch mode that differs from normal recording."
+        },
+        {
+          "testId": "bail-discards-change",
+          "scenario": "Pending and marked history changes are discarded without creating redo entries.",
+          "given": ["getNumUndos() > 0"],
+          "when": "historyManager.bail()",
+          "then": "the applicable changes are reversed and no corresponding redo entries are pushed",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Distinguishes bail from undo by verifying redo preservation is disabled."
+        },
+        {
+          "testId": "ignore-non-user-changes",
+          "scenario": "A store change arrives from a source other than the user.",
+          "given": ["historyManager = new HistoryManager({ store })", "store change source is not 'user'"],
+          "when": "the history interceptor receives the change",
+          "then": "the change is not added to pending history",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Pins the source filter that prevents programmatic changes from entering user history."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "HistoryRecorderState constant",
+        "HistoryRecorderState type alias",
+        "HistoryManager class",
+        "modeToState constant",
+        "PendingDiff class",
+        "hasAnyKey helper",
+        "Stack type alias",
+        "stack helper",
+        "EmptyStackItem class",
+        "EMPTY_STACK_ITEM constant",
+        "StackItem class",
+        "stackToArray helper"
+      ],
+      "moduleLevelCode": "import { atom, EMPTY_ARRAY, transact } from '@tldraw/state'\nimport {\n\tcreateEmptyRecordsDiff,\n\tisRecordsDiffEmpty,\n\tRecordsDiff,\n\treverseRecordsDiff,\n\tsquashRecordDiffsMutable,\n\tStore,\n\tUnknownRecord,\n} from '@tldraw/store'\nimport { exhaustiveSwitchError, noop } from '@tldraw/utils'\nimport { TLHistoryBatchOptions, TLHistoryEntry } from '../../types/history-types'",
+      "exports": [{ "name": "HistoryManager", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "atom", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "EMPTY_ARRAY", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "transact", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "createEmptyRecordsDiff", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "isRecordsDiffEmpty", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "RecordsDiff", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "reverseRecordsDiff", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "squashRecordDiffsMutable", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "Store", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "UnknownRecord", "module": "@tldraw/store", "alias": null, "kind": "external" },
+        { "symbol": "exhaustiveSwitchError", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "noop", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "TLHistoryBatchOptions", "module": "../../types/history-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLHistoryEntry", "module": "../../types/history-types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [
+        {
+          "name": "HistoryRecorderState",
+          "value": "{\n\tRecording: 'recording',\n\tRecordingPreserveRedoStack: 'recordingPreserveRedoStack',\n\tPaused: 'paused',\n}",
+          "kind": "object"
+        },
+        {
+          "name": "modeToState",
+          "value": "{\n\trecord: HistoryRecorderState.Recording,\n\t'record-preserveRedoStack': HistoryRecorderState.RecordingPreserveRedoStack,\n\tignore: HistoryRecorderState.Paused,\n}",
+          "kind": "object"
+        },
+        { "name": "EMPTY_STACK_ITEM", "value": "new EmptyStackItem()", "kind": "object" }
+      ],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+        "unitKind": "class",
+        "name": "HistoryManager",
+        "qualifiedName": "HistoryManager",
+        "parentUnitId": null,
+        "startLine": 22,
+        "endLine": 319,
+        "isBehavioral": true,
+        "source": "export class HistoryManager<R extends UnknownRecord> {\n\tprivate readonly store: Store<R>\n\n\treadonly dispose: () => void\n\n\tprivate state: HistoryRecorderState = HistoryRecorderState.Recording\n\tprivate readonly pendingDiff = new PendingDiff<R>()\n\tprivate stacks = atom(\n\t\t'HistoryManager.stacks',\n\t\t{\n\t\t\tundos: stack<TLHistoryEntry<R>>(),\n\t\t\tredos: stack<TLHistoryEntry<R>>(),\n\t\t},\n\t\t{\n\t\t\tisEqual: (a, b) => a.undos === b.undos && a.redos === b.redos,\n\t\t}\n\t)\n\n\tprivate readonly annotateError: (error: unknown) => void\n\n\tconstructor(opts: { store: Store<R>; annotateError?(error: unknown): void }) {\n\t\tthis.store = opts.store\n\t\tthis.annotateError = opts.annotateError ?? noop\n\t\tthis.dispose = this.store.addHistoryInterceptor((entry, source) => {\n\t\t\tif (source !== 'user') return\n\n\t\t\tswitch (this.state) {\n\t\t\t\tcase HistoryRecorderState.Recording:\n\t\t\t\t\tthis.pendingDiff.apply(entry.changes)\n\t\t\t\t\t// this interceptor runs for every store change, so skip the update when the\n\t\t\t\t\t// redo stack is already empty\n\t\t\t\t\tif (this.stacks.get().redos.length > 0) {\n\t\t\t\t\t\tthis.stacks.update(({ undos }) => ({ undos, redos: stack() }))\n\t\t\t\t\t}\n\t\t\t\t\tbreak\n\t\t\t\tcase HistoryRecorderState.RecordingPreserveRedoStack:\n\t\t\t\t\tthis.pendingDiff.apply(entry.changes)\n\t\t\t\t\tbreak\n\t\t\t\tcase HistoryRecorderState.Paused:\n\t\t\t\t\tbreak\n\t\t\t\tdefault:\n\t\t\t\t\texhaustiveSwitchError(this.state)\n\t\t\t}\n\t\t})\n\t}\n\n\tprivate flushPendingDiff() {\n\t\tif (this.pendingDiff.isEmpty()) return\n\n\t\tconst diff = this.pendingDiff.clear()\n\t\tthis.stacks.update(({ undos, redos }) => ({\n\t\t\tundos: undos.push({ type: 'diff', diff }),\n\t\t\tredos,\n\t\t}))\n\t}\n\n\tgetNumUndos() {\n\t\treturn this.stacks.get().undos.length + (this.pendingDiff.isEmpty() ? 0 : 1)\n\t}\n\n\tgetNumRedos() {\n\t\treturn this.stacks.get().redos.length\n\t}\n\n\t/** @internal */\n\tprivate _isReplaying = false\n\n\t/** @internal */\n\tisReplaying() {\n\t\treturn this._isReplaying\n\t}\n\n\t/** @internal */\n\t_isInBatch = false\n\n\tbatch(fn: () => void, opts?: TLHistoryBatchOptions) {\n\t\tconst previousState = this.state\n\n\t\t// we move to the new state only if we haven't explicitly paused\n\t\tif (previousState !== HistoryRecorderState.Paused && opts?.history) {\n\t\t\tthis.state = modeToState[opts.history]\n\t\t}\n\n\t\ttry {\n\t\t\tif (this._isInBatch) {\n\t\t\t\ttransact(fn)\n\t\t\t\treturn this\n\t\t\t}\n\n\t\t\tthis._isInBatch = true\n\t\t\ttry {\n\t\t\t\ttransact(fn)\n\t\t\t} catch (error) {\n\t\t\t\tthis.annotateError(error)\n\t\t\t\tthrow error\n\t\t\t} finally {\n\t\t\t\tthis._isInBatch = false\n\t\t\t}\n\n\t\t\treturn this\n\t\t} finally {\n\t\t\tthis.state = previousState\n\t\t}\n\t}\n\n\t// History\n\t_undo({ pushToRedoStack, toMark = undefined }: { pushToRedoStack: boolean; toMark?: string }) {\n\t\tconst previousState = this.state\n\t\tconst previousIsReplaying = this._isReplaying\n\t\tthis.state = HistoryRecorderState.Paused\n\t\tthis._isReplaying = true\n\t\ttry {\n\t\t\tlet { undos, redos } = this.stacks.get()\n\n\t\t\t// start by collecting the pending diff (everything since the last mark).\n\t\t\t// we'll accumulate the diff to undo in this variable so we can apply it atomically.\n\t\t\tconst pendingDiff = this.pendingDiff.clear()\n\t\t\tconst isPendingDiffEmpty = isRecordsDiffEmpty(pendingDiff)\n\t\t\tconst diffToUndo = reverseRecordsDiff(pendingDiff)\n\n\t\t\tif (pushToRedoStack && !isPendingDiffEmpty) {\n\t\t\t\tredos = redos.push({ type: 'diff', diff: pendingDiff })\n\t\t\t}\n\n\t\t\tlet didFindMark = false\n\t\t\tif (isPendingDiffEmpty) {\n\t\t\t\t// if nothing has happened since the last mark, pop any intermediate marks off the stack\n\t\t\t\twhile (undos.head?.type === 'stop') {\n\t\t\t\t\tconst mark = undos.head\n\t\t\t\t\tundos = undos.tail\n\t\t\t\t\tif (pushToRedoStack) {\n\t\t\t\t\t\tredos = redos.push(mark)\n\t\t\t\t\t}\n\t\t\t\t\tif (mark.id === toMark) {\n\t\t\t\t\t\tdidFindMark = true\n\t\t\t\t\t\tbreak\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (!didFindMark) {\n\t\t\t\tloop: while (undos.head) {\n\t\t\t\t\tconst undo = undos.head\n\t\t\t\t\tundos = undos.tail\n\n\t\t\t\t\tif (pushToRedoStack) {\n\t\t\t\t\t\tredos = redos.push(undo)\n\t\t\t\t\t}\n\n\t\t\t\t\tswitch (undo.type) {\n\t\t\t\t\t\tcase 'diff':\n\t\t\t\t\t\t\tsquashRecordDiffsMutable(diffToUndo, [reverseRecordsDiff(undo.diff)])\n\t\t\t\t\t\t\tbreak\n\t\t\t\t\t\tcase 'stop':\n\t\t\t\t\t\t\tif (!toMark) break loop\n\t\t\t\t\t\t\tif (undo.id === toMark) {\n\t\t\t\t\t\t\t\tdidFindMark = true\n\t\t\t\t\t\t\t\tbreak loop\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tbreak\n\t\t\t\t\t\tdefault:\n\t\t\t\t\t\t\texhaustiveSwitchError(undo)\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (!didFindMark && toMark) {\n\t\t\t\t// we didn't find the mark we were looking for — restore state and bail\n\t\t\t\tthis.pendingDiff.restore(pendingDiff)\n\t\t\t\treturn this\n\t\t\t}\n\t\t\tthis.store.applyDiff(diffToUndo, { ignoreEphemeralKeys: true })\n\t\t\tthis.store.ensureStoreIsUsable()\n\t\t\tthis.stacks.set({ undos, redos })\n\t\t} finally {\n\t\t\tthis._isReplaying = previousIsReplaying\n\t\t\tthis.state = previousState\n\t\t}\n\n\t\treturn this\n\t}\n\n\tundo() {\n\t\tthis._undo({ pushToRedoStack: true })\n\n\t\treturn this\n\t}\n\n\tredo() {\n\t\tconst previousState = this.state\n\t\tconst previousIsReplaying = this._isReplaying\n\t\tthis.state = HistoryRecorderState.Paused\n\t\tthis._isReplaying = true\n\t\ttry {\n\t\t\tthis.flushPendingDiff()\n\n\t\t\tlet { undos, redos } = this.stacks.get()\n\t\t\tif (redos.length === 0) {\n\t\t\t\treturn this\n\t\t\t}\n\n\t\t\t// ignore any intermediate marks - this should take us to the first `diff` entry\n\t\t\twhile (redos.head?.type === 'stop') {\n\t\t\t\tundos = undos.push(redos.head)\n\t\t\t\tredos = redos.tail\n\t\t\t}\n\n\t\t\t// accumulate diffs to be redone so they can be applied atomically\n\t\t\tconst diffToRedo = createEmptyRecordsDiff<R>()\n\n\t\t\twhile (redos.head) {\n\t\t\t\tconst redo = redos.head\n\t\t\t\tundos = undos.push(redo)\n\t\t\t\tredos = redos.tail\n\n\t\t\t\tif (redo.type === 'diff') {\n\t\t\t\t\tsquashRecordDiffsMutable(diffToRedo, [redo.diff])\n\t\t\t\t} else {\n\t\t\t\t\tbreak\n\t\t\t\t}\n\t\t\t}\n\t\t\tthis.store.applyDiff(diffToRedo, { ignoreEphemeralKeys: true })\n\t\t\tthis.store.ensureStoreIsUsable()\n\t\t\tthis.stacks.set({ undos, redos })\n\t\t} finally {\n\t\t\tthis._isReplaying = previousIsReplaying\n\t\t\tthis.state = previousState\n\t\t}\n\n\t\treturn this\n\t}\n\n\tbail() {\n\t\tthis._undo({ pushToRedoStack: false })\n\n\t\treturn this\n\t}\n\n\tbailToMark(id: string) {\n\t\tif (id) {\n\t\t\tthis._undo({ pushToRedoStack: false, toMark: id })\n\t\t}\n\n\t\treturn this\n\t}\n\n\tsquashToMark(id: string) {\n\t\t// remove marks between head and the mark\n\n\t\tlet top = this.stacks.get().undos\n\t\tconst popped: Array<RecordsDiff<R>> = []\n\n\t\twhile (top.head && !(top.head.type === 'stop' && top.head.id === id)) {\n\t\t\tif (top.head.type === 'diff') {\n\t\t\t\tpopped.push(top.head.diff)\n\t\t\t}\n\t\t\ttop = top.tail\n\t\t}\n\n\t\tif (!top.head || top.head?.id !== id) {\n\t\t\tconsole.error('Could not find mark to squash to: ', id)\n\t\t\treturn this\n\t\t}\n\t\tif (popped.length === 0) {\n\t\t\treturn this\n\t\t}\n\n\t\tconst diff = createEmptyRecordsDiff<R>()\n\t\tsquashRecordDiffsMutable(diff, popped.reverse())\n\n\t\tthis.stacks.update(({ redos }) => ({\n\t\t\tundos: top.push({\n\t\t\t\ttype: 'diff',\n\t\t\t\tdiff,\n\t\t\t}),\n\t\t\tredos,\n\t\t}))\n\n\t\treturn this\n\t}\n\n\t/** @internal */\n\t_mark(id: string) {\n\t\ttransact(() => {\n\t\t\tthis.flushPendingDiff()\n\t\t\tthis.stacks.update(({ undos, redos }) => ({ undos: undos.push({ type: 'stop', id }), redos }))\n\t\t})\n\t}\n\n\tclear() {\n\t\tthis.stacks.set({ undos: stack(), redos: stack() })\n\t\tthis.pendingDiff.clear()\n\t}\n\n\t/** @internal */\n\tgetMarkIdMatching(idSubstring: string) {\n\t\tlet top = this.stacks.get().undos\n\t\twhile (top.head) {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager",
+          "unitKind": "class",
+          "name": "HistoryManager",
+          "qualifiedName": "HistoryManager",
+          "parentUnitId": null,
+          "startLine": 22,
+          "endLine": 319,
+          "signature": "export class HistoryManager<R extends UnknownRecord>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["R extends UnknownRecord"],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "store",
+              "kind": "property",
+              "type": "Store<R>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "dispose",
+              "kind": "property",
+              "type": "() => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "state",
+              "kind": "property",
+              "type": "HistoryRecorderState",
+              "default": "HistoryRecorderState.Recording",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "pendingDiff",
+              "kind": "property",
+              "type": "PendingDiff<R>",
+              "default": "new PendingDiff<R>()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "stacks",
+              "kind": "property",
+              "type": "Atom<{ undos: Stack<TLHistoryEntry<R>>; redos: Stack<TLHistoryEntry<R>> }>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "annotateError",
+              "kind": "property",
+              "type": "(error: unknown) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_isReplaying",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_isInBatch",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": "constructor(opts: { store: Store<R>; annotateError?(error: unknown): void })",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getNumUndos",
+              "kind": "method",
+              "type": "() => number",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getNumRedos",
+              "kind": "method",
+              "type": "() => number",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "isReplaying",
+              "kind": "method",
+              "type": "() => boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "batch",
+              "kind": "method",
+              "type": "(fn: () => void, opts?: TLHistoryBatchOptions) => this",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "_undo",
+              "kind": "method",
+              "type": "({ pushToRedoStack, toMark = undefined }: { pushToRedoStack: boolean; toMark?: string }) => this",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "undo",
+              "kind": "method",
+              "type": "() => this",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "redo",
+              "kind": "method",
+              "type": "() => this",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "bail",
+              "kind": "method",
+              "type": "() => this",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "bailToMark",
+              "kind": "method",
+              "type": "(id: string) => this",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "squashToMark",
+              "kind": "method",
+              "type": "(id: string) => this",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "_mark",
+              "kind": "method",
+              "type": "(id: string) => void",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "clear",
+              "kind": "method",
+              "type": "() => void",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getMarkIdMatching",
+              "kind": "method",
+              "type": "(idSubstring: string) => string | null",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "HistoryManager coordinates undo, redo, batching, marks, and history recording for a Store<R>. It exposes history state management while allowing replay and recording behavior to be controlled.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "3304398cd7af5f096ef8aa1eddd931414fb26783c7ca9e8e30905e86429bca1f"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.constructor#method:HistoryManager.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "HistoryManager.constructor",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+        "startLine": 42,
+        "endLine": 66,
+        "isBehavioral": true,
+        "source": "\tconstructor(opts: { store: Store<R>; annotateError?(error: unknown): void }) {\n\t\tthis.store = opts.store\n\t\tthis.annotateError = opts.annotateError ?? noop\n\t\tthis.dispose = this.store.addHistoryInterceptor((entry, source) => {\n\t\t\tif (source !== 'user') return\n\n\t\t\tswitch (this.state) {\n\t\t\t\tcase HistoryRecorderState.Recording:\n\t\t\t\t\tthis.pendingDiff.apply(entry.changes)\n\t\t\t\t\t// this interceptor runs for every store change, so skip the update when the\n\t\t\t\t\t// redo stack is already empty\n\t\t\t\t\tif (this.stacks.get().redos.length > 0) {\n\t\t\t\t\t\tthis.stacks.update(({ undos }) => ({ undos, redos: stack() }))\n\t\t\t\t\t}\n\t\t\t\t\tbreak\n\t\t\t\tcase HistoryRecorderState.RecordingPreserveRedoStack:\n\t\t\t\t\tthis.pendingDiff.apply(entry.changes)\n\t\t\t\t\tbreak\n\t\t\t\tcase HistoryRecorderState.Paused:\n\t\t\t\t\tbreak\n\t\t\t\tdefault:\n\t\t\t\t\texhaustiveSwitchError(this.state)\n\t\t\t}\n\t\t})\n\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.constructor#method:HistoryManager.constructor",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.constructor",
+          "unitKind": "method",
+          "name": "constructor",
+          "qualifiedName": "HistoryManager.constructor",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+          "startLine": 42,
+          "endLine": 66,
+          "signature": "constructor(opts: { store: Store<R>; annotateError?(error: unknown): void })",
+          "parameters": [
+            {
+              "name": "opts",
+              "type": "{ store: Store<R>; annotateError?(error: unknown): void }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "opts.store is a Store<R> that provides addHistoryInterceptor.",
+            "The store accepts a history interceptor callback and returns a disposable cleanup function."
+          ],
+          "postconditions": [
+            "this.store references opts.store.",
+            "this.annotateError references opts.annotateError when provided, otherwise a no-op function.",
+            "this.dispose references the cleanup function returned by opts.store.addHistoryInterceptor.",
+            "A history interceptor is registered for subsequent store changes."
+          ],
+          "invariants": [
+            "Non-user history entries are ignored by the registered interceptor.",
+            "In Recording state, user changes are applied to the pending diff and existing redo entries are cleared.",
+            "In RecordingPreserveRedoStack state, user changes are applied to the pending diff without clearing redo entries.",
+            "In Paused state, user changes do not update the pending diff or history stacks."
+          ],
+          "edgeCases": [
+            "When annotateError is omitted, annotateError is initialized to a no-op function.",
+            "When a history entry has a source other than 'user', the interceptor returns without changing history state.",
+            "When the redo stack is already empty during Recording, the interceptor applies the changes but does not perform a redo-stack update.",
+            "When the manager state is Paused, user-originated changes are ignored.",
+            "When the manager state is not one of the recognized HistoryRecorderState values, the interceptor raises an exhaustive-switch error."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "The error raised by exhaustiveSwitchError for an unrecognized history recorder state.",
+              "Any error propagated by opts.store.addHistoryInterceptor during registration."
+            ],
+            "reverts": [],
+            "onInvalidInput": "No explicit validation is performed; invalid store behavior or an unrecognized recorder state propagates or raises an error.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Assigns this.store.",
+            "Assigns this.annotateError.",
+            "Assigns this.dispose.",
+            "The registered interceptor may mutate pendingDiff and the redo stack on later user-originated store changes."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "opts.store.addHistoryInterceptor", "source": "provided Store<R> instance", "kind": "external" },
+            { "name": "this.pendingDiff.apply", "source": "HistoryManager internal state", "kind": "internal" },
+            { "name": "this.stacks.get", "source": "HistoryManager internal state", "kind": "internal" },
+            { "name": "this.stacks.update", "source": "HistoryManager internal state", "kind": "internal" },
+            { "name": "stack", "source": "HistoryManager module", "kind": "internal" },
+            { "name": "exhaustiveSwitchError", "source": "HistoryManager module", "kind": "internal" },
+            { "name": "noop", "source": "HistoryManager module", "kind": "internal" }
+          ],
+          "symbolReferences": ["Store<R>", "HistoryRecorderState", "exhaustiveSwitchError", "noop"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes a HistoryManager with a store, an optional error annotation callback, and a history interceptor. The interceptor processes only user-originated changes according to the manager's current recording state.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "user",
+              "role": "Identifies the store history entries that the interceptor processes."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The store emits a user-originated history entry.",
+              "then": "The entry changes are applied to the pending diff and the redo stack is cleared.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The store emits a user-originated history entry.",
+              "then": "annotateError is callable as a no-op, the entry changes are applied to the pending diff, and the redo stack is preserved.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The store emits a user-originated history entry.",
+              "then": "The pending diff and history stacks are unchanged.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e570789bc45225f10d145351355cb4833e06fd08891cdc508c8e7194facae804"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.batch#method:HistoryManager.batch",
+        "unitKind": "method",
+        "name": "batch",
+        "qualifiedName": "HistoryManager.batch",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+        "startLine": 97,
+        "endLine": 121,
+        "isBehavioral": true,
+        "source": "\tbatch(fn: () => void, opts?: TLHistoryBatchOptions) {\n\t\tconst previousState = this.state\n\n\t\t// we move to the new state only if we haven't explicitly paused\n\t\tif (previousState !== HistoryRecorderState.Paused && opts?.history) {\n\t\t\tthis.state = modeToState[opts.history]\n\t\t}\n\n\t\ttry {\n\t\t\tif (this._isInBatch) {\n\t\t\t\ttransact(fn)\n\t\t\t\treturn this\n\t\t\t}\n\n\t\t\tthis._isInBatch = true\n\t\t\ttry {\n\t\t\t\ttransact(fn)\n\t\t\t} catch (error) {\n\t\t\t\tthis.annotateError(error)\n\t\t\t\tthrow error\n\t\t\t} finally {\n\t\t\t\tthis._isInBatch = false\n\t\t\t}\n\n\t\t\treturn this",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.batch#method:HistoryManager.batch",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.batch",
+          "unitKind": "method",
+          "name": "batch",
+          "qualifiedName": "HistoryManager.batch",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+          "startLine": 97,
+          "endLine": 121,
+          "signature": "batch(fn: () => void, opts?: TLHistoryBatchOptions)",
+          "parameters": [
+            { "name": "fn", "type": "() => void", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "opts",
+              "type": "TLHistoryBatchOptions",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "fn must be callable and accept no arguments.",
+            "opts, when provided, must conform to TLHistoryBatchOptions."
+          ],
+          "postconditions": [
+            "The callback has been executed within a transaction.",
+            "The method returns this HistoryManager instance.",
+            "For an outermost batch, _isInBatch is false after the batch completes, including when the callback throws."
+          ],
+          "invariants": [
+            "Nested batches execute through transact without changing the outer batch marker.",
+            "An error thrown by an outermost callback is annotated before being rethrown."
+          ],
+          "edgeCases": [
+            "When opts.history is absent, the current history state is not changed by the history-mode selection step.",
+            "When the manager is paused, opts.history does not change the state.",
+            "When called while already in a batch, the callback is transacted immediately and the current manager instance is returned.",
+            "When the callback throws in an outermost batch, the error is annotated, the error is rethrown, and the batch marker is cleared."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["The original error thrown by fn is rethrown after annotation."],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "May update this.state from opts.history when the previous state is not paused.",
+            "Sets this._isInBatch to true for the duration of an outermost batch and restores it to false in the finally path."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "transact", "source": null, "kind": "external" },
+            { "name": "annotateError", "source": "HistoryManager", "kind": "internal" }
+          ],
+          "symbolReferences": ["TLHistoryBatchOptions", "HistoryRecorderState.Paused", "modeToState"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Executes a callback within a history transaction and returns the current HistoryManager. When requested, it switches to the specified history mode unless history is explicitly paused.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "batch is called with a callback that completes normally.",
+              "then": "The manager enters the requested history state, executes the callback transactionally, clears the outermost batch marker, and returns the same manager instance.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "batch is called with that callback.",
+              "then": "The error is passed to annotateError and the same error is rethrown; _isInBatch is false afterward.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "batch is called with another callback.",
+              "then": "The nested callback is transacted and the current manager instance is returned without resetting the outer batch marker.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "793b4394d6848d5d95d3538fa5265118f781362d8596452ec95477787406e4ab"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager._undo#method:HistoryManager._undo",
+        "unitKind": "method",
+        "name": "_undo",
+        "qualifiedName": "HistoryManager._undo",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+        "startLine": 124,
+        "endLine": 195,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t}\n\n\t// History\n\t_undo({ pushToRedoStack, toMark = undefined }: { pushToRedoStack: boolean; toMark?: string }) {\n\t\tconst previousState = this.state\n\t\tconst previousIsReplaying = this._isReplaying\n\t\tthis.state = HistoryRecorderState.Paused\n\t\tthis._isReplaying = true\n\t\ttry {\n\t\t\tlet { undos, redos } = this.stacks.get()\n\n\t\t\t// start by collecting the pending diff (everything since the last mark).\n\t\t\t// we'll accumulate the diff to undo in this variable so we can apply it atomically.\n\t\t\tconst pendingDiff = this.pendingDiff.clear()\n\t\t\tconst isPendingDiffEmpty = isRecordsDiffEmpty(pendingDiff)\n\t\t\tconst diffToUndo = reverseRecordsDiff(pendingDiff)\n\n\t\t\tif (pushToRedoStack && !isPendingDiffEmpty) {\n\t\t\t\tredos = redos.push({ type: 'diff', diff: pendingDiff })\n\t\t\t}\n\n\t\t\tlet didFindMark = false\n\t\t\tif (isPendingDiffEmpty) {\n\t\t\t\t// if nothing has happened since the last mark, pop any intermediate marks off the stack\n\t\t\t\twhile (undos.head?.type === 'stop') {\n\t\t\t\t\tconst mark = undos.head\n\t\t\t\t\tundos = undos.tail\n\t\t\t\t\tif (pushToRedoStack) {\n\t\t\t\t\t\tredos = redos.push(mark)\n\t\t\t\t\t}\n\t\t\t\t\tif (mark.id === toMark) {\n\t\t\t\t\t\tdidFindMark = true\n\t\t\t\t\t\tbreak\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (!didFindMark) {\n\t\t\t\tloop: while (undos.head) {\n\t\t\t\t\tconst undo = undos.head\n\t\t\t\t\tundos = undos.tail\n\n\t\t\t\t\tif (pushToRedoStack) {\n\t\t\t\t\t\tredos = redos.push(undo)\n\t\t\t\t\t}\n\n\t\t\t\t\tswitch (undo.type) {\n\t\t\t\t\t\tcase 'diff':\n\t\t\t\t\t\t\tsquashRecordDiffsMutable(diffToUndo, [reverseRecordsDiff(undo.diff)])\n\t\t\t\t\t\t\tbreak\n\t\t\t\t\t\tcase 'stop':\n\t\t\t\t\t\t\tif (!toMark) break loop\n\t\t\t\t\t\t\tif (undo.id === toMark) {\n\t\t\t\t\t\t\t\tdidFindMark = true\n\t\t\t\t\t\t\t\tbreak loop\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tbreak\n\t\t\t\t\t\tdefault:\n\t\t\t\t\t\t\texhaustiveSwitchError(undo)\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (!didFindMark && toMark) {\n\t\t\t\t// we didn't find the mark we were looking for — restore state and bail\n\t\t\t\tthis.pendingDiff.restore(pendingDiff)\n\t\t\t\treturn this\n\t\t\t}\n\t\t\tthis.store.applyDiff(diffToUndo, { ignoreEphemeralKeys: true })\n\t\t\tthis.store.ensureStoreIsUsable()\n\t\t\tthis.stacks.set({ undos, redos })",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager._undo#method:HistoryManager._undo",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager._undo",
+          "unitKind": "method",
+          "name": "_undo",
+          "qualifiedName": "HistoryManager._undo",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+          "startLine": 124,
+          "endLine": 195,
+          "signature": "_undo({ pushToRedoStack, toMark = undefined }: { pushToRedoStack: boolean; toMark?: string })",
+          "parameters": [
+            {
+              "name": "{ pushToRedoStack, toMark = undefined }",
+              "type": "{ pushToRedoStack: boolean; toMark?: string }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "this",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "pushToRedoStack is a boolean.",
+            "The manager has initialized history stacks, a pending diff, and a usable store."
+          ],
+          "postconditions": [
+            "The selected changes are applied in reverse to the store.",
+            "The store is checked with ensureStoreIsUsable after the reverse diff is applied.",
+            "The pending diff is cleared when the operation succeeds.",
+            "When pushToRedoStack is true, the undone pending diff and history entries are transferred to the redo stack.",
+            "The manager's previous recording state and replaying flag are restored after the operation."
+          ],
+          "invariants": [
+            "The store is modified atomically using one accumulated reverse diff.",
+            "Ephemeral keys are ignored when applying the reverse diff.",
+            "The manager is paused and marked as replaying while undo processing is active.",
+            "A requested mark must be found before the accumulated undo is committed."
+          ],
+          "edgeCases": [
+            "When the pending diff is empty, intermediate stop marks are removed from the undo stack and optionally transferred to the redo stack.",
+            "When toMark is absent, undo processing stops at the next applicable stop mark after accumulating reverse diffs.",
+            "When toMark is specified and found, history is undone through that mark.",
+            "When toMark is specified but not found, the pending diff is restored, the store is not applied, and the method returns the manager.",
+            "When pushToRedoStack is false, undone entries are not pushed onto the redo stack."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "Exceptions propagated from history stack access, diff processing, store.applyDiff, store.ensureStoreIsUsable, or related dependencies."
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Temporarily sets this.state to HistoryRecorderState.Paused.",
+            "Temporarily sets this._isReplaying to true, then restores its previous value.",
+            "Clears and, when the requested mark is missing, restores this.pendingDiff.",
+            "Updates the undo and redo stacks when the operation completes.",
+            "Applies the accumulated reverse diff to this.store."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "this.stacks.get", "source": "HistoryManager", "kind": "internal" },
+            { "name": "this.pendingDiff.clear", "source": "PendingDiff", "kind": "internal" },
+            { "name": "isRecordsDiffEmpty", "source": null, "kind": "internal" },
+            { "name": "reverseRecordsDiff", "source": null, "kind": "internal" },
+            { "name": "squashRecordDiffsMutable", "source": null, "kind": "internal" },
+            { "name": "this.pendingDiff.restore", "source": "PendingDiff", "kind": "internal" },
+            { "name": "this.store.applyDiff", "source": null, "kind": "external" },
+            { "name": "this.store.ensureStoreIsUsable", "source": null, "kind": "external" },
+            { "name": "this.stacks.set", "source": "HistoryManager", "kind": "internal" },
+            { "name": "exhaustiveSwitchError", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "HistoryRecorderState.Paused",
+            "isRecordsDiffEmpty",
+            "reverseRecordsDiff",
+            "squashRecordDiffsMutable",
+            "exhaustiveSwitchError"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reverses the pending and recorded history changes up to the applicable history boundary or specified mark. It optionally transfers the undone history entries to the redo stack and restores the manager's recording state after replay.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The method is called without a toMark value.",
+              "then": "The pending changes are reversed in the store and the pending diff is added to the redo history.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The method is called.",
+              "then": "The pending diff is restored, no reverse diff is applied to the store, and the method returns the HistoryManager instance.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The method is called with that toMark.",
+              "then": "All changes through the matching mark are accumulated into one reverse diff, applied while ignoring ephemeral keys, and the store is checked for usability.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "29dea7c2ffab0fcc3c05bcf15eaaf033471a4832791cd7dab5694d6a8ed9d47b"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.redo#method:HistoryManager.redo",
+        "unitKind": "method",
+        "name": "redo",
+        "qualifiedName": "HistoryManager.redo",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+        "startLine": 202,
+        "endLine": 242,
+        "isBehavioral": true,
+        "source": "\t}\n\n\tundo() {\n\t\tthis._undo({ pushToRedoStack: true })\n\n\t\treturn this\n\t}\n\n\tredo() {\n\t\tconst previousState = this.state\n\t\tconst previousIsReplaying = this._isReplaying\n\t\tthis.state = HistoryRecorderState.Paused\n\t\tthis._isReplaying = true\n\t\ttry {\n\t\t\tthis.flushPendingDiff()\n\n\t\t\tlet { undos, redos } = this.stacks.get()\n\t\t\tif (redos.length === 0) {\n\t\t\t\treturn this\n\t\t\t}\n\n\t\t\t// ignore any intermediate marks - this should take us to the first `diff` entry\n\t\t\twhile (redos.head?.type === 'stop') {\n\t\t\t\tundos = undos.push(redos.head)\n\t\t\t\tredos = redos.tail\n\t\t\t}\n\n\t\t\t// accumulate diffs to be redone so they can be applied atomically\n\t\t\tconst diffToRedo = createEmptyRecordsDiff<R>()\n\n\t\t\twhile (redos.head) {\n\t\t\t\tconst redo = redos.head\n\t\t\t\tundos = undos.push(redo)\n\t\t\t\tredos = redos.tail\n\n\t\t\t\tif (redo.type === 'diff') {\n\t\t\t\t\tsquashRecordDiffsMutable(diffToRedo, [redo.diff])\n\t\t\t\t} else {\n\t\t\t\t\tbreak\n\t\t\t\t}\n\t\t\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.redo#method:HistoryManager.redo",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.redo",
+          "unitKind": "method",
+          "name": "redo",
+          "qualifiedName": "HistoryManager.redo",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+          "startLine": 202,
+          "endLine": 242,
+          "signature": "redo()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The HistoryManager instance is initialized with accessible history stacks."],
+          "postconditions": [
+            "If redo entries exist, the applicable redo entries are moved to the undo stack and their record diffs are accumulated for replay.",
+            "If no redo entries exist, the manager remains otherwise unchanged and the method returns the manager.",
+            "The manager's prior recorder state and replay flag are restored after the operation, including when processing fails."
+          ],
+          "invariants": [
+            "Pending diffs are flushed before redo entries are processed.",
+            "The recorder state is paused while redo processing occurs.",
+            "The replay flag is true while redo processing occurs.",
+            "Intermediate stop markers are transferred to the undo stack before the first diff entry is replayed.",
+            "Consecutive diff entries are accumulated into one diff for atomic redo application."
+          ],
+          "edgeCases": [
+            "When the redo stack is empty after pending diffs are flushed, no redo is applied and the manager itself is returned.",
+            "When redo entries begin with one or more stop markers, those markers are moved to the undo stack and are not treated as the diff to replay.",
+            "When consecutive diff entries are present, they are combined into a single accumulated record diff before application."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Temporarily sets state to HistoryRecorderState.Paused.",
+            "Temporarily sets _isReplaying to true.",
+            "Flushes pending history diffs.",
+            "Moves processed stop markers and diff entries from the redo stack to the undo stack."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "flushPendingDiff", "source": "HistoryManager", "kind": "internal" },
+            { "name": "stacks.get", "source": "HistoryManager.stacks", "kind": "internal" },
+            { "name": "squashRecordDiffsMutable", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["HistoryRecorderState.Paused", "createEmptyRecordsDiff", "squashRecordDiffsMutable"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Reapplies the next available redo history entry or grouped sequence and returns the history manager. Redo execution is performed in replay mode while preserving the manager's prior recorder state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "redo() is called",
+              "then": "Pending diffs are flushed, no history entry is reapplied, and the same manager instance is returned.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "redo() is called",
+              "then": "The stop markers and the consecutive diff entries are transferred to the undo stack, with the diff entries accumulated for one atomic redo operation.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6f00a96b8bf586a525ebec7acc31034172b5b04718d6f07c643ae6b987c55cdf"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.squashToMark#method:HistoryManager.squashToMark",
+        "unitKind": "method",
+        "name": "squashToMark",
+        "qualifiedName": "HistoryManager.squashToMark",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+        "startLine": 256,
+        "endLine": 283,
+        "isBehavioral": true,
+        "source": "\n\t\treturn this\n\t}\n\n\tbailToMark(id: string) {\n\t\tif (id) {\n\t\t\tthis._undo({ pushToRedoStack: false, toMark: id })\n\t\t}\n\n\t\treturn this\n\t}\n\n\tsquashToMark(id: string) {\n\t\t// remove marks between head and the mark\n\n\t\tlet top = this.stacks.get().undos\n\t\tconst popped: Array<RecordsDiff<R>> = []\n\n\t\twhile (top.head && !(top.head.type === 'stop' && top.head.id === id)) {\n\t\t\tif (top.head.type === 'diff') {\n\t\t\t\tpopped.push(top.head.diff)\n\t\t\t}\n\t\t\ttop = top.tail\n\t\t}\n\n\t\tif (!top.head || top.head?.id !== id) {\n\t\t\tconsole.error('Could not find mark to squash to: ', id)\n\t\t\treturn this",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.squashToMark#method:HistoryManager.squashToMark",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager.squashToMark",
+          "unitKind": "method",
+          "name": "squashToMark",
+          "qualifiedName": "HistoryManager.squashToMark",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__HistoryManager#class:HistoryManager",
+          "startLine": 256,
+          "endLine": 283,
+          "signature": "squashToMark(id: string)",
+          "parameters": [
+            { "name": "id", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["id is a string identifying a history stop mark."],
+          "postconditions": [
+            "When the specified stop mark is found, the diff records from the undo-stack head down to that mark are collected for squashing.",
+            "When the specified mark is not found, the method returns without applying the squash."
+          ],
+          "invariants": [
+            "Undo-stack traversal proceeds from the current head toward older entries through stack tails.",
+            "Only entries of type diff contribute diffs to the squash; stop-mark entries do not contribute diffs."
+          ],
+          "edgeCases": [
+            "If id does not identify a stop mark in the undo stack, an error is logged and the method returns the manager without completing the squash.",
+            "If entries between the head and the target mark include stop marks, those marks are traversed without being added to the collected diff list."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "If no matching mark is found, log an error and return the manager without completing the squash.",
+            "returnsOnError": "this"
+          },
+          "stateMutations": [
+            "On a successful operation, the undo-history stack is rewritten to represent the squashed changes."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "this.stacks.get", "source": "HistoryManager stack storage", "kind": "internal" },
+            { "name": "console.error", "source": "global console", "kind": "external" }
+          ],
+          "symbolReferences": ["RecordsDiff<R>"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Squashes the undo-history changes above the specified mark into a single history operation. If the mark cannot be found, it reports the failure and leaves the history unchanged.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "Could not find mark to squash to: ",
+              "role": "Prefix of the diagnostic emitted when the requested mark is absent."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "squashToMark(id) is called.",
+              "then": "console.error is called with \"Could not find mark to squash to: \" and the requested id, no squash is completed, and the method returns the HistoryManager instance.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "bbec7ca3776658d0e46c0e1ca33317c40ddc699e4d20bfdb1c5cc0c6cb2ae149"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff#class:PendingDiff",
+        "unitKind": "class",
+        "name": "PendingDiff",
+        "qualifiedName": "PendingDiff",
+        "parentUnitId": null,
+        "startLine": 327,
+        "endLine": 367,
+        "isBehavioral": true,
+        "source": "\n\t/** @internal */\n\tdebug() {\n\t\tconst { undos, redos } = this.stacks.get()\n\t\treturn {\n\t\t\tundos: stackToArray(undos),\n\t\t\tredos: stackToArray(redos),\n\t\t\tpendingDiff: this.pendingDiff.debug(),\n\t\t\tstate: this.state as string,\n\t\t}\n\t}\n}\n\nconst modeToState = {\n\trecord: HistoryRecorderState.Recording,\n\t'record-preserveRedoStack': HistoryRecorderState.RecordingPreserveRedoStack,\n\tignore: HistoryRecorderState.Paused,\n} as const\n\nclass PendingDiff<R extends UnknownRecord> {\n\tprivate diff = createEmptyRecordsDiff<R>()\n\tprivate isEmptyAtom = atom('PendingDiff.isEmpty', true)\n\n\tclear() {\n\t\tconst diff = this.diff\n\t\tthis.diff = createEmptyRecordsDiff<R>()\n\t\tthis.isEmptyAtom.set(true)\n\t\treturn diff\n\t}\n\n\trestore(diff: RecordsDiff<R>) {\n\t\tthis.diff = diff\n\t\tthis.isEmptyAtom.set(isRecordsDiffEmpty(diff))\n\t}\n\n\tisEmpty() {\n\t\treturn this.isEmptyAtom.get()\n\t}\n\n\tapply(diff: RecordsDiff<R>) {\n\t\tsquashRecordDiffsMutable(this.diff, [diff])",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff#class:PendingDiff",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff",
+          "unitKind": "class",
+          "name": "PendingDiff",
+          "qualifiedName": "PendingDiff",
+          "parentUnitId": null,
+          "startLine": 327,
+          "endLine": 367,
+          "signature": "class PendingDiff<R extends UnknownRecord>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["R extends UnknownRecord"],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "diff",
+              "kind": "property",
+              "type": "RecordsDiff<R>",
+              "default": "createEmptyRecordsDiff<R>()",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "isEmptyAtom",
+              "kind": "property",
+              "type": null,
+              "default": "atom('PendingDiff.isEmpty', true)",
+              "visibility": "private",
+              "static": false
+            },
+            { "name": "clear", "kind": "method", "type": null, "default": null, "visibility": null, "static": false },
+            { "name": "restore", "kind": "method", "type": null, "default": null, "visibility": null, "static": false },
+            { "name": "isEmpty", "kind": "method", "type": null, "default": null, "visibility": null, "static": false },
+            { "name": "apply", "kind": "method", "type": null, "default": null, "visibility": null, "static": false }
+          ],
+          "memberUnitIds": ["PendingDiff.apply"],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "PendingDiff stores and exposes a pending record diff for a generic record type, including whether the accumulated diff is empty.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "386cbd95ad60a0213086b15e9697517df3981910fee436e8a93a29163ccbc879"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff.apply#method:PendingDiff.apply",
+        "unitKind": "method",
+        "name": "apply",
+        "qualifiedName": "PendingDiff.apply",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff#class:PendingDiff",
+        "startLine": 348,
+        "endLine": 362,
+        "isBehavioral": true,
+        "source": "\tprivate isEmptyAtom = atom('PendingDiff.isEmpty', true)\n\n\tclear() {\n\t\tconst diff = this.diff\n\t\tthis.diff = createEmptyRecordsDiff<R>()\n\t\tthis.isEmptyAtom.set(true)\n\t\treturn diff\n\t}\n\n\trestore(diff: RecordsDiff<R>) {\n\t\tthis.diff = diff\n\t\tthis.isEmptyAtom.set(isRecordsDiffEmpty(diff))\n\t}\n\n\tisEmpty() {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff.apply#method:PendingDiff.apply",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff.apply",
+          "unitKind": "method",
+          "name": "apply",
+          "qualifiedName": "PendingDiff.apply",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__PendingDiff#class:PendingDiff",
+          "startLine": 348,
+          "endLine": 362,
+          "signature": "apply(diff: RecordsDiff<R>)",
+          "parameters": [
+            {
+              "name": "diff",
+              "type": "RecordsDiff<R>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": ["The supplied value is a RecordsDiff<R>."],
+          "postconditions": [
+            "The pending diff incorporates the supplied diff.",
+            "The pending-diff empty-state observable is updated to reflect the resulting diff."
+          ],
+          "invariants": [
+            "The stored pending diff remains a RecordsDiff<R>.",
+            "The empty-state observable is consistent with whether the stored diff is empty."
+          ],
+          "edgeCases": [
+            "Applying an empty records diff leaves the accumulated diff unchanged and preserves an empty state if no prior changes exist.",
+            "Applying a non-empty records diff makes the pending state non-empty.",
+            "Applying a diff when prior changes are already pending accumulates it with the existing pending diff."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["PendingDiff.diff", "PendingDiff.isEmptyAtom"],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["RecordsDiff<R>"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Adds the supplied records diff to the pending diff state so it can be consumed as one accumulated change.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "1951b1015eb021f51c7d0681e1097396d7539d06973264b84a5caad40c47bfd3"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__StackItem#class:StackItem",
+        "unitKind": "class",
+        "name": "StackItem",
+        "qualifiedName": "StackItem",
+        "parentUnitId": null,
+        "startLine": 391,
+        "endLine": 403,
+        "isBehavioral": true,
+        "source": "\nfunction stack<T>(): Stack<T> {\n\treturn EMPTY_STACK_ITEM as any\n}\n\nclass EmptyStackItem<T> {\n\treadonly length = 0\n\treadonly head = null\n\treadonly tail: Stack<T> = this\n\n\tpush(head: T): Stack<T> {\n\t\treturn new StackItem<T>(head, this)\n\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__StackItem#class:StackItem",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__StackItem",
+          "unitKind": "class",
+          "name": "StackItem",
+          "qualifiedName": "StackItem",
+          "parentUnitId": null,
+          "startLine": 391,
+          "endLine": 403,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Represents a stack item used as a node in the editor history stack.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "a0949cc20c18a44374b5203add936cb2ffff2cdf2160a0b8c25b0da4b1aba8a8"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__hasAnyKey#function:hasAnyKey",
+        "unitKind": "function",
+        "name": "hasAnyKey",
+        "qualifiedName": "hasAnyKey",
+        "parentUnitId": null,
+        "startLine": 369,
+        "endLine": 372,
+        "isBehavioral": true,
+        "source": "\t\t// dictionary-mode object pays an O(N) key-collection prologue), and this runs on\n\t\t// every history interceptor call — e.g. every input tick while resizing many\n\t\t// shapes. Updates can never cancel out existing entries during a squash, so the\n\t\t// full recompute is only needed when the incoming diff adds or removes records.",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__hasAnyKey#function:hasAnyKey",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__hasAnyKey",
+          "unitKind": "function",
+          "name": "hasAnyKey",
+          "qualifiedName": "hasAnyKey",
+          "parentUnitId": null,
+          "startLine": 369,
+          "endLine": 372,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Determines whether a key-value collection contains at least one key.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "dcdacbb7d973ab3df959fa1cbd357889b3be715bc1c4a98c545fbd805ec9a442"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__stackToArray#function:stackToArray",
+        "unitKind": "function",
+        "name": "stackToArray",
+        "qualifiedName": "stackToArray",
+        "parentUnitId": null,
+        "startLine": 405,
+        "endLine": 415,
+        "isBehavioral": true,
+        "source": "\nconst EMPTY_STACK_ITEM = new EmptyStackItem()\n\nclass StackItem<T> {\n\tlength: number\n\tconstructor(\n\t\tpublic readonly head: T,\n\t\tpublic readonly tail: Stack<T>\n\t) {\n\t\tthis.length = tail.length + 1\n\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__stackToArray#function:stackToArray",
+          "fileId": "packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.ts__stackToArray",
+          "unitKind": "function",
+          "name": "stackToArray",
+          "qualifiedName": "stackToArray",
+          "parentUnitId": null,
+          "startLine": 405,
+          "endLine": 415,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Converts the module's stack representation into an array representation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "e6d32861f46a105dde800add0d6929e83ee12878c7684941445eb7a88c75b013"
+        }
+      }
+    ]
+  },
+  "out": ["packages/editor/src/lib/editor/types/history-types.ts"],
+  "in": ["packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.test.ts"],
+  "externals": ["@tldraw/state", "@tldraw/store", "@tldraw/utils"],
+  "impact": {
+    "seeds": 11,
+    "callers": 1,
+    "impactedFiles": ["packages/editor/src/lib/editor/managers/HistoryManager/HistoryManager.test.ts"]
+  }
+}

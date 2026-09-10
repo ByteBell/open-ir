@@ -1,0 +1,874 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts",
+    "language": "typescript",
+    "sizeBytes": 3156,
+    "tokenCount": 789,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:21:16.252Z",
+    "module": {
+      "purpose": "Provides snapping state and shape-discovery logic for the editor, including snap indicators, snap thresholds, and the set of shapes eligible for snapping.",
+      "summary": "This module coordinates snapping-related state for an editor. It exposes indicator storage, derives a zoom-adjusted snap threshold, and identifies eligible shapes by traversing the current page hierarchy while excluding selected, unsupported, off-viewport, and group container shapes. Shape-bound and handle-specific snapping services are initialized and retained by the manager.",
+      "businessContext": "Supports alignment and snapping interactions in a graphical editor. If it fails, users lose accurate guides, handle snapping, and reliable alignment targets.",
+      "classes": [
+        "PointsSnapIndicator (~L9-13): Represents point-based visual snapping indicators",
+        "GapsSnapIndicator (~L16-24): Represents horizontal or vertical gap indicators",
+        "SnapData (~L30-32): Carries the translation vector required for snapping",
+        "SnapManager (~L35-110): Coordinates editor snapping state and eligible shapes"
+      ],
+      "functions": [
+        "constructor (~L41-44): Initializes bound and handle snapping services",
+        "getIndicators (~L46-48): Returns current snap indicators or an empty array",
+        "clearIndicators (~L50-54): Removes stored indicators when any exist",
+        "setIndicators (~L56-58): Stores the supplied snap indicators",
+        "getSnapThreshold (~L60-62): Computes the zoom-adjusted snapping threshold",
+        "getSnappableShapes (~L65-104): Collects eligible visible shapes for snapping",
+        "getCurrentCommonAncestor (~L107-110): Finds the common ancestor of selected shapes"
+      ],
+      "keywords": [
+        "shape snapping",
+        "snap indicators",
+        "viewport page bounds",
+        "common ancestor",
+        "shape frames",
+        "handle snapping",
+        "bounds snapping",
+        "zoom-adjusted threshold"
+      ],
+      "ontologyConcepts": [
+        "hierarchical traversal",
+        "selection filtering",
+        "viewport culling",
+        "reactive state",
+        "geometric snapping",
+        "editor coordination"
+      ],
+      "businessEntities": ["Shape", "SnapIndicator", "SnapData", "Editor", "Viewport", "Selection"],
+      "systemCapabilities": [
+        "Manage snap indicators",
+        "Calculate zoom-aware snap thresholds",
+        "Discover eligible snapping targets",
+        "Initialize bounds and handle snapping",
+        "Filter shapes by viewport and selection"
+      ],
+      "configDependencies": ["editor.options.snapThreshold"],
+      "importsInternal": [
+        {
+          "spec": "../../../primitives/Vec",
+          "symbols": ["Vec", "VecLike"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/Vec"
+        },
+        {
+          "spec": "../../Editor",
+          "symbols": ["Editor"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/Editor"
+        },
+        {
+          "spec": "./BoundsSnaps",
+          "symbols": ["BoundsSnaps"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps"
+        },
+        {
+          "spec": "./HandleSnaps",
+          "symbols": ["HandleSnaps"],
+          "anchor": { "startLine": 6, "endLine": 6 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/managers/SnapManager/HandleSnaps.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/managers/SnapManager/HandleSnaps.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/managers/SnapManager/HandleSnaps"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["EMPTY_ARRAY", "atom", "computed"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["TLParentId", "TLShapeId", "isShapeId"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "PointsSnapIndicator",
+          "shape": "interface PointsSnapIndicator { id: string; type: 'points'; points: VecLike[] }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "GapsSnapIndicator",
+          "shape": "interface GapsSnapIndicator { id: string; type: 'gaps'; direction: 'horizontal' | 'vertical'; gaps: Array<{ startEdge: [VecLike, VecLike]; endEdge: [VecLike, VecLike] }> }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SnapIndicator",
+          "shape": "type SnapIndicator = PointsSnapIndicator | GapsSnapIndicator",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SnapData",
+          "shape": "interface SnapData { nudge: Vec }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "SnapManager", "shape": "class SnapManager", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Editor",
+          "shape": "Editor",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts"
+        },
+        {
+          "name": "BoundsSnaps",
+          "shape": "BoundsSnaps",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts"
+        },
+        {
+          "name": "HandleSnaps",
+          "shape": "HandleSnaps",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/managers/SnapManager/HandleSnaps.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/managers/SnapManager/HandleSnaps.ts"
+        },
+        {
+          "name": "Vec",
+          "shape": "Vec",
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Vec.ts"
+        },
+        {
+          "name": "VecLike",
+          "shape": "VecLike",
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Vec.ts"
+        },
+        { "name": "TLParentId", "shape": "TLParentId", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLShapeId", "shape": "TLShapeId", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "isShapeId", "shape": "isShapeId(parentId)", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "initialization",
+          "intent": "Creates bounds and handle snapping collaborators for the editor",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 41, "endLine": 44 }
+        },
+        {
+          "name": "indicator-state",
+          "intent": "Reads, clears, and replaces reactive snap indicator state",
+          "structureKind": "io",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 46, "endLine": 58 }
+        },
+        {
+          "name": "snap-threshold",
+          "intent": "Scales configured snapping distance by current editor zoom",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 60, "endLine": 62 }
+        },
+        {
+          "name": "ancestor-traversal",
+          "intent": "Recursively traverses parent children in sorted order",
+          "structureKind": "recursion",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 73, "endLine": 99 }
+        },
+        {
+          "name": "parent-frame-filter",
+          "intent": "Adds shape parents that behave like frames",
+          "structureKind": "branch",
+          "predicate": "isShapeId(parentId)",
+          "branchOutcomes": ["shape parent", "non-shape parent"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 74, "endLine": 79 }
+        },
+        {
+          "name": "child-filtering",
+          "intent": "Excludes selected, missing, unsupported, or off-viewport children",
+          "structureKind": "branch",
+          "predicate": "selectedShapeIds.includes(childId)",
+          "branchOutcomes": ["skip selected child", "inspect child"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 80, "endLine": 92 }
+        },
+        {
+          "name": "group-descent",
+          "intent": "Descends into groups while excluding group containers themselves",
+          "structureKind": "branch",
+          "predicate": "editor.isShapeOfType(childShape, 'group')",
+          "branchOutcomes": ["recurse into group", "add ordinary shape"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 93, "endLine": 97 }
+        },
+        {
+          "name": "result-production",
+          "intent": "Starts traversal from common ancestor or current page and returns targets",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 101, "endLine": 103 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "PointsSnapIndicator",
+          "signature": "export interface PointsSnapIndicator {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 9, "endLine": 9 }
+        },
+        {
+          "kind": "interface",
+          "name": "GapsSnapIndicator",
+          "signature": "export interface GapsSnapIndicator {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 16, "endLine": 16 }
+        },
+        {
+          "kind": "type",
+          "name": "SnapIndicator",
+          "signature": "export type SnapIndicator = PointsSnapIndicator | GapsSnapIndicator",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 27, "endLine": 27 }
+        },
+        {
+          "kind": "interface",
+          "name": "SnapData",
+          "signature": "export interface SnapData {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 30, "endLine": 30 }
+        },
+        {
+          "kind": "class",
+          "name": "SnapManager",
+          "signature": "export class SnapManager {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 35, "endLine": 35 }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "\tconstructor(public readonly editor: Editor) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 41, "endLine": 41 }
+        },
+        {
+          "kind": "method",
+          "name": "getIndicators",
+          "signature": "\tgetIndicators() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 46, "endLine": 46 }
+        },
+        {
+          "kind": "method",
+          "name": "clearIndicators",
+          "signature": "\tclearIndicators() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 50, "endLine": 50 }
+        },
+        {
+          "kind": "method",
+          "name": "setIndicators",
+          "signature": "\tsetIndicators(indicators: SnapIndicator[]) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 56, "endLine": 56 }
+        },
+        {
+          "kind": "getter",
+          "name": "getSnapThreshold",
+          "signature": "\t@computed getSnapThreshold() {",
+          "generics": null,
+          "decorators": ["\t@computed"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 60, "endLine": 60 }
+        },
+        {
+          "kind": "getter",
+          "name": "getSnappableShapes",
+          "signature": "\t@computed getSnappableShapes(): Set<TLShapeId> {",
+          "generics": null,
+          "decorators": ["\t@computed"],
+          "returnType": "Set<TLShapeId>",
+          "exported": false,
+          "anchor": { "startLine": 65, "endLine": 65 }
+        },
+        {
+          "kind": "getter",
+          "name": "getCurrentCommonAncestor",
+          "signature": "\t@computed getCurrentCommonAncestor() {",
+          "generics": null,
+          "decorators": ["\t@computed"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 107, "endLine": 107 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "PointsSnapIndicator",
+          "shape": "{\n\tid: string\n\ttype: 'points'\n\tpoints: VecLike[]\n}",
+          "discriminant": "type",
+          "anchor": { "startLine": 9, "endLine": 13 }
+        },
+        {
+          "kind": "interface",
+          "name": "GapsSnapIndicator",
+          "shape": "{\n\tid: string\n\ttype: 'gaps'\n\tdirection: 'horizontal' | 'vertical'\n\tgaps: Array<{\n\t\tstartEdge: [VecLike, VecLike]\n\t\tendEdge: [VecLike, VecLike]\n\t}>\n}",
+          "discriminant": "type",
+          "anchor": { "startLine": 16, "endLine": 24 }
+        },
+        {
+          "kind": "union",
+          "name": "SnapIndicator",
+          "shape": "PointsSnapIndicator | GapsSnapIndicator",
+          "discriminant": "type",
+          "anchor": { "startLine": 27, "endLine": 27 }
+        },
+        {
+          "kind": "interface",
+          "name": "SnapData",
+          "shape": "{\n\tnudge: Vec\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 30, "endLine": 32 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "undefined snap indicator state",
+          "handled": true,
+          "behavior": "Returns EMPTY_ARRAY cast as SnapIndicator[].",
+          "anchor": { "startLine": 46, "endLine": 48 }
+        },
+        {
+          "inputShape": "empty indicator array",
+          "handled": true,
+          "behavior": "clearIndicators leaves state unchanged because the length check fails.",
+          "anchor": { "startLine": 50, "endLine": 54 }
+        },
+        {
+          "inputShape": "missing child shape",
+          "handled": true,
+          "behavior": "Skips the child and continues traversal.",
+          "anchor": { "startLine": 84, "endLine": 85 }
+        },
+        {
+          "inputShape": "group child shape",
+          "handled": true,
+          "behavior": "Recurses into the group's children instead of adding the group.",
+          "anchor": { "startLine": 93, "endLine": 96 }
+        },
+        {
+          "inputShape": "no common ancestor for selected shapes",
+          "handled": true,
+          "behavior": "Uses the current page identifier as the traversal root.",
+          "anchor": { "startLine": 101, "endLine": 101 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "postcondition",
+          "description": "Indicator reads always return an array, using an empty shared array when state is undefined.",
+          "anchor": { "startLine": 46, "endLine": 48 }
+        },
+        {
+          "kind": "invariant",
+          "description": "The snappable shape result is a Set of shape identifiers with no duplicates.",
+          "anchor": { "startLine": 71, "endLine": 71 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Children are traversed using the editor-provided sorted child order.",
+          "anchor": { "startLine": 80, "endLine": 81 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Selected shapes are never included as snapping targets.",
+          "anchor": { "startLine": 82, "endLine": 83 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The manager assumes the supplied editor exposes shape hierarchy, viewport, selection, zoom, and shape utility APIs.",
+          "anchor": { "startLine": 41, "endLine": 41 }
+        },
+        {
+          "kind": "schema",
+          "description": "Shape identifiers and parent identifiers follow the tldraw schema recognized by isShapeId.",
+          "anchor": { "startLine": 74, "endLine": 74 }
+        }
+      ],
+      "ambiguities": [],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "All operations are synchronous; reactive atom and computed decorators provide state derivation without asynchronous work."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "returns-empty-indicators-initially",
+          "scenario": "A newly constructed SnapManager has no snap indicators.",
+          "given": ["const manager = new SnapManager(editor)"],
+          "when": "manager.getIndicators()",
+          "then": "returns an empty SnapIndicator[]",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": ""
+        },
+        {
+          "testId": "sets-and-clears-indicators",
+          "scenario": "Snap indicators are set and then removed when clearIndicators is called.",
+          "given": [
+            "const indicators: SnapIndicator[] = [{ id: 'snap-1', type: 'points', points: [] }]",
+            "manager.setIndicators(indicators)"
+          ],
+          "when": "manager.clearIndicators()",
+          "then": "manager.getIndicators() returns an empty SnapIndicator[]",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the observable lifecycle of the manager's indicator state."
+        },
+        {
+          "testId": "preserves-indicators-when-clearing-empty-state",
+          "scenario": "Calling clearIndicators when no indicators exist does not introduce state or errors.",
+          "given": ["const manager = new SnapManager(editor)"],
+          "when": "manager.clearIndicators()",
+          "then": "manager.getIndicators() returns an empty SnapIndicator[]",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "Guards the empty-state behavior."
+        },
+        {
+          "testId": "computes-snap-threshold-from-zoom",
+          "scenario": "The snap threshold scales inversely with the editor zoom level.",
+          "given": ["editor.options.snapThreshold = 10", "editor.getZoomLevel() returns 2"],
+          "when": "manager.getSnapThreshold()",
+          "then": "returns 5",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the zoom-adjusted snapping tolerance."
+        },
+        {
+          "testId": "excludes-selected-and-unsnappable-shapes",
+          "scenario": "Selected shapes and shapes whose utilities disallow snapping are omitted from snappable shapes.",
+          "given": [
+            "editor.getSelectedShapeIds() includes selectedShapeId",
+            "editor.getShapeUtil(unsnappableShape).canSnap(unsnappableShape) returns false"
+          ],
+          "when": "manager.getSnappableShapes()",
+          "then": "the returned Set excludes selectedShapeId and unsnappableShape",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the primary exclusion rules for snap candidates."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "PointsSnapIndicator interface",
+        "GapsSnapIndicator interface",
+        "SnapIndicator type",
+        "SnapData interface",
+        "SnapManager class"
+      ],
+      "moduleLevelCode": "import { EMPTY_ARRAY, atom, computed } from '@tldraw/state'\nimport { TLParentId, TLShapeId, isShapeId } from '@tldraw/tlschema'\nimport { Vec, VecLike } from '../../../primitives/Vec'\nimport type { Editor } from '../../Editor'\nimport { BoundsSnaps } from './BoundsSnaps'\nimport { HandleSnaps } from './HandleSnaps'",
+      "exports": [
+        { "name": "PointsSnapIndicator", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "GapsSnapIndicator", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "SnapIndicator", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "SnapData", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "SnapManager", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "EMPTY_ARRAY", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "atom", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "computed", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "TLParentId", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLShapeId", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "isShapeId", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "Vec", "module": "../../../primitives/Vec", "alias": null, "kind": "internal" },
+        { "symbol": "VecLike", "module": "../../../primitives/Vec", "alias": null, "kind": "internal" },
+        { "symbol": "Editor", "module": "../../Editor", "alias": null, "kind": "internal" },
+        { "symbol": "BoundsSnaps", "module": "./BoundsSnaps", "alias": null, "kind": "internal" },
+        { "symbol": "HandleSnaps", "module": "./HandleSnaps", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager#class:SnapManager",
+        "unitKind": "class",
+        "name": "SnapManager",
+        "qualifiedName": "SnapManager",
+        "parentUnitId": null,
+        "startLine": 35,
+        "endLine": 110,
+        "isBehavioral": true,
+        "source": "export class SnapManager {\n\treadonly shapeBounds: BoundsSnaps\n\treadonly handles: HandleSnaps\n\n\tprivate _snapIndicators = atom<SnapIndicator[] | undefined>('snapLines', undefined)\n\n\tconstructor(public readonly editor: Editor) {\n\t\tthis.shapeBounds = new BoundsSnaps(this)\n\t\tthis.handles = new HandleSnaps(this)\n\t}\n\n\tgetIndicators() {\n\t\treturn this._snapIndicators.get() ?? (EMPTY_ARRAY as SnapIndicator[])\n\t}\n\n\tclearIndicators() {\n\t\tif (this.getIndicators().length) {\n\t\t\tthis._snapIndicators.set(undefined)\n\t\t}\n\t}\n\n\tsetIndicators(indicators: SnapIndicator[]) {\n\t\tthis._snapIndicators.set(indicators)\n\t}\n\n\t@computed getSnapThreshold() {\n\t\treturn this.editor.options.snapThreshold / this.editor.getZoomLevel()\n\t}\n\n\t// TODO: make this an incremental derivation\n\t@computed getSnappableShapes(): Set<TLShapeId> {\n\t\tconst { editor } = this\n\t\tconst renderingBounds = editor.getViewportPageBounds()\n\t\tconst selectedShapeIds = editor.getSelectedShapeIds()\n\n\t\tconst snappableShapes: Set<TLShapeId> = new Set()\n\n\t\tconst collectSnappableShapesFromParent = (parentId: TLParentId) => {\n\t\t\tif (isShapeId(parentId)) {\n\t\t\t\tconst parent = editor.getShape(parentId)\n\t\t\t\tif (parent && editor.isShapeFrameLike(parent)) {\n\t\t\t\t\tsnappableShapes.add(parentId)\n\t\t\t\t}\n\t\t\t}\n\t\t\tconst sortedChildIds = editor.getSortedChildIdsForParent(parentId)\n\t\t\tfor (const childId of sortedChildIds) {\n\t\t\t\t// Skip any selected ids\n\t\t\t\tif (selectedShapeIds.includes(childId)) continue\n\t\t\t\tconst childShape = editor.getShape(childId)\n\t\t\t\tif (!childShape) continue\n\t\t\t\tconst util = editor.getShapeUtil(childShape)\n\t\t\t\t// Skip any shapes that don't allow snapping\n\t\t\t\tif (!util.canSnap(childShape)) continue\n\t\t\t\t// Only consider shapes if they're inside of the viewport page bounds\n\t\t\t\tconst pageBounds = editor.getShapePageBounds(childId)\n\t\t\t\tif (!(pageBounds && renderingBounds.includes(pageBounds))) continue\n\t\t\t\t// Snap to children of groups but not group itself\n\t\t\t\tif (editor.isShapeOfType(childShape, 'group')) {\n\t\t\t\t\tcollectSnappableShapesFromParent(childId)\n\t\t\t\t\tcontinue\n\t\t\t\t}\n\t\t\t\tsnappableShapes.add(childId)\n\t\t\t}\n\t\t}\n\n\t\tcollectSnappableShapesFromParent(this.getCurrentCommonAncestor() ?? editor.getCurrentPageId())\n\n\t\treturn snappableShapes\n\t}\n\n\t// This needs to be external from any expensive work\n\t@computed getCurrentCommonAncestor() {\n\t\treturn this.editor.findCommonAncestor(this.editor.getSelectedShapes())\n\t}\n}\n",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager#class:SnapManager",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager",
+          "unitKind": "class",
+          "name": "SnapManager",
+          "qualifiedName": "SnapManager",
+          "parentUnitId": null,
+          "startLine": 35,
+          "endLine": 110,
+          "signature": "export class SnapManager",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "editor",
+              "kind": "property",
+              "type": "Editor",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "shapeBounds",
+              "kind": "property",
+              "type": "BoundsSnaps",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handles",
+              "kind": "property",
+              "type": "HandleSnaps",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "_snapIndicators",
+              "kind": "property",
+              "type": "Atom<SnapIndicator[] | undefined>",
+              "default": "atom<SnapIndicator[] | undefined>('snapLines', undefined)",
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getIndicators",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "clearIndicators",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "setIndicators",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getSnapThreshold",
+              "kind": "getter",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getSnappableShapes",
+              "kind": "getter",
+              "type": "Set<TLShapeId>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getCurrentCommonAncestor",
+              "kind": "getter",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [
+            "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts::SnapManager.getSnappableShapes"
+          ],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "SnapManager coordinates editor snapping state and exposes the shape and handle snapping helpers used by the editor. It also defines the public shape of snapping-related manager state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "b7233e1e2b6350b3d4466c66820fa47ad79acfe5953dc9f64732ea86274ea07d"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager.getSnappableShapes#method:SnapManager.getSnappableShapes",
+        "unitKind": "method",
+        "name": "getSnappableShapes",
+        "qualifiedName": "SnapManager.getSnappableShapes",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager#class:SnapManager",
+        "startLine": 65,
+        "endLine": 104,
+        "isBehavioral": true,
+        "source": "\t@computed getSnappableShapes(): Set<TLShapeId> {\n\t\tconst { editor } = this\n\t\tconst renderingBounds = editor.getViewportPageBounds()\n\t\tconst selectedShapeIds = editor.getSelectedShapeIds()\n\n\t\tconst snappableShapes: Set<TLShapeId> = new Set()\n\n\t\tconst collectSnappableShapesFromParent = (parentId: TLParentId) => {\n\t\t\tif (isShapeId(parentId)) {\n\t\t\t\tconst parent = editor.getShape(parentId)\n\t\t\t\tif (parent && editor.isShapeFrameLike(parent)) {\n\t\t\t\t\tsnappableShapes.add(parentId)\n\t\t\t\t}\n\t\t\t}\n\t\t\tconst sortedChildIds = editor.getSortedChildIdsForParent(parentId)\n\t\t\tfor (const childId of sortedChildIds) {\n\t\t\t\t// Skip any selected ids\n\t\t\t\tif (selectedShapeIds.includes(childId)) continue\n\t\t\t\tconst childShape = editor.getShape(childId)\n\t\t\t\tif (!childShape) continue\n\t\t\t\tconst util = editor.getShapeUtil(childShape)\n\t\t\t\t// Skip any shapes that don't allow snapping\n\t\t\t\tif (!util.canSnap(childShape)) continue\n\t\t\t\t// Only consider shapes if they're inside of the viewport page bounds\n\t\t\t\tconst pageBounds = editor.getShapePageBounds(childId)\n\t\t\t\tif (!(pageBounds && renderingBounds.includes(pageBounds))) continue\n\t\t\t\t// Snap to children of groups but not group itself\n\t\t\t\tif (editor.isShapeOfType(childShape, 'group')) {\n\t\t\t\t\tcollectSnappableShapesFromParent(childId)\n\t\t\t\t\tcontinue\n\t\t\t\t}\n\t\t\t\tsnappableShapes.add(childId)\n\t\t\t}\n\t\t}\n\n\t\tcollectSnappableShapesFromParent(this.getCurrentCommonAncestor() ?? editor.getCurrentPageId())\n\n\t\treturn snappableShapes\n\t}\n",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager.getSnappableShapes#method:SnapManager.getSnappableShapes",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager.getSnappableShapes",
+          "unitKind": "method",
+          "name": "getSnappableShapes",
+          "qualifiedName": "SnapManager.getSnappableShapes",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts__SnapManager#class:SnapManager",
+          "startLine": 65,
+          "endLine": 104,
+          "signature": "@computed getSnappableShapes(): Set<TLShapeId>",
+          "parameters": [],
+          "returnType": "Set<TLShapeId>",
+          "decorators": [],
+          "modifiersApplied": ["@computed"],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The associated editor provides the current viewport page bounds, selected shape IDs, current page ID, shape hierarchy, shape utilities, and shape bounds required by the traversal."
+          ],
+          "postconditions": [
+            "Returns a Set containing each eligible snappable shape ID at most once.",
+            "Returned shapes are within the current viewport page bounds, are not selected, and allow snapping according to their shape utility.",
+            "Frame-like parent shapes encountered as shape parents are included even when they are not traversed as ordinary child candidates.",
+            "Group shapes themselves are not added as ordinary candidates; their descendants are traversed recursively."
+          ],
+          "invariants": [
+            "Each shape ID is added at most once because the result is a Set.",
+            "Traversal follows the editor's sorted child order for each visited parent.",
+            "Selected child IDs are skipped before shape lookup and eligibility checks.",
+            "A missing shape, a shape that cannot snap, or a shape without page bounds inside the viewport is excluded."
+          ],
+          "edgeCases": [
+            "When there is no current common ancestor, traversal starts from the editor's current page.",
+            "When the traversal parent is a shape ID and that shape is frame-like, the parent ID is included if the shape exists.",
+            "Selected shapes are excluded even when they otherwise allow snapping and lie within the viewport.",
+            "Group shapes are not included directly, but eligible descendants of groups are recursively considered.",
+            "Missing child shapes and shapes whose page bounds are absent or outside the viewport are ignored.",
+            "An empty hierarchy or no eligible shapes produces an empty Set."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "this.getCurrentCommonAncestor", "source": "SnapManager", "kind": "internal" },
+            { "name": "editor.getViewportPageBounds", "source": "editor", "kind": "external" },
+            { "name": "editor.getSelectedShapeIds", "source": "editor", "kind": "external" },
+            { "name": "editor.getCurrentPageId", "source": "editor", "kind": "external" },
+            { "name": "editor.getShape", "source": "editor", "kind": "external" },
+            { "name": "editor.isShapeFrameLike", "source": "editor", "kind": "external" },
+            { "name": "editor.getSortedChildIdsForParent", "source": "editor", "kind": "external" },
+            { "name": "isShapeId", "source": null, "kind": "external" },
+            { "name": "editor.getShapeUtil", "source": "editor", "kind": "external" },
+            { "name": "util.canSnap", "source": "shape utility", "kind": "external" },
+            { "name": "editor.getShapePageBounds", "source": "editor", "kind": "external" },
+            { "name": "editor.isShapeOfType", "source": "editor", "kind": "external" }
+          ],
+          "symbolReferences": ["TLShapeId", "TLParentId", "isShapeId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes the set of shape IDs eligible for snapping within the current viewport and common-ancestor scope. Selected shapes, non-snappable shapes, and shapes outside the viewport are excluded, while eligible descendants of groups are considered recursively.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "group",
+              "role": "Identifies group shapes whose descendants are traversed while the group shape itself is not added as an ordinary snappable shape."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getSnappableShapes is evaluated.",
+              "then": "The result contains only the unselected shape that allows snapping.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getSnappableShapes is evaluated.",
+              "then": "The descendant is included, while the group shape itself is not included as an ordinary candidate.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getSnappableShapes is evaluated.",
+              "then": "That shape ID is absent from the returned Set.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "d1c48b2a9e896ab605064646c390ee70dd0ae34049c87627b1472dbd066357c7"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/editor/src/lib/editor/managers/SnapManager/HandleSnaps.ts",
+    "packages/editor/src/lib/primitives/Vec.ts",
+    "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts"
+  ],
+  "in": [
+    "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.test.ts",
+    "packages/editor/src/lib/editor/managers/SnapManager/HandleSnaps.ts",
+    "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts"
+  ],
+  "externals": ["@tldraw/state", "@tldraw/tlschema"],
+  "impact": { "seeds": 2, "callers": 0, "impactedFiles": [] }
+}

@@ -1,0 +1,57 @@
+{
+  "id": "xrepo-v6-16-a-falsy-value-is-still-a-value-hard",
+  "question": "Several places in these libraries decide whether they HAVE something by asking whether the thing is truthy, and the things in question are values supplied by the application, which are allowed to be zero, an empty string, or nothing at all. So a combined result that legitimately computes to an empty value is treated as no result, and recomputed on every pass instead of being reused; and a failure whose value is legitimately empty is treated as no failure, so the consumer that was supposed to be told about it is never told and runs on down the success path. In both cases the presence of the thing and the value of the thing have been collapsed into one test, and the only inputs that expose it are the ones an application is entitled to produce. The contract is that presence is a separate fact from value: it has to be carried by a flag, a tag, a wrapper or a status, never inferred from the value's own truthiness. Elsewhere in the folder that separation is the whole design: one library models every outcome as a tagged pair whose tag - not its payload - says which arm it is, and another goes further and enumerates the values that have no natural ordering at all, with a comment saying they are handled explicitly rather than left to fall out of a comparison. Which files infer presence from truthiness, and which own the presence-is-not-value contract they have to be brought in line with?",
+  "anchor": {
+    "repo": "query",
+    "pinned_commit": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+    "fix_pr": "https://github.com/TanStack/query/pull/11065",
+    "pr_number": 11065,
+    "pr_title": "fix(query-core): memoize falsy combine results in QueriesObserver",
+    "fix_merged": "2026-08-20",
+    "fix_merge_commit": "3e836010032c",
+    "parent_is_buggy": true
+  },
+  "counts": {
+    "min_repos": 3,
+    "min_files": 4
+  },
+  "repo_commits": {
+    "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+    "tldraw": "5590d14d8edd4faab7dc1177b6e1adb28876fd23",
+    "redux-toolkit": "b1c5130154c454ca8387f55da6122fcb507c560c"
+  },
+  "expected": [
+    {
+      "repo": "query",
+      "knowledgeId": "0c574639-1088-4233-a793-3a4397e6c431",
+      "files": ["packages/query-core/src/queriesObserver.ts", "packages/preact-query/src/useQueries.ts"]
+    },
+    {
+      "repo": "tldraw",
+      "knowledgeId": "91b23c56-1aee-5c86-a34b-c66f8970d025",
+      "files": ["packages/utils/src/lib/control.ts"]
+    },
+    {
+      "repo": "redux-toolkit",
+      "knowledgeId": "5129210f7edc89d624231a57a3b76770",
+      "files": ["packages/toolkit/src/query/core/buildInitiate.ts"]
+    }
+  ],
+  "grader_notes": {
+    "why_cross_repo": "ANCHOR (TanStack/query #11065, merged 2026-08-20 as 3e836010032c, AFTER the pinned commit 46d7f02f1c; 2/2 removed lines live at the pin): queriesObserver.ts memoises the combined result behind a truthiness test, so a combine() that returns a falsy value is recomputed every pass. The same collapse appears live in the same repo on the failure axis: preact-query/src/useQueries.ts guards with `if (firstSingleResultWhichShouldThrow?.error)`, so a falsy thrown value never reaches the error boundary (#11309, 67fddee6310c, 1/1 live). Citations: tldraw's control.ts models an outcome as a tagged pair whose tag decides the arm; redux-toolkit's buildInitiate.ts is the reference for the other half - unwrap() decides whether to throw from the explicit presence of an error property on the result object, never from the payload's truthiness.",
+    "verification_method": "(1) Both query anchors mined from `pin..origin/main`, pin-is-ancestor True, 2/2 and 1/1 removed lines live at the pin. (2) Citations confirmed at their pins and read. (3) Overlap check: 0 shared (repo,file) pairs - note react-query/src/useQueries.ts carries the SAME live defect (#11305) but is already gold in an existing case, so the preact port is used instead and the react one is documented here rather than double-counted. (4) Greppability screen: the router #8209 family, which shares this contract, was rejected outright because `onCatch` reaches 13 of its 20 files out of 17 ecosystem-wide; this gold carries no such identifier - the four files share no name. (5) Contract check: no v5 case is about presence-versus-truthiness.",
+    "difficulty_design": "The smallest gold in the set (4 files / 3 repos) and deliberately the most abstract: the two defects are one-line conditions in different packages of one repo, and the two references are a Result type and a comparison helper that share no vocabulary with either. Below the >=7-file breadth floor by design - if the bare-model probe recalls it easily it should be demoted to medium rather than widened with filler.",
+    "rejected_candidates": "TanStack/router #8209 'handle unknown error boundary values' is the same contract at 15 files but fails the greppability screen (`onCatch`: 13/20 gold of 17 files ecosystem-wide)."
+  },
+  "calibration": {
+    "probe": "claudecli_opus5_bare (Opus 5, Bash/Read/Grep/Glob over the pinned checkouts, sandbox-exec gold-blind, one fresh headless session)",
+    "date": "2026-09-10",
+    "recall": 0.5,
+    "precision": 0.074,
+    "returned": 27,
+    "gold": 4,
+    "cost_usd": 4.06,
+    "rule": "hard requires recall < 0.6; medium requires recall <= 0.8; above that the case is easy",
+    "label_from_probe": "hard"
+  }
+}

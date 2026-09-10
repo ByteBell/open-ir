@@ -1,0 +1,2048 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts",
+    "language": "typescript",
+    "sizeBytes": 37579,
+    "tokenCount": 8993,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:21:21.345Z",
+    "module": {
+      "purpose": "Provides geometric snapping behavior for translating and resizing editor shapes against nearby shape points and equal-spacing gaps.",
+      "summary": "This module computes page-space snap points and visible horizontal or vertical gaps from editor shapes, then selects nearest point, center-gap, or duplicate-gap matches during movement and resizing. It supports locked axes, aspect-ratio-preserving resize behavior, center resizing, flipped handles, recursive adjacent-gap discovery, duplicate indicator suppression, and generation of visual snap indicators for the snap manager.",
+      "businessContext": "Supports precision layout and alignment in a graphical editor. If it fails, shape movement and resizing lose alignment, spacing, and visual snapping feedback.",
+      "classes": [
+        "BoundsSnaps (~L190-1017): Coordinates point and gap snapping for editor shape translation and resizing."
+      ],
+      "functions": [
+        "round (~L113-117): Normalizes floating-point geometry values to avoid snapping glitches.",
+        "findAdjacentGaps (~L119-155): Recursively finds equal-length connected gaps with overlapping breadth.",
+        "dedupeGapSnaps (~L157-187): Removes redundant gap indicators whose edges are already represented.",
+        "getResizeSnapPointsForHandle (~L1019-1071): Builds resize snap points for the active selection handle."
+      ],
+      "keywords": [
+        "bounds snapping",
+        "gap snapping",
+        "snap indicators",
+        "selection handles",
+        "page bounds",
+        "aspect ratio",
+        "gap duplication",
+        "geometric alignment",
+        "snap threshold"
+      ],
+      "ontologyConcepts": [
+        "geometric alignment",
+        "nearest-neighbor matching",
+        "spatial indexing",
+        "constraint-based resizing",
+        "equal-spacing detection",
+        "visual feedback",
+        "floating-point normalization"
+      ],
+      "businessEntities": ["Shape", "Selection", "SnapPoint", "Gap", "SnapIndicator", "SnapManager"],
+      "systemCapabilities": [
+        "Snap translated shapes to nearby geometry",
+        "Snap resized shapes while preserving constraints",
+        "Detect equal-spacing gaps",
+        "Generate point and gap indicators",
+        "Filter redundant snap indicators"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "../../../primitives/Box",
+          "symbols": [
+            "Box",
+            "SelectionCorner",
+            "SelectionEdge",
+            "flipSelectionHandleX",
+            "flipSelectionHandleY",
+            "isSelectionCorner"
+          ],
+          "anchor": { "startLine": 4, "endLine": 12 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Box.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Box.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/Box.ts"
+        },
+        {
+          "spec": "../../../primitives/Mat",
+          "symbols": ["Mat"],
+          "anchor": { "startLine": 13, "endLine": 13 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Mat.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Mat.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/Mat.ts"
+        },
+        {
+          "spec": "../../../primitives/utils",
+          "symbols": ["rangeIntersection", "rangesOverlap"],
+          "anchor": { "startLine": 14, "endLine": 14 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/utils.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/utils.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/utils.ts"
+        },
+        {
+          "spec": "../../../primitives/Vec",
+          "symbols": ["Vec"],
+          "anchor": { "startLine": 15, "endLine": 15 },
+          "resolvedRelativePath": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedFileId": "packages/editor/src/lib/primitives/Vec.ts",
+          "resolvedHint": "packages/editor/src/lib/primitives/Vec.ts"
+        },
+        {
+          "spec": "../../Editor",
+          "symbols": ["Editor"],
+          "anchor": { "startLine": 16, "endLine": 16 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedHint": "packages/editor/src/lib/Editor.ts"
+        },
+        {
+          "spec": "./SnapManager",
+          "symbols": ["GapsSnapIndicator", "PointsSnapIndicator", "SnapData", "SnapIndicator", "SnapManager"],
+          "anchor": { "startLine": 17, "endLine": 23 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts",
+          "resolvedHint": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["computed"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/tlschema",
+          "symbols": ["TLShape", "TLShapeId", "VecModel"],
+          "package": "@tldraw/tlschema",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["assertExists", "dedupe", "uniqueId"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        }
+      ],
+      "sideEffects": {
+        "io": [],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": [
+          "Mutates snap arrays by clearing, appending, sorting, and replacing candidate snaps.",
+          "Mutates selection bounds and snap-point vectors while applying calculated nudges.",
+          "Mutates gap indicator arrays when removing redundant entries."
+        ]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "BoundsSnapGeometry",
+          "shape": "export interface BoundsSnapGeometry { points?: VecModel[] }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BoundsSnapPoint",
+          "shape": "export interface BoundsSnapPoint { id: string; x: number; y: number; handle?: SelectionCorner }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "BoundsSnaps",
+          "shape": "export class BoundsSnaps { constructor(readonly manager: SnapManager); getSnapPoints(shapeId: TLShapeId): BoundsSnapPoint[]; snapTranslateShapes({ lockedAxis, initialSelectionPageBounds, initialSelectionSnapPoints, dragDelta }: { lockedAxis: 'x' | 'y' | null; initialSelectionSnapPoints: BoundsSnapPoint[]; initialSelectionPageBounds: Box; dragDelta: Vec }): SnapData; snapResizeShapes({ initialSelectionPageBounds, dragDelta, handle: originalHandle, isAspectRatioLocked, isResizingFromCenter }: { initialSelectionPageBounds: Box; dragDelta: Vec; handle: SelectionCorner | SelectionEdge; isAspectRatioLocked: boolean; isResizingFromCenter: boolean }): SnapData }",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "SnapManager",
+          "shape": "SnapManager",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts"
+        },
+        {
+          "name": "Editor",
+          "shape": "Editor",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts"
+        },
+        {
+          "name": "ShapeUtil.getBoundsSnapGeometry",
+          "shape": "getBoundsSnapGeometry(shape)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SnapManager.getSnapThreshold",
+          "shape": "this.manager.getSnapThreshold()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SnapManager.getSnappableShapes",
+          "shape": "this.manager.getSnappableShapes()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "SnapManager.setIndicators",
+          "shape": "this.manager.setIndicators([...gapSnapLines, ...pointSnapsLines])",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "computed geometry caches",
+          "intent": "Caches transformed shape snap points, snappable nodes, and visible gaps.",
+          "structureKind": "declaration",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 198, "endLine": 304 }
+        },
+        {
+          "name": "translation snapping",
+          "intent": "Calculates translation nudges and publishes point and gap indicators.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 306, "endLine": 394 }
+        },
+        {
+          "name": "resize snapping",
+          "intent": "Resizes selections, applies constraints, and recalculates final snap indicators.",
+          "structureKind": "branch",
+          "predicate": "if (isAspectRatioLocked && isSelectionCorner(handle) && nudge.len() !== 0)",
+          "branchOutcomes": ["aspect-ratio correction", "independent axis nudge"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 396, "endLine": 525 }
+        },
+        {
+          "name": "point candidate collection",
+          "intent": "Finds closest point offsets independently along both axes.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 527, "endLine": 578 }
+        },
+        {
+          "name": "gap candidate collection",
+          "intent": "Finds center and duplicate matches across horizontal and vertical gaps.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 580, "endLine": 790 }
+        },
+        {
+          "name": "point indicator generation",
+          "intent": "Groups aligned point pairs and creates deduplicated visual lines.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 792, "endLine": 844 }
+        },
+        {
+          "name": "gap indicator generation",
+          "intent": "Converts center and duplicate gap matches into rendered gap indicators.",
+          "structureKind": "branch",
+          "predicate": "if (nearestSnapsX.length > 0)",
+          "branchOutcomes": ["horizontal indicators", "vertical indicators"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 846, "endLine": 1017 }
+        }
+      ],
+      "representationFamily": "class-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "BoundsSnapGeometry",
+          "signature": "export interface BoundsSnapGeometry",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 31, "endLine": 36 }
+        },
+        {
+          "kind": "interface",
+          "name": "BoundsSnapPoint",
+          "signature": "export interface BoundsSnapPoint",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 39, "endLine": 44 }
+        },
+        {
+          "kind": "class",
+          "name": "BoundsSnaps",
+          "signature": "export class BoundsSnaps",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 190, "endLine": 1017 }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "constructor(readonly manager: SnapManager)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 193, "endLine": 196 }
+        },
+        {
+          "kind": "method",
+          "name": "getSnapPoints",
+          "signature": "getSnapPoints(shapeId: TLShapeId)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 208, "endLine": 210 }
+        },
+        {
+          "kind": "method",
+          "name": "snapTranslateShapes",
+          "signature": "snapTranslateShapes({",
+          "generics": null,
+          "decorators": [],
+          "returnType": "SnapData",
+          "exported": false,
+          "anchor": { "startLine": 306, "endLine": 394 }
+        },
+        {
+          "kind": "method",
+          "name": "snapResizeShapes",
+          "signature": "snapResizeShapes({",
+          "generics": null,
+          "decorators": [],
+          "returnType": "SnapData",
+          "exported": false,
+          "anchor": { "startLine": 396, "endLine": 525 }
+        },
+        {
+          "kind": "function",
+          "name": "round",
+          "signature": "const round = (x: number) => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 113, "endLine": 117 }
+        },
+        {
+          "kind": "function",
+          "name": "findAdjacentGaps",
+          "signature": "function findAdjacentGaps(",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Gap[]",
+          "exported": false,
+          "anchor": { "startLine": 119, "endLine": 155 }
+        },
+        {
+          "kind": "function",
+          "name": "dedupeGapSnaps",
+          "signature": "function dedupeGapSnaps(snaps: Array<Extract<SnapIndicator, { type: 'gaps' }>>) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 157, "endLine": 187 }
+        },
+        {
+          "kind": "function",
+          "name": "getResizeSnapPointsForHandle",
+          "signature": "function getResizeSnapPointsForHandle(",
+          "generics": null,
+          "decorators": [],
+          "returnType": "BoundsSnapPoint[]",
+          "exported": false,
+          "anchor": { "startLine": 1019, "endLine": 1071 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "BoundsSnapGeometry",
+          "shape": "{\n\tpoints?: VecModel[]\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 31, "endLine": 36 }
+        },
+        {
+          "kind": "interface",
+          "name": "BoundsSnapPoint",
+          "shape": "{\n\tid: string\n\tx: number\n\ty: number\n\thandle?: SelectionCorner\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 39, "endLine": 44 }
+        },
+        {
+          "kind": "interface",
+          "name": "SnapPair",
+          "shape": "{\n\tthisPoint: BoundsSnapPoint\n\totherPoint: BoundsSnapPoint\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 46, "endLine": 49 }
+        },
+        {
+          "kind": "interface",
+          "name": "NearestPointsSnap",
+          "shape": "{\n\ttype: 'points'\n\tpoints: SnapPair\n\tnudge: number\n}",
+          "discriminant": "type",
+          "anchor": { "startLine": 51, "endLine": 56 }
+        },
+        {
+          "kind": "interface",
+          "name": "GapNode",
+          "shape": "{\n\tid: TLShapeId\n\tpageBounds: Box\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 71, "endLine": 74 }
+        },
+        {
+          "kind": "interface",
+          "name": "Gap",
+          "shape": "{\n\tstartNode: GapNode\n\tendNode: GapNode\n\tstartEdge: [Vec, Vec]\n\tendEdge: [Vec, Vec]\n\tlength: number\n\tbreadthIntersection: [number, number]\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 76, "endLine": 111 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "No matching snap points",
+          "handled": true,
+          "behavior": "Returns a zero nudge and emits no point indicators.",
+          "anchor": { "startLine": 368, "endLine": 377 }
+        },
+        {
+          "inputShape": "No adjacent gaps",
+          "handled": true,
+          "behavior": "Recursive gap search returns an empty array.",
+          "anchor": { "startLine": 135, "endLine": 137 }
+        },
+        {
+          "inputShape": "Selection does not overlap a gap breadth",
+          "handled": true,
+          "behavior": "The gap is skipped for snapping.",
+          "anchor": { "startLine": 589, "endLine": 599 }
+        },
+        {
+          "inputShape": "Negative resize scale",
+          "handled": true,
+          "behavior": "The corresponding selection handle is flipped before snap-point selection.",
+          "anchor": { "startLine": 414, "endLine": 423 }
+        },
+        {
+          "inputShape": "Center resizing",
+          "handled": true,
+          "behavior": "The resized bounds are recentered on the original selection center.",
+          "anchor": { "startLine": 425, "endLine": 429 }
+        },
+        {
+          "inputShape": "Aspect-ratio-locked corner resize",
+          "handled": true,
+          "behavior": "One axis is discarded and the other is derived using the original aspect ratio.",
+          "anchor": { "startLine": 451, "endLine": 480 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<",
+          "left": "startNode.pageBounds.maxX",
+          "right": "endNode.pageBounds.minX",
+          "inclusive": false,
+          "intent": "Requires a positive horizontal space between shape bounds.",
+          "anchor": { "startLine": 269, "endLine": 269 }
+        },
+        {
+          "operator": "<",
+          "left": "startNode.pageBounds.maxY",
+          "right": "endNode.pageBounds.minY",
+          "inclusive": false,
+          "intent": "Requires a positive vertical space between shape bounds.",
+          "anchor": { "startLine": 302, "endLine": 302 }
+        },
+        {
+          "operator": "<=",
+          "left": "round(offsetX)",
+          "right": "round(minOffset.x)",
+          "inclusive": true,
+          "intent": "Accepts point candidates within the current horizontal minimum offset.",
+          "anchor": { "startLine": 545, "endLine": 545 }
+        },
+        {
+          "operator": "<",
+          "left": "round(offsetX)",
+          "right": "round(minOffset.x)",
+          "inclusive": false,
+          "intent": "Replaces horizontal candidates when a strictly closer point is found.",
+          "anchor": { "startLine": 546, "endLine": 546 }
+        },
+        {
+          "operator": "<=",
+          "left": "round(offsetY)",
+          "right": "round(minOffset.y)",
+          "inclusive": true,
+          "intent": "Accepts point candidates within the current vertical minimum offset.",
+          "anchor": { "startLine": 559, "endLine": 559 }
+        },
+        {
+          "operator": "<",
+          "left": "round(offsetY)",
+          "right": "round(minOffset.y)",
+          "inclusive": false,
+          "intent": "Replaces vertical candidates when a strictly closer point is found.",
+          "anchor": { "startLine": 560, "endLine": 560 }
+        },
+        {
+          "operator": ">",
+          "left": "gap.length",
+          "right": "selectionPageBounds.width",
+          "inclusive": false,
+          "intent": "Allows horizontal center snapping only when the gap is wider than the selection.",
+          "anchor": { "startLine": 618, "endLine": 618 }
+        },
+        {
+          "operator": ">",
+          "left": "gap.length",
+          "right": "selectionPageBounds.height",
+          "inclusive": false,
+          "intent": "Allows vertical center snapping only when the gap is taller than the selection.",
+          "anchor": { "startLine": 719, "endLine": 719 }
+        },
+        {
+          "operator": "!=",
+          "left": "nudge.len()",
+          "right": "0",
+          "inclusive": false,
+          "intent": "Applies aspect-ratio correction only when resizing requires movement.",
+          "anchor": { "startLine": 451, "endLine": 451 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Requires shape page bounds to exist.",
+          "fallback": null,
+          "anchor": { "startLine": 228, "endLine": 232 }
+        },
+        {
+          "thrown": null,
+          "caught": null,
+          "action": "Uses non-null assertions for range intersections after overlap checks.",
+          "fallback": null,
+          "anchor": { "startLine": 288, "endLine": 296 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Snap offsets are rounded before comparison to suppress floating-point geometry noise.",
+          "anchor": { "startLine": 113, "endLine": 117 }
+        },
+        {
+          "kind": "non-null",
+          "description": "Snappable shape page bounds are required when constructing gap nodes.",
+          "anchor": { "startLine": 228, "endLine": 232 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Nearest snap arrays retain candidates having the minimum rounded offset on each axis.",
+          "anchor": { "startLine": 542, "endLine": 576 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Aspect-ratio-locked corner resizing uses one primary nudge axis to derive the other.",
+          "anchor": { "startLine": 451, "endLine": 480 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Translation and resize operations publish the current snap indicators through the manager.",
+          "anchor": { "startLine": 386, "endLine": 394 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide page-space selection bounds and drag deltas consistent with the active editor operation.",
+          "anchor": { "startLine": 306, "endLine": 320 }
+        },
+        {
+          "kind": "caller",
+          "description": "The snap manager supplies the current snap threshold and snappable shape set.",
+          "anchor": { "startLine": 333, "endLine": 334 }
+        },
+        {
+          "kind": "schema",
+          "description": "Shape utilities provide bounds snap geometry or the geometry bounding-box corners and center.",
+          "anchor": { "startLine": 199, "endLine": 204 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Which editor operations consume the returned nudge and apply it to shapes?",
+          "affects": "orchestration and mutation behavior",
+          "anchor": { "startLine": 306, "endLine": 394 },
+          "resolution": null
+        },
+        {
+          "question": "What exact visual rendering semantics are attached to point and gap indicators?",
+          "affects": "SnapIndicator behavior",
+          "anchor": { "startLine": 792, "endLine": 1017 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "All calculations are synchronous and depend on computed editor caches and current manager state."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "translates-to-nearest-point-snap",
+          "scenario": "A translated selection is within the snap threshold of another shape's snap point.",
+          "given": ["initialSelectionSnapPoints", "initialSelectionPageBounds", "dragDelta"],
+          "when": "boundsSnaps.snapTranslateShapes({ lockedAxis: null, initialSelectionPageBounds, initialSelectionSnapPoints, dragDelta })",
+          "then": "the returned nudge aligns the nearest selection snap point with the nearest external snap point",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins nearest-point alignment and returned translation correction."
+        },
+        {
+          "testId": "respects-locked-translation-axis",
+          "scenario": "A translated selection is close to snap points on both axes while one translation axis is locked.",
+          "given": ["lockedAxis: 'x'", "initialSelectionSnapPoints", "initialSelectionPageBounds", "dragDelta"],
+          "when": "boundsSnaps.snapTranslateShapes({ lockedAxis, initialSelectionPageBounds, initialSelectionSnapPoints, dragDelta })",
+          "then": "the returned nudge has x equal to 0 and may contain only the y-axis correction",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures axis locking prevents movement along the locked axis."
+        },
+        {
+          "testId": "respects-aspect-ratio-during-resize-snap",
+          "scenario": "A corner resize with aspect ratio locking finds a snap correction.",
+          "given": ["isAspectRatioLocked: true", "isResizingFromCenter: false", "handle: 'top_left'"],
+          "when": "boundsSnaps.snapResizeShapes({ initialSelectionPageBounds, dragDelta, handle, isAspectRatioLocked, isResizingFromCenter })",
+          "then": "the returned nudge is diagonal and preserves the initial selection aspect ratio",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins coupled axis corrections for aspect-ratio-locked corner resizing."
+        },
+        {
+          "testId": "snaps-resize-handle-to-point",
+          "scenario": "A resized selection edge or corner approaches an external snap point.",
+          "given": [
+            "initialSelectionPageBounds",
+            "dragDelta",
+            "handle: 'right'",
+            "isAspectRatioLocked: false",
+            "isResizingFromCenter: false"
+          ],
+          "when": "boundsSnaps.snapResizeShapes({ initialSelectionPageBounds, dragDelta, handle, isAspectRatioLocked, isResizingFromCenter })",
+          "then": "the returned nudge adjusts only the resizable axis and indicators are set for the resulting alignment",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards handle-specific resize snapping and indicator generation."
+        },
+        {
+          "testId": "uses-custom-snap-geometry",
+          "scenario": "A shape provides custom bounds snap points through its shape utility.",
+          "given": ["boundsSnapGeometry.points"],
+          "when": "boundsSnaps.getSnapPoints(shapeId)",
+          "then": "the returned points are the custom points transformed into page coordinates",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures custom geometry overrides default corners-and-center snapping."
+        },
+        {
+          "testId": "falls-back-to-bounds-corners-and-center",
+          "scenario": "A shape does not provide custom bounds snap points.",
+          "given": ["boundsSnapGeometry.points === undefined"],
+          "when": "boundsSnaps.getSnapPoints(shapeId)",
+          "then": "the returned points equal the shape geometry bounds corners and center transformed into page coordinates",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the default snapping geometry."
+        },
+        {
+          "testId": "centers-selection-in-larger-gap",
+          "scenario": "A selection overlaps a visible gap and is smaller than that gap.",
+          "given": ["selectionPageBounds", "gap.length > selectionPageBounds.width"],
+          "when": "boundsSnaps.snapTranslateShapes({ lockedAxis: null, initialSelectionPageBounds, initialSelectionSnapPoints, dragDelta })",
+          "then": "the returned nudge may center the selection within the gap and indicators describe the resulting equal gaps",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Covers gap-center snapping and its visual gap contract."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports",
+        "exported snap geometry interfaces",
+        "private snap and gap types",
+        "rounding helper",
+        "recursive adjacent-gap helper",
+        "gap indicator deduplication helper",
+        "BoundsSnaps class",
+        "resize snap-point helper"
+      ],
+      "moduleLevelCode": "import { computed } from '@tldraw/state'\nimport { TLShape, TLShapeId, VecModel } from '@tldraw/tlschema'\nimport { assertExists, dedupe, uniqueId } from '@tldraw/utils'",
+      "exports": [
+        { "name": "BoundsSnapGeometry", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "BoundsSnapPoint", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "BoundsSnaps", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "computed", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "TLShape", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "TLShapeId", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "VecModel", "module": "@tldraw/tlschema", "alias": null, "kind": "external" },
+        { "symbol": "assertExists", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "dedupe", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "uniqueId", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "Box", "module": "../../../primitives/Box", "alias": null, "kind": "internal" },
+        { "symbol": "SelectionCorner", "module": "../../../primitives/Box", "alias": null, "kind": "internal" },
+        { "symbol": "SelectionEdge", "module": "../../../primitives/Box", "alias": null, "kind": "internal" },
+        { "symbol": "flipSelectionHandleX", "module": "../../../primitives/Box", "alias": null, "kind": "internal" },
+        { "symbol": "flipSelectionHandleY", "module": "../../../primitives/Box", "alias": null, "kind": "internal" },
+        { "symbol": "isSelectionCorner", "module": "../../../primitives/Box", "alias": null, "kind": "internal" },
+        { "symbol": "Mat", "module": "../../../primitives/Mat", "alias": null, "kind": "internal" },
+        { "symbol": "rangeIntersection", "module": "../../../primitives/utils", "alias": null, "kind": "internal" },
+        { "symbol": "rangesOverlap", "module": "../../../primitives/utils", "alias": null, "kind": "internal" },
+        { "symbol": "Vec", "module": "../../../primitives/Vec", "alias": null, "kind": "internal" },
+        { "symbol": "Editor", "module": "../../Editor", "alias": null, "kind": "internal" },
+        { "symbol": "GapsSnapIndicator", "module": "./SnapManager", "alias": null, "kind": "internal" },
+        { "symbol": "PointsSnapIndicator", "module": "./SnapManager", "alias": null, "kind": "internal" },
+        { "symbol": "SnapData", "module": "./SnapManager", "alias": null, "kind": "internal" },
+        { "symbol": "SnapIndicator", "module": "./SnapManager", "alias": null, "kind": "internal" },
+        { "symbol": "SnapManager", "module": "./SnapManager", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [{ "name": "decimalPlacesTolerance", "value": "8", "kind": "number" }],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__round#function:round",
+        "unitKind": "function",
+        "name": "round",
+        "qualifiedName": "round",
+        "parentUnitId": null,
+        "startLine": 113,
+        "endLine": 117,
+        "isBehavioral": true,
+        "source": "\nfunction findAdjacentGaps(\n\tgaps: Gap[],\n\tshapeId: TLShapeId,\n\tgapLength: number,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__round#function:round",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__round",
+          "unitKind": "function",
+          "name": "round",
+          "qualifiedName": "round",
+          "parentUnitId": null,
+          "startLine": 113,
+          "endLine": 117,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides a rounding helper used by the editor's bounds-snapping logic.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "93f6311dc6e6c7220ad1b4e338bc2731b1b23b6b8059fb76f718535fb084607b"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__findAdjacentGaps#function:findAdjacentGaps",
+        "unitKind": "function",
+        "name": "findAdjacentGaps",
+        "qualifiedName": "findAdjacentGaps",
+        "parentUnitId": null,
+        "startLine": 119,
+        "endLine": 155,
+        "isBehavioral": true,
+        "source": "\tintersection: [number, number]\n): Gap[] {\n\t// TODO: take advantage of the fact that gaps is sorted by starting position?\n\tconst matches = gaps.filter(\n\t\t(gap) =>\n\t\t\t(direction === 'forward' ? gap.startNode.id === shapeId : gap.endNode.id === shapeId) &&\n\t\t\tround(gap.length) === round(gapLength) &&\n\t\t\trangeIntersection(\n\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\tgap.breadthIntersection[1],\n\t\t\t\tintersection[0],\n\t\t\t\tintersection[1]\n\t\t\t)\n\t)\n\n\tif (matches.length === 0) return []\n\n\tconst nextNodes = new Set<TLShapeId>()\n\n\tmatches.forEach((match) => {\n\t\tconst node = direction === 'forward' ? match.endNode.id : match.startNode.id\n\t\tif (!nextNodes.has(node)) {\n\t\t\tnextNodes.add(node)\n\t\t\tconst foundGaps = findAdjacentGaps(\n\t\t\t\tgaps,\n\t\t\t\tnode,\n\t\t\t\tgapLength,\n\t\t\t\tdirection,\n\t\t\t\trangeIntersection(\n\t\t\t\t\tmatch.breadthIntersection[0],\n\t\t\t\t\tmatch.breadthIntersection[1],\n\t\t\t\t\tintersection[0],\n\t\t\t\t\tintersection[1]\n\t\t\t\t)!\n\t\t\t)\n\n\t\t\tmatches.push(...foundGaps)",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__findAdjacentGaps#function:findAdjacentGaps",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__findAdjacentGaps",
+          "unitKind": "function",
+          "name": "findAdjacentGaps",
+          "qualifiedName": "findAdjacentGaps",
+          "parentUnitId": null,
+          "startLine": 119,
+          "endLine": 155,
+          "signature": "function findAdjacentGaps(gaps: Gap[], shapeId: TLShapeId, gapLength: number, direction: 'forward' | 'backward', intersection: [number, number]): Gap[]",
+          "parameters": [
+            { "name": "gaps", "type": "Gap[]", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "shapeId",
+              "type": "TLShapeId",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "gapLength",
+              "type": "number",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "direction",
+              "type": "'forward' | 'backward'",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "intersection",
+              "type": "[number, number]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            }
+          ],
+          "returnType": "Gap[]",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "gaps contains gap records with startNode, endNode, length, and breadthIntersection fields.",
+            "direction is either 'forward' or 'backward'.",
+            "intersection is a two-number breadth range."
+          ],
+          "postconditions": [
+            "Returns every initially matching gap and recursively discovered adjacent matching gap reachable through the selected direction.",
+            "A gap matches only when its relevant endpoint shape ID matches, its rounded length equals the rounded requested length, and its breadth intersects the current intersection.",
+            "Returns an empty array when no initial gap matches."
+          ],
+          "invariants": [
+            "Recursive traversal follows endNode IDs for 'forward' and startNode IDs for 'backward'.",
+            "Each next-node ID is traversed at most once during a call.",
+            "Gap lengths are compared after applying round to both values.",
+            "Breadth intersections are narrowed by intersecting each matched gap with the current intersection."
+          ],
+          "edgeCases": [
+            "An empty gaps array returns an empty array.",
+            "No gap with the required endpoint, rounded length, and breadth overlap returns an empty array.",
+            "A gap whose raw length differs from gapLength but rounds to the same value is treated as a match.",
+            "Multiple matching gaps leading to the same next-node ID cause recursive traversal for that node only once.",
+            "Gaps with non-overlapping breadth intersections are excluded."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates only local traversal collections; the supplied gaps array and its gap records are not modified."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "round", "source": "local function", "kind": "internal" },
+            { "name": "rangeIntersection", "source": "imported dependency", "kind": "external" },
+            { "name": "findAdjacentGaps", "source": "self", "kind": "internal" }
+          ],
+          "symbolReferences": ["Gap", "TLShapeId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Finds gaps adjacent to a shape that match the requested length and overlap the requested breadth intersection. It recursively follows matching adjacent gaps in the selected direction while avoiding repeated next nodes.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "forward",
+              "role": "Selects traversal from each gap's start node to its end node."
+            },
+            {
+              "kind": "enum-value",
+              "value": "backward",
+              "role": "Selects traversal from each gap's end node to its start node."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findAdjacentGaps is called.",
+              "then": "The result is an empty array.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findAdjacentGaps is called with direction set to 'forward'.",
+              "then": "The matching gap is included in the result, and matching gaps beginning at its endNode.id are recursively included.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "findAdjacentGaps is called.",
+              "then": "That next node is recursively searched at most once.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "ca466dcf1b4de7beb7bc800c2906feb8689ea145104d920251adeec2fdc6215e"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__dedupeGapSnaps#function:dedupeGapSnaps",
+        "unitKind": "function",
+        "name": "dedupeGapSnaps",
+        "qualifiedName": "dedupeGapSnaps",
+        "parentUnitId": null,
+        "startLine": 157,
+        "endLine": 187,
+        "isBehavioral": true,
+        "source": "\t})\n\n\treturn matches\n}\n\nfunction dedupeGapSnaps(snaps: Array<Extract<SnapIndicator, { type: 'gaps' }>>) {\n\t// sort by descending order of number of gaps\n\tsnaps.sort((a, b) => b.gaps.length - a.gaps.length)\n\t// pop off any that are included already\n\tfor (let i = snaps.length - 1; i > 0; i--) {\n\t\tconst snap = snaps[i]\n\t\tfor (let j = i - 1; j >= 0; j--) {\n\t\t\tconst otherSnap = snaps[j]\n\t\t\t// if every edge in this snap is included in the other snap somewhere, then it's redundant\n\t\t\tif (\n\t\t\t\totherSnap.direction === snap.direction &&\n\t\t\t\tsnap.gaps.every(\n\t\t\t\t\t(gap) =>\n\t\t\t\t\t\totherSnap.gaps.some(\n\t\t\t\t\t\t\t(otherGap) =>\n\t\t\t\t\t\t\t\tround(gap.startEdge[0].x) === round(otherGap.startEdge[0].x) &&\n\t\t\t\t\t\t\t\tround(gap.startEdge[0].y) === round(otherGap.startEdge[0].y) &&\n\t\t\t\t\t\t\t\tround(gap.startEdge[1].x) === round(otherGap.startEdge[1].x) &&\n\t\t\t\t\t\t\t\tround(gap.startEdge[1].y) === round(otherGap.startEdge[1].y)\n\t\t\t\t\t\t) &&\n\t\t\t\t\t\totherSnap.gaps.some(\n\t\t\t\t\t\t\t(otherGap) =>\n\t\t\t\t\t\t\t\tround(gap.endEdge[0].x) === round(otherGap.endEdge[0].x) &&\n\t\t\t\t\t\t\t\tround(gap.endEdge[0].y) === round(otherGap.endEdge[0].y) &&\n\t\t\t\t\t\t\t\tround(gap.endEdge[1].x) === round(otherGap.endEdge[1].x) &&\n\t\t\t\t\t\t\t\tround(gap.endEdge[1].y) === round(otherGap.endEdge[1].y)",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__dedupeGapSnaps#function:dedupeGapSnaps",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__dedupeGapSnaps",
+          "unitKind": "function",
+          "name": "dedupeGapSnaps",
+          "qualifiedName": "dedupeGapSnaps",
+          "parentUnitId": null,
+          "startLine": 157,
+          "endLine": 187,
+          "signature": "function dedupeGapSnaps(snaps: Array<Extract<SnapIndicator, { type: 'gaps' }>>)",
+          "parameters": [
+            {
+              "name": "snaps",
+              "type": "Array<Extract<SnapIndicator, { type: 'gaps' }>>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "snaps is an array of gap-type snap indicators.",
+            "Each gap exposes startEdge and endEdge as two points with numeric x and y coordinates.",
+            "Each snap exposes a direction value and a gaps array."
+          ],
+          "postconditions": [
+            "snaps is sorted in descending order by gaps.length.",
+            "A snap is removed when an earlier snap with the same direction contains a rounded-coordinate match for every start edge and every end edge in that snap.",
+            "Non-redundant snap indicators remain in the array."
+          ],
+          "invariants": [
+            "Only snap indicators with matching direction values can deduplicate one another.",
+            "Edge-coordinate equality is determined after applying the unit's round helper to each coordinate.",
+            "The input array is mutated rather than replaced."
+          ],
+          "edgeCases": [
+            "An empty or single-element array is sorted in place and otherwise unchanged.",
+            "Snap indicators with different directions are not removed even when all edge coordinates match.",
+            "A snap with no gaps satisfies the containment checks and can be removed when a preceding same-direction snap exists.",
+            "Duplicate or contained gap indicators are reduced to the preceding, more comprehensive same-direction indicator after descending gap-count sorting.",
+            "Coordinates that differ before rounding but match after rounding are treated as equal for deduplication."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["The input snaps array is sorted in place and redundant elements are removed from it."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "round", "source": "local function in BoundsSnaps.ts", "kind": "internal" }],
+          "symbolReferences": ["SnapIndicator"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Deduplicates gap snap indicators in place by retaining the more comprehensive indicator when another indicator with the same direction contains all of its rounded edge pairs.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "dedupeGapSnaps is called with that array.",
+              "then": "The array is sorted with the more comprehensive snap first and the contained snap is removed.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "dedupeGapSnaps is called.",
+              "then": "Both snaps remain in the array.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "dedupeGapSnaps is called with same-direction snaps.",
+              "then": "The less comprehensive snap is treated as redundant and removed.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c4acd512dd1f1f0e6410ec08376475e7a529fc96bf367d3e3be4feca89f098c4"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+        "unitKind": "class",
+        "name": "BoundsSnaps",
+        "qualifiedName": "BoundsSnaps",
+        "parentUnitId": null,
+        "startLine": 190,
+        "endLine": 1017,
+        "isBehavioral": true,
+        "source": "\t\t\t) {\n\t\t\t\tsnaps.splice(i, 1)\n\t\t\t\tbreak\n\t\t\t}\n\t\t}\n\t}\n}\n\n/** @public */\nexport class BoundsSnaps {\n\treadonly editor: Editor\n\tconstructor(readonly manager: SnapManager) {\n\t\tthis.editor = manager.editor\n\t}\n\n\t@computed private getSnapPointsCache() {\n\t\tconst { editor } = this\n\t\treturn editor.store.createComputedCache<BoundsSnapPoint[], TLShape>('snapPoints', (shape) => {\n\t\t\tconst pageTransform = editor.getShapePageTransform(shape.id)\n\t\t\tconst boundsSnapGeometry = editor.getShapeUtil(shape).getBoundsSnapGeometry(shape)\n\t\t\tconst snapPoints =\n\t\t\t\tboundsSnapGeometry.points ?? editor.getShapeGeometry(shape).bounds.cornersAndCenter\n\n\t\t\treturn snapPoints.map((point, i) => {\n\t\t\t\tconst { x, y } = Mat.applyToPoint(pageTransform, point)\n\t\t\t\treturn { x, y, id: `${shape.id}:${i}` }\n\t\t\t})\n\t\t})\n\t}\n\n\tgetSnapPoints(shapeId: TLShapeId) {\n\t\treturn this.getSnapPointsCache().get(shapeId) ?? []\n\t}\n\n\t// Points which belong to snappable shapes\n\t@computed private getSnappablePoints() {\n\t\tconst snapPointsCache = this.getSnapPointsCache()\n\t\tconst snappableShapes = this.manager.getSnappableShapes()\n\t\tconst result: BoundsSnapPoint[] = []\n\n\t\tfor (const shapeId of snappableShapes) {\n\t\t\tconst snapPoints = snapPointsCache.get(shapeId)\n\t\t\tif (snapPoints) {\n\t\t\t\tresult.push(...snapPoints)\n\t\t\t}\n\t\t}\n\n\t\treturn result\n\t}\n\n\t@computed private getSnappableGapNodes(): Array<GapNode> {\n\t\treturn Array.from(this.manager.getSnappableShapes(), (shapeId) => ({\n\t\t\tid: shapeId,\n\t\t\tpageBounds: assertExists(this.editor.getShapePageBounds(shapeId)),\n\t\t}))\n\t}\n\n\t@computed private getVisibleGaps(): { horizontal: Gap[]; vertical: Gap[] } {\n\t\tconst horizontal: Gap[] = []\n\t\tconst vertical: Gap[] = []\n\n\t\tlet startNode: GapNode, endNode: GapNode\n\n\t\tconst sortedShapesOnCurrentPageHorizontal = this.getSnappableGapNodes().sort((a, b) => {\n\t\t\treturn a.pageBounds.minX - b.pageBounds.minX\n\t\t})\n\n\t\t// Collect horizontal gaps\n\t\tfor (let i = 0; i < sortedShapesOnCurrentPageHorizontal.length; i++) {\n\t\t\tstartNode = sortedShapesOnCurrentPageHorizontal[i]\n\t\t\tfor (let j = i + 1; j < sortedShapesOnCurrentPageHorizontal.length; j++) {\n\t\t\t\tendNode = sortedShapesOnCurrentPageHorizontal[j]\n\n\t\t\t\tif (\n\t\t\t\t\t// is there space between the boxes\n\t\t\t\t\tstartNode.pageBounds.maxX < endNode.pageBounds.minX &&\n\t\t\t\t\t// and they overlap in the y axis\n\t\t\t\t\trangesOverlap(\n\t\t\t\t\t\tstartNode.pageBounds.minY,\n\t\t\t\t\t\tstartNode.pageBounds.maxY,\n\t\t\t\t\t\tendNode.pageBounds.minY,\n\t\t\t\t\t\tendNode.pageBounds.maxY\n\t\t\t\t\t)\n\t\t\t\t) {\n\t\t\t\t\thorizontal.push({\n\t\t\t\t\t\tstartNode,\n\t\t\t\t\t\tendNode,\n\t\t\t\t\t\tstartEdge: [\n\t\t\t\t\t\t\tnew Vec(startNode.pageBounds.maxX, startNode.pageBounds.minY),\n\t\t\t\t\t\t\tnew Vec(startNode.pageBounds.maxX, startNode.pageBounds.maxY),\n\t\t\t\t\t\t],\n\t\t\t\t\t\tendEdge: [\n\t\t\t\t\t\t\tnew Vec(endNode.pageBounds.minX, endNode.pageBounds.minY),\n\t\t\t\t\t\t\tnew Vec(endNode.pageBounds.minX, endNode.pageBounds.maxY),\n\t\t\t\t\t\t],\n\t\t\t\t\t\tlength: endNode.pageBounds.minX - startNode.pageBounds.maxX,\n\t\t\t\t\t\tbreadthIntersection: rangeIntersection(\n\t\t\t\t\t\t\tstartNode.pageBounds.minY,\n\t\t\t\t\t\t\tstartNode.pageBounds.maxY,\n\t\t\t\t\t\t\tendNode.pageBounds.minY,\n\t\t\t\t\t\t\tendNode.pageBounds.maxY\n\t\t\t\t\t\t)!,\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t// Collect vertical gaps\n\t\tconst sortedShapesOnCurrentPageVertical = sortedShapesOnCurrentPageHorizontal.sort((a, b) => {\n\t\t\treturn a.pageBounds.minY - b.pageBounds.minY\n\t\t})\n\n\t\tfor (let i = 0; i < sortedShapesOnCurrentPageVertical.length; i++) {\n\t\t\tstartNode = sortedShapesOnCurrentPageVertical[i]\n\t\t\tfor (let j = i + 1; j < sortedShapesOnCurrentPageVertical.length; j++) {\n\t\t\t\tendNode = sortedShapesOnCurrentPageVertical[j]\n\n\t\t\t\tif (\n\t\t\t\t\t// is there space between the boxes\n\t\t\t\t\tstartNode.pageBounds.maxY < endNode.pageBounds.minY &&\n\t\t\t\t\t// do they overlap in the x axis\n\t\t\t\t\trangesOverlap(\n\t\t\t\t\t\tstartNode.pageBounds.minX,\n\t\t\t\t\t\tstartNode.pageBounds.maxX,\n\t\t\t\t\t\tendNode.pageBounds.minX,\n\t\t\t\t\t\tendNode.pageBounds.maxX\n\t\t\t\t\t)\n\t\t\t\t) {\n\t\t\t\t\tvertical.push({\n\t\t\t\t\t\tstartNode,\n\t\t\t\t\t\tendNode,\n\t\t\t\t\t\tstartEdge: [\n\t\t\t\t\t\t\tnew Vec(startNode.pageBounds.minX, startNode.pageBounds.maxY),\n\t\t\t\t\t\t\tnew Vec(startNode.pageBounds.maxX, startNode.pageBounds.maxY),\n\t\t\t\t\t\t],\n\t\t\t\t\t\tendEdge: [\n\t\t\t\t\t\t\tnew Vec(endNode.pageBounds.minX, endNode.pageBounds.minY),\n\t\t\t\t\t\t\tnew Vec(endNode.pageBounds.maxX, endNode.pageBounds.minY),\n\t\t\t\t\t\t],\n\t\t\t\t\t\tlength: endNode.pageBounds.minY - startNode.pageBounds.maxY,\n\t\t\t\t\t\tbreadthIntersection: rangeIntersection(\n\t\t\t\t\t\t\tstartNode.pageBounds.minX,\n\t\t\t\t\t\t\tstartNode.pageBounds.maxX,\n\t\t\t\t\t\t\tendNode.pageBounds.minX,\n\t\t\t\t\t\t\tendNode.pageBounds.maxX\n\t\t\t\t\t\t)!,\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\treturn { horizontal, vertical }\n\t}\n\n\tsnapTranslateShapes({\n\t\tlockedAxis,\n\t\tinitialSelectionPageBounds,\n\t\tinitialSelectionSnapPoints,\n\t\tdragDelta,\n\t}: {\n\t\tlockedAxis: 'x' | 'y' | null\n\t\tinitialSelectionSnapPoints: BoundsSnapPoint[]\n\t\tinitialSelectionPageBounds: Box\n\t\tdragDelta: Vec\n\t}): SnapData {\n\t\tconst snapThreshold = this.manager.getSnapThreshold()\n\t\tconst visibleSnapPointsNotInSelection = this.getSnappablePoints()\n\n\t\tconst selectionPageBounds = initialSelectionPageBounds.clone().translate(dragDelta)\n\n\t\tconst selectionSnapPoints: BoundsSnapPoint[] = initialSelectionSnapPoints.map(\n\t\t\t({ x, y }, i) => ({\n\t\t\t\tid: 'selection:' + i,\n\t\t\t\tx: x + dragDelta.x,\n\t\t\t\ty: y + dragDelta.y,\n\t\t\t})\n\t\t)\n\n\t\tconst otherNodeSnapPoints = visibleSnapPointsNotInSelection\n\n\t\tconst nearestSnapsX: NearestSnap[] = []\n\t\tconst nearestSnapsY: NearestSnap[] = []\n\t\tconst minOffset = new Vec(snapThreshold, snapThreshold)\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints,\n\t\t})\n\n\t\tthis.collectGapSnaps({\n\t\t\tselectionPageBounds,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\tminOffset,\n\t\t})\n\n\t\t// at the same time, calculate how far we need to nudge the shape to 'snap' to the target point(s)\n\t\tconst nudge = new Vec(\n\t\t\tlockedAxis === 'x' ? 0 : (nearestSnapsX[0]?.nudge ?? 0),\n\t\t\tlockedAxis === 'y' ? 0 : (nearestSnapsY[0]?.nudge ?? 0)\n\t\t)\n\n\t\t// ok we've figured out how much the box should be nudged, now let's find all the snap points\n\t\t// that are exact after making that translation, so we can render all of them.\n\t\t// first reset everything and adjust the original shapes to conform to the nudge\n\t\tminOffset.x = 0\n\t\tminOffset.y = 0\n\t\tnearestSnapsX.length = 0\n\t\tnearestSnapsY.length = 0\n\t\tselectionSnapPoints.forEach((s) => {\n\t\t\ts.x += nudge.x\n\t\t\ts.y += nudge.y\n\t\t})\n\t\tselectionPageBounds.translate(nudge)\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints,\n\t\t})\n\n\t\tthis.collectGapSnaps({\n\t\t\tselectionPageBounds,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\tminOffset,\n\t\t})\n\n\t\tconst pointSnapsLines = this.getPointSnapLines({\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t})\n\n\t\tconst gapSnapLines = this.getGapSnapLines({\n\t\t\tselectionPageBounds,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t})\n\n\t\tthis.manager.setIndicators([...gapSnapLines, ...pointSnapsLines])\n\n\t\treturn { nudge }\n\t}\n\n\tsnapResizeShapes({\n\t\tinitialSelectionPageBounds,\n\t\tdragDelta,\n\t\thandle: originalHandle,\n\t\tisAspectRatioLocked,\n\t\tisResizingFromCenter,\n\t}: {\n\t\t// the page bounds when the pointer went down, before any dragging\n\t\tinitialSelectionPageBounds: Box\n\t\t// how far the pointer has been dragged\n\t\tdragDelta: Vec\n\n\t\thandle: SelectionCorner | SelectionEdge\n\t\tisAspectRatioLocked: boolean\n\t\tisResizingFromCenter: boolean\n\t}): SnapData {\n\t\tconst snapThreshold = this.manager.getSnapThreshold()\n\n\t\t// first figure out the new bounds of the selection\n\t\tconst {\n\t\t\tbox: unsnappedResizedPageBounds,\n\t\t\tscaleX,\n\t\t\tscaleY,\n\t\t} = Box.Resize(\n\t\t\tinitialSelectionPageBounds,\n\t\t\toriginalHandle,\n\t\t\tisResizingFromCenter ? dragDelta.x * 2 : dragDelta.x,\n\t\t\tisResizingFromCenter ? dragDelta.y * 2 : dragDelta.y,\n\t\t\tisAspectRatioLocked\n\t\t)\n\n\t\tlet handle = originalHandle\n\n\t\tif (scaleX < 0) {\n\t\t\thandle = flipSelectionHandleX(handle)\n\t\t}\n\t\tif (scaleY < 0) {\n\t\t\thandle = flipSelectionHandleY(handle)\n\t\t}\n\n\t\tif (isResizingFromCenter) {\n\t\t\t// reposition if resizing from center\n\t\t\tunsnappedResizedPageBounds.center = initialSelectionPageBounds.center\n\t\t}\n\n\t\tconst isXLocked = handle === 'top' || handle === 'bottom'\n\t\tconst isYLocked = handle === 'left' || handle === 'right'\n\n\t\tconst selectionSnapPoints = getResizeSnapPointsForHandle(handle, unsnappedResizedPageBounds)\n\n\t\tconst otherNodeSnapPoints = this.getSnappablePoints()\n\n\t\tconst nearestSnapsX: NearestPointsSnap[] = []\n\t\tconst nearestSnapsY: NearestPointsSnap[] = []\n\t\tconst minOffset = new Vec(snapThreshold, snapThreshold)\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints,\n\t\t})\n\n\t\t// at the same time, calculate how far we need to nudge the shape to 'snap' to the target point(s)\n\t\tconst nudge = new Vec(\n\t\t\tisXLocked ? 0 : (nearestSnapsX[0]?.nudge ?? 0),\n\t\t\tisYLocked ? 0 : (nearestSnapsY[0]?.nudge ?? 0)\n\t\t)\n\n\t\tif (isAspectRatioLocked && isSelectionCorner(handle) && nudge.len() !== 0) {\n\t\t\t// if the aspect ratio is locked we need to make the nudge diagonal rather than independent in each axis\n\t\t\t// so we use the aspect ratio along with one axis value to set the other axis value, but which axis we use\n\t\t\t// as a source of truth depends what we have snapped to and how far.\n\n\t\t\t// if we found a snap in both axes, pick the closest one and discard the other\n\t\t\tconst primaryNudgeAxis: 'x' | 'y' =\n\t\t\t\tnearestSnapsX.length && nearestSnapsY.length\n\t\t\t\t\t? Math.abs(nudge.x) < Math.abs(nudge.y)\n\t\t\t\t\t\t? 'x'\n\t\t\t\t\t\t: 'y'\n\t\t\t\t\t: nearestSnapsX.length\n\t\t\t\t\t\t? 'x'\n\t\t\t\t\t\t: 'y'\n\n\t\t\tconst ratio = initialSelectionPageBounds.aspectRatio\n\n\t\t\tif (primaryNudgeAxis === 'x') {\n\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\tnudge.y = nudge.x / ratio\n\t\t\t\tif (handle === 'bottom_left' || handle === 'top_right') {\n\t\t\t\t\tnudge.y = -nudge.y\n\t\t\t\t}\n\t\t\t} else {\n\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\tnudge.x = nudge.y * ratio\n\t\t\t\tif (handle === 'bottom_left' || handle === 'top_right') {\n\t\t\t\t\tnudge.x = -nudge.x\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t// now resize the box after nudging, calculate the snaps again, and return the snap lines to match\n\t\t// the fully resized box\n\t\tconst snappedDelta = Vec.Add(dragDelta, nudge)\n\n\t\t// first figure out the new bounds of the selection\n\t\tconst { box: snappedResizedPageBounds } = Box.Resize(\n\t\t\tinitialSelectionPageBounds,\n\t\t\toriginalHandle,\n\t\t\tisResizingFromCenter ? snappedDelta.x * 2 : snappedDelta.x,\n\t\t\tisResizingFromCenter ? snappedDelta.y * 2 : snappedDelta.y,\n\t\t\tisAspectRatioLocked\n\t\t)\n\n\t\tif (isResizingFromCenter) {\n\t\t\t// reposition if resizing from center\n\t\t\tsnappedResizedPageBounds.center = initialSelectionPageBounds.center\n\t\t}\n\n\t\tconst snappedSelectionPoints = getResizeSnapPointsForHandle('any', snappedResizedPageBounds)\n\t\t// calculate snaps again using all points\n\t\tnearestSnapsX.length = 0\n\t\tnearestSnapsY.length = 0\n\t\tminOffset.x = 0\n\t\tminOffset.y = 0\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints: snappedSelectionPoints,\n\t\t})\n\t\tconst pointSnaps = this.getPointSnapLines({\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t})\n\n\t\tthis.manager.setIndicators([...pointSnaps])\n\n\t\treturn { nudge }\n\t}\n\n\tprivate collectPointSnaps({\n\t\tselectionSnapPoints,\n\t\totherNodeSnapPoints,\n\t\tminOffset,\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tselectionSnapPoints: BoundsSnapPoint[]\n\t\totherNodeSnapPoints: BoundsSnapPoint[]\n\t\tminOffset: Vec\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}) {\n\t\t// for each snap point on the bounding box of the selection, find the set of points\n\t\t// which are closest to it in each axis\n\t\tfor (const thisSnapPoint of selectionSnapPoints) {\n\t\t\tfor (const otherSnapPoint of otherNodeSnapPoints) {\n\t\t\t\tconst offset = Vec.Sub(thisSnapPoint, otherSnapPoint)\n\t\t\t\tconst offsetX = Math.abs(offset.x)\n\t\t\t\tconst offsetY = Math.abs(offset.y)\n\n\t\t\t\tif (round(offsetX) <= round(minOffset.x)) {\n\t\t\t\t\tif (round(offsetX) < round(minOffset.x)) {\n\t\t\t\t\t\t// we found a point that is significantly closer than all previous points\n\t\t\t\t\t\t// so wipe the slate clean and start over\n\t\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t\t}\n\n\t\t\t\t\tnearestSnapsX.push({\n\t\t\t\t\t\ttype: 'points',\n\t\t\t\t\t\tpoints: { thisPoint: thisSnapPoint, otherPoint: otherSnapPoint },\n\t\t\t\t\t\tnudge: otherSnapPoint.x - thisSnapPoint.x,\n\t\t\t\t\t})\n\t\t\t\t\tminOffset.x = offsetX\n\t\t\t\t}\n\n\t\t\t\tif (round(offsetY) <= round(minOffset.y)) {\n\t\t\t\t\tif (round(offsetY) < round(minOffset.y)) {\n\t\t\t\t\t\t// we found a point that is significantly closer than all previous points\n\t\t\t\t\t\t// so wipe the slate clean and start over\n\t\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t\t}\n\t\t\t\t\tnearestSnapsY.push({\n\t\t\t\t\t\ttype: 'points',\n\t\t\t\t\t\tpoints: { thisPoint: thisSnapPoint, otherPoint: otherSnapPoint },\n\t\t\t\t\t\tnudge: otherSnapPoint.y - thisSnapPoint.y,\n\t\t\t\t\t})\n\t\t\t\t\tminOffset.y = offsetY\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate collectGapSnaps({\n\t\tselectionPageBounds,\n\t\tminOffset,\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tselectionPageBounds: Box\n\t\tminOffset: Vec\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}) {\n\t\tconst { horizontal, vertical } = this.getVisibleGaps()\n\n\t\tfor (const gap of horizontal) {\n\t\t\t// ignore this gap if the selection doesn't overlap with it in the y axis\n\t\t\tif (\n\t\t\t\t!rangesOverlap(\n\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\tgap.breadthIntersection[1],\n\t\t\t\t\tselectionPageBounds.minY,\n\t\t\t\t\tselectionPageBounds.maxY\n\t\t\t\t)\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// check for center match\n\t\t\tconst gapMidX = gap.startEdge[0].x + gap.length / 2\n\t\t\tconst centerNudge = gapMidX - selectionPageBounds.center.x\n\t\t\tconst gapIsLargerThanSelection = gap.length > selectionPageBounds.width\n\n\t\t\tif (gapIsLargerThanSelection && round(Math.abs(centerNudge)) <= round(minOffset.x)) {\n\t\t\t\tif (round(Math.abs(centerNudge)) < round(minOffset.x)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.x = Math.abs(centerNudge)\n\n\t\t\t\tconst snap: NearestSnap = {\n\t\t\t\t\ttype: 'gap_center',\n\t\t\t\t\tgap,\n\t\t\t\t\tnudge: centerNudge,\n\t\t\t\t}\n\n\t\t\t\t// we need to avoid creating visual noise with too many center snaps in situations\n\t\t\t\t// where there are lots of adjacent items with even spacing\n\t\t\t\t// so let's only show other center snaps where the gap's breadth does not overlap with this one\n\t\t\t\t// i.e.\n\t\t\t\t//                ┌───────────────┐\n\t\t\t\t//                │               │\n\t\t\t\t//                └──────┬────┬───┘\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                 ┌─────┴┐   │\n\t\t\t\t//                 │      │   ┼\n\t\t\t\t//                 └─────┬┘   │\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                   ┌───┴────┴───────┐\n\t\t\t\t//                   │                │  ◄────  i'm dragging this one\n\t\t\t\t//                   └───┬────┬───────┘\n\t\t\t\t//            ─────►     ┼    │\n\t\t\t\t//                 ┌─────┴┐   │                don't show these\n\t\t\t\t// show these      │      │   ┼                larger gaps since\n\t\t\t\t// smaller         └─────┬┘   │ ◄───────────── the smaller ones\n\t\t\t\t// gaps                  ┼    │                cover the same\n\t\t\t\t//              ─────►  ┌┴────┴─────┐          information\n\t\t\t\t//                      │           │\n\t\t\t\t//                      └───────────┘\n\t\t\t\t//\n\t\t\t\t// but we want to show all of these ones since the gap breadths don't overlap\n\t\t\t\t//            ┌─────────────┐\n\t\t\t\t//            │             │\n\t\t\t\t// ┌────┐     └───┬─────────┘\n\t\t\t\t// │    │         │\n\t\t\t\t// └──┬─┘         ┼\n\t\t\t\t//    ┼           │\n\t\t\t\t// ┌──┴───────────┴─┐\n\t\t\t\t// │                │ ◄───── i'm dragging this one\n\t\t\t\t// └──┬───────────┬─┘\n\t\t\t\t//    ┼           │\n\t\t\t\t// ┌──┴────┐      ┼\n\t\t\t\t// │       │      │\n\t\t\t\t// └───────┘    ┌─┴───────┐\n\t\t\t\t//              │         │\n\t\t\t\t//              └─────────┘\n\n\t\t\t\tconst otherCenterSnap = nearestSnapsX.find(({ type }) => type === 'gap_center') as\n\t\t\t\t\t| Extract<NearestSnap, { type: 'gap_center' }>\n\t\t\t\t\t| undefined\n\n\t\t\t\tconst gapBreadthsOverlap =\n\t\t\t\t\totherCenterSnap &&\n\t\t\t\t\trangeIntersection(\n\t\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\t\tgap.breadthIntersection[1],\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[0],\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[1]\n\t\t\t\t\t)\n\n\t\t\t\t// if there is another center snap and it's bigger than this one, and it overlaps with this one, replace it\n\t\t\t\tif (otherCenterSnap && otherCenterSnap.gap.length > gap.length && gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsX[nearestSnapsX.indexOf(otherCenterSnap)] = snap\n\t\t\t\t} else if (!otherCenterSnap || !gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsX.push(snap)\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// check for duplication left match\n\t\t\tconst duplicationLeftX = gap.startNode.pageBounds.minX - gap.length\n\t\t\tconst selectionRightX = selectionPageBounds.maxX\n\n\t\t\tconst duplicationLeftNudge = duplicationLeftX - selectionRightX\n\t\t\tif (round(Math.abs(duplicationLeftNudge)) <= round(minOffset.x)) {\n\t\t\t\tif (round(Math.abs(duplicationLeftNudge)) < round(minOffset.x)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.x = Math.abs(duplicationLeftNudge)\n\n\t\t\t\tnearestSnapsX.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'left',\n\t\t\t\t\tnudge: duplicationLeftNudge,\n\t\t\t\t})\n\t\t\t}\n\n\t\t\t// check for duplication right match\n\t\t\tconst duplicationRightX = gap.endNode.pageBounds.maxX + gap.length\n\t\t\tconst selectionLeftX = selectionPageBounds.minX\n\n\t\t\tconst duplicationRightNudge = duplicationRightX - selectionLeftX\n\t\t\tif (round(Math.abs(duplicationRightNudge)) <= round(minOffset.x)) {\n\t\t\t\tif (round(Math.abs(duplicationRightNudge)) < round(minOffset.x)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.x = Math.abs(duplicationRightNudge)\n\n\t\t\t\tnearestSnapsX.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'right',\n\t\t\t\t\tnudge: duplicationRightNudge,\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\n\t\tfor (const gap of vertical) {\n\t\t\t// ignore this gap if the selection doesn't overlap with it in the y axis\n\t\t\tif (\n\t\t\t\t!rangesOverlap(\n\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\tgap.breadthIntersection[1],\n\t\t\t\t\tselectionPageBounds.minX,\n\t\t\t\t\tselectionPageBounds.maxX\n\t\t\t\t)\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// check for center match\n\t\t\tconst gapMidY = gap.startEdge[0].y + gap.length / 2\n\t\t\tconst centerNudge = gapMidY - selectionPageBounds.center.y\n\n\t\t\tconst gapIsLargerThanSelection = gap.length > selectionPageBounds.height\n\n\t\t\tif (gapIsLargerThanSelection && round(Math.abs(centerNudge)) <= round(minOffset.y)) {\n\t\t\t\tif (round(Math.abs(centerNudge)) < round(minOffset.y)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.y = Math.abs(centerNudge)\n\n\t\t\t\tconst snap: NearestSnap = {\n\t\t\t\t\ttype: 'gap_center',\n\t\t\t\t\tgap,\n\t\t\t\t\tnudge: centerNudge,\n\t\t\t\t}\n\n\t\t\t\t// we need to avoid creating visual noise with too many center snaps in situations\n\t\t\t\t// where there are lots of adjacent items with even spacing\n\t\t\t\t// so let's only show other center snaps where the gap's breadth does not overlap with this one\n\t\t\t\t// i.e.\n\t\t\t\t//                ┌───────────────┐\n\t\t\t\t//                │               │\n\t\t\t\t//                └──────┬────┬───┘\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                 ┌─────┴┐   │\n\t\t\t\t//                 │      │   ┼\n\t\t\t\t//                 └─────┬┘   │\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                   ┌───┴────┴───────┐\n\t\t\t\t//                   │                │  ◄────  i'm dragging this one\n\t\t\t\t//                   └───┬────┬───────┘\n\t\t\t\t//            ─────►     ┼    │\n\t\t\t\t//                 ┌─────┴┐   │                don't show these\n\t\t\t\t// show these      │      │   ┼                larger gaps since\n\t\t\t\t// smaller         └─────┬┘   │ ◄───────────── the smaller ones\n\t\t\t\t// gaps                  ┼    │                cover the same\n\t\t\t\t//              ─────►  ┌┴────┴─────┐          information\n\t\t\t\t//                      │           │\n\t\t\t\t//                      └───────────┘\n\t\t\t\t//\n\t\t\t\t// but we want to show all of these ones since the gap breadths don't overlap\n\t\t\t\t//            ┌─────────────┐\n\t\t\t\t//            │             │\n\t\t\t\t// ┌────┐     └───┬─────────┘\n\t\t\t\t// │    │         │\n\t\t\t\t// └──┬─┘         ┼\n\t\t\t\t//    ┼           │\n\t\t\t\t// ┌──┴───────────┴─┐\n\t\t\t\t// │                │ ◄───── i'm dragging this one\n\t\t\t\t// └──┬───────────┬─┘\n\t\t\t\t//    ┼           │\n\t\t\t\t// ┌──┴────┐      ┼\n\t\t\t\t// │       │      │\n\t\t\t\t// └───────┘    ┌─┴───────┐\n\t\t\t\t//              │         │\n\t\t\t\t//              └─────────┘\n\n\t\t\t\tconst otherCenterSnap = nearestSnapsY.find(({ type }) => type === 'gap_center') as\n\t\t\t\t\t| Extract<NearestSnap, { type: 'gap_center' }>\n\t\t\t\t\t| undefined\n\n\t\t\t\tconst gapBreadthsOverlap =\n\t\t\t\t\totherCenterSnap &&\n\t\t\t\t\trangesOverlap(\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[0],\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[1],\n\t\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\t\tgap.breadthIntersection[1]\n\t\t\t\t\t)\n\n\t\t\t\t// if there is another center snap and it's bigger than this one, and it overlaps with this one, replace it\n\t\t\t\tif (otherCenterSnap && otherCenterSnap.gap.length > gap.length && gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsY[nearestSnapsY.indexOf(otherCenterSnap)] = snap\n\t\t\t\t} else if (!otherCenterSnap || !gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsY.push(snap)\n\t\t\t\t}\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// check for duplication top match\n\t\t\tconst duplicationTopY = gap.startNode.pageBounds.minY - gap.length\n\t\t\tconst selectionBottomY = selectionPageBounds.maxY\n\n\t\t\tconst duplicationTopNudge = duplicationTopY - selectionBottomY\n\t\t\tif (round(Math.abs(duplicationTopNudge)) <= round(minOffset.y)) {\n\t\t\t\tif (round(Math.abs(duplicationTopNudge)) < round(minOffset.y)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.y = Math.abs(duplicationTopNudge)\n\n\t\t\t\tnearestSnapsY.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'top',\n\t\t\t\t\tnudge: duplicationTopNudge,\n\t\t\t\t})\n\t\t\t}\n\n\t\t\t// check for duplication bottom match\n\t\t\tconst duplicationBottomY = gap.endNode.pageBounds.maxY + gap.length\n\t\t\tconst selectionTopY = selectionPageBounds.minY\n\n\t\t\tconst duplicationBottomNudge = duplicationBottomY - selectionTopY\n\t\t\tif (round(Math.abs(duplicationBottomNudge)) <= round(minOffset.y)) {\n\t\t\t\tif (round(Math.abs(duplicationBottomNudge)) < round(minOffset.y)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.y = Math.abs(duplicationBottomNudge)\n\n\t\t\t\tnearestSnapsY.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'bottom',\n\t\t\t\t\tnudge: duplicationBottomNudge,\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate getPointSnapLines({\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}): PointsSnapIndicator[] {\n\t\t// point snaps may align on multiple parallel lines so we need to split the pairs\n\t\t// into groups based on where they are in their their snap axes\n\t\tconst snapGroupsX = {} as { [key: string]: SnapPair[] }\n\t\tconst snapGroupsY = {} as { [key: string]: SnapPair[] }\n\n\t\tif (nearestSnapsX.length > 0) {\n\t\t\tfor (const snap of nearestSnapsX) {\n\t\t\t\tif (snap.type === 'points') {\n\t\t\t\t\tconst key = round(snap.points.otherPoint.x)\n\t\t\t\t\tif (!snapGroupsX[key]) {\n\t\t\t\t\t\tsnapGroupsX[key] = []\n\t\t\t\t\t}\n\t\t\t\t\tsnapGroupsX[key].push(snap.points)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\tif (nearestSnapsY.length > 0) {\n\t\t\tfor (const snap of nearestSnapsY) {\n\t\t\t\tif (snap.type === 'points') {\n\t\t\t\t\tconst key = round(snap.points.otherPoint.y)\n\t\t\t\t\tif (!snapGroupsY[key]) {\n\t\t\t\t\t\tsnapGroupsY[key] = []\n\t\t\t\t\t}\n\t\t\t\t\tsnapGroupsY[key].push(snap.points)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t// and finally create all the snap lines for the UI to render\n\t\treturn Object.values(snapGroupsX)\n\t\t\t.concat(Object.values(snapGroupsY))\n\t\t\t.map((snapGroup) => ({\n\t\t\t\tid: uniqueId(),\n\t\t\t\ttype: 'points',\n\t\t\t\tpoints: dedupe(\n\t\t\t\t\tsnapGroup\n\t\t\t\t\t\t.map((snap) => Vec.From(snap.otherPoint))\n\t\t\t\t\t\t// be sure to nudge over the selection snap points\n\t\t\t\t\t\t.concat(snapGroup.map((snap) => Vec.From(snap.thisPoint))),\n\t\t\t\t\t(a: Vec, b: Vec) => a.equals(b)\n\t\t\t\t),\n\t\t\t}))\n\t}\n\n\tprivate getGapSnapLines({\n\t\tselectionPageBounds,\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tselectionPageBounds: Box\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}): GapsSnapIndicator[] {\n\t\tconst { vertical, horizontal } = this.getVisibleGaps()\n\n\t\tconst selectionSides: Record<SelectionEdge, [Vec, Vec]> = {\n\t\t\ttop: selectionPageBounds.sides[0],\n\t\t\tright: selectionPageBounds.sides[1],\n\t\t\t// need bottom and left to be sorted asc, which .sides is not.\n\t\t\tbottom: [selectionPageBounds.corners[3], selectionPageBounds.corners[2]],\n\t\t\tleft: [selectionPageBounds.corners[0], selectionPageBounds.corners[3]],\n\t\t}\n\n\t\tconst result: GapsSnapIndicator[] = []\n\n\t\tif (nearestSnapsX.length > 0) {\n\t\t\tfor (const snap of nearestSnapsX) {\n\t\t\t\tif (snap.type === 'points') continue\n\n\t\t\t\tconst {\n\t\t\t\t\tgap: { breadthIntersection, startEdge, startNode, endNode, length, endEdge },\n\t\t\t\t} = snap\n\n\t\t\t\tswitch (snap.type) {\n\t\t\t\t\tcase 'gap_center': {\n\t\t\t\t\t\t// create\n\t\t\t\t\t\tconst newGapsLength = (length - selectionPageBounds.width) / 2\n\t\t\t\t\t\tconst gapBreadthIntersection = rangeIntersection(\n\t\t\t\t\t\t\tbreadthIntersection[0],\n\t\t\t\t\t\t\tbreadthIntersection[1],\n\t\t\t\t\t\t\tselectionPageBounds.minY,\n\t\t\t\t\t\t\tselectionPageBounds.maxY\n\t\t\t\t\t\t)!\n\t\t\t\t\t\tresult.push({\n\t\t\t\t\t\t\ttype: 'gaps',\n\t\t\t\t\t\t\tdirection: 'horizontal',\n\t\t\t\t\t\t\tid: uniqueId(),\n\t\t\t\t\t\t\tgaps: [\n\t\t\t\t\t\t\t\t...findAdjacentGaps(\n\t\t\t\t\t\t\t\t\thorizontal,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps",
+          "unitKind": "class",
+          "name": "BoundsSnaps",
+          "qualifiedName": "BoundsSnaps",
+          "parentUnitId": null,
+          "startLine": 190,
+          "endLine": 1017,
+          "signature": "export class BoundsSnaps",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "editor",
+              "kind": "property",
+              "type": "Editor",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "manager",
+              "kind": "property",
+              "type": "SnapManager",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "snapTranslateShapes",
+              "kind": "method",
+              "type": "SnapData",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "snapResizeShapes",
+              "kind": "method",
+              "type": "SnapData",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "collectPointSnaps",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "collectGapSnaps",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "getPointSnapLines",
+              "kind": "method",
+              "type": "PointsSnapIndicator[]",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "getGapSnapLines",
+              "kind": "method",
+              "type": "GapsSnapIndicator[]",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "BoundsSnaps provides the editor's bounds-based snapping surface for translating and resizing selections. It exposes snap-related state and operations used to calculate alignment, gap, and duplication indicators.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "b2ba47e18ee6320ed7d0b229056bf4acda79997660e32190abe96f3874609562"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.snapTranslateShapes#method:BoundsSnaps.snapTranslateShapes",
+        "unitKind": "method",
+        "name": "snapTranslateShapes",
+        "qualifiedName": "BoundsSnaps.snapTranslateShapes",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+        "startLine": 306,
+        "endLine": 394,
+        "isBehavioral": true,
+        "source": "\n\t\t\t\tif (\n\t\t\t\t\t// is there space between the boxes\n\t\t\t\t\tstartNode.pageBounds.maxY < endNode.pageBounds.minY &&\n\t\t\t\t\t// do they overlap in the x axis\n\t\t\t\t\trangesOverlap(\n\t\t\t\t\t\tstartNode.pageBounds.minX,\n\t\t\t\t\t\tstartNode.pageBounds.maxX,\n\t\t\t\t\t\tendNode.pageBounds.minX,\n\t\t\t\t\t\tendNode.pageBounds.maxX\n\t\t\t\t\t)\n\t\t\t\t) {\n\t\t\t\t\tvertical.push({\n\t\t\t\t\t\tstartNode,\n\t\t\t\t\t\tendNode,\n\t\t\t\t\t\tstartEdge: [\n\t\t\t\t\t\t\tnew Vec(startNode.pageBounds.minX, startNode.pageBounds.maxY),\n\t\t\t\t\t\t\tnew Vec(startNode.pageBounds.maxX, startNode.pageBounds.maxY),\n\t\t\t\t\t\t],\n\t\t\t\t\t\tendEdge: [\n\t\t\t\t\t\t\tnew Vec(endNode.pageBounds.minX, endNode.pageBounds.minY),\n\t\t\t\t\t\t\tnew Vec(endNode.pageBounds.maxX, endNode.pageBounds.minY),\n\t\t\t\t\t\t],\n\t\t\t\t\t\tlength: endNode.pageBounds.minY - startNode.pageBounds.maxY,\n\t\t\t\t\t\tbreadthIntersection: rangeIntersection(\n\t\t\t\t\t\t\tstartNode.pageBounds.minX,\n\t\t\t\t\t\t\tstartNode.pageBounds.maxX,\n\t\t\t\t\t\t\tendNode.pageBounds.minX,\n\t\t\t\t\t\t\tendNode.pageBounds.maxX\n\t\t\t\t\t\t)!,\n\t\t\t\t\t})\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\treturn { horizontal, vertical }\n\t}\n\n\tsnapTranslateShapes({\n\t\tlockedAxis,\n\t\tinitialSelectionPageBounds,\n\t\tinitialSelectionSnapPoints,\n\t\tdragDelta,\n\t}: {\n\t\tlockedAxis: 'x' | 'y' | null\n\t\tinitialSelectionSnapPoints: BoundsSnapPoint[]\n\t\tinitialSelectionPageBounds: Box\n\t\tdragDelta: Vec\n\t}): SnapData {\n\t\tconst snapThreshold = this.manager.getSnapThreshold()\n\t\tconst visibleSnapPointsNotInSelection = this.getSnappablePoints()\n\n\t\tconst selectionPageBounds = initialSelectionPageBounds.clone().translate(dragDelta)\n\n\t\tconst selectionSnapPoints: BoundsSnapPoint[] = initialSelectionSnapPoints.map(\n\t\t\t({ x, y }, i) => ({\n\t\t\t\tid: 'selection:' + i,\n\t\t\t\tx: x + dragDelta.x,\n\t\t\t\ty: y + dragDelta.y,\n\t\t\t})\n\t\t)\n\n\t\tconst otherNodeSnapPoints = visibleSnapPointsNotInSelection\n\n\t\tconst nearestSnapsX: NearestSnap[] = []\n\t\tconst nearestSnapsY: NearestSnap[] = []\n\t\tconst minOffset = new Vec(snapThreshold, snapThreshold)\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints,\n\t\t})\n\n\t\tthis.collectGapSnaps({\n\t\t\tselectionPageBounds,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\tminOffset,\n\t\t})\n\n\t\t// at the same time, calculate how far we need to nudge the shape to 'snap' to the target point(s)\n\t\tconst nudge = new Vec(\n\t\t\tlockedAxis === 'x' ? 0 : (nearestSnapsX[0]?.nudge ?? 0),\n\t\t\tlockedAxis === 'y' ? 0 : (nearestSnapsY[0]?.nudge ?? 0)\n\t\t)\n",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.snapTranslateShapes#method:BoundsSnaps.snapTranslateShapes",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.snapTranslateShapes",
+          "unitKind": "method",
+          "name": "snapTranslateShapes",
+          "qualifiedName": "BoundsSnaps.snapTranslateShapes",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+          "startLine": 306,
+          "endLine": 394,
+          "signature": "snapTranslateShapes({ lockedAxis, initialSelectionPageBounds, initialSelectionSnapPoints, dragDelta, }: { lockedAxis: 'x' | 'y' | null; initialSelectionSnapPoints: BoundsSnapPoint[]; initialSelectionPageBounds: Box; dragDelta: Vec }): SnapData",
+          "parameters": [
+            {
+              "name": "{ lockedAxis, initialSelectionPageBounds, initialSelectionSnapPoints, dragDelta }",
+              "type": "{ lockedAxis: 'x' | 'y' | null; initialSelectionSnapPoints: BoundsSnapPoint[]; initialSelectionPageBounds: Box; dragDelta: Vec }",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            }
+          ],
+          "returnType": "SnapData",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "initialSelectionPageBounds is a valid Box.",
+            "initialSelectionSnapPoints contains the selection's snap points in the coordinate space of initialSelectionPageBounds.",
+            "dragDelta is a Vec.",
+            "lockedAxis is null, 'x', or 'y'."
+          ],
+          "postconditions": [
+            "The returned SnapData reflects point and gap snapping opportunities within the manager's snap threshold.",
+            "Selection snap points are evaluated after applying dragDelta.",
+            "The nudge on the x axis is zero when lockedAxis is 'x'.",
+            "The nudge on the y axis is zero when lockedAxis is 'y'.",
+            "When no applicable snap is found on an unlocked axis, that axis's nudge is zero."
+          ],
+          "invariants": [
+            "Snap calculations use the translated selection bounds and translated selection snap points.",
+            "Only visible snappable points outside the selection are used as point-snap targets.",
+            "The original initialSelectionPageBounds and initialSelectionSnapPoints inputs are not mutated."
+          ],
+          "edgeCases": [
+            "When lockedAxis is 'x', horizontal snapping is still collected but the returned x nudge is zero.",
+            "When lockedAxis is 'y', vertical snapping is still collected but the returned y nudge is zero.",
+            "When no nearest snap exists on an unlocked axis, its nudge defaults to zero.",
+            "When initialSelectionSnapPoints is empty, no translated selection point snaps are available, while gap snapping is still attempted."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getSnapThreshold", "source": "this.manager", "kind": "external" },
+            { "name": "getSnappablePoints", "source": "BoundsSnaps", "kind": "internal" },
+            { "name": "collectPointSnaps", "source": "BoundsSnaps", "kind": "internal" },
+            { "name": "collectGapSnaps", "source": "BoundsSnaps", "kind": "internal" },
+            { "name": "Box.clone", "source": "initialSelectionPageBounds", "kind": "external" },
+            { "name": "Box.translate", "source": "selectionPageBounds", "kind": "external" },
+            { "name": "Vec", "source": "Vec", "kind": "external" }
+          ],
+          "symbolReferences": ["SnapData", "BoundsSnapPoint", "Box", "Vec", "NearestSnap"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes snapping data for translating a selection by a drag delta. It considers nearby point and gap snaps and suppresses nudging along an axis locked by the caller.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "'x'", "role": "Identifies the x axis for axis locking." },
+            { "kind": "enum-value", "value": "'y'", "role": "Identifies the y axis for axis locking." },
+            {
+              "kind": "format-string",
+              "value": "selection:",
+              "role": "Prefix used for generated IDs assigned to translated selection snap points."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call snapTranslateShapes with the selection bounds, snap points, and drag delta.",
+              "then": "The result may include horizontal and vertical snap data, but its horizontal nudge is zero.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call snapTranslateShapes with that selection and drag delta.",
+              "then": "The nudge for that axis is zero.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Call snapTranslateShapes with a drag delta.",
+              "then": "The snap points supplied to point-snap collection have IDs selection:0, selection:1, and so on, and coordinates offset by the drag delta.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "53fdd4df77c68175e0f1371731a174ecae503fc8d5d32bc586191f878ae931e0"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.snapResizeShapes#method:BoundsSnaps.snapResizeShapes",
+        "unitKind": "method",
+        "name": "snapResizeShapes",
+        "qualifiedName": "BoundsSnaps.snapResizeShapes",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+        "startLine": 396,
+        "endLine": 525,
+        "isBehavioral": true,
+        "source": "\t\t// that are exact after making that translation, so we can render all of them.\n\t\t// first reset everything and adjust the original shapes to conform to the nudge\n\t\tminOffset.x = 0\n\t\tminOffset.y = 0\n\t\tnearestSnapsX.length = 0\n\t\tnearestSnapsY.length = 0\n\t\tselectionSnapPoints.forEach((s) => {\n\t\t\ts.x += nudge.x\n\t\t\ts.y += nudge.y\n\t\t})\n\t\tselectionPageBounds.translate(nudge)\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints,\n\t\t})\n\n\t\tthis.collectGapSnaps({\n\t\t\tselectionPageBounds,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\tminOffset,\n\t\t})\n\n\t\tconst pointSnapsLines = this.getPointSnapLines({\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t})\n\n\t\tconst gapSnapLines = this.getGapSnapLines({\n\t\t\tselectionPageBounds,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t})\n\n\t\tthis.manager.setIndicators([...gapSnapLines, ...pointSnapsLines])\n\n\t\treturn { nudge }\n\t}\n\n\tsnapResizeShapes({\n\t\tinitialSelectionPageBounds,\n\t\tdragDelta,\n\t\thandle: originalHandle,\n\t\tisAspectRatioLocked,\n\t\tisResizingFromCenter,\n\t}: {\n\t\t// the page bounds when the pointer went down, before any dragging\n\t\tinitialSelectionPageBounds: Box\n\t\t// how far the pointer has been dragged\n\t\tdragDelta: Vec\n\n\t\thandle: SelectionCorner | SelectionEdge\n\t\tisAspectRatioLocked: boolean\n\t\tisResizingFromCenter: boolean\n\t}): SnapData {\n\t\tconst snapThreshold = this.manager.getSnapThreshold()\n\n\t\t// first figure out the new bounds of the selection\n\t\tconst {\n\t\t\tbox: unsnappedResizedPageBounds,\n\t\t\tscaleX,\n\t\t\tscaleY,\n\t\t} = Box.Resize(\n\t\t\tinitialSelectionPageBounds,\n\t\t\toriginalHandle,\n\t\t\tisResizingFromCenter ? dragDelta.x * 2 : dragDelta.x,\n\t\t\tisResizingFromCenter ? dragDelta.y * 2 : dragDelta.y,\n\t\t\tisAspectRatioLocked\n\t\t)\n\n\t\tlet handle = originalHandle\n\n\t\tif (scaleX < 0) {\n\t\t\thandle = flipSelectionHandleX(handle)\n\t\t}\n\t\tif (scaleY < 0) {\n\t\t\thandle = flipSelectionHandleY(handle)\n\t\t}\n\n\t\tif (isResizingFromCenter) {\n\t\t\t// reposition if resizing from center\n\t\t\tunsnappedResizedPageBounds.center = initialSelectionPageBounds.center\n\t\t}\n\n\t\tconst isXLocked = handle === 'top' || handle === 'bottom'\n\t\tconst isYLocked = handle === 'left' || handle === 'right'\n\n\t\tconst selectionSnapPoints = getResizeSnapPointsForHandle(handle, unsnappedResizedPageBounds)\n\n\t\tconst otherNodeSnapPoints = this.getSnappablePoints()\n\n\t\tconst nearestSnapsX: NearestPointsSnap[] = []\n\t\tconst nearestSnapsY: NearestPointsSnap[] = []\n\t\tconst minOffset = new Vec(snapThreshold, snapThreshold)\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints,\n\t\t})\n\n\t\t// at the same time, calculate how far we need to nudge the shape to 'snap' to the target point(s)\n\t\tconst nudge = new Vec(\n\t\t\tisXLocked ? 0 : (nearestSnapsX[0]?.nudge ?? 0),\n\t\t\tisYLocked ? 0 : (nearestSnapsY[0]?.nudge ?? 0)\n\t\t)\n\n\t\tif (isAspectRatioLocked && isSelectionCorner(handle) && nudge.len() !== 0) {\n\t\t\t// if the aspect ratio is locked we need to make the nudge diagonal rather than independent in each axis\n\t\t\t// so we use the aspect ratio along with one axis value to set the other axis value, but which axis we use\n\t\t\t// as a source of truth depends what we have snapped to and how far.\n\n\t\t\t// if we found a snap in both axes, pick the closest one and discard the other\n\t\t\tconst primaryNudgeAxis: 'x' | 'y' =\n\t\t\t\tnearestSnapsX.length && nearestSnapsY.length\n\t\t\t\t\t? Math.abs(nudge.x) < Math.abs(nudge.y)\n\t\t\t\t\t\t? 'x'\n\t\t\t\t\t\t: 'y'\n\t\t\t\t\t: nearestSnapsX.length\n\t\t\t\t\t\t? 'x'\n\t\t\t\t\t\t: 'y'\n\n\t\t\tconst ratio = initialSelectionPageBounds.aspectRatio\n",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.snapResizeShapes#method:BoundsSnaps.snapResizeShapes",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.snapResizeShapes",
+          "unitKind": "method",
+          "name": "snapResizeShapes",
+          "qualifiedName": "BoundsSnaps.snapResizeShapes",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+          "startLine": 396,
+          "endLine": 525,
+          "signature": "snapResizeShapes({ initialSelectionPageBounds, dragDelta, handle: originalHandle, isAspectRatioLocked, isResizingFromCenter }: { initialSelectionPageBounds: Box; dragDelta: Vec; handle: SelectionCorner | SelectionEdge; isAspectRatioLocked: boolean; isResizingFromCenter: boolean }): SnapData",
+          "parameters": [
+            {
+              "name": "initialSelectionPageBounds",
+              "type": "Box",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "dragDelta", "type": "Vec", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "originalHandle",
+              "type": "SelectionCorner | SelectionEdge",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "isAspectRatioLocked",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "isResizingFromCenter",
+              "type": "boolean",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            }
+          ],
+          "returnType": "SnapData",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "initialSelectionPageBounds is a valid Box.",
+            "dragDelta is a valid Vec.",
+            "handle is a valid SelectionCorner or SelectionEdge.",
+            "isAspectRatioLocked and isResizingFromCenter are booleans."
+          ],
+          "postconditions": [
+            "The resize bounds are computed from the initial bounds, handle, drag delta, center-resizing mode, and aspect-ratio mode.",
+            "The returned nudge does not move axes locked by the effective resize handle.",
+            "Point snapping is evaluated against the manager's snappable points.",
+            "When aspect ratio is locked for a corner resize, a non-zero snap nudge is adjusted to preserve the initial selection aspect ratio."
+          ],
+          "invariants": [
+            "Negative resize scales flip the effective handle on the corresponding axis before snap-point selection.",
+            "For center-based resizing, the drag delta supplied to Box.Resize is doubled on both axes and the resized bounds are recentered on the initial selection bounds.",
+            "A top or bottom effective handle locks the x-axis nudge to zero.",
+            "A left or right effective handle locks the y-axis nudge to zero."
+          ],
+          "edgeCases": [
+            "A resize that produces a negative scale flips the effective handle horizontally and/or vertically before collecting snap points.",
+            "Center-based resizing doubles the drag delta and restores the resized bounds center to the initial bounds center.",
+            "Aspect-ratio-locked corner resizing with snaps on both axes chooses the axis with the smaller absolute nudge as the primary axis.",
+            "If no snap is found on an unlocked axis, the nudge for that axis is zero.",
+            "Snapping on an axis locked by the effective handle produces no nudge on that axis."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getSnapThreshold", "source": "this.manager", "kind": "external" },
+            { "name": "Box.Resize", "source": "Box", "kind": "external" },
+            { "name": "flipSelectionHandleX", "source": null, "kind": "internal" },
+            { "name": "flipSelectionHandleY", "source": null, "kind": "internal" },
+            { "name": "getResizeSnapPointsForHandle", "source": null, "kind": "internal" },
+            { "name": "getSnappablePoints", "source": "this", "kind": "internal" },
+            { "name": "collectPointSnaps", "source": "this", "kind": "internal" },
+            { "name": "isSelectionCorner", "source": null, "kind": "internal" },
+            { "name": "Vec", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": [
+            "Box",
+            "Vec",
+            "SelectionCorner",
+            "SelectionEdge",
+            "SnapData",
+            "NearestPointsSnap",
+            "flipSelectionHandleX",
+            "flipSelectionHandleY",
+            "getResizeSnapPointsForHandle",
+            "isSelectionCorner"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Accepts a destructured object with initialSelectionPageBounds, dragDelta, handle, isAspectRatioLocked, and isResizingFromCenter; returns SnapData containing a resize nudge.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Computes snapping adjustments for a selection resize, accounting for the resize handle, aspect-ratio locking, and center-based resizing. It returns snap data containing the nudge applied to the resize operation.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "45ebc838b6e34ece54c84f70237b7e6d2bff87e0fce0c32b342e4d1c476dcead"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.collectPointSnaps#method:BoundsSnaps.collectPointSnaps",
+        "unitKind": "method",
+        "name": "collectPointSnaps",
+        "qualifiedName": "BoundsSnaps.collectPointSnaps",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+        "startLine": 527,
+        "endLine": 578,
+        "isBehavioral": true,
+        "source": "\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\tnudge.y = nudge.x / ratio\n\t\t\t\tif (handle === 'bottom_left' || handle === 'top_right') {\n\t\t\t\t\tnudge.y = -nudge.y\n\t\t\t\t}\n\t\t\t} else {\n\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\tnudge.x = nudge.y * ratio\n\t\t\t\tif (handle === 'bottom_left' || handle === 'top_right') {\n\t\t\t\t\tnudge.x = -nudge.x\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t// now resize the box after nudging, calculate the snaps again, and return the snap lines to match\n\t\t// the fully resized box\n\t\tconst snappedDelta = Vec.Add(dragDelta, nudge)\n\n\t\t// first figure out the new bounds of the selection\n\t\tconst { box: snappedResizedPageBounds } = Box.Resize(\n\t\t\tinitialSelectionPageBounds,\n\t\t\toriginalHandle,\n\t\t\tisResizingFromCenter ? snappedDelta.x * 2 : snappedDelta.x,\n\t\t\tisResizingFromCenter ? snappedDelta.y * 2 : snappedDelta.y,\n\t\t\tisAspectRatioLocked\n\t\t)\n\n\t\tif (isResizingFromCenter) {\n\t\t\t// reposition if resizing from center\n\t\t\tsnappedResizedPageBounds.center = initialSelectionPageBounds.center\n\t\t}\n\n\t\tconst snappedSelectionPoints = getResizeSnapPointsForHandle('any', snappedResizedPageBounds)\n\t\t// calculate snaps again using all points\n\t\tnearestSnapsX.length = 0\n\t\tnearestSnapsY.length = 0\n\t\tminOffset.x = 0\n\t\tminOffset.y = 0\n\n\t\tthis.collectPointSnaps({\n\t\t\tminOffset,\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t\totherNodeSnapPoints,\n\t\t\tselectionSnapPoints: snappedSelectionPoints,\n\t\t})\n\t\tconst pointSnaps = this.getPointSnapLines({\n\t\t\tnearestSnapsX,\n\t\t\tnearestSnapsY,\n\t\t})\n\n\t\tthis.manager.setIndicators([...pointSnaps])",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.collectPointSnaps#method:BoundsSnaps.collectPointSnaps",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.collectPointSnaps",
+          "unitKind": "method",
+          "name": "collectPointSnaps",
+          "qualifiedName": "BoundsSnaps.collectPointSnaps",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+          "startLine": 527,
+          "endLine": 578,
+          "signature": null,
+          "parameters": [
+            { "name": "minOffset", "type": null, "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "nearestSnapsX",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "nearestSnapsY",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "otherNodeSnapPoints",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            },
+            {
+              "name": "selectionSnapPoints",
+              "type": null,
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 4
+            }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "minOffset, nearestSnapsX, nearestSnapsY, otherNodeSnapPoints, and selectionSnapPoints are provided in the shapes expected by the snapping subsystem.",
+            "The supplied snap-point collections contain comparable geometric point data."
+          ],
+          "postconditions": [
+            "The supplied nearest snap collections and minimum-offset state reflect the closest point alignments found between the selection and other node snap points.",
+            "No value is returned as the result of the collection operation."
+          ],
+          "invariants": [
+            "Horizontal and vertical snap candidates are accumulated independently.",
+            "Only candidates at the nearest currently applicable offset are retained in the corresponding accumulation state."
+          ],
+          "edgeCases": [
+            "Empty snap-point collections produce no point snap candidates and leave the accumulation state without a newly applicable alignment.",
+            "Multiple candidates at the same nearest offset may be retained so callers can generate all corresponding snap lines.",
+            "Candidates farther than an already collected nearest offset do not replace the nearer accumulated candidates."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates the supplied minOffset accumulation object.",
+            "Mutates the supplied nearestSnapsX collection.",
+            "Mutates the supplied nearestSnapsY collection."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Collects point-based snap candidates between the selection and other nodes, retaining the nearest applicable horizontal and vertical alignments and updating the supplied accumulation state.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "0ae527280663bd56ec19a5b012df26c5e5a5238a0c79deeb9cf0d14acc33d4e6"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.collectGapSnaps#method:BoundsSnaps.collectGapSnaps",
+        "unitKind": "method",
+        "name": "collectGapSnaps",
+        "qualifiedName": "BoundsSnaps.collectGapSnaps",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+        "startLine": 580,
+        "endLine": 790,
+        "isBehavioral": true,
+        "source": "\t\treturn { nudge }\n\t}\n\n\tprivate collectPointSnaps({\n\t\tselectionSnapPoints,\n\t\totherNodeSnapPoints,\n\t\tminOffset,\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tselectionSnapPoints: BoundsSnapPoint[]\n\t\totherNodeSnapPoints: BoundsSnapPoint[]\n\t\tminOffset: Vec\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}) {\n\t\t// for each snap point on the bounding box of the selection, find the set of points\n\t\t// which are closest to it in each axis\n\t\tfor (const thisSnapPoint of selectionSnapPoints) {\n\t\t\tfor (const otherSnapPoint of otherNodeSnapPoints) {\n\t\t\t\tconst offset = Vec.Sub(thisSnapPoint, otherSnapPoint)\n\t\t\t\tconst offsetX = Math.abs(offset.x)\n\t\t\t\tconst offsetY = Math.abs(offset.y)\n\n\t\t\t\tif (round(offsetX) <= round(minOffset.x)) {\n\t\t\t\t\tif (round(offsetX) < round(minOffset.x)) {\n\t\t\t\t\t\t// we found a point that is significantly closer than all previous points\n\t\t\t\t\t\t// so wipe the slate clean and start over\n\t\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t\t}\n\n\t\t\t\t\tnearestSnapsX.push({\n\t\t\t\t\t\ttype: 'points',\n\t\t\t\t\t\tpoints: { thisPoint: thisSnapPoint, otherPoint: otherSnapPoint },\n\t\t\t\t\t\tnudge: otherSnapPoint.x - thisSnapPoint.x,\n\t\t\t\t\t})\n\t\t\t\t\tminOffset.x = offsetX\n\t\t\t\t}\n\n\t\t\t\tif (round(offsetY) <= round(minOffset.y)) {\n\t\t\t\t\tif (round(offsetY) < round(minOffset.y)) {\n\t\t\t\t\t\t// we found a point that is significantly closer than all previous points\n\t\t\t\t\t\t// so wipe the slate clean and start over\n\t\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t\t}\n\t\t\t\t\tnearestSnapsY.push({\n\t\t\t\t\t\ttype: 'points',\n\t\t\t\t\t\tpoints: { thisPoint: thisSnapPoint, otherPoint: otherSnapPoint },\n\t\t\t\t\t\tnudge: otherSnapPoint.y - thisSnapPoint.y,\n\t\t\t\t\t})\n\t\t\t\t\tminOffset.y = offsetY\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate collectGapSnaps({\n\t\tselectionPageBounds,\n\t\tminOffset,\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tselectionPageBounds: Box\n\t\tminOffset: Vec\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}) {\n\t\tconst { horizontal, vertical } = this.getVisibleGaps()\n\n\t\tfor (const gap of horizontal) {\n\t\t\t// ignore this gap if the selection doesn't overlap with it in the y axis\n\t\t\tif (\n\t\t\t\t!rangesOverlap(\n\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\tgap.breadthIntersection[1],\n\t\t\t\t\tselectionPageBounds.minY,\n\t\t\t\t\tselectionPageBounds.maxY\n\t\t\t\t)\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// check for center match\n\t\t\tconst gapMidX = gap.startEdge[0].x + gap.length / 2\n\t\t\tconst centerNudge = gapMidX - selectionPageBounds.center.x\n\t\t\tconst gapIsLargerThanSelection = gap.length > selectionPageBounds.width\n\n\t\t\tif (gapIsLargerThanSelection && round(Math.abs(centerNudge)) <= round(minOffset.x)) {\n\t\t\t\tif (round(Math.abs(centerNudge)) < round(minOffset.x)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.x = Math.abs(centerNudge)\n\n\t\t\t\tconst snap: NearestSnap = {\n\t\t\t\t\ttype: 'gap_center',\n\t\t\t\t\tgap,\n\t\t\t\t\tnudge: centerNudge,\n\t\t\t\t}\n\n\t\t\t\t// we need to avoid creating visual noise with too many center snaps in situations\n\t\t\t\t// where there are lots of adjacent items with even spacing\n\t\t\t\t// so let's only show other center snaps where the gap's breadth does not overlap with this one\n\t\t\t\t// i.e.\n\t\t\t\t//                ┌───────────────┐\n\t\t\t\t//                │               │\n\t\t\t\t//                └──────┬────┬───┘\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                 ┌─────┴┐   │\n\t\t\t\t//                 │      │   ┼\n\t\t\t\t//                 └─────┬┘   │\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                   ┌───┴────┴───────┐\n\t\t\t\t//                   │                │  ◄────  i'm dragging this one\n\t\t\t\t//                   └───┬────┬───────┘\n\t\t\t\t//            ─────►     ┼    │\n\t\t\t\t//                 ┌─────┴┐   │                don't show these\n\t\t\t\t// show these      │      │   ┼                larger gaps since\n\t\t\t\t// smaller         └─────┬┘   │ ◄───────────── the smaller ones\n\t\t\t\t// gaps                  ┼    │                cover the same\n\t\t\t\t//              ─────►  ┌┴────┴─────┐          information\n\t\t\t\t//                      │           │\n\t\t\t\t//                      └───────────┘\n\t\t\t\t//\n\t\t\t\t// but we want to show all of these ones since the gap breadths don't overlap\n\t\t\t\t//            ┌─────────────┐\n\t\t\t\t//            │             │\n\t\t\t\t// ┌────┐     └───┬─────────┘\n\t\t\t\t// │    │         │\n\t\t\t\t// └──┬─┘         ┼\n\t\t\t\t//    ┼           │\n\t\t\t\t// ┌──┴───────────┴─┐\n\t\t\t\t// │                │ ◄───── i'm dragging this one\n\t\t\t\t// └──┬───────────┬─┘\n\t\t\t\t//    ┼           │\n\t\t\t\t// ┌──┴────┐      ┼\n\t\t\t\t// │       │      │\n\t\t\t\t// └───────┘    ┌─┴───────┐\n\t\t\t\t//              │         │\n\t\t\t\t//              └─────────┘\n\n\t\t\t\tconst otherCenterSnap = nearestSnapsX.find(({ type }) => type === 'gap_center') as\n\t\t\t\t\t| Extract<NearestSnap, { type: 'gap_center' }>\n\t\t\t\t\t| undefined\n\n\t\t\t\tconst gapBreadthsOverlap =\n\t\t\t\t\totherCenterSnap &&\n\t\t\t\t\trangeIntersection(\n\t\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\t\tgap.breadthIntersection[1],\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[0],\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[1]\n\t\t\t\t\t)\n\n\t\t\t\t// if there is another center snap and it's bigger than this one, and it overlaps with this one, replace it\n\t\t\t\tif (otherCenterSnap && otherCenterSnap.gap.length > gap.length && gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsX[nearestSnapsX.indexOf(otherCenterSnap)] = snap\n\t\t\t\t} else if (!otherCenterSnap || !gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsX.push(snap)\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// check for duplication left match\n\t\t\tconst duplicationLeftX = gap.startNode.pageBounds.minX - gap.length\n\t\t\tconst selectionRightX = selectionPageBounds.maxX\n\n\t\t\tconst duplicationLeftNudge = duplicationLeftX - selectionRightX\n\t\t\tif (round(Math.abs(duplicationLeftNudge)) <= round(minOffset.x)) {\n\t\t\t\tif (round(Math.abs(duplicationLeftNudge)) < round(minOffset.x)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.x = Math.abs(duplicationLeftNudge)\n\n\t\t\t\tnearestSnapsX.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'left',\n\t\t\t\t\tnudge: duplicationLeftNudge,\n\t\t\t\t})\n\t\t\t}\n\n\t\t\t// check for duplication right match\n\t\t\tconst duplicationRightX = gap.endNode.pageBounds.maxX + gap.length\n\t\t\tconst selectionLeftX = selectionPageBounds.minX\n\n\t\t\tconst duplicationRightNudge = duplicationRightX - selectionLeftX\n\t\t\tif (round(Math.abs(duplicationRightNudge)) <= round(minOffset.x)) {\n\t\t\t\tif (round(Math.abs(duplicationRightNudge)) < round(minOffset.x)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsX.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.x = Math.abs(duplicationRightNudge)\n\n\t\t\t\tnearestSnapsX.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'right',\n\t\t\t\t\tnudge: duplicationRightNudge,\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\n\t\tfor (const gap of vertical) {\n\t\t\t// ignore this gap if the selection doesn't overlap with it in the y axis\n\t\t\tif (\n\t\t\t\t!rangesOverlap(\n\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\tgap.breadthIntersection[1],\n\t\t\t\t\tselectionPageBounds.minX,\n\t\t\t\t\tselectionPageBounds.maxX",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.collectGapSnaps#method:BoundsSnaps.collectGapSnaps",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.collectGapSnaps",
+          "unitKind": "method",
+          "name": "collectGapSnaps",
+          "qualifiedName": "BoundsSnaps.collectGapSnaps",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+          "startLine": 580,
+          "endLine": 790,
+          "signature": "private collectGapSnaps({ selectionPageBounds, minOffset, nearestSnapsX, nearestSnapsY, }: { selectionPageBounds: Box; minOffset: Vec; nearestSnapsX: NearestSnap[]; nearestSnapsY: NearestSnap[]; })",
+          "parameters": [
+            {
+              "name": "selectionPageBounds",
+              "type": "Box",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "minOffset", "type": "Vec", "default": null, "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "nearestSnapsX",
+              "type": "NearestSnap[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            },
+            {
+              "name": "nearestSnapsY",
+              "type": "NearestSnap[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 3
+            }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "selectionPageBounds contains finite page-coordinate bounds with min/max and center values.",
+            "minOffset contains the current minimum allowable snap distances for the x and y axes.",
+            "nearestSnapsX and nearestSnapsY are mutable candidate arrays."
+          ],
+          "postconditions": [
+            "Visible horizontal and vertical gaps that overlap the selection on their perpendicular axis are evaluated.",
+            "nearestSnapsX and nearestSnapsY contain only candidates at the closest rounded offset encountered for their respective axes, subject to the gap-center deduplication rules.",
+            "minOffset.x and minOffset.y are updated to the closest absolute offsets encountered for their respective axes.",
+            "Center matches are emitted only when the gap is larger than the selection along the matching axis.",
+            "Duplication matches record whether the candidate protrudes to the left, right, top, or bottom as applicable."
+          ],
+          "invariants": [
+            "A gap is ignored when its breadth intersection does not overlap the selection on the perpendicular axis.",
+            "A strictly closer rounded offset clears previously collected candidates for that axis.",
+            "Candidates whose rounded offset ties the current minimum are retained.",
+            "Gap-center candidates with overlapping breadths suppress the larger overlapping gap in favor of the smaller one."
+          ],
+          "edgeCases": [
+            "A gap with no perpendicular-axis overlap produces no snap candidate.",
+            "A gap whose length is not greater than the selection dimension produces no center-match candidate, but its duplication matches are still evaluated.",
+            "Equal rounded offsets retain multiple candidates rather than selecting only one.",
+            "When a closer candidate is found after prior candidates, the corresponding nearest-snap array is cleared before the closer candidate is retained.",
+            "Overlapping gap-center candidates retain the smaller gap when the competing center candidate is larger."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Mutates minOffset.x and minOffset.y.",
+            "Clears and appends to nearestSnapsX and nearestSnapsY."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getVisibleGaps", "source": "BoundsSnaps", "kind": "internal" },
+            { "name": "rangesOverlap", "source": null, "kind": "internal" },
+            { "name": "rangeIntersection", "source": null, "kind": "internal" },
+            { "name": "round", "source": null, "kind": "internal" }
+          ],
+          "symbolReferences": ["Box", "Vec", "NearestSnap", "gap_center", "gap_duplicate"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Collects nearest horizontal and vertical gap-based snap candidates for the selected page bounds. It updates the supplied minimum offsets and candidate arrays in place, including center-alignment and duplicated-spacing snaps.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "gap_center",
+              "role": "Identifies a snap that aligns the selection center with the center of a larger visible gap."
+            },
+            {
+              "kind": "enum-value",
+              "value": "gap_duplicate",
+              "role": "Identifies a snap that duplicates a visible gap spacing."
+            },
+            {
+              "kind": "enum-value",
+              "value": "left",
+              "role": "Identifies the left-side duplication protrusion direction."
+            },
+            {
+              "kind": "enum-value",
+              "value": "right",
+              "role": "Identifies the right-side duplication protrusion direction."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "collectGapSnaps is invoked.",
+              "then": "nearestSnapsX contains a gap_center candidate whose nudge moves the selection center to the gap center, and minOffset.x equals the absolute center nudge.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "collectGapSnaps evaluates that gap.",
+              "then": "The existing candidates for that axis are cleared, the closer gap candidate is retained, and the corresponding minOffset axis is reduced.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "collectGapSnaps evaluates that gap.",
+              "then": "The gap contributes no snap candidates.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f30c255e9549c3ceb7015f19f3363111b3ca54835a7523479c23aacb6d3c4943"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.getPointSnapLines#method:BoundsSnaps.getPointSnapLines",
+        "unitKind": "method",
+        "name": "getPointSnapLines",
+        "qualifiedName": "BoundsSnaps.getPointSnapLines",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+        "startLine": 792,
+        "endLine": 844,
+        "isBehavioral": true,
+        "source": "\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// check for center match\n\t\t\tconst gapMidY = gap.startEdge[0].y + gap.length / 2\n\t\t\tconst centerNudge = gapMidY - selectionPageBounds.center.y\n\n\t\t\tconst gapIsLargerThanSelection = gap.length > selectionPageBounds.height\n\n\t\t\tif (gapIsLargerThanSelection && round(Math.abs(centerNudge)) <= round(minOffset.y)) {\n\t\t\t\tif (round(Math.abs(centerNudge)) < round(minOffset.y)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.y = Math.abs(centerNudge)\n\n\t\t\t\tconst snap: NearestSnap = {\n\t\t\t\t\ttype: 'gap_center',\n\t\t\t\t\tgap,\n\t\t\t\t\tnudge: centerNudge,\n\t\t\t\t}\n\n\t\t\t\t// we need to avoid creating visual noise with too many center snaps in situations\n\t\t\t\t// where there are lots of adjacent items with even spacing\n\t\t\t\t// so let's only show other center snaps where the gap's breadth does not overlap with this one\n\t\t\t\t// i.e.\n\t\t\t\t//                ┌───────────────┐\n\t\t\t\t//                │               │\n\t\t\t\t//                └──────┬────┬───┘\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                 ┌─────┴┐   │\n\t\t\t\t//                 │      │   ┼\n\t\t\t\t//                 └─────┬┘   │\n\t\t\t\t//                       ┼    │\n\t\t\t\t//                   ┌───┴────┴───────┐\n\t\t\t\t//                   │                │  ◄────  i'm dragging this one\n\t\t\t\t//                   └───┬────┬───────┘\n\t\t\t\t//            ─────►     ┼    │\n\t\t\t\t//                 ┌─────┴┐   │                don't show these\n\t\t\t\t// show these      │      │   ┼                larger gaps since\n\t\t\t\t// smaller         └─────┬┘   │ ◄───────────── the smaller ones\n\t\t\t\t// gaps                  ┼    │                cover the same\n\t\t\t\t//              ─────►  ┌┴────┴─────┐          information\n\t\t\t\t//                      │           │\n\t\t\t\t//                      └───────────┘\n\t\t\t\t//\n\t\t\t\t// but we want to show all of these ones since the gap breadths don't overlap\n\t\t\t\t//            ┌─────────────┐\n\t\t\t\t//            │             │\n\t\t\t\t// ┌────┐     └───┬─────────┘\n\t\t\t\t// │    │         │\n\t\t\t\t// └──┬─┘         ┼",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.getPointSnapLines#method:BoundsSnaps.getPointSnapLines",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.getPointSnapLines",
+          "unitKind": "method",
+          "name": "getPointSnapLines",
+          "qualifiedName": "BoundsSnaps.getPointSnapLines",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+          "startLine": 792,
+          "endLine": 844,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the point-based snap guide lines associated with the bounds snapping manager. The method exposes point-alignment information for use by the editor's snapping UI or translation logic.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "7c1d052b19538d461885b0b829fcb0df3fe782073a3076412ba1d88c6fedfd40"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.getGapSnapLines#method:BoundsSnaps.getGapSnapLines",
+        "unitKind": "method",
+        "name": "getGapSnapLines",
+        "qualifiedName": "BoundsSnaps.getGapSnapLines",
+        "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+        "startLine": 846,
+        "endLine": 1017,
+        "isBehavioral": true,
+        "source": "\t\t\t\t// ┌──┴───────────┴─┐\n\t\t\t\t// │                │ ◄───── i'm dragging this one\n\t\t\t\t// └──┬───────────┬─┘\n\t\t\t\t//    ┼           │\n\t\t\t\t// ┌──┴────┐      ┼\n\t\t\t\t// │       │      │\n\t\t\t\t// └───────┘    ┌─┴───────┐\n\t\t\t\t//              │         │\n\t\t\t\t//              └─────────┘\n\n\t\t\t\tconst otherCenterSnap = nearestSnapsY.find(({ type }) => type === 'gap_center') as\n\t\t\t\t\t| Extract<NearestSnap, { type: 'gap_center' }>\n\t\t\t\t\t| undefined\n\n\t\t\t\tconst gapBreadthsOverlap =\n\t\t\t\t\totherCenterSnap &&\n\t\t\t\t\trangesOverlap(\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[0],\n\t\t\t\t\t\totherCenterSnap.gap.breadthIntersection[1],\n\t\t\t\t\t\tgap.breadthIntersection[0],\n\t\t\t\t\t\tgap.breadthIntersection[1]\n\t\t\t\t\t)\n\n\t\t\t\t// if there is another center snap and it's bigger than this one, and it overlaps with this one, replace it\n\t\t\t\tif (otherCenterSnap && otherCenterSnap.gap.length > gap.length && gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsY[nearestSnapsY.indexOf(otherCenterSnap)] = snap\n\t\t\t\t} else if (!otherCenterSnap || !gapBreadthsOverlap) {\n\t\t\t\t\tnearestSnapsY.push(snap)\n\t\t\t\t}\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// check for duplication top match\n\t\t\tconst duplicationTopY = gap.startNode.pageBounds.minY - gap.length\n\t\t\tconst selectionBottomY = selectionPageBounds.maxY\n\n\t\t\tconst duplicationTopNudge = duplicationTopY - selectionBottomY\n\t\t\tif (round(Math.abs(duplicationTopNudge)) <= round(minOffset.y)) {\n\t\t\t\tif (round(Math.abs(duplicationTopNudge)) < round(minOffset.y)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.y = Math.abs(duplicationTopNudge)\n\n\t\t\t\tnearestSnapsY.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'top',\n\t\t\t\t\tnudge: duplicationTopNudge,\n\t\t\t\t})\n\t\t\t}\n\n\t\t\t// check for duplication bottom match\n\t\t\tconst duplicationBottomY = gap.endNode.pageBounds.maxY + gap.length\n\t\t\tconst selectionTopY = selectionPageBounds.minY\n\n\t\t\tconst duplicationBottomNudge = duplicationBottomY - selectionTopY\n\t\t\tif (round(Math.abs(duplicationBottomNudge)) <= round(minOffset.y)) {\n\t\t\t\tif (round(Math.abs(duplicationBottomNudge)) < round(minOffset.y)) {\n\t\t\t\t\t// reset if we found a closer snap\n\t\t\t\t\tnearestSnapsY.length = 0\n\t\t\t\t}\n\t\t\t\tminOffset.y = Math.abs(duplicationBottomNudge)\n\n\t\t\t\tnearestSnapsY.push({\n\t\t\t\t\ttype: 'gap_duplicate',\n\t\t\t\t\tgap,\n\t\t\t\t\tprotrusionDirection: 'bottom',\n\t\t\t\t\tnudge: duplicationBottomNudge,\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\t}\n\n\tprivate getPointSnapLines({\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}): PointsSnapIndicator[] {\n\t\t// point snaps may align on multiple parallel lines so we need to split the pairs\n\t\t// into groups based on where they are in their their snap axes\n\t\tconst snapGroupsX = {} as { [key: string]: SnapPair[] }\n\t\tconst snapGroupsY = {} as { [key: string]: SnapPair[] }\n\n\t\tif (nearestSnapsX.length > 0) {\n\t\t\tfor (const snap of nearestSnapsX) {\n\t\t\t\tif (snap.type === 'points') {\n\t\t\t\t\tconst key = round(snap.points.otherPoint.x)\n\t\t\t\t\tif (!snapGroupsX[key]) {\n\t\t\t\t\t\tsnapGroupsX[key] = []\n\t\t\t\t\t}\n\t\t\t\t\tsnapGroupsX[key].push(snap.points)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\tif (nearestSnapsY.length > 0) {\n\t\t\tfor (const snap of nearestSnapsY) {\n\t\t\t\tif (snap.type === 'points') {\n\t\t\t\t\tconst key = round(snap.points.otherPoint.y)\n\t\t\t\t\tif (!snapGroupsY[key]) {\n\t\t\t\t\t\tsnapGroupsY[key] = []\n\t\t\t\t\t}\n\t\t\t\t\tsnapGroupsY[key].push(snap.points)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t// and finally create all the snap lines for the UI to render\n\t\treturn Object.values(snapGroupsX)\n\t\t\t.concat(Object.values(snapGroupsY))\n\t\t\t.map((snapGroup) => ({\n\t\t\t\tid: uniqueId(),\n\t\t\t\ttype: 'points',\n\t\t\t\tpoints: dedupe(\n\t\t\t\t\tsnapGroup\n\t\t\t\t\t\t.map((snap) => Vec.From(snap.otherPoint))\n\t\t\t\t\t\t// be sure to nudge over the selection snap points\n\t\t\t\t\t\t.concat(snapGroup.map((snap) => Vec.From(snap.thisPoint))),\n\t\t\t\t\t(a: Vec, b: Vec) => a.equals(b)\n\t\t\t\t),\n\t\t\t}))\n\t}\n\n\tprivate getGapSnapLines({\n\t\tselectionPageBounds,\n\t\tnearestSnapsX,\n\t\tnearestSnapsY,\n\t}: {\n\t\tselectionPageBounds: Box\n\t\tnearestSnapsX: NearestSnap[]\n\t\tnearestSnapsY: NearestSnap[]\n\t}): GapsSnapIndicator[] {\n\t\tconst { vertical, horizontal } = this.getVisibleGaps()\n\n\t\tconst selectionSides: Record<SelectionEdge, [Vec, Vec]> = {\n\t\t\ttop: selectionPageBounds.sides[0],\n\t\t\tright: selectionPageBounds.sides[1],\n\t\t\t// need bottom and left to be sorted asc, which .sides is not.\n\t\t\tbottom: [selectionPageBounds.corners[3], selectionPageBounds.corners[2]],\n\t\t\tleft: [selectionPageBounds.corners[0], selectionPageBounds.corners[3]],\n\t\t}\n\n\t\tconst result: GapsSnapIndicator[] = []\n\n\t\tif (nearestSnapsX.length > 0) {\n\t\t\tfor (const snap of nearestSnapsX) {\n\t\t\t\tif (snap.type === 'points') continue\n\n\t\t\t\tconst {\n\t\t\t\t\tgap: { breadthIntersection, startEdge, startNode, endNode, length, endEdge },\n\t\t\t\t} = snap\n\n\t\t\t\tswitch (snap.type) {\n\t\t\t\t\tcase 'gap_center': {\n\t\t\t\t\t\t// create\n\t\t\t\t\t\tconst newGapsLength = (length - selectionPageBounds.width) / 2\n\t\t\t\t\t\tconst gapBreadthIntersection = rangeIntersection(\n\t\t\t\t\t\t\tbreadthIntersection[0],\n\t\t\t\t\t\t\tbreadthIntersection[1],\n\t\t\t\t\t\t\tselectionPageBounds.minY,\n\t\t\t\t\t\t\tselectionPageBounds.maxY\n\t\t\t\t\t\t)!\n\t\t\t\t\t\tresult.push({\n\t\t\t\t\t\t\ttype: 'gaps',\n\t\t\t\t\t\t\tdirection: 'horizontal',\n\t\t\t\t\t\t\tid: uniqueId(),\n\t\t\t\t\t\t\tgaps: [\n\t\t\t\t\t\t\t\t...findAdjacentGaps(\n\t\t\t\t\t\t\t\t\thorizontal,",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.getGapSnapLines#method:BoundsSnaps.getGapSnapLines",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps.getGapSnapLines",
+          "unitKind": "method",
+          "name": "getGapSnapLines",
+          "qualifiedName": "BoundsSnaps.getGapSnapLines",
+          "parentUnitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__BoundsSnaps#class:BoundsSnaps",
+          "startLine": 846,
+          "endLine": 1017,
+          "signature": "private getGapSnapLines({ selectionPageBounds, nearestSnapsX, nearestSnapsY, }: { selectionPageBounds: Box; nearestSnapsX: NearestSnap[]; nearestSnapsY: NearestSnap[]; }): GapsSnapIndicator[]",
+          "parameters": [
+            {
+              "name": "selectionPageBounds",
+              "type": "Box",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            {
+              "name": "nearestSnapsX",
+              "type": "NearestSnap[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 1
+            },
+            {
+              "name": "nearestSnapsY",
+              "type": "NearestSnap[]",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "GapsSnapIndicator[]",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "selectionPageBounds provides valid bounds, corners, sides, width, minY, and maxY values.",
+            "nearestSnapsX and nearestSnapsY contain valid NearestSnap values."
+          ],
+          "postconditions": [
+            "Returns an array of GapsSnapIndicator objects representing applicable gap snap candidates.",
+            "Each generated indicator has type 'gaps', a direction, a unique id, and gap visualization data.",
+            "Nearest snaps with type 'points' do not produce gap indicators."
+          ],
+          "invariants": [
+            "The input nearest snap arrays are not mutated.",
+            "Selection edge geometry is derived from selectionPageBounds, with bottom and left edges ordered ascending as required by gap calculations.",
+            "Generated indicator identifiers are obtained from uniqueId()."
+          ],
+          "edgeCases": [
+            "When both nearest snap arrays are empty, no snap candidates are processed and the result contains no indicators.",
+            "When a nearest snap has type 'points', it is skipped rather than converted into a gap indicator.",
+            "Gap breadth intersections are constrained to the corresponding selection extent before constructing the indicator."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getVisibleGaps", "source": "BoundsSnaps", "kind": "internal" },
+            { "name": "findAdjacentGaps", "source": "BoundsSnaps.ts", "kind": "internal" },
+            { "name": "rangeIntersection", "source": null, "kind": "external" },
+            { "name": "uniqueId", "source": null, "kind": "external" }
+          ],
+          "symbolReferences": ["Box", "NearestSnap", "GapsSnapIndicator", "SelectionEdge", "Vec"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Returns GapsSnapIndicator[]; each emitted indicator uses type 'gaps', direction 'horizontal' or 'vertical', a generated id, and a gaps collection derived from the matched snap and visible gaps.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Builds gap snap indicators for the UI from the current selection bounds and nearest horizontal and vertical snap candidates. Point snaps are excluded, while supported gap snaps are converted into directional gap visualizations using the currently visible gaps.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "points",
+              "role": "Nearest snaps with this type are excluded from gap indicator generation."
+            },
+            { "kind": "enum-value", "value": "gaps", "role": "Type assigned to every generated gap snap indicator." },
+            {
+              "kind": "enum-value",
+              "value": "horizontal",
+              "role": "Direction assigned to indicators created from horizontal-axis snap candidates."
+            },
+            {
+              "kind": "enum-value",
+              "value": "vertical",
+              "role": "Direction assigned to indicators created from vertical-axis snap candidates."
+            },
+            {
+              "kind": "enum-value",
+              "value": "gap_center",
+              "role": "Nearest snap type handled as a centered-gap candidate."
+            },
+            {
+              "kind": "enum-value",
+              "value": "gap_duplicate",
+              "role": "Nearest snap type handled as a duplicated-gap candidate."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getGapSnapLines is called",
+              "then": "It returns an empty GapsSnapIndicator array.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "getGapSnapLines is called",
+              "then": "It returns no gap indicators for those snaps.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "a61200524efb3e0b3a8ccf2c316a80c00121348e0fbf3cbee8fddaecb5381ce1"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__getResizeSnapPointsForHandle#function:getResizeSnapPointsForHandle",
+        "unitKind": "function",
+        "name": "getResizeSnapPointsForHandle",
+        "qualifiedName": "getResizeSnapPointsForHandle",
+        "parentUnitId": null,
+        "startLine": 1019,
+        "endLine": 1071,
+        "isBehavioral": true,
+        "source": "\t\t\t\t\t\t\t\t\tnewGapsLength,\n\t\t\t\t\t\t\t\t\t'backward',\n\t\t\t\t\t\t\t\t\tgapBreadthIntersection\n\t\t\t\t\t\t\t\t),\n\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\tstartEdge,\n\t\t\t\t\t\t\t\t\tendEdge: selectionSides.left,\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\tstartEdge: selectionSides.right,\n\t\t\t\t\t\t\t\t\tendEdge,\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t...findAdjacentGaps(\n\t\t\t\t\t\t\t\t\thorizontal,\n\t\t\t\t\t\t\t\t\tendNode.id,\n\t\t\t\t\t\t\t\t\tnewGapsLength,\n\t\t\t\t\t\t\t\t\t'forward',\n\t\t\t\t\t\t\t\t\tgapBreadthIntersection\n\t\t\t\t\t\t\t\t),\n\t\t\t\t\t\t\t],\n\t\t\t\t\t\t})\n\t\t\t\t\t\tbreak\n\t\t\t\t\t}\n\t\t\t\t\tcase 'gap_duplicate': {\n\t\t\t\t\t\t// create\n\t\t\t\t\t\tconst gapBreadthIntersection = rangeIntersection(\n\t\t\t\t\t\t\tbreadthIntersection[0],\n\t\t\t\t\t\t\tbreadthIntersection[1],\n\t\t\t\t\t\t\tselectionPageBounds.minY,\n\t\t\t\t\t\t\tselectionPageBounds.maxY\n\t\t\t\t\t\t)!\n\t\t\t\t\t\tresult.push({\n\t\t\t\t\t\t\ttype: 'gaps',\n\t\t\t\t\t\t\tdirection: 'horizontal',\n\t\t\t\t\t\t\tid: uniqueId(),\n\t\t\t\t\t\t\tgaps:\n\t\t\t\t\t\t\t\tsnap.protrusionDirection === 'left'\n\t\t\t\t\t\t\t\t\t? [\n\t\t\t\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\t\t\t\tstartEdge: selectionSides.right,\n\t\t\t\t\t\t\t\t\t\t\t\tendEdge: startEdge.map((v) =>\n\t\t\t\t\t\t\t\t\t\t\t\t\tv.clone().addXY(-startNode.pageBounds.width, 0)\n\t\t\t\t\t\t\t\t\t\t\t\t) as [Vec, Vec],\n\t\t\t\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\t\t\t{ startEdge, endEdge },\n\t\t\t\t\t\t\t\t\t\t\t...findAdjacentGaps(\n\t\t\t\t\t\t\t\t\t\t\t\thorizontal,\n\t\t\t\t\t\t\t\t\t\t\t\tendNode.id,\n\t\t\t\t\t\t\t\t\t\t\t\tlength,\n\t\t\t\t\t\t\t\t\t\t\t\t'forward',\n\t\t\t\t\t\t\t\t\t\t\t\tgapBreadthIntersection\n\t\t\t\t\t\t\t\t\t\t\t),\n\t\t\t\t\t\t\t\t\t\t]",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__getResizeSnapPointsForHandle#function:getResizeSnapPointsForHandle",
+          "fileId": "packages/editor/src/lib/editor/managers/SnapManager/BoundsSnaps.ts__getResizeSnapPointsForHandle",
+          "unitKind": "function",
+          "name": "getResizeSnapPointsForHandle",
+          "qualifiedName": "getResizeSnapPointsForHandle",
+          "parentUnitId": null,
+          "startLine": 1019,
+          "endLine": 1071,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides the snap points used when resizing through a specified handle.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "d1e70a02d3a3fe4fd56bcbfd8c5457601fe8864cf6568ab30f9de0fb3c3e024f"
+        }
+      }
+    ]
+  },
+  "out": [
+    "packages/editor/src/lib/primitives/Vec.ts",
+    "packages/editor/src/lib/primitives/Mat.ts",
+    "packages/editor/src/lib/primitives/Box.ts",
+    "packages/editor/src/lib/primitives/utils.ts",
+    "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts"
+  ],
+  "in": [
+    "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.test.ts",
+    "packages/editor/src/lib/editor/managers/SnapManager/SnapManager.ts",
+    "packages/editor/src/lib/editor/shapes/ShapeUtil.ts"
+  ],
+  "externals": ["@tldraw/state", "@tldraw/tlschema", "@tldraw/utils"],
+  "impact": { "seeds": 11, "callers": 5, "impactedFiles": [] }
+}

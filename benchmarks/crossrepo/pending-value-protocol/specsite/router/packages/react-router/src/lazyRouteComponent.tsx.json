@@ -1,0 +1,946 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "router",
+  "file": {
+    "relativePath": "packages/react-router/src/lazyRouteComponent.tsx",
+    "language": "typescript",
+    "sizeBytes": 2822,
+    "tokenCount": 706,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-25T11:16:20.010Z",
+    "module": {
+      "purpose": "Provides a React-compatible lazy route component wrapper around dynamic imports, including preload support and recovery behavior for missing modules after deployments.",
+      "summary": "This module adapts a dynamic module importer into a route component with an attached preload operation. It caches the import promise, records loading failures for the render path, clears client-side preload state after successful loading, and reuses the promise during server rendering. Missing-module errors trigger a guarded browser reload using session storage, while unresolved loading integrates with React suspense through reactUse or a thrown promise.",
+      "businessContext": "Supports code-split route delivery in React applications. Failures can prevent navigation or leave users on stale deployments, so controlled reload behavior preserves route availability.",
+      "classes": [],
+      "functions": [
+        "lazyRouteComponent (~L15-85): Creates a preloadable lazy React route component from a dynamic importer",
+        "load (~L28-49): Starts, caches, and resolves the dynamically imported route module",
+        "Lazy (~L50-80): Resolves loading state, reloads stale deployments, and renders the route component"
+      ],
+      "keywords": [
+        "dynamic import",
+        "lazy route component",
+        "React suspense",
+        "preload",
+        "SSR",
+        "module not found",
+        "sessionStorage",
+        "deployment reload",
+        "code splitting"
+      ],
+      "ontologyConcepts": [
+        "lazy loading",
+        "resource caching",
+        "server-side rendering",
+        "error recovery",
+        "stale deployment detection",
+        "suspense integration"
+      ],
+      "businessEntities": ["route component", "dynamic module", "deployment", "browser session"],
+      "systemCapabilities": [
+        "Create lazy route components",
+        "Preload code-split modules",
+        "Reuse imports during server rendering",
+        "Detect missing deployed modules",
+        "Reload browsers after stale deployments",
+        "Suspend rendering during asynchronous loading"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./utils",
+          "symbols": ["reactUse"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/react-router/src/utils.ts",
+          "resolvedFileId": "packages/react-router/src/utils.ts",
+          "resolvedHint": "packages/react-router/src/utils.ts"
+        },
+        {
+          "spec": "./route",
+          "symbols": ["AsyncRouteComponent"],
+          "anchor": { "startLine": 5, "endLine": 5 },
+          "resolvedRelativePath": "packages/react-router/src/route.tsx",
+          "resolvedFileId": "packages/react-router/src/route.tsx",
+          "resolvedHint": "packages/react-router/src/route.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "react",
+          "symbols": ["React"],
+          "package": "react",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tanstack/router-core",
+          "symbols": ["isModuleNotFoundError"],
+          "package": "@tanstack/router-core",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        },
+        {
+          "spec": "@tanstack/router-core/isServer",
+          "symbols": ["isServer"],
+          "package": "@tanstack/router-core",
+          "subpath": "isServer",
+          "isBuiltin": false,
+          "anchor": { "startLine": 3, "endLine": 3 }
+        }
+      ],
+      "sideEffects": {
+        "io": ["Creates React elements for the resolved route component."],
+        "network": ["Invokes the supplied importer, which may fetch a dynamically split module."],
+        "env": ["Reads browser globals including window, sessionStorage, and the server-detection value."],
+        "fs": [],
+        "process": ["Reloads the browser window after an unrecorded missing-module error."],
+        "mutationOfArg": ["Mutates the returned lazy component by assigning and later clearing its preload property."]
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "lazyRouteComponent",
+          "shape": "export function lazyRouteComponent<\n  T extends Record<string, any>,\n  TKey extends keyof T = 'default',\n>(\n  importer: () => Promise<T>,\n  exportName?: TKey,\n): T[TKey] extends (props: infer TProps) => any\n  ? AsyncRouteComponent<TProps>\n  : never",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "lazyRouteComponent.preload",
+          "shape": "preload: () => Promise<any>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "isModuleNotFoundError",
+          "shape": "isModuleNotFoundError(error)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "isServer",
+          "shape": "isServer ?? typeof window === 'undefined'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "reactUse",
+          "shape": "reactUse(load())",
+          "resolvedRelativePath": "packages/react-router/src/utils.ts",
+          "resolvedFileId": "packages/react-router/src/utils.ts"
+        },
+        {
+          "name": "AsyncRouteComponent",
+          "shape": "AsyncRouteComponent<TProps>",
+          "resolvedRelativePath": "packages/react-router/src/route.tsx",
+          "resolvedFileId": "packages/react-router/src/route.tsx"
+        },
+        {
+          "name": "React.createElement",
+          "shape": "React.createElement(comp, props)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "load-cache",
+          "intent": "Cache one importer promise and reset client preload state after success.",
+          "structureKind": "branch",
+          "predicate": "!loadPromise",
+          "branchOutcomes": ["start import", "reuse cached promise"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 28, "endLine": 48 }
+        },
+        {
+          "name": "dynamic-import-resolution",
+          "intent": "Resolve the selected module export and retain it as the component.",
+          "structureKind": "async",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 31, "endLine": 39 }
+        },
+        {
+          "name": "render-error-recovery",
+          "intent": "Reload the browser once when the current error indicates a missing module.",
+          "structureKind": "branch",
+          "predicate": "isModuleNotFoundError(error) &&\n        !(isServer ?? typeof window === 'undefined') &&\n        typeof sessionStorage !== 'undefined'",
+          "branchOutcomes": ["attempt guarded reload", "throw current error"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 51, "endLine": 68 }
+        },
+        {
+          "name": "reload-deduplication",
+          "intent": "Use session storage to prevent repeated reloads for the same module error.",
+          "structureKind": "branch",
+          "predicate": "!sessionStorage.getItem(storageKey)",
+          "branchOutcomes": ["store marker and reload", "skip reload"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 60, "endLine": 66 }
+        },
+        {
+          "name": "component-loading",
+          "intent": "Suspend through React or throw the loading promise until import completion.",
+          "structureKind": "branch",
+          "predicate": "!comp",
+          "branchOutcomes": ["use React resource integration", "throw loading promise"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 71, "endLine": 76 }
+        },
+        {
+          "name": "component-render",
+          "intent": "Create the React element using the resolved component and supplied props.",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 79, "endLine": 79 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "function",
+          "name": "lazyRouteComponent",
+          "signature": "export function lazyRouteComponent<\n  T extends Record<string, any>,\n  TKey extends keyof T = 'default',\n>(\n  importer: () => Promise<T>,\n  exportName?: TKey,\n): T[TKey] extends (props: infer TProps) => any\n  ? AsyncRouteComponent<TProps>\n  : never {",
+          "generics": "<\n  T extends Record<string, any>,\n  TKey extends keyof T = 'default',\n>",
+          "decorators": [],
+          "returnType": "T[TKey] extends (props: infer TProps) => any\n  ? AsyncRouteComponent<TProps>\n  : never",
+          "exported": true,
+          "anchor": { "startLine": 15, "endLine": 23 }
+        },
+        {
+          "kind": "function",
+          "name": "load",
+          "signature": "  const load = () => {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 28, "endLine": 28 }
+        },
+        {
+          "kind": "function",
+          "name": "Lazy",
+          "signature": "  const lazyComp = function Lazy(props: any) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 50, "endLine": 50 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Importer is already loading",
+          "handled": true,
+          "behavior": "Returns the existing promise instead of invoking importer again.",
+          "anchor": { "startLine": 29, "endLine": 48 }
+        },
+        {
+          "inputShape": "Importer rejects with any error",
+          "handled": true,
+          "behavior": "Clears the cached promise, records the error, and defers throwing until render.",
+          "anchor": { "startLine": 40, "endLine": 46 }
+        },
+        {
+          "inputShape": "Missing module error in a browser",
+          "handled": true,
+          "behavior": "Reloads once per error message and suspends forever while reload proceeds.",
+          "anchor": { "startLine": 55, "endLine": 66 }
+        },
+        {
+          "inputShape": "Missing module error on server or without sessionStorage",
+          "handled": true,
+          "behavior": "Skips reload behavior and throws the recorded error.",
+          "anchor": { "startLine": 55, "endLine": 68 }
+        },
+        {
+          "inputShape": "Component not yet resolved",
+          "handled": true,
+          "behavior": "Uses reactUse when available; otherwise throws the loading promise.",
+          "anchor": { "startLine": 71, "endLine": 76 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "err",
+          "action": "Clears the cached loading promise and records the rejection for render-time handling.",
+          "fallback": null,
+          "anchor": { "startLine": 40, "endLine": 46 }
+        },
+        {
+          "thrown": "new Promise(() => {})",
+          "caught": null,
+          "action": "Suspends indefinitely after initiating a browser reload.",
+          "fallback": null,
+          "anchor": { "startLine": 62, "endLine": 65 }
+        },
+        {
+          "thrown": "error",
+          "caught": null,
+          "action": "Propagates the recorded importer error during rendering when reload recovery does not apply.",
+          "fallback": null,
+          "anchor": { "startLine": 67, "endLine": 68 }
+        },
+        {
+          "thrown": "load()",
+          "caught": null,
+          "action": "Suspends rendering when React's resource integration is unavailable.",
+          "fallback": null,
+          "anchor": { "startLine": 72, "endLine": 75 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Only one importer promise is created while loadPromise remains defined.",
+          "anchor": { "startLine": 29, "endLine": 31 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "A successful import assigns the selected export to comp before rendering.",
+          "anchor": { "startLine": 38, "endLine": 38 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Client preload state is cleared only after the module import resolves.",
+          "anchor": { "startLine": 34, "endLine": 37 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A missing-module reload is attempted at most once per error message in a session.",
+          "anchor": { "startLine": 60, "endLine": 63 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The importer returns a promise resolving to an object containing the requested component export.",
+          "anchor": { "startLine": 19, "endLine": 20 }
+        },
+        {
+          "kind": "schema",
+          "description": "The selected export is callable with props compatible with AsyncRouteComponent.",
+          "anchor": { "startLine": 21, "endLine": 23 }
+        },
+        {
+          "kind": "platform",
+          "description": "Browser reload recovery relies on window and sessionStorage being available outside server rendering.",
+          "anchor": { "startLine": 55, "endLine": 64 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What exact runtime value does isServer provide, and under which environments is it nullish?",
+          "affects": "SSR detection and preload-promise lifetime",
+          "anchor": { "startLine": 34, "endLine": 34 },
+          "resolution": null
+        },
+        {
+          "question": "What guarantees does reactUse provide when called with the importer promise?",
+          "affects": "Suspense integration and loading behavior",
+          "anchor": { "startLine": 72, "endLine": 73 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Concurrent callers share the cached importer promise; client success clears the promise after resolution, while server rendering retains it."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "loads-default-export",
+          "scenario": "The importer resolves a module containing the default route component.",
+          "given": [
+            "const importer = () => Promise.resolve({ default: Component })",
+            "const Lazy = lazyRouteComponent(importer)"
+          ],
+          "when": "await Lazy.preload()",
+          "then": "Lazy renders Component with the supplied props",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Verifies default export selection and component rendering."
+        },
+        {
+          "testId": "loads-named-export",
+          "scenario": "The importer resolves a module containing the explicitly selected named route component.",
+          "given": [
+            "const importer = () => Promise.resolve({ route: Component })",
+            "const Lazy = lazyRouteComponent(importer, 'route')"
+          ],
+          "when": "await Lazy.preload()",
+          "then": "Lazy renders Component with the supplied props",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins support for selecting a non-default module export."
+        },
+        {
+          "testId": "deduplicates-concurrent-loads",
+          "scenario": "Multiple preload calls occur before the importer resolves.",
+          "given": ["const importer = jest.fn(() => deferred.promise)", "const Lazy = lazyRouteComponent(importer)"],
+          "when": "Promise.all([Lazy.preload(), Lazy.preload()])",
+          "then": "importer is called once",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the shared load promise contract."
+        },
+        {
+          "testId": "clears-client-preload-after-resolution",
+          "scenario": "A module resolves in a client environment.",
+          "given": [
+            "isServer = false",
+            "const Lazy = lazyRouteComponent(() => Promise.resolve({ default: Component }))"
+          ],
+          "when": "await Lazy.preload()",
+          "then": "Lazy.preload is undefined",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures resolved client imports do not retain preload work."
+        },
+        {
+          "testId": "retains-server-preload-after-resolution",
+          "scenario": "A module resolves during server rendering.",
+          "given": [
+            "isServer = true",
+            "const Lazy = lazyRouteComponent(() => Promise.resolve({ default: Component }))"
+          ],
+          "when": "await Lazy.preload()",
+          "then": "Lazy.preload remains callable",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins SSR import reuse behavior."
+        },
+        {
+          "testId": "propagates-nonmissing-import-error",
+          "scenario": "The importer rejects with an error that is not a module-not-found error.",
+          "given": [
+            "const error = new Error('load failed')",
+            "const Lazy = lazyRouteComponent(() => Promise.reject(error))"
+          ],
+          "when": "Lazy({})",
+          "then": "the same error is thrown",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures ordinary import failures remain observable to the render path."
+        },
+        {
+          "testId": "reloads-on-current-missing-module",
+          "scenario": "A client render encounters a current module-not-found error without a reload marker.",
+          "given": [
+            "isServer = false",
+            "sessionStorage.getItem(`tanstack_router_reload:${error.message}`) returns null",
+            "isModuleNotFoundError(error) returns true"
+          ],
+          "when": "Lazy({})",
+          "then": "sessionStorage.setItem(`tanstack_router_reload:${error.message}`, '1') is called and window.location.reload() is called",
+          "targets": [],
+          "oracleKind": "integration-trace",
+          "rationale": "Verifies friendly recovery for deployments that invalidate dynamic import URLs."
+        },
+        {
+          "testId": "does-not-reload-marked-missing-module",
+          "scenario": "A client render encounters a module-not-found error whose reload marker already exists.",
+          "given": [
+            "isServer = false",
+            "sessionStorage.getItem(`tanstack_router_reload:${error.message}`) returns '1'",
+            "isModuleNotFoundError(error) returns true"
+          ],
+          "when": "Lazy({})",
+          "then": "window.location.reload() is not called and the error is thrown",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents repeated reload loops."
+        },
+        {
+          "testId": "suspends-during-reload",
+          "scenario": "A missing module triggers the first client reload attempt.",
+          "given": [
+            "isServer = false",
+            "sessionStorage.getItem(`tanstack_router_reload:${error.message}`) returns null",
+            "isModuleNotFoundError(error) returns true"
+          ],
+          "when": "Lazy({})",
+          "then": "a never-resolving Promise is thrown after window.location.reload()",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Prevents rendering stale content while the document reloads."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "React namespace import",
+        "module-not-found predicate import",
+        "server-environment import",
+        "React utility import",
+        "AsyncRouteComponent type import",
+        "exported lazy route component factory"
+      ],
+      "moduleLevelCode": "import * as React from 'react'\nimport { isModuleNotFoundError } from '@tanstack/router-core'\nimport { isServer } from '@tanstack/router-core/isServer'\nimport { reactUse } from './utils'\nimport type { AsyncRouteComponent } from './route'",
+      "exports": [{ "name": "lazyRouteComponent", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "React", "module": "react", "alias": null, "kind": "external" },
+        { "symbol": "isModuleNotFoundError", "module": "@tanstack/router-core", "alias": null, "kind": "external" },
+        { "symbol": "isServer", "module": "@tanstack/router-core/isServer", "alias": null, "kind": "external" },
+        { "symbol": "reactUse", "module": "./utils", "alias": null, "kind": "internal" },
+        { "symbol": "AsyncRouteComponent", "module": "./route", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent#function:lazyRouteComponent",
+        "unitKind": "function",
+        "name": "lazyRouteComponent",
+        "qualifiedName": "lazyRouteComponent",
+        "parentUnitId": null,
+        "startLine": 15,
+        "endLine": 85,
+        "isBehavioral": true,
+        "source": " */\nexport function lazyRouteComponent<\n  T extends Record<string, any>,\n  TKey extends keyof T = 'default',\n>(\n  importer: () => Promise<T>,\n  exportName?: TKey,\n): T[TKey] extends (props: infer TProps) => any\n  ? AsyncRouteComponent<TProps>\n  : never {\n  let loadPromise: Promise<any> | undefined\n  let comp: T[TKey] | T['default']\n  let error: any\n\n  const load = () => {\n    if (!loadPromise) {\n      error = undefined\n      loadPromise = importer()\n        .then((res) => {\n          // Resolved clients have no preload work; SSR can reuse the import.\n          if (!(isServer ?? typeof window === 'undefined')) {\n            loadPromise = undefined\n            ;(lazyComp as any).preload = undefined\n          }\n          comp = res[exportName ?? 'default']\n        })\n        .catch((err) => {\n          loadPromise = undefined\n          // We don't want an error thrown from preload in this case, because\n          // there's nothing we want to do about module not found during preload.\n          // Record the error, the rest is handled during the render path.\n          error = err\n        })\n    }\n\n    return loadPromise\n  }\n  const lazyComp = function Lazy(props: any) {\n    if (error) {\n      // A missing module can mean that a newer deployment replaced the URL.\n      // Reload only for the error that is still current at render time, so a\n      // successful retry cannot leave a stale reload request armed.\n      if (\n        isModuleNotFoundError(error) &&\n        !(isServer ?? typeof window === 'undefined') &&\n        typeof sessionStorage !== 'undefined'\n      ) {\n        const storageKey = `tanstack_router_reload:${error.message}`\n        if (!sessionStorage.getItem(storageKey)) {\n          sessionStorage.setItem(storageKey, '1')\n          window.location.reload()\n          // Suspend forever while the document reloads.\n          throw new Promise(() => {})\n        }\n      }\n      throw error\n    }\n\n    if (!comp) {\n      if (reactUse) {\n        reactUse(load())\n      } else {\n        throw load()\n      }\n    }\n\n    return React.createElement(comp, props)\n  }\n\n  ;(lazyComp as any).preload = load\n",
+        "detail": {
+          "unitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent#function:lazyRouteComponent",
+          "fileId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent",
+          "unitKind": "function",
+          "name": "lazyRouteComponent",
+          "qualifiedName": "lazyRouteComponent",
+          "parentUnitId": null,
+          "startLine": 15,
+          "endLine": 85,
+          "signature": "export function lazyRouteComponent<T extends Record<string, any>, TKey extends keyof T = 'default'>(importer: () => Promise<T>, exportName?: TKey): T[TKey] extends (props: infer TProps) => any ? AsyncRouteComponent<TProps> : never",
+          "parameters": [
+            {
+              "name": "importer",
+              "type": "() => Promise<T>",
+              "default": null,
+              "optional": false,
+              "variadic": false,
+              "order": 0
+            },
+            { "name": "exportName", "type": "TKey", "default": null, "optional": true, "variadic": false, "order": 1 }
+          ],
+          "returnType": "T[TKey] extends (props: infer TProps) => any ? AsyncRouteComponent<TProps> : never",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends Record<string, any>", "TKey extends keyof T = 'default'"],
+          "logicOutline": [],
+          "preconditions": [
+            "importer must be a callable function returning a Promise resolving to the module object.",
+            "When exportName is supplied, the resolved module must expose the corresponding export as a renderable component."
+          ],
+          "postconditions": [
+            "Returns a callable component whose rendering uses the selected imported export.",
+            "The importer is invoked at most once for each active load promise.",
+            "On successful client-side loading, the cached load promise and preload reference are cleared so later loads may re-import the module.",
+            "On importer rejection, the rejection is recorded for the next render and the active load promise is cleared."
+          ],
+          "invariants": [
+            "The selected export is exportName when provided, otherwise the module's default export.",
+            "An active load promise is shared by concurrent preload or render-triggered loads.",
+            "A recorded error is thrown from rendering until a subsequent load replaces it.",
+            "On the server, a successfully resolved load promise remains cached for reuse."
+          ],
+          "edgeCases": [
+            "If no exportName is supplied, the module's 'default' export is selected.",
+            "If rendering occurs before loading completes and reactUse is available, the load promise is passed to reactUse; otherwise the load promise is thrown.",
+            "If the importer rejects, preload resolves after recording the error rather than propagating the rejection directly, while a later render throws the recorded error.",
+            "If the recorded error is a module-not-found error in a browser with sessionStorage and no matching reload marker, the marker is stored, the page is reloaded, and rendering throws a never-resolving Promise.",
+            "If the module-not-found reload marker already exists, or the code is running server-side, the recorded error is thrown without reloading.",
+            "If the selected component is falsy after loading, rendering attempts another load rather than creating an element."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "The recorded importer error during rendering",
+              "The active load Promise when rendering without reactUse before resolution",
+              "A never-resolving Promise after initiating a qualifying module-not-found browser reload"
+            ],
+            "reverts": [],
+            "onInvalidInput": "No explicit argument validation is performed; invalid importer results or missing selected exports fail through the loading/rendering path.",
+            "returnsOnError": "The internal preload/load Promise resolves after importer rejection while storing the error; the render function subsequently throws that stored error."
+          },
+          "stateMutations": [
+            "Mutates the internal loadPromise cache.",
+            "Mutates the internal selected component reference comp.",
+            "Mutates the internal error reference.",
+            "On successful client-side resolution, clears lazyComp.preload.",
+            "On qualifying module-not-found errors, writes a reload marker to sessionStorage and invokes window.location.reload()."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "importer", "source": "caller-supplied callback", "kind": "external" },
+            { "name": "reactUse", "source": "module dependency", "kind": "external" },
+            { "name": "isModuleNotFoundError", "source": "module dependency", "kind": "external" },
+            { "name": "React.createElement", "source": "React", "kind": "external" },
+            { "name": "sessionStorage.getItem", "source": "browser global", "kind": "external" },
+            { "name": "sessionStorage.setItem", "source": "browser global", "kind": "external" },
+            { "name": "window.location.reload", "source": "browser global", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "Record",
+            "Promise",
+            "AsyncRouteComponent",
+            "React",
+            "isServer",
+            "reactUse",
+            "isModuleNotFoundError",
+            "sessionStorage",
+            "window"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Creates a lazily loaded route component backed by an importer promise. It loads the selected module export on demand, suspends or throws while loading, and preserves load errors for the render path.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "default", "role": "Fallback export name when exportName is omitted." },
+            {
+              "kind": "format-string",
+              "value": "tanstack_router_reload:${error.message}",
+              "role": "Session-storage key format used to prevent repeated reloads for the same module-not-found error."
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "Marker value stored in sessionStorage after a reload has been armed."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned component is rendered after loading has resolved.",
+              "then": "It creates a React element using Component and the supplied props.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The component is rendered before the importer settles, then rendered again after rejection.",
+              "then": "The first render throws the load Promise, and the later render throws the original importer error.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The returned component is rendered after that error has been recorded.",
+              "then": "It stores the marker value '1', calls window.location.reload(), and throws a never-resolving Promise.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "c54c6893ab89aaa9c317d29c84e1c39bb92af03cb10b4dc32ff0fe6bd5328e62"
+        }
+      },
+      {
+        "unitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent.load#function:lazyRouteComponent.load",
+        "unitKind": "function",
+        "name": "load",
+        "qualifiedName": "lazyRouteComponent.load",
+        "parentUnitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent#function:lazyRouteComponent",
+        "startLine": 28,
+        "endLine": 49,
+        "isBehavioral": true,
+        "source": "\n  const load = () => {\n    if (!loadPromise) {\n      error = undefined\n      loadPromise = importer()\n        .then((res) => {\n          // Resolved clients have no preload work; SSR can reuse the import.\n          if (!(isServer ?? typeof window === 'undefined')) {\n            loadPromise = undefined\n            ;(lazyComp as any).preload = undefined\n          }\n          comp = res[exportName ?? 'default']\n        })\n        .catch((err) => {\n          loadPromise = undefined\n          // We don't want an error thrown from preload in this case, because\n          // there's nothing we want to do about module not found during preload.\n          // Record the error, the rest is handled during the render path.\n          error = err\n        })\n    }\n",
+        "detail": {
+          "unitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent.load#function:lazyRouteComponent.load",
+          "fileId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent.load",
+          "unitKind": "function",
+          "name": "load",
+          "qualifiedName": "lazyRouteComponent.load",
+          "parentUnitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent#function:lazyRouteComponent",
+          "startLine": 28,
+          "endLine": 49,
+          "signature": "() => void",
+          "parameters": [],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The enclosing lazy route component has been configured with an importer callable.",
+            "The enclosing component state variables loadPromise, error, comp, lazyComp, importer, and exportName are available."
+          ],
+          "postconditions": [
+            "If no load was already in progress, importer() has been invoked and a load promise has been stored.",
+            "On successful import, comp is assigned the export named by exportName or the module's default export.",
+            "On importer rejection, loadPromise is cleared and the rejection value is recorded in error without being thrown from load.",
+            "On client-side successful resolution, loadPromise and lazyComp.preload are cleared."
+          ],
+          "invariants": [
+            "Calling load while loadPromise is truthy does not invoke importer again.",
+            "A new load attempt clears the previously recorded error before invoking importer.",
+            "Importer rejection is handled internally rather than escaping synchronously or as an unhandled rejection from this load path."
+          ],
+          "edgeCases": [
+            "Repeated calls while a load is pending reuse the existing load attempt and do not invoke importer more than once.",
+            "A rejected importer clears the pending promise, records the rejection, and allows a later call to start a new attempt.",
+            "When exportName is absent, the module's default export is selected.",
+            "After a successful resolution in a server environment, the pending promise is retained and lazyComp.preload is not cleared.",
+            "After a successful resolution in a non-server environment, the pending promise and lazyComp.preload are cleared."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "Returns undefined; importer rejection is stored in error for handling during rendering."
+          },
+          "stateMutations": [
+            "Sets error to undefined at the start of a new load attempt.",
+            "Sets loadPromise to the importer promise when starting a load.",
+            "Sets comp to the selected module export on successful resolution.",
+            "Sets loadPromise to undefined after successful client-side resolution.",
+            "Sets lazyComp.preload to undefined after successful client-side resolution.",
+            "Sets loadPromise to undefined and error to the rejection value when importing fails."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "importer", "source": null, "kind": "external" }],
+          "symbolReferences": ["loadPromise", "error", "importer", "exportName", "comp", "lazyComp"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Starts loading the configured route component at most once while a load is in progress. It records the resolved export or loading error for the render path and suppresses importer rejections.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "default",
+              "role": "Fallback module export name when exportName is not provided."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "load() is called and the import resolves in a non-server environment",
+              "then": "importer is invoked once, comp becomes the module's default export, loadPromise becomes undefined, and lazyComp.preload becomes undefined.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "load() is called and the import rejects",
+              "then": "the rejection is not thrown by load; loadPromise becomes undefined and error is set to the rejection value.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "load() is called again before that load settles",
+              "then": "importer is not invoked again and the existing pending load remains in use.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "6f947191fbedd7a583ec9c43c27574286e86e313818d8a88f0d229a3a15b53c8"
+        }
+      },
+      {
+        "unitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent.Lazy#function:lazyRouteComponent.Lazy",
+        "unitKind": "function",
+        "name": "Lazy",
+        "qualifiedName": "lazyRouteComponent.Lazy",
+        "parentUnitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent#function:lazyRouteComponent",
+        "startLine": 50,
+        "endLine": 80,
+        "isBehavioral": true,
+        "source": "    return loadPromise\n  }\n  const lazyComp = function Lazy(props: any) {\n    if (error) {\n      // A missing module can mean that a newer deployment replaced the URL.\n      // Reload only for the error that is still current at render time, so a\n      // successful retry cannot leave a stale reload request armed.\n      if (\n        isModuleNotFoundError(error) &&\n        !(isServer ?? typeof window === 'undefined') &&\n        typeof sessionStorage !== 'undefined'\n      ) {\n        const storageKey = `tanstack_router_reload:${error.message}`\n        if (!sessionStorage.getItem(storageKey)) {\n          sessionStorage.setItem(storageKey, '1')\n          window.location.reload()\n          // Suspend forever while the document reloads.\n          throw new Promise(() => {})\n        }\n      }\n      throw error\n    }\n\n    if (!comp) {\n      if (reactUse) {\n        reactUse(load())\n      } else {\n        throw load()\n      }\n    }\n",
+        "detail": {
+          "unitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent.Lazy#function:lazyRouteComponent.Lazy",
+          "fileId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent.Lazy",
+          "unitKind": "function",
+          "name": "Lazy",
+          "qualifiedName": "lazyRouteComponent.Lazy",
+          "parentUnitId": "packages/react-router/src/lazyRouteComponent.tsx__lazyRouteComponent#function:lazyRouteComponent",
+          "startLine": 50,
+          "endLine": 80,
+          "signature": "function Lazy(props: any)",
+          "parameters": [
+            { "name": "props", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The function is invoked in the lazy component's rendering context.",
+            "The captured lazy-loading state and component reference are available to the closure."
+          ],
+          "postconditions": [
+            "When the component is loaded, the deferred component is rendered with the supplied props.",
+            "When loading is pending and a React promise-consuming hook is available, that hook is invoked with the loading promise.",
+            "When loading is pending and no React promise-consuming hook is available, the loading promise is thrown.",
+            "When an error exists, that error is thrown unless the browser reload branch throws an intentionally pending promise."
+          ],
+          "invariants": [
+            "A module-not-found error triggers at most one reload request per error message and browser session storage key.",
+            "The reload branch is disabled during server rendering.",
+            "The reload branch is disabled when sessionStorage is unavailable.",
+            "Only the currently captured error is considered when deciding whether to reload."
+          ],
+          "edgeCases": [
+            "If an error is present and is not a module-not-found error, the original error is thrown.",
+            "If a module-not-found error occurs during client rendering and no matching session-storage key exists, the key is set to '1', window.location.reload() is called, and a promise that never settles is thrown.",
+            "If a module-not-found error occurs during client rendering but the matching session-storage key already exists, the error is thrown without reloading.",
+            "If rendering is server-side, a module-not-found error is thrown without accessing the reload path.",
+            "If no component is loaded and reactUse is unavailable, load() is invoked and its promise is thrown.",
+            "If no component is loaded and reactUse is available, reactUse is invoked with the promise returned by load()."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [
+              "The captured loading or component error",
+              "A never-settling Promise during a client-side module-not-found reload"
+            ],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Writes sessionStorage[`tanstack_router_reload:${error.message}`] = '1' before requesting a reload."
+          ],
+          "eventsEmitted": ["Browser document reload via window.location.reload()."],
+          "complexity": null,
+          "calls": [
+            { "name": "load", "source": "lazyRouteComponent.load", "kind": "internal" },
+            { "name": "reactUse", "source": null, "kind": "external" },
+            { "name": "isModuleNotFoundError", "source": null, "kind": "external" },
+            { "name": "sessionStorage.getItem", "source": "sessionStorage", "kind": "external" },
+            { "name": "sessionStorage.setItem", "source": "sessionStorage", "kind": "external" },
+            { "name": "window.location.reload", "source": "window", "kind": "external" }
+          ],
+          "symbolReferences": ["isModuleNotFoundError", "isServer", "reactUse", "sessionStorage", "window"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Provides a lazy React component that loads and renders the deferred component. It propagates loading and component errors, and may request a browser reload when a current module-not-found error indicates a stale deployment.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "tanstack_router_reload:${error.message}",
+              "role": "Session-storage key format used to deduplicate browser reloads for a module-not-found error."
+            },
+            {
+              "kind": "magic-number",
+              "value": "1",
+              "role": "Session-storage marker indicating that the reload for the error has already been requested."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The Lazy component is rendered.",
+              "then": "It stores '1' under the error-specific key, calls window.location.reload(), and throws a promise that never settles.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The Lazy component is rendered.",
+              "then": "It does not request a reload and throws the original error.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The Lazy component is rendered.",
+              "then": "It invokes load() and throws the returned loading promise.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "065e0bbcc7163d40796d9fda6b8c7efd85eb423216ed2c2e5bf30695b4432d81"
+        }
+      }
+    ]
+  },
+  "out": ["packages/react-router/src/utils.ts", "packages/react-router/src/route.tsx"],
+  "in": ["packages/react-router/src/index.tsx"],
+  "externals": ["react", "@tanstack/router-core", "@tanstack/router-core/isServer"],
+  "impact": { "seeds": 3, "callers": 0, "impactedFiles": [] }
+}

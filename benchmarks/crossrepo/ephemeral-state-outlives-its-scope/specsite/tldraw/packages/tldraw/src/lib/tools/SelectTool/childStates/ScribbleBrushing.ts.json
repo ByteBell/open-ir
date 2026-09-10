@@ -1,0 +1,1097 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts",
+    "language": "typescript",
+    "sizeBytes": 5669,
+    "tokenCount": 1418,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:11:11.816Z",
+    "module": {
+      "purpose": "Implements the temporary select-tool state that lets users drag a freeform scribble across shapes to select them, while supporting modifier-key selection semantics, visual scribble feedback, completion, and cancellation.",
+      "summary": "This state node manages a freeform brushing interaction within the selection tool. It records the selection present when brushing begins, renders the pointer path as a scribble, incrementally hit-tests candidate shapes against each movement segment, respects groups, locked shapes, frame containment, masks, and modifier keys, then commits or restores selection when the interaction completes or is cancelled.",
+      "businessContext": "Supports freeform shape selection in the drawing editor. If it fails, users cannot reliably select multiple irregularly arranged shapes or restore selection after cancelling a brush gesture.",
+      "classes": ["ScribbleBrushing (~L12-199): Select-tool state for freeform shape brushing and selection updates"],
+      "functions": [
+        "onEnter (~L25-44): Initializes selection snapshots, scribble rendering, and brush state",
+        "onExit (~L46-48): Stops the active visual scribble when leaving the state",
+        "onPointerMove (~L50-52): Updates hit selection while the pointer moves",
+        "onPointerUp (~L54-56): Completes brushing after pointer release",
+        "onKeyDown (~L58-60): Updates brushing without adding a pointer point",
+        "onKeyUp (~L62-68): Switches brushing mode or refreshes selection after key release",
+        "onCancel (~L70-72): Restores the selection captured at brush entry",
+        "onComplete (~L74-76): Completes the current brushing interaction",
+        "pushPointToScribble (~L78-81): Appends the current page point to the active scribble",
+        "updateScribbleSelection (~L83-188): Hit-tests the current segment and synchronizes selected shapes",
+        "complete (~L190-193): Adds the final point and transitions to idle",
+        "cancel (~L195-198): Restores initial selection and transitions to idle"
+      ],
+      "keywords": [
+        "freeform selection",
+        "scribble brushing",
+        "shape hit testing",
+        "selection state",
+        "shape masks",
+        "frame-like shapes",
+        "locked shapes",
+        "tldraw editor"
+      ],
+      "ontologyConcepts": [
+        "interactive selection",
+        "finite state transition",
+        "incremental hit testing",
+        "gesture tracking",
+        "selection reconciliation",
+        "cancellation recovery"
+      ],
+      "businessEntities": ["Shape", "Selection", "Scribble", "ShapeMask", "Editor", "PointerGesture"],
+      "systemCapabilities": [
+        "Select shapes with a freeform brush",
+        "Render and stop selection scribbles",
+        "Respect modifier-key selection behavior",
+        "Filter locked, grouped, and masked shapes",
+        "Restore selection after cancellation"
+      ],
+      "configDependencies": ["selectLockedShapes"],
+      "importsInternal": [],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/editor",
+          "symbols": [
+            "Box",
+            "Geometry2d",
+            "StateNode",
+            "TLShape",
+            "TLShapeId",
+            "Vec",
+            "intersectLineSegmentPolygon",
+            "pointInPolygon"
+          ],
+          "package": "@tldraw/editor",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 10 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "ScribbleBrushing",
+          "shape": "export class ScribbleBrushing extends StateNode",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "scribble_brushing",
+          "shape": "static override id = 'scribble_brushing'",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        { "name": "StateNode", "shape": "StateNode", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "Box", "shape": "Box", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "Geometry2d", "shape": "Geometry2d", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLShape", "shape": "TLShape", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "TLShapeId", "shape": "TLShapeId", "resolvedRelativePath": null, "resolvedFileId": null },
+        { "name": "Vec", "shape": "Vec", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "intersectLineSegmentPolygon",
+          "shape": "intersectLineSegmentPolygon",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "pointInPolygon", "shape": "pointInPolygon", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "entry initialization",
+          "intent": "Capture selection state and create the visible scribble gesture",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 25, "endLine": 44 }
+        },
+        {
+          "name": "modifier transition",
+          "intent": "Return to normal brushing unless Alt remains pressed",
+          "structureKind": "branch",
+          "predicate": "!this.editor.inputs.getAltKey()",
+          "branchOutcomes": ["transition to brushing", "refresh selection"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 62, "endLine": 68 }
+        },
+        {
+          "name": "candidate absence",
+          "intent": "Reconcile selection without expensive rendering-shape lookup",
+          "structureKind": "branch",
+          "predicate": "candidateIds.size === 0",
+          "branchOutcomes": ["reconcile current selection and return", "continue hit testing"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 104, "endLine": 114 }
+        },
+        {
+          "name": "shape iteration",
+          "intent": "Evaluate each candidate shape against the current scribble segment",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "i < n",
+          "terminationCondition": "i < n",
+          "anchor": { "startLine": 122, "endLine": 179 }
+        },
+        {
+          "name": "shape filtering",
+          "intent": "Skip groups, already selected shapes, and disallowed locked shapes",
+          "structureKind": "branch",
+          "predicate": "editor.isShapeOfType(shape, 'group') ||\n\t\t\t\tnewlySelectedShapeIds.has(shape.id) ||\n\t\t\t\t(!editor.options.selectLockedShapes && editor.isShapeOrAncestorLocked(shape))",
+          "branchOutcomes": ["continue to next shape", "continue evaluating shape"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 127, "endLine": 133 }
+        },
+        {
+          "name": "geometry hit testing",
+          "intent": "Reject bounding-box misses and test segment intersection with shape geometry",
+          "structureKind": "branch",
+          "predicate": "bounds.minX - minDist > Math.max(A.x, B.x) ||\n\t\t\t\tbounds.minY - minDist > Math.max(A.y, B.y) ||\n\t\t\t\tbounds.maxX + minDist < Math.min(A.x, B.x) ||\n\t\t\t\tbounds.maxY + minDist < Math.min(A.y, B.y)",
+          "branchOutcomes": ["skip hit test", "perform geometry hit test"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 154, "endLine": 161 }
+        },
+        {
+          "name": "selection synchronization",
+          "intent": "Apply newly detected shapes together with the initial selection when shifted",
+          "structureKind": "sequence",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 181, "endLine": 188 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "class",
+          "name": "ScribbleBrushing",
+          "signature": "export class ScribbleBrushing extends StateNode {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 12, "endLine": 12 }
+        },
+        {
+          "kind": "method",
+          "name": "onEnter",
+          "signature": "\toverride onEnter() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 25, "endLine": 25 }
+        },
+        {
+          "kind": "method",
+          "name": "onExit",
+          "signature": "\toverride onExit() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 46, "endLine": 46 }
+        },
+        {
+          "kind": "method",
+          "name": "onPointerMove",
+          "signature": "\toverride onPointerMove() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 50, "endLine": 50 }
+        },
+        {
+          "kind": "method",
+          "name": "onPointerUp",
+          "signature": "\toverride onPointerUp() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 54, "endLine": 54 }
+        },
+        {
+          "kind": "method",
+          "name": "onKeyDown",
+          "signature": "\toverride onKeyDown() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 58, "endLine": 58 }
+        },
+        {
+          "kind": "method",
+          "name": "onKeyUp",
+          "signature": "\toverride onKeyUp() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 62, "endLine": 62 }
+        },
+        {
+          "kind": "method",
+          "name": "onCancel",
+          "signature": "\toverride onCancel() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 70, "endLine": 70 }
+        },
+        {
+          "kind": "method",
+          "name": "onComplete",
+          "signature": "\toverride onComplete() {",
+          "generics": null,
+          "decorators": ["override"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 74, "endLine": 74 }
+        },
+        {
+          "kind": "method",
+          "name": "pushPointToScribble",
+          "signature": "\tprivate pushPointToScribble() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 78, "endLine": 78 }
+        },
+        {
+          "kind": "method",
+          "name": "updateScribbleSelection",
+          "signature": "\tprivate updateScribbleSelection(addPoint: boolean) {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 83, "endLine": 83 }
+        },
+        {
+          "kind": "method",
+          "name": "complete",
+          "signature": "\tprivate complete() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 190, "endLine": 190 }
+        },
+        {
+          "kind": "method",
+          "name": "cancel",
+          "signature": "\tprivate cancel() {",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 195, "endLine": 195 }
+        }
+      ],
+      "typeShapes": [],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "No shapes intersect the current segment bounds",
+          "handled": true,
+          "behavior": "Reconciles selection from tracked initial and newly selected IDs, then returns without rendering-shape lookup.",
+          "anchor": { "startLine": 102, "endLine": 114 }
+        },
+        {
+          "inputShape": "Shape is a group, already newly selected, or locked when locked selection is disabled",
+          "handled": true,
+          "behavior": "Skips the shape.",
+          "anchor": { "startLine": 125, "endLine": 133 }
+        },
+        {
+          "inputShape": "Scribble begins inside a frame-like shape",
+          "handled": true,
+          "behavior": "Skips selecting that frame-like shape.",
+          "anchor": { "startLine": 137, "endLine": 143 }
+        },
+        {
+          "inputShape": "Shape geometry or page transform is unavailable",
+          "handled": true,
+          "behavior": "Skips the shape before coordinate conversion and hit testing.",
+          "anchor": { "startLine": 145, "endLine": 150 }
+        },
+        {
+          "inputShape": "Segment lies entirely outside the shape bounding box",
+          "handled": true,
+          "behavior": "Skips the expensive geometry hit test.",
+          "anchor": { "startLine": 152, "endLine": 161 }
+        },
+        {
+          "inputShape": "Masked shape intersection ends outside the mask",
+          "handled": true,
+          "behavior": "Rejects the hit; otherwise adds the outermost selectable shape.",
+          "anchor": { "startLine": 163, "endLine": 178 }
+        },
+        {
+          "inputShape": "Brush cancellation",
+          "handled": true,
+          "behavior": "Restores the exact selection captured on entry and transitions to idle.",
+          "anchor": { "startLine": 195, "endLine": 198 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "!=",
+          "left": "current.length",
+          "right": "next.size",
+          "inclusive": false,
+          "intent": "Detects a changed selection size before applying selection state.",
+          "anchor": { "startLine": 110, "endLine": 111 }
+        },
+        {
+          "operator": ">",
+          "left": "bounds.minX - minDist",
+          "right": "Math.max(A.x, B.x)",
+          "inclusive": false,
+          "intent": "Rejects segments entirely left of the shape bounds.",
+          "anchor": { "startLine": 155, "endLine": 155 }
+        },
+        {
+          "operator": ">",
+          "left": "bounds.minY - minDist",
+          "right": "Math.max(A.y, B.y)",
+          "inclusive": false,
+          "intent": "Rejects segments entirely above the shape bounds.",
+          "anchor": { "startLine": 156, "endLine": 156 }
+        },
+        {
+          "operator": "<",
+          "left": "bounds.maxX + minDist",
+          "right": "Math.min(A.x, B.x)",
+          "inclusive": false,
+          "intent": "Rejects segments entirely right of the shape bounds.",
+          "anchor": { "startLine": 157, "endLine": 157 }
+        },
+        {
+          "operator": "<",
+          "left": "bounds.maxY + minDist",
+          "right": "Math.min(A.y, B.y)",
+          "inclusive": false,
+          "intent": "Rejects segments entirely below the shape bounds.",
+          "anchor": { "startLine": 158, "endLine": 158 }
+        },
+        {
+          "operator": "!=",
+          "left": "intersection",
+          "right": "null",
+          "inclusive": false,
+          "intent": "Checks whether the segment intersects the shape mask.",
+          "anchor": { "startLine": 172, "endLine": 175 }
+        },
+        {
+          "operator": "!=",
+          "left": "current.length",
+          "right": "next.size",
+          "inclusive": false,
+          "intent": "Detects a changed final selection before applying it.",
+          "anchor": { "startLine": 185, "endLine": 186 }
+        }
+      ],
+      "errorHandling": [],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "The entry selection snapshot is retained for shift merging and cancellation restoration.",
+          "anchor": { "startLine": 28, "endLine": 31 }
+        },
+        {
+          "kind": "ordering",
+          "description": "The scribble is stopped when this state exits.",
+          "anchor": { "startLine": 46, "endLine": 48 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Groups and shapes already newly selected are never added again.",
+          "anchor": { "startLine": 127, "endLine": 133 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Selection is updated only when its contents differ from the computed next set.",
+          "anchor": { "startLine": 185, "endLine": 187 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Completion transitions the parent state to idle after final selection update.",
+          "anchor": { "startLine": 190, "endLine": 193 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "The parent state provides brushing and idle transitions used by this child state.",
+          "anchor": { "startLine": 64, "endLine": 65 }
+        },
+        {
+          "kind": "schema",
+          "description": "Editor shape, geometry, mask, scribble, and input APIs provide the methods and identifiers consumed here.",
+          "anchor": { "startLine": 28, "endLine": 41 }
+        },
+        {
+          "kind": "config",
+          "description": "The editor options object supplies selectLockedShapes to control locked-shape filtering.",
+          "anchor": { "startLine": 130, "endLine": 131 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What guarantees that the scribble identifier remains valid until onExit stops it?",
+          "affects": "scribble lifecycle and visual feedback",
+          "anchor": { "startLine": 33, "endLine": 47 },
+          "resolution": null
+        },
+        {
+          "question": "How does the parent state interpret the brushing transition after Alt key release?",
+          "affects": "state-machine orchestration",
+          "anchor": { "startLine": 62, "endLine": 68 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "All pointer, keyboard, selection, geometry, and state-transition operations execute synchronously within the editor state machine."
+      },
+      "stateModel": {
+        "states": ["scribble_brushing", "brushing", "idle"],
+        "initialState": "scribble_brushing",
+        "finalStates": ["idle", "brushing"],
+        "transitions": [
+          {
+            "from": "scribble_brushing",
+            "to": "brushing",
+            "trigger": "onKeyUp()",
+            "guard": "!this.editor.inputs.getAltKey()",
+            "effect": "this.parent.transition('brushing')",
+            "anchor": { "startLine": 60, "endLine": 62 }
+          },
+          {
+            "from": "scribble_brushing",
+            "to": "idle",
+            "trigger": "onPointerUp()",
+            "guard": null,
+            "effect": "this.updateScribbleSelection(true); this.parent.transition('idle')",
+            "anchor": { "startLine": 52, "endLine": 53 }
+          },
+          {
+            "from": "scribble_brushing",
+            "to": "idle",
+            "trigger": "onComplete()",
+            "guard": null,
+            "effect": "this.updateScribbleSelection(true); this.parent.transition('idle')",
+            "anchor": { "startLine": 72, "endLine": 73 }
+          },
+          {
+            "from": "scribble_brushing",
+            "to": "idle",
+            "trigger": "onCancel()",
+            "guard": null,
+            "effect": "this.editor.setSelectedShapes([...this.initialSelectedShapeIds]); this.parent.transition('idle')",
+            "anchor": { "startLine": 68, "endLine": 69 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "initializes-scribble-selection",
+          "scenario": "Entering the state captures the current selection, clears transient hits, and starts a selection scribble.",
+          "given": [
+            "this.editor.getSelectedShapeIds()",
+            "this.editor.scribbles.addScribble({ color: 'selection-stroke', opacity: 0.32, size: 12 })"
+          ],
+          "when": "onEnter()",
+          "then": "this.initialSelectedShapeIds contains the prior selection, this.newlySelectedShapeIds is empty, and this.editor.updateInstanceState({ brush: null }) has been called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves the selection baseline required for shift-selection and cancellation."
+        },
+        {
+          "testId": "selects-shapes-crossed-by-scribble",
+          "scenario": "A scribble segment intersects an eligible shape.",
+          "given": [
+            "editor.getShapeIdsInsideBounds(lineBounds) returns the shape id",
+            "geometry.hitTestLineSegment(A, B, minDist) returns true",
+            "editor.isShapeOfType(shape, 'group') returns false",
+            "editor.isShapeOrAncestorLocked(shape) returns false"
+          ],
+          "when": "updateScribbleSelection(true)",
+          "then": "newlySelectedShapeIds contains editor.getOutermostSelectableShape(shape).id and the shape is included in editor.setSelectedShapes(...)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins the core geometric selection behavior while allowing implementation changes."
+        },
+        {
+          "testId": "preserves-initial-selection-with-shift",
+          "scenario": "The user brushes while holding Shift.",
+          "given": [
+            "this.editor.inputs.getShiftKey() returns true",
+            "initialSelectedShapeIds contains 'existing-shape'",
+            "newlySelectedShapeIds contains 'brushed-shape'"
+          ],
+          "when": "updateScribbleSelection(false)",
+          "then": "editor.setSelectedShapes(...) receives both 'existing-shape' and 'brushed-shape'",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards additive selection semantics."
+        },
+        {
+          "testId": "cancels-to-initial-selection",
+          "scenario": "The active scribble is cancelled after selection changes.",
+          "given": [
+            "initialSelectedShapeIds contains the selection captured on entry",
+            "editor.getSelectedShapeIds() differs from initialSelectedShapeIds"
+          ],
+          "when": "onCancel()",
+          "then": "editor.setSelectedShapes([...this.initialSelectedShapeIds]) is called and parent.transition('idle') is called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Pins cancellation as a full restoration of the entry selection."
+        },
+        {
+          "testId": "completes-to-idle",
+          "scenario": "The pointer is released while scribble brushing.",
+          "given": ["this.editor.scribbles.addPoint is available for the final point"],
+          "when": "onPointerUp()",
+          "then": "updateScribbleSelection(true) runs and parent.transition('idle') is called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures the final pointer position is included before completion."
+        },
+        {
+          "testId": "alt-keyup-keeps-scribble-brushing",
+          "scenario": "Alt remains pressed when the key-up handler runs.",
+          "given": ["this.editor.inputs.getAltKey() returns true"],
+          "when": "onKeyUp()",
+          "then": "updateScribbleSelection(false) runs and parent.transition('brushing') is not called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Guards the modifier-dependent transition behavior."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": ["import declaration", "ScribbleBrushing class"],
+      "moduleLevelCode": "import {\n\tBox,\n\tGeometry2d,\n\tStateNode,\n\tTLShape,\n\tTLShapeId,\n\tVec,\n\tintersectLineSegmentPolygon,\n\tpointInPolygon,\n} from '@tldraw/editor'",
+      "exports": [{ "name": "ScribbleBrushing", "kind": "own", "fromSpec": null, "exportedAs": null }],
+      "importSymbolMap": [
+        { "symbol": "Box", "module": "@tldraw/editor", "alias": null, "kind": "external" },
+        { "symbol": "Geometry2d", "module": "@tldraw/editor", "alias": null, "kind": "external" },
+        { "symbol": "StateNode", "module": "@tldraw/editor", "alias": null, "kind": "external" },
+        { "symbol": "TLShape", "module": "@tldraw/editor", "alias": null, "kind": "external" },
+        { "symbol": "TLShapeId", "module": "@tldraw/editor", "alias": null, "kind": "external" },
+        { "symbol": "Vec", "module": "@tldraw/editor", "alias": null, "kind": "external" },
+        { "symbol": "intersectLineSegmentPolygon", "module": "@tldraw/editor", "alias": null, "kind": "external" },
+        { "symbol": "pointInPolygon", "module": "@tldraw/editor", "alias": null, "kind": "external" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+        "unitKind": "class",
+        "name": "ScribbleBrushing",
+        "qualifiedName": "ScribbleBrushing",
+        "parentUnitId": null,
+        "startLine": 12,
+        "endLine": 199,
+        "isBehavioral": true,
+        "source": "export class ScribbleBrushing extends StateNode {\n\tstatic override id = 'scribble_brushing'\n\tstatic override trackPerformance = true\n\n\thits = new Set<TLShapeId>()\n\n\tsize = 0\n\n\tscribbleId = 'id'\n\n\tinitialSelectedShapeIds = new Set<TLShapeId>()\n\tnewlySelectedShapeIds = new Set<TLShapeId>()\n\n\toverride onEnter() {\n\t\t// Captured regardless of shift so cancel() can restore it like the rectangle\n\t\t// brush does (#10429); shift only decides whether it merges into the live selection.\n\t\tthis.initialSelectedShapeIds = new Set<TLShapeId>(this.editor.getSelectedShapeIds())\n\t\tthis.newlySelectedShapeIds = new Set<TLShapeId>()\n\t\tthis.size = 0\n\t\tthis.hits.clear()\n\n\t\tconst scribbleItem = this.editor.scribbles.addScribble({\n\t\t\tcolor: 'selection-stroke',\n\t\t\topacity: 0.32,\n\t\t\tsize: 12,\n\t\t})\n\n\t\tthis.scribbleId = scribbleItem.id\n\n\t\tthis.updateScribbleSelection(true)\n\n\t\tthis.editor.updateInstanceState({ brush: null })\n\t}\n\n\toverride onExit() {\n\t\tthis.editor.scribbles.stop(this.scribbleId)\n\t}\n\n\toverride onPointerMove() {\n\t\tthis.updateScribbleSelection(true)\n\t}\n\n\toverride onPointerUp() {\n\t\tthis.complete()\n\t}\n\n\toverride onKeyDown() {\n\t\tthis.updateScribbleSelection(false)\n\t}\n\n\toverride onKeyUp() {\n\t\tif (!this.editor.inputs.getAltKey()) {\n\t\t\tthis.parent.transition('brushing')\n\t\t} else {\n\t\t\tthis.updateScribbleSelection(false)\n\t\t}\n\t}\n\n\toverride onCancel() {\n\t\tthis.cancel()\n\t}\n\n\toverride onComplete() {\n\t\tthis.complete()\n\t}\n\n\tprivate pushPointToScribble() {\n\t\tconst { x, y } = this.editor.inputs.getCurrentPagePoint()\n\t\tthis.editor.scribbles.addPoint(this.scribbleId, x, y)\n\t}\n\n\tprivate updateScribbleSelection(addPoint: boolean) {\n\t\tconst { editor } = this\n\t\tconst shiftKey = this.editor.inputs.getShiftKey()\n\t\tconst originPagePoint = this.editor.inputs.getOriginPagePoint()\n\t\tconst previousPagePoint = this.editor.inputs.getPreviousPagePoint()\n\t\tconst currentPagePoint = this.editor.inputs.getCurrentPagePoint()\n\n\t\tconst { newlySelectedShapeIds, initialSelectedShapeIds } = this\n\n\t\tif (addPoint) {\n\t\t\tthis.pushPointToScribble()\n\t\t}\n\n\t\tconst minDist = 0 // this.editor.options.hitTestMargin / zoomLevel\n\n\t\t// Create bounds around line segment with margin\n\t\tconst lineBounds = Box.FromPoints([previousPagePoint, currentPagePoint]).expandBy(minDist)\n\t\tconst candidateIds = editor.getShapeIdsInsideBounds(lineBounds)\n\n\t\t// Early return if no candidates - avoid expensive getCurrentPageRenderingShapesSorted()\n\t\t// But still update selection based on current state\n\t\tif (candidateIds.size === 0) {\n\t\t\tconst current = editor.getSelectedShapeIds()\n\t\t\tconst next = new Set<TLShapeId>(\n\t\t\t\tshiftKey\n\t\t\t\t\t? [...newlySelectedShapeIds, ...initialSelectedShapeIds]\n\t\t\t\t\t: [...newlySelectedShapeIds]\n\t\t\t)\n\t\t\tif (current.length !== next.size || current.some((id) => !next.has(id))) {\n\t\t\t\tthis.editor.setSelectedShapes(Array.from(next))\n\t\t\t}\n\t\t\treturn\n\t\t}\n\n\t\tconst allShapes = this.editor.getCurrentPageRenderingShapesSorted()\n\t\tconst currentPageShapes = allShapes.filter((shape) => candidateIds.has(shape.id))\n\n\t\tconst shapes = currentPageShapes\n\t\tlet shape: TLShape, geometry: Geometry2d, A: Vec, B: Vec\n\n\t\tfor (let i = 0, n = shapes.length; i < n; i++) {\n\t\t\tshape = shapes[i]\n\n\t\t\t// If the shape is a group or is already selected, don't select it.\n\t\t\t// Also skip locked shapes unless the selectLockedShapes option is enabled.\n\t\t\tif (\n\t\t\t\teditor.isShapeOfType(shape, 'group') ||\n\t\t\t\tnewlySelectedShapeIds.has(shape.id) ||\n\t\t\t\t(!editor.options.selectLockedShapes && editor.isShapeOrAncestorLocked(shape))\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\tgeometry = editor.getShapeGeometry(shape)\n\n\t\t\t// If the scribble started inside of a frame-like shape, don't select it\n\t\t\tif (\n\t\t\t\teditor.isShapeFrameLike(shape) &&\n\t\t\t\tgeometry.bounds.containsPoint(editor.getPointInShapeSpace(shape, originPagePoint))\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// Hit test the shape using a line segment\n\t\t\tconst pageTransform = editor.getShapePageTransform(shape)\n\t\t\tif (!geometry || !pageTransform) continue\n\t\t\tconst pt = pageTransform.clone().invert()\n\t\t\tA = pt.applyToPoint(previousPagePoint)\n\t\t\tB = pt.applyToPoint(currentPagePoint)\n\n\t\t\t// If the line segment is entirely above / below / left / right of the shape's bounding box, skip the hit test\n\t\t\tconst { bounds } = geometry\n\t\t\tif (\n\t\t\t\tbounds.minX - minDist > Math.max(A.x, B.x) ||\n\t\t\t\tbounds.minY - minDist > Math.max(A.y, B.y) ||\n\t\t\t\tbounds.maxX + minDist < Math.min(A.x, B.x) ||\n\t\t\t\tbounds.maxY + minDist < Math.min(A.y, B.y)\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\tif (geometry.hitTestLineSegment(A, B, minDist)) {\n\t\t\t\tconst outermostShape = this.editor.getOutermostSelectableShape(shape)\n\t\t\t\tconst pageMask = this.editor.getShapeMask(outermostShape.id)\n\t\t\t\tif (pageMask) {\n\t\t\t\t\tconst intersection = intersectLineSegmentPolygon(\n\t\t\t\t\t\tpreviousPagePoint,\n\t\t\t\t\t\tcurrentPagePoint,\n\t\t\t\t\t\tpageMask\n\t\t\t\t\t)\n\t\t\t\t\tif (intersection !== null) {\n\t\t\t\t\t\tconst isInMask = pointInPolygon(currentPagePoint, pageMask)\n\t\t\t\t\t\tif (!isInMask) continue\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tnewlySelectedShapeIds.add(outermostShape.id)\n\t\t\t}\n\t\t}\n\n\t\tconst current = editor.getSelectedShapeIds()\n\t\tconst next = new Set<TLShapeId>(\n\t\t\tshiftKey ? [...newlySelectedShapeIds, ...initialSelectedShapeIds] : [...newlySelectedShapeIds]\n\t\t)\n\t\tif (current.length !== next.size || current.some((id) => !next.has(id))) {\n\t\t\tthis.editor.setSelectedShapes(Array.from(next))\n\t\t}\n\t}\n\n\tprivate complete() {\n\t\tthis.updateScribbleSelection(true)\n\t\tthis.parent.transition('idle')\n\t}\n\n\tprivate cancel() {\n\t\tthis.editor.setSelectedShapes([...this.initialSelectedShapeIds])\n\t\tthis.parent.transition('idle')",
+        "detail": {
+          "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+          "fileId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing",
+          "unitKind": "class",
+          "name": "ScribbleBrushing",
+          "qualifiedName": "ScribbleBrushing",
+          "parentUnitId": null,
+          "startLine": 12,
+          "endLine": 199,
+          "signature": "export class ScribbleBrushing extends StateNode",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": ["StateNode"],
+          "implementsTypes": [],
+          "members": [
+            {
+              "name": "id",
+              "kind": "static property",
+              "type": null,
+              "default": "'scribble_brushing'",
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "trackPerformance",
+              "kind": "static property",
+              "type": null,
+              "default": "true",
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "hits",
+              "kind": "property",
+              "type": "Set<TLShapeId>",
+              "default": "new Set<TLShapeId>()",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "size",
+              "kind": "property",
+              "type": null,
+              "default": "0",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "scribbleId",
+              "kind": "property",
+              "type": null,
+              "default": "'id'",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "initialSelectedShapeIds",
+              "kind": "property",
+              "type": "Set<TLShapeId>",
+              "default": "new Set<TLShapeId>()",
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "newlySelectedShapeIds",
+              "kind": "property",
+              "type": "Set<TLShapeId>",
+              "default": "new Set<TLShapeId>()",
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Represents the selection-tool state used while the user selects shapes by drawing a scribble. It exposes the state metadata and selection-tracking fields required by the state machine.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "scribble_brushing",
+              "role": "Static state-node identifier used to bind this class to the scribble-brushing state."
+            }
+          ],
+          "declaredConstants": [
+            { "name": "id", "value": "'scribble_brushing'", "kind": "string" },
+            { "name": "trackPerformance", "value": "true", "kind": "boolean" }
+          ],
+          "specTests": [],
+          "semanticFingerprint": "e96e3d49116ba0601d06a0a98e8d896a44d5d2e714865de4bfb134e097672f2f"
+        }
+      },
+      {
+        "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.onEnter#method:ScribbleBrushing.onEnter",
+        "unitKind": "method",
+        "name": "onEnter",
+        "qualifiedName": "ScribbleBrushing.onEnter",
+        "parentUnitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+        "startLine": 25,
+        "endLine": 44,
+        "isBehavioral": true,
+        "source": "\toverride onEnter() {\n\t\t// Captured regardless of shift so cancel() can restore it like the rectangle\n\t\t// brush does (#10429); shift only decides whether it merges into the live selection.\n\t\tthis.initialSelectedShapeIds = new Set<TLShapeId>(this.editor.getSelectedShapeIds())\n\t\tthis.newlySelectedShapeIds = new Set<TLShapeId>()\n\t\tthis.size = 0\n\t\tthis.hits.clear()\n\n\t\tconst scribbleItem = this.editor.scribbles.addScribble({\n\t\t\tcolor: 'selection-stroke',\n\t\t\topacity: 0.32,\n\t\t\tsize: 12,\n\t\t})\n\n\t\tthis.scribbleId = scribbleItem.id\n\n\t\tthis.updateScribbleSelection(true)\n\n\t\tthis.editor.updateInstanceState({ brush: null })\n\t}",
+        "detail": {
+          "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.onEnter#method:ScribbleBrushing.onEnter",
+          "fileId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.onEnter",
+          "unitKind": "method",
+          "name": "onEnter",
+          "qualifiedName": "ScribbleBrushing.onEnter",
+          "parentUnitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+          "startLine": 25,
+          "endLine": 44,
+          "signature": "override onEnter()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The editor and its scribbles collection are available.",
+            "The method is entered as part of the ScribbleBrushing state lifecycle."
+          ],
+          "postconditions": [
+            "initialSelectedShapeIds contains the shape IDs selected when entry began.",
+            "newlySelectedShapeIds is an empty set.",
+            "size is reset to 0.",
+            "hits is cleared.",
+            "A scribble with color selection-stroke, opacity 0.32, and size 12 is added.",
+            "scribbleId is set to the newly added scribble's ID.",
+            "updateScribbleSelection(true) has been invoked.",
+            "The editor instance brush state is set to null."
+          ],
+          "invariants": [
+            "The initial selection is captured independently of whether shift is held.",
+            "The captured initial selection is stored as a Set of shape IDs."
+          ],
+          "edgeCases": [
+            "When no shapes are selected, initialSelectedShapeIds is an empty set and entry still creates the scribble and clears the brush state.",
+            "When shapes are already selected, the exact selection at entry is captured before scribble selection is updated.",
+            "Any exception raised by the editor selection query, scribble creation, selection update, or instance-state update is not handled by this method."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "Replaces initialSelectedShapeIds with a new Set containing the editor's selected shape IDs.",
+            "Replaces newlySelectedShapeIds with an empty Set.",
+            "Sets size to 0.",
+            "Clears hits.",
+            "Sets scribbleId to the ID returned by editor.scribbles.addScribble.",
+            "Updates the editor instance state to set brush to null."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "editor.getSelectedShapeIds", "source": "this.editor", "kind": "external" },
+            { "name": "editor.scribbles.addScribble", "source": "this.editor.scribbles", "kind": "external" },
+            { "name": "updateScribbleSelection", "source": "ScribbleBrushing", "kind": "internal" },
+            { "name": "editor.updateInstanceState", "source": "this.editor", "kind": "external" }
+          ],
+          "symbolReferences": ["TLShapeId"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": "Adds a scribble using { color: 'selection-stroke', opacity: 0.32, size: 12 } and updates editor instance state with { brush: null }.",
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes a scribble-brushing interaction from the current selection state and creates the visual scribble indicator. It resets brush-tracking state, updates scribble selection, and clears the instance brush state.",
+          "specLiterals": [
+            {
+              "kind": "enum-value",
+              "value": "selection-stroke",
+              "role": "Color identifier used for the created selection scribble."
+            },
+            { "kind": "magic-number", "value": "0.32", "role": "Opacity of the created selection scribble." },
+            { "kind": "magic-number", "value": "12", "role": "Size of the created selection scribble." },
+            { "kind": "magic-number", "value": "0", "role": "Reset value for the brushing size." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "onEnter() is called.",
+              "then": "The current selection is captured, newlySelectedShapeIds is reset to empty, size is zero, hits is cleared, a scribble is created with color 'selection-stroke', opacity 0.32, and size 12, the returned scribble ID is stored, and the editor brush state becomes null.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "dcef6eae6d83bc542a9f59723596ee33e54b39d5a2a8dedae825dd2dc1c45815"
+        }
+      },
+      {
+        "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.onKeyUp#method:ScribbleBrushing.onKeyUp",
+        "unitKind": "method",
+        "name": "onKeyUp",
+        "qualifiedName": "ScribbleBrushing.onKeyUp",
+        "parentUnitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+        "startLine": 62,
+        "endLine": 68,
+        "isBehavioral": true,
+        "source": "\toverride onKeyUp() {\n\t\tif (!this.editor.inputs.getAltKey()) {\n\t\t\tthis.parent.transition('brushing')\n\t\t} else {\n\t\t\tthis.updateScribbleSelection(false)\n\t\t}\n\t}",
+        "detail": {
+          "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.onKeyUp#method:ScribbleBrushing.onKeyUp",
+          "fileId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.onKeyUp",
+          "unitKind": "method",
+          "name": "onKeyUp",
+          "qualifiedName": "ScribbleBrushing.onKeyUp",
+          "parentUnitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+          "startLine": 62,
+          "endLine": 68,
+          "signature": "override onKeyUp()",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "If Alt is not held, the parent state transitions to \"brushing\".",
+            "If Alt is held, the scribble selection is updated with the non-initial update flag."
+          ],
+          "invariants": ["The active behavior is selected solely from the current Alt-key state at key-up time."],
+          "edgeCases": [
+            "When Alt is not held, no scribble-selection update is performed and the parent transitions to \"brushing\".",
+            "When Alt remains held, no parent transition is performed and the scribble selection is updated with false."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "this.editor.inputs.getAltKey", "source": "this.editor.inputs", "kind": "internal" },
+            { "name": "this.parent.transition", "source": "this.parent", "kind": "internal" },
+            { "name": "this.updateScribbleSelection", "source": "ScribbleBrushing", "kind": "internal" }
+          ],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles key-release input while scribble brushing, returning to ordinary brushing when Alt is no longer held and otherwise refreshing the scribble selection.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "onKeyUp() is invoked.",
+              "then": "The parent transitions to the \"brushing\" state, and the scribble selection is not updated.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "onKeyUp() is invoked.",
+              "then": "updateScribbleSelection(false) is invoked, and the parent does not transition.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "f862b7871a4de97b5607c02c73f4a64bdcf7d635f7fa28c0bd6bcd0c82c84592"
+        }
+      },
+      {
+        "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.updateScribbleSelection#method:ScribbleBrushing.updateScribbleSelection",
+        "unitKind": "method",
+        "name": "updateScribbleSelection",
+        "qualifiedName": "ScribbleBrushing.updateScribbleSelection",
+        "parentUnitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+        "startLine": 83,
+        "endLine": 188,
+        "isBehavioral": true,
+        "source": "\tprivate updateScribbleSelection(addPoint: boolean) {\n\t\tconst { editor } = this\n\t\tconst shiftKey = this.editor.inputs.getShiftKey()\n\t\tconst originPagePoint = this.editor.inputs.getOriginPagePoint()\n\t\tconst previousPagePoint = this.editor.inputs.getPreviousPagePoint()\n\t\tconst currentPagePoint = this.editor.inputs.getCurrentPagePoint()\n\n\t\tconst { newlySelectedShapeIds, initialSelectedShapeIds } = this\n\n\t\tif (addPoint) {\n\t\t\tthis.pushPointToScribble()\n\t\t}\n\n\t\tconst minDist = 0 // this.editor.options.hitTestMargin / zoomLevel\n\n\t\t// Create bounds around line segment with margin\n\t\tconst lineBounds = Box.FromPoints([previousPagePoint, currentPagePoint]).expandBy(minDist)\n\t\tconst candidateIds = editor.getShapeIdsInsideBounds(lineBounds)\n\n\t\t// Early return if no candidates - avoid expensive getCurrentPageRenderingShapesSorted()\n\t\t// But still update selection based on current state\n\t\tif (candidateIds.size === 0) {\n\t\t\tconst current = editor.getSelectedShapeIds()\n\t\t\tconst next = new Set<TLShapeId>(\n\t\t\t\tshiftKey\n\t\t\t\t\t? [...newlySelectedShapeIds, ...initialSelectedShapeIds]\n\t\t\t\t\t: [...newlySelectedShapeIds]\n\t\t\t)\n\t\t\tif (current.length !== next.size || current.some((id) => !next.has(id))) {\n\t\t\t\tthis.editor.setSelectedShapes(Array.from(next))\n\t\t\t}\n\t\t\treturn\n\t\t}\n\n\t\tconst allShapes = this.editor.getCurrentPageRenderingShapesSorted()\n\t\tconst currentPageShapes = allShapes.filter((shape) => candidateIds.has(shape.id))\n\n\t\tconst shapes = currentPageShapes\n\t\tlet shape: TLShape, geometry: Geometry2d, A: Vec, B: Vec\n\n\t\tfor (let i = 0, n = shapes.length; i < n; i++) {\n\t\t\tshape = shapes[i]\n\n\t\t\t// If the shape is a group or is already selected, don't select it.\n\t\t\t// Also skip locked shapes unless the selectLockedShapes option is enabled.\n\t\t\tif (\n\t\t\t\teditor.isShapeOfType(shape, 'group') ||\n\t\t\t\tnewlySelectedShapeIds.has(shape.id) ||\n\t\t\t\t(!editor.options.selectLockedShapes && editor.isShapeOrAncestorLocked(shape))\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\tgeometry = editor.getShapeGeometry(shape)\n\n\t\t\t// If the scribble started inside of a frame-like shape, don't select it\n\t\t\tif (\n\t\t\t\teditor.isShapeFrameLike(shape) &&\n\t\t\t\tgeometry.bounds.containsPoint(editor.getPointInShapeSpace(shape, originPagePoint))\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\t// Hit test the shape using a line segment\n\t\t\tconst pageTransform = editor.getShapePageTransform(shape)\n\t\t\tif (!geometry || !pageTransform) continue\n\t\t\tconst pt = pageTransform.clone().invert()\n\t\t\tA = pt.applyToPoint(previousPagePoint)\n\t\t\tB = pt.applyToPoint(currentPagePoint)\n\n\t\t\t// If the line segment is entirely above / below / left / right of the shape's bounding box, skip the hit test\n\t\t\tconst { bounds } = geometry\n\t\t\tif (\n\t\t\t\tbounds.minX - minDist > Math.max(A.x, B.x) ||\n\t\t\t\tbounds.minY - minDist > Math.max(A.y, B.y) ||\n\t\t\t\tbounds.maxX + minDist < Math.min(A.x, B.x) ||\n\t\t\t\tbounds.maxY + minDist < Math.min(A.y, B.y)\n\t\t\t) {\n\t\t\t\tcontinue\n\t\t\t}\n\n\t\t\tif (geometry.hitTestLineSegment(A, B, minDist)) {\n\t\t\t\tconst outermostShape = this.editor.getOutermostSelectableShape(shape)\n\t\t\t\tconst pageMask = this.editor.getShapeMask(outermostShape.id)\n\t\t\t\tif (pageMask) {\n\t\t\t\t\tconst intersection = intersectLineSegmentPolygon(\n\t\t\t\t\t\tpreviousPagePoint,\n\t\t\t\t\t\tcurrentPagePoint,\n\t\t\t\t\t\tpageMask\n\t\t\t\t\t)\n\t\t\t\t\tif (intersection !== null) {\n\t\t\t\t\t\tconst isInMask = pointInPolygon(currentPagePoint, pageMask)\n\t\t\t\t\t\tif (!isInMask) continue\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tnewlySelectedShapeIds.add(outermostShape.id)\n\t\t\t}\n\t\t}\n\n\t\tconst current = editor.getSelectedShapeIds()\n\t\tconst next = new Set<TLShapeId>(\n\t\t\tshiftKey ? [...newlySelectedShapeIds, ...initialSelectedShapeIds] : [...newlySelectedShapeIds]\n\t\t)\n\t\tif (current.length !== next.size || current.some((id) => !next.has(id))) {\n\t\t\tthis.editor.setSelectedShapes(Array.from(next))",
+        "detail": {
+          "unitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.updateScribbleSelection#method:ScribbleBrushing.updateScribbleSelection",
+          "fileId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing.updateScribbleSelection",
+          "unitKind": "method",
+          "name": "updateScribbleSelection",
+          "qualifiedName": "ScribbleBrushing.updateScribbleSelection",
+          "parentUnitId": "packages/tldraw/src/lib/tools/SelectTool/childStates/ScribbleBrushing.ts__ScribbleBrushing#class:ScribbleBrushing",
+          "startLine": 83,
+          "endLine": 188,
+          "signature": "private updateScribbleSelection(addPoint: boolean)",
+          "parameters": [
+            { "name": "addPoint", "type": "boolean", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "void",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "private",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The ScribbleBrushing instance has initialized editor input state and selection tracking sets.",
+            "The editor can provide the origin, previous, and current page points for the active scribble."
+          ],
+          "postconditions": [
+            "If addPoint is true, the current scribble point has been appended through pushPointToScribble().",
+            "Shapes hit by the current pointer segment and eligible for selection are added to newlySelectedShapeIds through their outermost selectable shape.",
+            "The editor selection is updated only when the computed selection differs from the current selection.",
+            "Without shift, the resulting selection consists of newly selected shape IDs; with shift, initial selected shape IDs are retained as well."
+          ],
+          "invariants": [
+            "Groups are never directly added to the newly selected set.",
+            "Shapes already present in newlySelectedShapeIds are not processed again.",
+            "Locked shapes are skipped unless editor.options.selectLockedShapes is enabled.",
+            "A frame-like shape containing the scribble origin in its shape-space bounds is not selected.",
+            "A shape with a mask is selected only when the segment-mask intersection rules permit the current point.",
+            "Selection ordering is based on insertion order into the computed set."
+          ],
+          "edgeCases": [
+            "When addPoint is false, no scribble point is appended, but selection processing still occurs.",
+            "When the segment's candidate shape ID set is empty, expensive rendering-shape retrieval is skipped and the selection is still synchronized from the tracked selected IDs.",
+            "When a candidate is a group, already newly selected, or locked while locked selection is disabled, it is ignored.",
+            "When a shape lacks geometry or a page transform, it is ignored.",
+            "When the segment lies entirely outside a shape's geometry bounds, line-segment hit testing is skipped.",
+            "When a masked shape's segment intersects its mask but the current page point is outside the mask, the shape is ignored.",
+            "When the computed selection already equals the editor's current selection, setSelectedShapes is not called."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "May append the current point to the scribble state through pushPointToScribble().",
+            "Mutates newlySelectedShapeIds by adding eligible outermost selectable shape IDs.",
+            "May mutate the editor's selected shape IDs through setSelectedShapes()."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "editor.inputs.getShiftKey", "source": "editor input state", "kind": "internal" },
+            { "name": "editor.inputs.getOriginPagePoint", "source": "editor input state", "kind": "internal" },
+            { "name": "editor.inputs.getPreviousPagePoint", "source": "editor input state", "kind": "internal" },
+            { "name": "editor.inputs.getCurrentPagePoint", "source": "editor input state", "kind": "internal" },
+            { "name": "pushPointToScribble", "source": "ScribbleBrushing", "kind": "internal" },
+            { "name": "editor.getShapeIdsInsideBounds", "source": "editor", "kind": "external" },
+            { "name": "editor.getSelectedShapeIds", "source": "editor", "kind": "external" },
+            { "name": "editor.setSelectedShapes", "source": "editor", "kind": "external" },
+            { "name": "editor.getCurrentPageRenderingShapesSorted", "source": "editor", "kind": "external" },
+            { "name": "editor.isShapeOfType", "source": "editor", "kind": "external" },
+            { "name": "editor.isShapeOrAncestorLocked", "source": "editor", "kind": "external" },
+            { "name": "editor.getShapeGeometry", "source": "editor", "kind": "external" },
+            { "name": "editor.isShapeFrameLike", "source": "editor", "kind": "external" },
+            { "name": "editor.getPointInShapeSpace", "source": "editor", "kind": "external" },
+            { "name": "editor.getShapePageTransform", "source": "editor", "kind": "external" },
+            { "name": "geometry.hitTestLineSegment", "source": "shape geometry", "kind": "internal" },
+            { "name": "editor.getOutermostSelectableShape", "source": "editor", "kind": "external" },
+            { "name": "editor.getShapeMask", "source": "editor", "kind": "external" },
+            { "name": "intersectLineSegmentPolygon", "source": "geometry utility", "kind": "external" },
+            { "name": "pointInPolygon", "source": "geometry utility", "kind": "external" }
+          ],
+          "symbolReferences": [
+            "TLShapeId",
+            "TLShape",
+            "Geometry2d",
+            "Vec",
+            "Box",
+            "intersectLineSegmentPolygon",
+            "pointInPolygon"
+          ],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Updates the scribble-selection set using the current pointer segment and editor shape geometry. It optionally records the current scribble point and synchronizes selected shapes while respecting shift-selection, groups, locks, frames, masks, and hit testing.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateScribbleSelection(false) is invoked.",
+              "then": "No rendering-shape retrieval occurs, and the editor selection is set to the newly selected shape IDs only.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateScribbleSelection(true) is invoked.",
+              "then": "The current scribble point is appended and the shape's outermost selectable shape ID is added to the tracked newly selected set.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "updateScribbleSelection(false) is invoked.",
+              "then": "The tracked set may be processed, but editor.setSelectedShapes is not called.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "ef44d506457d9f9539f03f59fb2d9aaaa90118381f1e12e746b08abe7ce8a69e"
+        }
+      }
+    ]
+  },
+  "out": [],
+  "in": ["packages/tldraw/src/lib/tools/SelectTool/SelectTool.ts"],
+  "externals": ["@tldraw/editor"],
+  "impact": { "seeds": 4, "callers": 0, "impactedFiles": [] }
+}

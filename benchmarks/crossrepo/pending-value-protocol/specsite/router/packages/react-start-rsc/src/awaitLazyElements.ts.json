@@ -1,0 +1,684 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "router",
+  "file": {
+    "relativePath": "packages/react-start-rsc/src/awaitLazyElements.ts",
+    "language": "typescript",
+    "sizeBytes": 2714,
+    "tokenCount": 679,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-25T11:12:28.340Z",
+    "module": {
+      "purpose": "Traverses React element trees to await unresolved lazy payloads and optionally collect stylesheet URLs for server-side preloading.",
+      "summary": "This module provides a synchronous generator for cycle-safe traversal of React trees and an asynchronous coordinator that waits for pending or blocked lazy component payloads. Traversal deliberately stops at Suspense boundaries, skips React ownership and store metadata, and detects stylesheet link elements injected by the RSC bundler so their URLs can be collected without altering the tree.",
+      "businessContext": "Supports React Server Components navigation by ensuring client chunks are loaded before rendering and enabling CSS preloading. Failure can cause Suspense flashing or missing stylesheet preloads.",
+      "classes": [],
+      "functions": [
+        "findPendingLazyPayloads (~L13-70): Traverses trees, stops at Suspense, collects CSS, and yields lazy payloads.",
+        "awaitLazyElements (~L84-95): Sequentially waits for all pending lazy payloads while suppressing rejection."
+      ],
+      "keywords": [
+        "React Server Components",
+        "React.lazy",
+        "Suspense boundary",
+        "CSS preloading",
+        "RSC bundler",
+        "lazy payload",
+        "cycle detection",
+        "SWR navigation"
+      ],
+      "ontologyConcepts": [
+        "tree traversal",
+        "lazy loading",
+        "promise coordination",
+        "boundary detection",
+        "cycle prevention",
+        "resource preloading"
+      ],
+      "businessEntities": [
+        "React element",
+        "lazy component",
+        "Suspense boundary",
+        "CSS stylesheet",
+        "client component chunk"
+      ],
+      "systemCapabilities": [
+        "Await client component chunks",
+        "Traverse React element trees",
+        "Collect stylesheet preload URLs",
+        "Avoid recursive cycles",
+        "Suppress lazy loading failures"
+      ],
+      "configDependencies": [],
+      "importsInternal": [
+        {
+          "spec": "./reactSymbols",
+          "symbols": ["ReactElement", "ReactLazy", "ReactSuspense"],
+          "anchor": { "startLine": 1, "endLine": 1 },
+          "resolvedRelativePath": "packages/react-start-rsc/src/reactSymbols.ts",
+          "resolvedFileId": "packages/react-start-rsc/src/reactSymbols.ts",
+          "resolvedHint": "packages/react-start-rsc/src/reactSymbols.ts"
+        }
+      ],
+      "importsExternal": [],
+      "sideEffects": {
+        "io": ["Invokes the optional CSS collector callback for matching stylesheet link elements."],
+        "network": [],
+        "env": [],
+        "fs": [],
+        "process": [],
+        "mutationOfArg": []
+      },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "CssHrefCollector",
+          "shape": "export type CssHrefCollector = (href: string) => void",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "awaitLazyElements",
+          "shape": "export async function awaitLazyElements(\n  tree: unknown,\n  cssCollector?: CssHrefCollector,\n): Promise<void>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "ReactElement",
+          "shape": "ReactElement",
+          "resolvedRelativePath": "packages/react-start-rsc/src/reactSymbols.ts",
+          "resolvedFileId": "packages/react-start-rsc/src/reactSymbols.ts"
+        },
+        {
+          "name": "ReactLazy",
+          "shape": "ReactLazy",
+          "resolvedRelativePath": "packages/react-start-rsc/src/reactSymbols.ts",
+          "resolvedFileId": "packages/react-start-rsc/src/reactSymbols.ts"
+        },
+        {
+          "name": "ReactSuspense",
+          "shape": "ReactSuspense",
+          "resolvedRelativePath": "packages/react-start-rsc/src/reactSymbols.ts",
+          "resolvedFileId": "packages/react-start-rsc/src/reactSymbols.ts"
+        }
+      ],
+      "sectionMap": [
+        {
+          "name": "cycle and primitive guard",
+          "intent": "Stops traversal for primitive, nullish, or previously visited values.",
+          "structureKind": "branch",
+          "predicate": "!obj || typeof obj !== 'object'",
+          "branchOutcomes": ["return", "continue traversal"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 19, "endLine": 21 }
+        },
+        {
+          "name": "Suspense boundary stop",
+          "intent": "Prevents discovery of deferred lazy content beneath Suspense boundaries.",
+          "structureKind": "branch",
+          "predicate": "el.$$typeof === ReactElement && el.type === ReactSuspense",
+          "branchOutcomes": ["return", "continue traversal"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 26, "endLine": 30 }
+        },
+        {
+          "name": "stylesheet collection",
+          "intent": "Identifies injected stylesheet links and forwards their URLs to the collector.",
+          "structureKind": "branch",
+          "predicate": "el.$$typeof === ReactElement &&\n    el.type === 'link' &&\n    el.props?.rel === 'stylesheet'",
+          "branchOutcomes": ["inspect and possibly collect href", "skip CSS collection"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 34, "endLine": 45 }
+        },
+        {
+          "name": "pending lazy payload detection",
+          "intent": "Yields payloads whose state indicates unresolved lazy component loading.",
+          "structureKind": "branch",
+          "predicate": "payload &&\n      typeof payload === 'object' &&\n      (payload.status === 'pending' || payload.status === 'blocked') &&\n      typeof payload.then === 'function'",
+          "branchOutcomes": ["yield payload", "do not yield"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 48, "endLine": 58 }
+        },
+        {
+          "name": "array child traversal",
+          "intent": "Recursively visits each item in an array-valued tree.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "obj",
+          "terminationCondition": null,
+          "anchor": { "startLine": 61, "endLine": 64 }
+        },
+        {
+          "name": "object property traversal",
+          "intent": "Recursively visits object properties while excluding React metadata fields.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "Object.keys(obj)",
+          "terminationCondition": null,
+          "anchor": { "startLine": 65, "endLine": 69 }
+        },
+        {
+          "name": "lazy payload awaiting",
+          "intent": "Processes discovered payloads sequentially and ignores rejected loading promises.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "findPendingLazyPayloads(\n    tree,\n    new Set(),\n    cssCollector,\n  )",
+          "terminationCondition": null,
+          "anchor": { "startLine": 88, "endLine": 94 }
+        }
+      ],
+      "representationFamily": "function-bag",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "type_alias",
+          "name": "CssHrefCollector",
+          "signature": "export type CssHrefCollector = (href: string) => void",
+          "generics": null,
+          "decorators": [],
+          "returnType": "void",
+          "exported": true,
+          "anchor": { "startLine": 7, "endLine": 7 }
+        },
+        {
+          "kind": "generator",
+          "name": "findPendingLazyPayloads",
+          "signature": "function* findPendingLazyPayloads(\n  obj: unknown,\n  seen = new Set(),\n  cssCollector?: CssHrefCollector,\n): Generator<PromiseLike<unknown>>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Generator<PromiseLike<unknown>>",
+          "exported": false,
+          "anchor": { "startLine": 13, "endLine": 17 }
+        },
+        {
+          "kind": "function",
+          "name": "awaitLazyElements",
+          "signature": "export async function awaitLazyElements(\n  tree: unknown,\n  cssCollector?: CssHrefCollector,\n): Promise<void>",
+          "generics": null,
+          "decorators": [],
+          "returnType": "Promise<void>",
+          "exported": true,
+          "anchor": { "startLine": 84, "endLine": 87 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "alias",
+          "name": "CssHrefCollector",
+          "shape": "(href: string) => void",
+          "discriminant": null,
+          "anchor": { "startLine": 7, "endLine": 7 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "null, undefined, or primitive tree value",
+          "handled": true,
+          "behavior": "Traversal returns without yielding payloads or invoking the collector.",
+          "anchor": { "startLine": 19, "endLine": 19 }
+        },
+        {
+          "inputShape": "cyclic object graph",
+          "handled": true,
+          "behavior": "Previously seen objects are skipped, preventing recursive repetition.",
+          "anchor": { "startLine": 20, "endLine": 21 }
+        },
+        {
+          "inputShape": "Suspense element containing lazy descendants",
+          "handled": true,
+          "behavior": "The boundary and its descendants are not traversed.",
+          "anchor": { "startLine": 26, "endLine": 30 }
+        },
+        {
+          "inputShape": "stylesheet link without a usable href or collector",
+          "handled": true,
+          "behavior": "No callback is invoked.",
+          "anchor": { "startLine": 38, "endLine": 45 }
+        },
+        {
+          "inputShape": "lazy payload with non-pending status or no then function",
+          "handled": true,
+          "behavior": "The payload is ignored rather than yielded.",
+          "anchor": { "startLine": 50, "endLine": 56 }
+        },
+        {
+          "inputShape": "rejected lazy payload promise",
+          "handled": true,
+          "behavior": "The rejection is caught and suppressed, allowing remaining payloads to process.",
+          "anchor": { "startLine": 93, "endLine": 93 }
+        }
+      ],
+      "boundaryConditions": [],
+      "errorHandling": [
+        {
+          "thrown": null,
+          "caught": "Rejection from Promise.resolve(payload)",
+          "action": "Suppresses the rejection and continues the loop.",
+          "fallback": null,
+          "anchor": { "startLine": 93, "endLine": 93 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "Each object identity is visited at most once during a traversal.",
+          "anchor": { "startLine": 19, "endLine": 21 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Traversal never descends into Suspense boundary contents.",
+          "anchor": { "startLine": 26, "endLine": 30 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Lazy payloads are awaited in generator traversal order.",
+          "anchor": { "startLine": 88, "endLine": 94 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "The coordinator resolves after every discovered payload settles, regardless of rejection.",
+          "anchor": { "startLine": 93, "endLine": 93 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "schema",
+          "description": "Traversed React internals expose the expected $$typeof, type, props, _payload, status, and then fields.",
+          "anchor": { "startLine": 23, "endLine": 58 }
+        },
+        {
+          "kind": "caller",
+          "description": "Callers provide a collector when stylesheet URLs need to be captured for preloading.",
+          "anchor": { "startLine": 43, "endLine": 45 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "Which concrete React versions and RSC bundler adapters guarantee these internal element and payload shapes?",
+          "affects": "type_shapes and traversal behavior",
+          "anchor": { "startLine": 23, "endLine": 58 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "async",
+        "reentrant": true,
+        "ordering": "deterministic",
+        "notes": "Each invocation owns its traversal state, and payload promises are awaited sequentially in traversal order."
+      },
+      "stateModel": null,
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "awaits-pending-lazy-payload",
+          "scenario": "A tree contains a lazy element whose payload is pending.",
+          "given": ["payload.status === 'pending'", "typeof payload.then === 'function'"],
+          "when": "await awaitLazyElements(tree)",
+          "then": "the returned promise resolves only after the lazy payload settles",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Ensures pending client component chunks are loaded before rendering."
+        },
+        {
+          "testId": "awaits-blocked-lazy-payload",
+          "scenario": "A tree contains a lazy element whose payload is blocked.",
+          "given": ["payload.status === 'blocked'", "typeof payload.then === 'function'"],
+          "when": "await awaitLazyElements(tree)",
+          "then": "the returned promise resolves only after the blocked payload settles",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Blocked lazy payloads are explicitly treated as pending work."
+        },
+        {
+          "testId": "swallows-lazy-payload-rejection",
+          "scenario": "A discovered lazy payload rejects while the tree is being awaited.",
+          "given": ["payload.status === 'pending'", "Promise.resolve(payload).catch(() => {})"],
+          "when": "await awaitLazyElements(tree)",
+          "then": "the returned promise resolves instead of rejecting",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Lazy loading failures are intentionally swallowed by the waiting helper."
+        },
+        {
+          "testId": "stops-at-suspense-boundary",
+          "scenario": "A Suspense element contains a pending lazy element.",
+          "given": ["el.$$typeof === ReactElement", "el.type === ReactSuspense"],
+          "when": "await awaitLazyElements(tree)",
+          "then": "the lazy element inside the Suspense boundary is not awaited",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Suspense-contained lazy elements are intentionally deferred."
+        },
+        {
+          "testId": "collects-css-href",
+          "scenario": "A tree contains a stylesheet link with a data-rsc-css-href attribute.",
+          "given": [
+            "el.$$typeof === ReactElement",
+            "el.type === 'link'",
+            "el.props?.rel === 'stylesheet'",
+            "'data-rsc-css-href' in el.props",
+            "el.props.href === cssHref"
+          ],
+          "when": "await awaitLazyElements(tree, cssCollector)",
+          "then": "cssCollector(cssHref) is called",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Preserves CSS preload discovery for RSC client component styles."
+        },
+        {
+          "testId": "deduplicates-cyclic-tree-objects",
+          "scenario": "A traversed tree contains the same object more than once or contains a cycle.",
+          "given": ["seen.has(obj)", "seen.add(obj)"],
+          "when": "await awaitLazyElements(tree)",
+          "then": "the traversal terminates without revisiting the object",
+          "targets": [],
+          "oracleKind": "invariant-check",
+          "rationale": "The seen set prevents infinite recursion and duplicate payload processing."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "import ReactElement, ReactLazy, and ReactSuspense symbols",
+        "export CssHrefCollector type alias",
+        "define findPendingLazyPayloads generator",
+        "export awaitLazyElements async function"
+      ],
+      "moduleLevelCode": "import { ReactElement, ReactLazy, ReactSuspense } from './reactSymbols'",
+      "exports": [
+        { "name": "CssHrefCollector", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "awaitLazyElements", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "ReactElement", "module": "./reactSymbols", "alias": null, "kind": "internal" },
+        { "symbol": "ReactLazy", "module": "./reactSymbols", "alias": null, "kind": "internal" },
+        { "symbol": "ReactSuspense", "module": "./reactSymbols", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/react-start-rsc/src/awaitLazyElements.ts__findPendingLazyPayloads#generator:findPendingLazyPayloads",
+        "unitKind": "generator",
+        "name": "findPendingLazyPayloads",
+        "qualifiedName": "findPendingLazyPayloads",
+        "parentUnitId": null,
+        "startLine": 13,
+        "endLine": 70,
+        "isBehavioral": true,
+        "source": "function* findPendingLazyPayloads(\n  obj: unknown,\n  seen = new Set(),\n  cssCollector?: CssHrefCollector,\n): Generator<PromiseLike<unknown>> {\n  if (!obj || typeof obj !== 'object') return\n  if (seen.has(obj)) return\n  seen.add(obj)\n\n  const el = obj as any\n\n  // Stop at Suspense boundaries - lazy elements inside are intentionally deferred\n  if (el.$$typeof === ReactElement && el.type === ReactSuspense) {\n    return\n  }\n\n  // Collect CSS hrefs from <link rel=\"stylesheet\" data-rsc-css-href>\n  // The active RSC bundler adapter injects these for CSS module imports\n  if (\n    el.$$typeof === ReactElement &&\n    el.type === 'link' &&\n    el.props?.rel === 'stylesheet'\n  ) {\n    let cssHref: string | undefined\n    if ('data-rsc-css-href' in el.props) {\n      cssHref = el.props.href\n    }\n    if (cssHref && cssCollector) {\n      cssCollector(cssHref)\n    }\n  }\n\n  // Yield pending lazy element payload\n  if (el.$$typeof === ReactLazy) {\n    const payload = el._payload\n    if (\n      payload &&\n      typeof payload === 'object' &&\n      (payload.status === 'pending' || payload.status === 'blocked') &&\n      typeof payload.then === 'function'\n    ) {\n      yield payload\n    }\n  }\n\n  // Recurse into children\n  if (Array.isArray(obj)) {\n    for (const item of obj) {\n      yield* findPendingLazyPayloads(item, seen, cssCollector)\n    }\n  } else {\n    for (const key of Object.keys(obj)) {\n      if (key !== '_owner' && key !== '_store') {\n        yield* findPendingLazyPayloads(el[key], seen, cssCollector)\n      }\n    }\n  }\n}",
+        "detail": {
+          "unitId": "packages/react-start-rsc/src/awaitLazyElements.ts__findPendingLazyPayloads#generator:findPendingLazyPayloads",
+          "fileId": "packages/react-start-rsc/src/awaitLazyElements.ts__findPendingLazyPayloads",
+          "unitKind": "generator",
+          "name": "findPendingLazyPayloads",
+          "qualifiedName": "findPendingLazyPayloads",
+          "parentUnitId": null,
+          "startLine": 13,
+          "endLine": 70,
+          "signature": "function* findPendingLazyPayloads(\n  obj: unknown,\n  seen = new Set(),\n  cssCollector?: CssHrefCollector,\n): Generator<PromiseLike<unknown>>",
+          "parameters": [
+            { "name": "obj", "type": "unknown", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "seen", "type": null, "default": "new Set()", "optional": false, "variadic": false, "order": 1 },
+            {
+              "name": "cssCollector",
+              "type": "CssHrefCollector",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 2
+            }
+          ],
+          "returnType": "Generator<PromiseLike<unknown>>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The optional seen argument, when supplied, supports has and add operations.",
+            "The optional cssCollector argument, when supplied, accepts a CSS href string."
+          ],
+          "postconditions": [
+            "Each yielded value is a lazy-element payload whose status is pending or blocked and whose then property is a function.",
+            "Each object identity is traversed at most once per shared seen set.",
+            "Recognized stylesheet links with a truthy href and a cssCollector cause the href to be passed to cssCollector."
+          ],
+          "invariants": [
+            "Falsy values and non-object values produce no yields and are not traversed.",
+            "Objects already present in seen produce no yields and are not traversed.",
+            "The _owner and _store keys are excluded from recursive traversal.",
+            "Objects inside recognized Suspense boundaries are not traversed."
+          ],
+          "edgeCases": [
+            "A null, undefined, primitive, or other falsy input produces an empty generator result.",
+            "A cyclic or multiply referenced object graph is traversed without revisiting an object identity.",
+            "A lazy payload with status other than pending or blocked, or without a functional then property, is not yielded.",
+            "A stylesheet link without data-rsc-css-href, without a truthy href, or without a cssCollector does not invoke the collector.",
+            "An array is traversed item by item; other objects are traversed through enumerable own keys except _owner and _store.",
+            "A recognized Suspense element stops traversal at that boundary."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "Non-object or falsy input is ignored and produces no values.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Adds each traversed object identity to the supplied or default seen Set.",
+            "Invokes the supplied cssCollector callback for qualifying stylesheet hrefs."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "findPendingLazyPayloads", "source": "internal recursive traversal", "kind": "internal" },
+            { "name": "cssCollector", "source": "caller-supplied CssHrefCollector", "kind": "external" }
+          ],
+          "symbolReferences": ["CssHrefCollector", "ReactElement", "ReactSuspense", "ReactLazy"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Traverses an object graph and yields pending or blocked lazy-element payloads. It avoids cycles, does not descend into Suspense boundaries, and optionally collects stylesheet hrefs from recognized RSC CSS links.",
+          "specLiterals": [
+            { "kind": "enum-value", "value": "pending", "role": "Accepted lazy payload status for yielding." },
+            { "kind": "enum-value", "value": "blocked", "role": "Accepted lazy payload status for yielding." },
+            { "kind": "enum-value", "value": "link", "role": "Required element type for stylesheet href collection." },
+            {
+              "kind": "enum-value",
+              "value": "stylesheet",
+              "role": "Required rel value for stylesheet href collection."
+            },
+            {
+              "kind": "string",
+              "value": "data-rsc-css-href",
+              "role": "Required CSS marker property used to identify RSC stylesheet links."
+            },
+            { "kind": "string", "value": "_owner", "role": "Element/object key excluded from recursive traversal." },
+            { "kind": "string", "value": "_store", "role": "Element/object key excluded from recursive traversal." }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The generator is fully consumed.",
+              "then": "It yields that payload exactly once.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The generator is fully consumed.",
+              "then": "The object is traversed only once and iteration terminates without repeated yields caused by revisiting it.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "The generator is fully consumed.",
+              "then": "The nested lazy payload is not yielded, while the stylesheet href is passed to cssCollector.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4d6f41305beaee6afffbffd726ac63522373f9084723fdc8564400f382af2be6"
+        }
+      },
+      {
+        "unitId": "packages/react-start-rsc/src/awaitLazyElements.ts__awaitLazyElements#function:awaitLazyElements",
+        "unitKind": "function",
+        "name": "awaitLazyElements",
+        "qualifiedName": "awaitLazyElements",
+        "parentUnitId": null,
+        "startLine": 84,
+        "endLine": 95,
+        "isBehavioral": true,
+        "source": "  tree: unknown,\n  cssCollector?: CssHrefCollector,\n): Promise<void> {\n  for (const payload of findPendingLazyPayloads(\n    tree,\n    new Set(),\n    cssCollector,\n  )) {\n    await Promise.resolve(payload).catch(() => {})\n  }\n}\n",
+        "detail": {
+          "unitId": "packages/react-start-rsc/src/awaitLazyElements.ts__awaitLazyElements#function:awaitLazyElements",
+          "fileId": "packages/react-start-rsc/src/awaitLazyElements.ts__awaitLazyElements",
+          "unitKind": "function",
+          "name": "awaitLazyElements",
+          "qualifiedName": "awaitLazyElements",
+          "parentUnitId": null,
+          "startLine": 84,
+          "endLine": 95,
+          "signature": "awaitLazyElements(tree: unknown, cssCollector?: CssHrefCollector): Promise<void>",
+          "parameters": [
+            { "name": "tree", "type": "unknown", "default": null, "optional": false, "variadic": false, "order": 0 },
+            {
+              "name": "cssCollector",
+              "type": "CssHrefCollector",
+              "default": null,
+              "optional": true,
+              "variadic": false,
+              "order": 1
+            }
+          ],
+          "returnType": "Promise<void>",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": true,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [
+            "All payloads yielded by findPendingLazyPayloads have been awaited before the returned promise fulfills.",
+            "The returned promise fulfills with undefined unless findPendingLazyPayloads itself or iteration fails outside an individual payload rejection."
+          ],
+          "invariants": [
+            "Payloads are processed in the order yielded by findPendingLazyPayloads.",
+            "Each yielded payload is awaited before processing the next payload.",
+            "Rejection from an individual payload does not propagate from awaitLazyElements."
+          ],
+          "edgeCases": [
+            "When no payloads are yielded, the function completes without awaiting any payload and fulfills with undefined.",
+            "When a yielded payload fulfills, processing continues to the next yielded payload.",
+            "When a yielded payload rejects, its rejection is swallowed and processing continues with subsequent payloads."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": null,
+            "returnsOnError": "Individual yielded payload rejections are ignored; errors thrown by findPendingLazyPayloads or its iteration are not caught by this function."
+          },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "findPendingLazyPayloads", "source": null, "kind": "internal" },
+            { "name": "Promise.resolve", "source": "global Promise API", "kind": "external" }
+          ],
+          "symbolReferences": ["CssHrefCollector", "findPendingLazyPayloads"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Discovers pending lazy payloads in a tree and waits for each payload to settle. Payload rejection is swallowed so the returned promise resolves without propagating payload errors.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "awaitLazyElements is invoked.",
+              "then": "The returned Promise fulfills with undefined.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "awaitLazyElements is awaited.",
+              "then": "The returned Promise fulfills, and the later payload is still awaited.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "4462607feb44c8fb4548419effa0da24b0889aa2b54146a40599826317197ecc"
+        }
+      }
+    ]
+  },
+  "out": ["packages/react-start-rsc/src/reactSymbols.ts"],
+  "in": [
+    "packages/react-start-rsc/tests/createRscProxy.test.tsx",
+    "packages/react-start-rsc/src/createServerComponentFromStream.ts",
+    "packages/react-start-rsc/src/serialization.server.ts"
+  ],
+  "externals": [],
+  "impact": {
+    "seeds": 2,
+    "callers": 4,
+    "impactedFiles": [
+      "packages/react-start-rsc/src/createServerComponentFromStream.ts",
+      "packages/react-start-rsc/src/serialization.server.ts"
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "id": "xrepo-v6-23-a-copy-is-not-the-original-hard",
+  "question": "Several of these libraries let a record be built either from nothing or out of an existing record, and the second path is where they go wrong. In one library, three producers of a derived record are each incomplete, and each is invisible until the record is derived rather than constructed. One of them, preparing a record just before it is stored, edits the sub-object it was handed instead of replacing it - harmless when that sub-object was made for the occasion, destructive when it belongs to the record being derived from, and an outright failure when that source is protected against writes. One of them, when a gradual transition between two versions of a record needs the shorter side padded out, mints the padding by copying an existing member and changing only what it thought of, so the padded members are indistinguishable to the step that later has to tell members apart, which keeps one and drops the rest. One of them rebuilds a composite in a new coordinate space out of its parts alone, so everything the composite had additionally been told about itself - how it should be treated, which of its parts to hold but disregard, what the caller asked to override - is absent from the result. A fourth producer, in a different library, reconstructs live state from a package that a different version of the same library may have written, and assumes every field the current version writes is present in it. The contract behind all four is that a derived record is a new and independent thing: it carries forward everything the original carried that the derivation does not deliberately replace, it is given its own identity wherever identity is what tells members apart, it tolerates an original written by an older or sparser producer, and it is never produced by writing into the original. Two further libraries in this folder make that discipline the centre of their core rather than an afterthought, and are the reference a complete derivation should be measured against. Which files derive a record incompletely, or by writing into its source, and which own the contract they have to be brought in line with?",
+  "anchor": {
+    "repo": "tldraw",
+    "pinned_commit": "5590d14d8edd4faab7dc1177b6e1adb28876fd23",
+    "fix_pr": "https://github.com/tldraw/tldraw/pull/10248",
+    "pr_number": 10248,
+    "pr_title": "fix(lines): do not mutate the caller's points in onBeforeCreate",
+    "fix_merged": "2026-09-10",
+    "fix_merge_commit": "de7288f563",
+    "parent_is_buggy": true
+  },
+  "counts": {
+    "min_repos": 3,
+    "min_files": 4
+  },
+  "repo_commits": {
+    "tldraw": "5590d14d8edd4faab7dc1177b6e1adb28876fd23",
+    "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+    "react": "3a717e42438afac81020cdec297dadb5613a4304",
+    "xyflow": "360f5b13e2bc6899ea06b4be1a49b068d86926cf"
+  },
+  "expected": [
+    {
+      "repo": "tldraw",
+      "knowledgeId": "91b23c56-1aee-5c86-a34b-c66f8970d025",
+      "files": [
+        "packages/tldraw/src/lib/shapes/line/LineShapeUtil.tsx",
+        "packages/editor/src/lib/primitives/geometry/Group2d.ts"
+      ]
+    },
+    {
+      "repo": "query",
+      "knowledgeId": "0c574639-1088-4233-a793-3a4397e6c431",
+      "files": ["packages/query-core/src/hydration.ts"]
+    },
+    {
+      "repo": "react",
+      "knowledgeId": "2a9d1614-943b-44ad-b7cf-edda2f37ddf9",
+      "files": ["packages/react-reconciler/src/ReactFiber.js"]
+    },
+    {
+      "repo": "xyflow",
+      "knowledgeId": "6f1f2a40-aa51-4fe1-b9d2-d33ee4571368",
+      "files": ["packages/system/src/utils/store.ts"]
+    }
+  ],
+  "grader_notes": {
+    "why_cross_repo": "ANCHORS, all mined from `pin..origin/main`, pin-is-ancestor True, all removed-line verified live at their pins. (1) tldraw #10248 (de7288f563, 5/5 live): LineShapeUtil.onBeforeCreate nudges the last point by writing `points[lastKey] = {...}` into the points object it was handed; createShapes spreads the partial's props shallowly, so on a duplicate that object IS the frozen source record's own points - the source mutates and the write throws. (2) tldraw #10247 (134d2e0d50, 1/1 live): the same file's getInterpolatedProps clones extra start points as `{...startPoints[i], id: index}` without a fresh `index`, so linePointsToArray collapses the duplicate-indexed clones and the line loses points for the length of the animation. (3) tldraw #10603 (77c3c12cec, 7/7 live): Group2d.transform rebuilds the group from its children only, dropping isLabel / isInternal / excludeFromShapeBounds / debugColor, the ignoredChildren, and the caller's option overrides. (4) query #11260 (134890dbd, 6/6 live): hydration.ts assumes every field of the dehydrated package is present and breaks on a partial or older one. OWNERS (both verified read at their pins, both unclaimed by any other case): react's ReactFiber.js is the contract written out longhand - createWorkInProgress double-buffers, enumerating field by field what is carried from `current` and what is reset (flags, subtreeFlags, deletions, lanes), and resetWorkInProgress does the same on reuse; xyflow's system/src/utils/store.ts rebuilds internal nodes from the user's plain nodes on every change and decides explicitly, in parseHandles and adoptUserNodes, which measured state (handleBounds, positionAbsolute, userNode identity) survives the rebuild.",
+    "verification_method": "(1) `_tools/verify_anchor.py` on all four fix commits: pin-is-ancestor True, 5/5, 1/1, 7/7 and 6/6 removed lines live at the pins. (2) Every gold path confirmed with `git cat-file -e <pin>:<path>`. (3) Overlap check against every existing golden.json: 0 shared (repo,file) pairs. (4) Greppability screen, on identifiers AND on mechanism (the lesson from v6-22, which passed the identifier screen and still measured 0.769 because its mechanism - a cache, an export pipeline - was spelled in the file names): no gold file shares a term with any other. At the pins, `clone` appears only in Group2d.ts (2) and ReactFiber.js (4), `copy` only in ReactFiber.js (2), and `duplicate`/`structuredClone` in none of them. There is no directory whose listing yields a majority of gold - the five files sit in five different packages of four different repositories. (5) Contract check: v5-15 is read-path mutation (a getter rewriting stored state) and v6-15 is instance reuse; neither is about the fidelity and independence of a derived record.",
+    "difficulty_design": "Built to the shape of the only two cases that measured hard: small gold (5 files), each member either a one-line defect inside a large file or a file with no lexical relationship to the contract's vocabulary, and no nameable subsystem to dump. The two owners are the risk - a model reasoning about clones may reach for React's fiber double-buffering - so three of the five are deliberately obscure: a shape util, a geometry primitive, and an internal node-adoption routine.",
+    "rejected_candidates": "tldraw's crop.ts (a30c9c8b9c) and note Pointing.ts (1ad7975d82) are the same PR wave but a different contract (deriving a position in the wrong frame of reference), so they are not gold here. tldraw's SelectTool childStates cluster (#10171/#10179/#10165/#10183) was rejected on dumpability: the gold would be 5 of ~20 files in one directory, which a bare arm gets for free by listing it.",
+    "question_revision": "Three phrasings of one fixed gold set, each probed with a fresh bare arm; all three prompts and arms are kept (attempt-1-descriptive-question/, attempt-2-contract-only/). Attempt 1 named each defect's subject matter and sketched both owners' mechanisms: recall 0.800, 27 paths, $3.96 - the arm matched files off the description. Attempt 2 stated the contract alone, with no domain cue at all: recall 0.000, $9.96, 78 turns - the arm spent the whole run in redux / redux-devtools / redux-toolkit, because 'a record derived from another record' describes every state library in the folder. That is not a hard case, it is an unidentifiable one. Attempt 3 is the middle: the defects keep behaviour-level cues that require code reading to map, and the two owners are named only as owners - no mechanism sketch, which is what handed the arm ReactFiber.js and xyflow's store.ts in attempt 1."
+  },
+  "calibration": {
+    "probe": "claudecli_opus5_bare (Opus 5, Bash/Read/Grep/Glob over the pinned checkouts, sandbox-exec gold-blind, one fresh headless session per attempt)",
+    "date": "2026-09-10",
+    "recall": 0.4,
+    "precision": 0.133,
+    "returned": 15,
+    "gold": 5,
+    "cost_usd": 7.27,
+    "wall_s": null,
+    "turns": 74,
+    "label_implied": "hard",
+    "attempts": [
+      {
+        "phrasing": "defects' subject matter named + both owners' mechanisms sketched",
+        "recall": 0.8,
+        "returned": 27,
+        "usd": 3.96,
+        "dir": "attempt-1-descriptive-question"
+      },
+      {
+        "phrasing": "contract only, every domain cue stripped",
+        "recall": 0.0,
+        "returned": 27,
+        "usd": 9.96,
+        "dir": "attempt-2-contract-only",
+        "note": "unidentifiable, not hard: the arm spent 78 turns inside redux / redux-devtools / redux-toolkit"
+      },
+      {
+        "phrasing": "behaviour-level defect cues, owners named only as owners",
+        "recall": 0.4,
+        "returned": 15,
+        "usd": 7.27,
+        "dir": "(current)"
+      }
+    ],
+    "note": "Found: LineShapeUtil.tsx and Group2d.ts. Missed all three of the files that carry no cue in the question - query's hydration.ts, react's ReactFiber.js and xyflow's system/utils/store.ts - and spent its remaining budget in the redux family. 0.400 ties the hardest case in the suite (hard-the-virtual-container-is-not-a-node)."
+  }
+}

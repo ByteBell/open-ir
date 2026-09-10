@@ -1,0 +1,71 @@
+{
+  "id": "xrepo-v6-22-a-failure-is-not-an-answer-medium",
+  "question": "One of these libraries resolves references to things that live outside its own data - an identifier that has to be turned into something fetchable, and remote documents that have to be pulled in before a result can be produced. Resolution has three possible outcomes, not two: it succeeded, it has not finished yet, and it failed. Throughout this library only the first two are modelled, and the third is quietly folded into one of them, in four different places and four different ways. A shared bounded store keyed by location keeps whatever the last attempt produced, including the placeholder that means \"this attempt failed\", and the store has no operation for forgetting an entry at all, so one bad moment on the network makes that location permanently unavailable for the rest of the session; a second surface keeps a per-object promise for the same reason and never discards the rejected one, so a retry can never happen. A third place keeps showing what the previous reference resolved to after the reference itself is changed or taken away, because it only reacts when the resolved end product differs, and the end product of \"nothing\" is not something it compares. A fourth treats a reference that cannot currently be resolved as a reference that does not exist: it is dropped from the material handed to the next consumer rather than carried across unresolved, and an error raised while removing one is swallowed so the caller believes the removal happened. Each of these is invisible whenever the network cooperates and whenever references are only ever added. The contract is that a failed resolution is a transient fact about one attempt, never a value to be stored in place of the thing, and that a reference whose target cannot be produced right now must be kept, retried and reported rather than substituted with absence. Elsewhere in the folder that separation is the design: one library gives a failing attempt its own object with its own lifecycle - it can be paused, resumed, cancelled and asked for its status, and its failure never becomes the stored value - and another enumerates the three outcomes explicitly as distinct states so that a failure travels alongside the data rather than replacing it. Which files store, keep or discard a failed resolution as though it were an answer, and which own the contract they have to be brought in line with?",
+  "anchor": {
+    "repo": "tldraw",
+    "pinned_commit": "5590d14d8edd4faab7dc1177b6e1adb28876fd23",
+    "fix_pr": "https://github.com/tldraw/tldraw/pull/10338",
+    "pr_number": 10338,
+    "pr_title": "fix(editor): export embedding of multi-url styles, font lists, failed fetches and bare @import rules",
+    "fix_merged": "2026-09-10",
+    "fix_merge_commit": "4651ebb3ac",
+    "parent_is_buggy": true
+  },
+  "counts": {
+    "min_repos": 3,
+    "min_files": 6
+  },
+  "repo_commits": {
+    "tldraw": "5590d14d8edd4faab7dc1177b6e1adb28876fd23",
+    "query": "46d7f02f1c7b9fcd3255082cc7103e8bfa3dab76",
+    "jotai": "5c4ca26b0db5571114be58393e17854a771f7790"
+  },
+  "expected": [
+    {
+      "repo": "tldraw",
+      "knowledgeId": "91b23c56-1aee-5c86-a34b-c66f8970d025",
+      "files": [
+        "packages/tldraw/src/lib/shapes/shared/useImageOrVideoAsset.ts",
+        "packages/tldraw/src/lib/shapes/image/ImageShapeUtil.tsx",
+        "packages/tldraw/src/lib/shapes/video/VideoShapeUtil.tsx",
+        "packages/tldraw/src/lib/shapes/bookmark/BookmarkShapeUtil.tsx",
+        "packages/tldraw/src/lib/shapes/bookmark/bookmarks.ts",
+        "packages/editor/src/lib/exports/fetchCache.ts",
+        "packages/editor/src/lib/exports/FontEmbedder.ts",
+        "packages/editor/src/lib/exports/StyleEmbedder.ts",
+        "packages/editor/src/lib/exports/parseCss.ts",
+        "packages/utils/src/lib/LruCache.ts",
+        "packages/editor/src/lib/editor/Editor.ts"
+      ]
+    },
+    {
+      "repo": "query",
+      "knowledgeId": "0c574639-1088-4233-a793-3a4397e6c431",
+      "files": ["packages/query-core/src/retryer.ts"]
+    },
+    {
+      "repo": "jotai",
+      "knowledgeId": "581a242e-3f4c-45db-8e84-c69cf159ac44",
+      "files": ["src/vanilla/utils/loadable.ts"]
+    }
+  ],
+  "grader_notes": {
+    "why_cross_repo": "ANCHOR: four independent post-pin tldraw fixes, all mined from `pin..origin/main`, pin-is-ancestor True, all removed-line verified live at the pin 5590d14d8e. (1) #10338 (4651ebb3ac) - fetchCache.ts memoises the promise for every url INCLUDING the `null` it returns on a failed fetch, and LruCache.ts at the pin has no `delete` at all, so the cache structurally cannot forget a poisoned entry; the fix adds `LruCache.delete` and evicts null results, and repairs FontEmbedder.ts / StyleEmbedder.ts / parseCss.ts, which consume those cached nulls (9/9, 3/3, 2/2 removed lines live). (2) #10226 (f35842e3ba) - ImageShapeUtil.tsx / VideoShapeUtil.tsx memoise the export promise per shape and keep it after rejection, so a failed export can never be retried (6/6, 1/1 live). (3) #10250 (5be37f92cb) - useImageOrVideoAsset.ts returns early when assetId is falsy without clearing the previous result, and skips resolution whenever the resolved url equals `previousUrl`, so a removed, re-attached or same-url asset keeps the stale render (3/3 live). (4) #10208 (46368b7754) - BookmarkShapeUtil.tsx / bookmarks.ts only act when the resolved asset differs, so changing a bookmark's url leaves the old asset (5/5, 11/11 live). (5) #10366 + #10368 (e22dbf6261, b10f608cba) - Editor.ts drops assets it cannot resolve from copied content and swallows asset-store removal errors (10/10 and 1/1 live). CITATIONS: query-core/src/retryer.ts is the reference for the same contract done right - a failing attempt gets its own object with pause/continue/cancel/status and its failure never becomes a stored value; jotai's loadable.ts enumerates loading / hasError / hasData as three distinct states so an error travels alongside the data rather than replacing it.",
+    "verification_method": "(1) `_tools/verify_anchor.py tldraw <sha>` for all six anchor commits: pin-is-ancestor True, every touched source file 100% removed-line live at the pin; fetchCache.ts and LruCache.ts are pure additions at the fix, so both were read directly at the pin instead - fetchCache caches the failure promise verbatim, LruCache has no delete method. (2) Every gold path confirmed with `git cat-file -e <pin>:<path>`. (3) Overlap check against every existing golden.json: 0 shared (repo,file) pairs. (4) Greppability screen: no identifier reaches a majority of gold - `assetId` 6/13, `resolveAssetUrl` 4/13, `fetchCache` 3/13, `LruCache` 2/13. (5) Contract check: no existing case (v5 ledger or v6 dirs) is about failed resolution being cached as an answer; the nearest neighbours are v6-1 (a failure must reach waiters and must not be terminal, at the collection-lifecycle layer, db) and v6-16 (presence vs truthiness), neither of which is about memoising a failure.",
+    "difficulty_design": "11 of 13 gold files are anchor-repo siblings and only 2 are cross-repo citations, which is the ratio the calibration data says defeats a bare model. The gold spans four unrelated subsystems of one repo (shape utils, an export pipeline, a hook, and the editor facade) so it is not a nameable family, and the two members that carry the actual structural defect - a generic bounded-cache class in a utils package, and a 20-line fetch memoiser - share no vocabulary with the contract's own words. Editor.ts is the one free hit: a bare model tends to name it for any tldraw question.",
+    "rejected_candidates": "TanStack/router #8308 'harden URL handling across Router and Start' (9c1871ccc8) verified 11/11 source files live at the pin and would have made a strong anchor, but 5 of its 6 router-core/history files (history/src/index.ts, router-core/src/{utils,router,redirect,load-client}.ts) are already gold in medium-a-link-is-matched-not-parsed (v6-6), whose contract - parse rather than pattern-match - covers the same code. Rejected on overlap. TanStack/table's ordering cluster (#6529/#6568/#6576) was rejected earlier: the table pin d08af367e1 sits on origin/v8, not origin/main, so no main-line fix is a descendant of it and table cannot serve as an anchor at all (post-pin commits on v8: 1)."
+  },
+  "calibration": {
+    "probe": "claudecli_opus5_bare (Opus 5, Bash/Read/Grep/Glob over the pinned checkouts, sandbox-exec gold-blind, one fresh headless session)",
+    "date": "2026-09-10",
+    "recall": 0.769,
+    "precision": 0.312,
+    "returned": 32,
+    "gold": 13,
+    "cost_usd": 3.49,
+    "wall_s": 364,
+    "turns": 50,
+    "label_implied": "medium",
+    "note": "Designed as hard and measured medium. The bare arm found the whole export/cache half of the gold (fetchCache.ts, LruCache.ts, FontEmbedder.ts, StyleEmbedder.ts, ImageShapeUtil.tsx, VideoShapeUtil.tsx, useImageOrVideoAsset.ts, Editor.ts, plus both citations) by grepping for caches and export code: 'cache' is the contract's own mechanism and it is spelled in the file names. It missed exactly the three members whose subject matter is unrelated to the contract's vocabulary - bookmarks.ts, BookmarkShapeUtil.tsx and parseCss.ts. Design lesson for the next attempt: a contract whose MECHANISM is nameable (a cache, an export pipeline) is greppable even when no single identifier reaches a majority of gold; the greppability screen on identifiers does not catch it."
+  }
+}

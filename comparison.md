@@ -16,7 +16,7 @@ Claude-context takes your code, chunks it up using Tree-sitter, and runs every c
 
 This one parses your repository with Tree-sitter and stores the result in a SQLite graph with real call, inheritance, and test edges. It ships with 28 MCP tools, has solid blast-radius analysis built in, and can index 500 files in about ten seconds. For structural questions like who calls what, it is excellent. The README is upfront about the limitation though, which is that each node only carries the function signature, roughly ten tokens of information. So while it knows the structure of your code, it does not really know what any of it is for.
 
-### graphify
+### graphtools
 
 Graphify is a Claude Code skill that takes any folder, whether that is code, documents, PDFs, images, or videos, and turns it into a multi-modal knowledge graph. It uses Tree-sitter for the code, NetworkX for the graph itself, and Leiden community detection to cluster related nodes. It is MIT licensed and local first, and only sends semantic descriptions out to an LLM rather than your actual source. It is genuinely useful when you have a mixed corpus where docs and diagrams sit alongside code. The scope is limited to a single folder, and there is no cross-repository graph.
 

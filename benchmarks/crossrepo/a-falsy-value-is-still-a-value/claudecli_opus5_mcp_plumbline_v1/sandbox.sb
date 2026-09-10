@@ -1,0 +1,18 @@
+(version 1)
+(allow default)
+
+;; ---- benchmark tree: blind everything, then re-open only what this arm needs ----
+;; Later rules win, so this denies golden.json, every other arm's ranked.json /
+;; result.json, and the case-construction scripts.
+(deny file-read* (subpath "/Users/sauravverma/programs/benchmarks/react-ecosystem"))
+;; The ONLY re-opened path: the MCP server config, which the CLI itself must read to
+;; bind the server. It is a server URL, not case data, and the model has no Read/Bash
+;; tools with which to reach it. Without this the blanket deny above makes the CLI die
+;; with "Invalid MCP configuration: EPERM" and the arm produces an empty response.
+(allow file-read* (literal "/Users/sauravverma/programs/benchmarks/react-ecosystem/mcp_plumbline.json"))
+;; otherwise nothing is re-opened: this arm reaches code only through its MCP server.
+(deny file-write* (subpath "/Users/sauravverma/programs/benchmarks/react-ecosystem"))
+
+;; ---- no session transcript is readable: not an earlier run's, not this one's ----
+(deny file-read* (subpath "/Users/sauravverma/.claude/projects"))
+(deny file-read* (subpath "/Users/sauravverma/.claude/history.jsonl"))

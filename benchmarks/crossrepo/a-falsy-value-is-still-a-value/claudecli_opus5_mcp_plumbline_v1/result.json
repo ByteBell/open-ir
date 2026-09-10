@@ -1,0 +1,116 @@
+{
+  "case_id": "xrepo-v6-16-a-falsy-value-is-still-a-value-hard",
+  "case": "xrepo-h03",
+  "arm": "claudecli_opus5_mcp_plumbline",
+  "model": "claude-opus-5[1m]",
+  "tooling": "plumbline MCP only (+ bash for file IO)",
+  "date": "2026-09-11",
+  "phase1": {
+    "returned_count": 22,
+    "returned": [
+      {
+        "repo": "query",
+        "files": [
+          "packages/query-core/src/queriesObserver.ts",
+          "packages/react-query/src/useQueries.ts",
+          "packages/solid-query/src/useQueries.ts",
+          "packages/preact-query/src/useQueries.ts",
+          "packages/svelte-query/src/createQueries.svelte.ts",
+          "packages/angular-query-experimental/src/inject-queries.ts",
+          "packages/lit-query/src/createQueriesController.ts",
+          "packages/vue-query/src/useQueries.ts",
+          "packages/query-core/src/types.ts"
+        ]
+      },
+      {
+        "repo": "react-redux",
+        "files": ["src/components/connect.tsx", "src/hooks/useSelector.ts", "src/utils/Subscription.ts"]
+      },
+      {
+        "repo": "router",
+        "files": [
+          "packages/router-core/src/load-server.ts",
+          "packages/router-core/src/load-client.ts",
+          "packages/router-core/src/defer.ts",
+          "packages/router-core/src/utils.ts"
+        ]
+      },
+      {
+        "repo": "db",
+        "files": [
+          "packages/db/src/utils/comparison.ts",
+          "packages/db/src/query/compiler/evaluators.ts",
+          "packages/db/src/utils/index-optimization.ts"
+        ]
+      },
+      { "repo": "react", "files": ["compiler/packages/babel-plugin-react-compiler/src/Utils/Result.ts"] },
+      { "repo": "tldraw", "files": ["packages/state/src/lib/Computed.ts", "packages/state/src/lib/constants.ts"] }
+    ]
+  },
+  "gold": {
+    "count": 4,
+    "files": [
+      { "repo": "query", "file": "packages/query-core/src/queriesObserver.ts", "role": "defect (anchor, PR #11065)" },
+      { "repo": "query", "file": "packages/preact-query/src/useQueries.ts", "role": "defect (PR #11309)" },
+      { "repo": "tldraw", "file": "packages/utils/src/lib/control.ts", "role": "contract owner (tagged Result pair)" },
+      {
+        "repo": "redux-toolkit",
+        "file": "packages/toolkit/src/query/core/buildInitiate.ts",
+        "role": "contract owner (unwrap() checks presence of error property)"
+      }
+    ]
+  },
+  "found": [
+    { "repo": "query", "file": "packages/query-core/src/queriesObserver.ts", "rank_overall": 1 },
+    { "repo": "query", "file": "packages/preact-query/src/useQueries.ts", "rank_overall": 4 }
+  ],
+  "missed": [
+    {
+      "repo": "tldraw",
+      "file": "packages/utils/src/lib/control.ts",
+      "note": "Right repo, wrong file. Answered tldraw with packages/state/src/lib/Computed.ts + constants.ts (the signals library's error wrapper / UNINITIALIZED sentinel) instead of the @tldraw/utils Result type."
+    },
+    {
+      "repo": "redux-toolkit",
+      "file": "packages/toolkit/src/query/core/buildInitiate.ts",
+      "note": "Repo not returned at all. RTK Query's unwrap() was hypothesised early but abandoned: the RTK source snapshot at commit b1c5130154c4 is partial (shakedown scanned only 78 files, 17 under src/), so greps for 'result.error' returned 0 hits and the lead was dropped instead of being pursued through the graph tools (case_file/manhunt), which do have the file."
+    }
+  ],
+  "metrics": {
+    "gold_total": 4,
+    "found_count": 2,
+    "recall": 0.5,
+    "precision": 0.0909,
+    "f1": 0.1538,
+    "repo_recall": 0.333,
+    "repos_gold": ["query", "tldraw", "redux-toolkit"],
+    "repos_returned": ["query", "react-redux", "router", "db", "react", "tldraw"],
+    "repos_fully_correct": ["query"]
+  },
+  "calibration_comparison": {
+    "bare_probe_recall": 0.5,
+    "bare_probe_precision": 0.074,
+    "bare_probe_returned": 27,
+    "this_arm_recall": 0.5,
+    "this_arm_precision": 0.0909,
+    "this_arm_returned": 22,
+    "verdict": "Same recall as the gold-blind bare probe; slightly better precision on a smaller answer. Both halves of the anchor repo's defect were found and ranked top-4; both contract-owner citations were missed."
+  },
+  "analysis": {
+    "what_worked": [
+      "substrate stakeout on the memoization symptom put packages/query-core/src/queriesObserver.ts at rank 1 on the first call; the_receipts confirmed `!this.#combinedResult` guarding `combine(input)` verbatim.",
+      "collateral_damage seeded on queriesObserver.ts returned the framework useQueries adapters, which is how preact-query/src/useQueries.ts entered the answer at all."
+    ],
+    "what_went_wrong": [
+      "The two contract-owner clues were matched to plausible-but-wrong files. 'tagged pair whose tag says which arm it is' was read as TanStack Router's LoaderOutcome tuples ([SUCCESS, data] | [ERROR, error]) and React Compiler's Utils/Result.ts; the intended file was tldraw's packages/utils/src/lib/control.ts, which was never searched for because the tldraw grep was scoped to error-truthiness rather than to Result/ok/err.",
+      "'enumerates the values that have no natural ordering, handled explicitly' was matched with high confidence to TanStack DB's packages/db/src/utils/comparison.ts (isUnorderable, verbatim comment 'treat them explicitly instead of letting NaN compare unequal to everything'). That is a genuinely strong textual match and is NOT gold - a distractor the grader did not anticipate.",
+      "Time was spent hunting the failure-axis defect across jotai, zustand, xyflow, tldraw, table, redux-devtools, reselect and react-redux by grep, landing on react-redux src/components/connect.tsx (`if (!error) lastThrownError = null`) - a real instance of the same bug, but not gold. The gold failure-axis defect was in the SAME repo as the anchor (preact-query), which the anchor fold had already surfaced.",
+      "A partial source snapshot (redux-toolkit @ b1c5130154c4) was treated as evidence of absence. The correct move on 'scanned 78 files' is to switch to the graph layer, not to drop the hypothesis."
+    ],
+    "lessons": [
+      "When one defect is confirmed, exhaust its own repo for the second defect before sweeping other repos - the prompt's 'spans more than one repository' was already satisfied by the citations.",
+      "shakedown reporting an implausibly small scan count is a snapshot gap, not an absence result; escalate to case_file/manhunt for that repo.",
+      "Contract-owner clues describe a TYPE, so search the type vocabulary (Result/ok/err/tagged union) in each candidate repo rather than the defect's vocabulary."
+    ]
+  }
+}

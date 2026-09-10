@@ -1,0 +1,1640 @@
+{
+  "schema": 2,
+  "kind": "file",
+  "repoName": "tldraw",
+  "file": {
+    "relativePath": "packages/editor/src/lib/editor/tools/StateNode.ts",
+    "language": "typescript",
+    "sizeBytes": 8115,
+    "tokenCount": 2029,
+    "model": "us.openai.gpt-5.6-luna",
+    "analysedAt": "2026-08-24T12:20:58.593Z",
+    "module": {
+      "purpose": "Defines the hierarchical state-machine node used by the editor to model tools, child states, transitions, event dispatch, lifecycle hooks, and active-state observability.",
+      "summary": "This file implements the core hierarchical editor state abstraction. Nodes can be roots, branches, or leaves; branches construct and activate child nodes, transitions navigate dotted child paths, lifecycle hooks manage activation and deactivation, and events propagate from the active node down the hierarchy. Reactive atoms and computed values expose active state and paths, while optional performance tracking integrates state transitions with editor interaction metrics.",
+      "businessContext": "Supports editor interaction tools and their nested modes. If state transitions or event propagation fail, editor tools can become stuck, misreport their active mode, or lose interaction lifecycle events.",
+      "classes": ["StateNode (~L31-272): Hierarchical editor interaction state with lifecycle and event propagation"],
+      "functions": [
+        "constructor (~L33-76): Initializes reactive state, hierarchy metadata, and optional child nodes",
+        "getPath (~L96-99): Returns the active hierarchical path for this state node",
+        "getCurrent (~L102-105): Returns the currently active child state node",
+        "getIsActive (~L108-111): Returns whether this state node is active",
+        "transition (~L121-148): Navigates child states and performs coordinated enter and exit hooks",
+        "handleEvent (~L150-161): Dispatches mapped events and forwards them to the active child",
+        "enter (~L164-187): Activates the node and enters its initial child when appropriate",
+        "exit (~L190-205): Deactivates the node and exits its active child",
+        "getCurrentToolIdMask (~L218-220): Reads the temporary active-tool identity override",
+        "setCurrentToolIdMask (~L222-224): Sets or clears the temporary active-tool identity override",
+        "addChild (~L233-252): Dynamically creates and registers a child state node"
+      ],
+      "keywords": [
+        "hierarchical state machine",
+        "editor tools",
+        "reactive atoms",
+        "computed state path",
+        "event propagation",
+        "state transition",
+        "interaction lifecycle",
+        "performance tracking"
+      ],
+      "ontologyConcepts": [
+        "hierarchical state machine",
+        "state transition",
+        "event delegation",
+        "lifecycle management",
+        "reactive state",
+        "performance instrumentation"
+      ],
+      "businessEntities": ["Editor", "StateNode", "tool", "interaction", "child state", "event"],
+      "systemCapabilities": [
+        "Model nested editor tool states",
+        "Transition between active interaction modes",
+        "Propagate editor events through active states",
+        "Track interaction start and end performance",
+        "Expose active tool identity overrides",
+        "Register dynamic child states"
+      ],
+      "configDependencies": ["debugFlags.measurePerformance"],
+      "importsInternal": [
+        {
+          "spec": "../../utils/debug-flags",
+          "symbols": ["debugFlags"],
+          "anchor": { "startLine": 3, "endLine": 3 },
+          "resolvedRelativePath": "packages/editor/src/lib/utils/debug-flags.ts",
+          "resolvedFileId": "packages/editor/src/lib/utils/debug-flags.ts",
+          "resolvedHint": "packages/editor/src/lib/utils/debug-flags.ts"
+        },
+        {
+          "spec": "../Editor",
+          "symbols": ["Editor"],
+          "anchor": { "startLine": 4, "endLine": 4 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedHint": "packages/editor/src/lib/Editor.ts"
+        },
+        {
+          "spec": "../types/event-types",
+          "symbols": [
+            "EVENT_NAME_MAP",
+            "TLCancelEventInfo",
+            "TLClickEventInfo",
+            "TLCompleteEventInfo",
+            "TLEventHandlers",
+            "TLEventInfo",
+            "TLInterruptEventInfo",
+            "TLKeyboardEventInfo",
+            "TLPinchEventInfo",
+            "TLPointerEventInfo",
+            "TLTickEventInfo",
+            "TLWheelEventInfo"
+          ],
+          "anchor": { "startLine": 5, "endLine": 18 },
+          "resolvedRelativePath": "packages/editor/src/lib/editor/types/event-types.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/types/event-types.ts",
+          "resolvedHint": "packages/editor/src/lib/types/event-types.ts"
+        }
+      ],
+      "importsExternal": [
+        {
+          "spec": "@tldraw/state",
+          "symbols": ["Atom", "Computed", "atom", "computed"],
+          "package": "@tldraw/state",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 1, "endLine": 1 }
+        },
+        {
+          "spec": "@tldraw/utils",
+          "symbols": ["PerformanceTracker"],
+          "package": "@tldraw/utils",
+          "subpath": null,
+          "isBuiltin": false,
+          "anchor": { "startLine": 2, "endLine": 2 }
+        }
+      ],
+      "sideEffects": { "io": [], "network": [], "env": [], "fs": [], "process": [], "mutationOfArg": [] },
+      "integrationSurface": [],
+      "contractsProvided": [
+        {
+          "name": "TLStateNodeConstructor",
+          "shape": "new (editor: Editor, parent?: StateNode): StateNode",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "StateNode.getPath", "shape": "getPath()", "resolvedRelativePath": null, "resolvedFileId": null },
+        {
+          "name": "StateNode.getCurrent",
+          "shape": "getCurrent()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.getIsActive",
+          "shape": "getIsActive()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.transition",
+          "shape": "transition(id: string, info: any = {})",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.handleEvent",
+          "shape": "handleEvent(info: Exclude<TLEventInfo, TLPinchEventInfo>)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.enter",
+          "shape": "enter(info: any, from: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.exit",
+          "shape": "exit(info: any, to: string)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.getCurrentToolIdMask",
+          "shape": "getCurrentToolIdMask()",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.setCurrentToolIdMask",
+          "shape": "setCurrentToolIdMask(id: string | undefined)",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode.addChild",
+          "shape": "addChild(childConstructor: TLStateNodeConstructor): this",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "StateNode event handlers",
+          "shape": "implements Partial<TLEventHandlers>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        }
+      ],
+      "contractsConsumed": [
+        {
+          "name": "Editor",
+          "shape": "editor: Editor",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/Editor.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/Editor.ts"
+        },
+        {
+          "name": "TLStateNodeConstructor",
+          "shape": "new (editor: Editor, parent?: StateNode): StateNode",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "TLEventInfo",
+          "shape": "Exclude<TLEventInfo, TLPinchEventInfo>",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/types/event-types.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/types/event-types.ts"
+        },
+        {
+          "name": "TLEventHandlers",
+          "shape": "Partial<TLEventHandlers>",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/types/event-types.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/types/event-types.ts"
+        },
+        {
+          "name": "EVENT_NAME_MAP",
+          "shape": "EVENT_NAME_MAP[info.name]",
+          "resolvedRelativePath": "packages/editor/src/lib/editor/types/event-types.ts",
+          "resolvedFileId": "packages/editor/src/lib/editor/types/event-types.ts"
+        },
+        {
+          "name": "PerformanceTracker",
+          "shape": "performanceTracker: PerformanceTracker",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        {
+          "name": "debugFlags",
+          "shape": "debugFlags.measurePerformance.get()",
+          "resolvedRelativePath": "packages/editor/src/lib/utils/debug-flags.ts",
+          "resolvedFileId": "packages/editor/src/lib/utils/debug-flags.ts"
+        },
+        {
+          "name": "Atom",
+          "shape": "Atom<StateNode | undefined>",
+          "resolvedRelativePath": null,
+          "resolvedFileId": null
+        },
+        { "name": "Computed", "shape": "Computed<string>", "resolvedRelativePath": null, "resolvedFileId": null }
+      ],
+      "sectionMap": [
+        {
+          "name": "constructor initialization",
+          "intent": "Creates reactive state and establishes root, branch, or leaf hierarchy metadata.",
+          "structureKind": "branch",
+          "predicate": "if (parent)",
+          "branchOutcomes": ["parented node", "root node"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 37, "endLine": 75 }
+        },
+        {
+          "name": "child construction",
+          "intent": "Instantiates statically declared children and selects the configured initial child.",
+          "structureKind": "branch",
+          "predicate": "if (children && initial)",
+          "branchOutcomes": ["children initialized", "no static children"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 51, "endLine": 70 }
+        },
+        {
+          "name": "transition path traversal",
+          "intent": "Walks dotted child identifiers while exiting and entering changed states.",
+          "structureKind": "loop",
+          "predicate": null,
+          "branchOutcomes": [],
+          "bounds": "i < path.length",
+          "terminationCondition": null,
+          "anchor": { "startLine": 126, "endLine": 145 }
+        },
+        {
+          "name": "event dispatch",
+          "intent": "Invokes the mapped handler and forwards events to the unchanged active child.",
+          "structureKind": "branch",
+          "predicate": "this._isActive.__unsafe__getWithoutCapture() && currentActiveChild && currentActiveChild === this._current.__unsafe__getWithoutCapture()",
+          "branchOutcomes": ["forward to active child", "do not forward"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 150, "endLine": 161 }
+        },
+        {
+          "name": "enter lifecycle",
+          "intent": "Marks the node active, invokes entry hooks, and enters the initial child.",
+          "structureKind": "branch",
+          "predicate": "this.children && this.initial && this.getIsActive() && this.getCurrent() === currentBeforeEnter",
+          "branchOutcomes": ["enter initial child", "retain transitioned child"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 164, "endLine": 187 }
+        },
+        {
+          "name": "exit lifecycle",
+          "intent": "Stops tracking, marks the node inactive, invokes exit hooks, and exits its child.",
+          "structureKind": "branch",
+          "predicate": "!this.getIsActive()",
+          "branchOutcomes": ["exit current child", "do not exit child"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 190, "endLine": 205 }
+        },
+        {
+          "name": "dynamic child registration",
+          "intent": "Rejects leaf nodes and duplicate identifiers before registering a constructed child.",
+          "structureKind": "branch",
+          "predicate": "this.type === 'leaf'",
+          "branchOutcomes": ["throw for leaf", "initialize or reuse children"],
+          "bounds": null,
+          "terminationCondition": null,
+          "anchor": { "startLine": 233, "endLine": 252 }
+        }
+      ],
+      "representationFamily": "state-machine",
+      "representationType": "",
+      "publicSignatures": [
+        {
+          "kind": "interface",
+          "name": "TLStateNodeConstructor",
+          "signature": "export interface TLStateNodeConstructor {",
+          "generics": null,
+          "decorators": ["/** @public */"],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 18, "endLine": 28 }
+        },
+        {
+          "kind": "class",
+          "name": "StateNode",
+          "signature": "export abstract class StateNode implements Partial<TLEventHandlers> {",
+          "generics": null,
+          "decorators": ["/** @public */"],
+          "returnType": null,
+          "exported": true,
+          "anchor": { "startLine": 30, "endLine": 31 }
+        },
+        {
+          "kind": "constructor",
+          "name": "constructor",
+          "signature": "constructor(\n\t\tpublic editor: Editor,\n\t\tparent?: StateNode\n\t)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 33, "endLine": 36 }
+        },
+        {
+          "kind": "method",
+          "name": "getPath",
+          "signature": "getPath()",
+          "generics": null,
+          "decorators": ["/**\n\t * This node's path of active state nodes\n\t *\n\t * @public\n\t */"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 95, "endLine": 96 }
+        },
+        {
+          "kind": "method",
+          "name": "getCurrent",
+          "signature": "getCurrent()",
+          "generics": null,
+          "decorators": ["/**\n\t * This node's current active child node, if any.\n\t *\n\t * @public\n\t */"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 101, "endLine": 102 }
+        },
+        {
+          "kind": "method",
+          "name": "getIsActive",
+          "signature": "getIsActive()",
+          "generics": null,
+          "decorators": ["/**\n\t * Whether this node is active.\n\t *\n\t * @public\n\t */"],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 107, "endLine": 108 }
+        },
+        {
+          "kind": "method",
+          "name": "transition",
+          "signature": "transition(id: string, info: any = {})",
+          "generics": null,
+          "decorators": [
+            "/**\n\t * Transition to a new active child state node.\n\t *\n\t * @example\n\t * ```ts\n\t * parentState.transition('childStateA')\n\t * parentState.transition('childStateB', { myData: 4 })\n\t *```\n\t *\n\t * @param id - The id of the child state node to transition to.\n\t * @param info - Any data to pass to the `onEnter` and `onExit` handlers.\n\t *\n\t * @public\n\t */"
+          ],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 113, "endLine": 121 }
+        },
+        {
+          "kind": "method",
+          "name": "handleEvent",
+          "signature": "handleEvent(info: Exclude<TLEventInfo, TLPinchEventInfo>)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 150, "endLine": 150 }
+        },
+        {
+          "kind": "method",
+          "name": "enter",
+          "signature": "enter(info: any, from: string)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 164, "endLine": 164 }
+        },
+        {
+          "kind": "method",
+          "name": "exit",
+          "signature": "exit(info: any, to: string)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 190, "endLine": 190 }
+        },
+        {
+          "kind": "method",
+          "name": "getCurrentToolIdMask",
+          "signature": "getCurrentToolIdMask()",
+          "generics": null,
+          "decorators": [
+            "/**\n\t * This is a hack / escape hatch that will tell the editor to\n\t * report a different state as active (in `getCurrentToolId()`) when this\n\t * state is active. This is usually used when a tool transitions\n\t * to a child of a different state for a certain interaction and then\n\t * returns to the original tool when that interaction completes; and\n\t * where we would want to show the original tool as active in the UI.\n\t *\n\t * @public\n\t */"
+          ],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 218, "endLine": 218 }
+        },
+        {
+          "kind": "method",
+          "name": "setCurrentToolIdMask",
+          "signature": "setCurrentToolIdMask(id: string | undefined)",
+          "generics": null,
+          "decorators": [],
+          "returnType": null,
+          "exported": false,
+          "anchor": { "startLine": 222, "endLine": 222 }
+        },
+        {
+          "kind": "method",
+          "name": "addChild",
+          "signature": "addChild(childConstructor: TLStateNodeConstructor): this",
+          "generics": null,
+          "decorators": ["/**\n\t * Add a child node to this state node.\n\t *\n\t * @public\n\t */"],
+          "returnType": "this",
+          "exported": false,
+          "anchor": { "startLine": 233, "endLine": 233 }
+        }
+      ],
+      "typeShapes": [
+        {
+          "kind": "interface",
+          "name": "TLStateNodeConstructor",
+          "shape": "export interface TLStateNodeConstructor {\n\tnew (editor: Editor, parent?: StateNode): StateNode\n\tid: string\n\tinitial?: string\n\tchildren?(): TLStateNodeConstructor[]\n\tisLockable: boolean\n\tuseCoalescedEvents: boolean\n\ttrackPerformance: boolean\n}",
+          "discriminant": null,
+          "anchor": { "startLine": 19, "endLine": 28 }
+        }
+      ],
+      "localCallGraph": [],
+      "dataFlowGraph": [],
+      "verbatimLiterals": [],
+      "canonicalCentroid": { "paragraph": "", "tokenEstimate": 0 },
+      "edgeCases": [
+        {
+          "inputShape": "Transition identifier references a missing child",
+          "handled": true,
+          "behavior": "Throws an error naming the current node and missing child identifier.",
+          "anchor": { "startLine": 129, "endLine": 133 }
+        },
+        {
+          "inputShape": "Transition begins from an already inactive previous child",
+          "handled": true,
+          "behavior": "Skips a second exit to avoid firing a spurious exit hook.",
+          "anchor": { "startLine": 135, "endLine": 140 }
+        },
+        {
+          "inputShape": "Entry hook transitions to a child before default initialization",
+          "handled": true,
+          "behavior": "Preserves the hook-selected child instead of orphaning it with the initial child.",
+          "anchor": { "startLine": 177, "endLine": 186 }
+        },
+        {
+          "inputShape": "Adding a child to a leaf node",
+          "handled": true,
+          "behavior": "Throws an error stating that children cannot be added to leaves.",
+          "anchor": { "startLine": 234, "endLine": 236 }
+        },
+        {
+          "inputShape": "Adding a child with an existing identifier",
+          "handled": true,
+          "behavior": "Throws an error identifying the duplicate child id.",
+          "anchor": { "startLine": 245, "endLine": 248 }
+        },
+        {
+          "inputShape": "Root node without statically declared children",
+          "handled": true,
+          "behavior": "Leaves children undefined until dynamic registration initializes the child map.",
+          "anchor": { "startLine": 62, "endLine": 72 }
+        }
+      ],
+      "boundaryConditions": [
+        {
+          "operator": "<",
+          "left": "i",
+          "right": "path.length",
+          "inclusive": false,
+          "intent": "Processes each path segment while its index remains below the path length.",
+          "anchor": { "startLine": 126, "endLine": 126 }
+        },
+        {
+          "operator": "!=",
+          "left": "prevChildState?.id",
+          "right": "nextChildState.id",
+          "inclusive": false,
+          "intent": "Detects whether the requested child differs from the currently active child.",
+          "anchor": { "startLine": 135, "endLine": 135 }
+        },
+        {
+          "operator": "==",
+          "left": "currentActiveChild",
+          "right": "this._current.__unsafe__getWithoutCapture()",
+          "inclusive": true,
+          "intent": "Ensures event forwarding targets the same child captured before dispatch.",
+          "anchor": { "startLine": 156, "endLine": 158 }
+        },
+        {
+          "operator": "==",
+          "left": "this.getCurrent()",
+          "right": "currentBeforeEnter",
+          "inclusive": true,
+          "intent": "Ensures default initial entry does not overwrite a child selected by onEnter.",
+          "anchor": { "startLine": 180, "endLine": 182 }
+        },
+        {
+          "operator": "==",
+          "left": "this.type",
+          "right": "'leaf'",
+          "inclusive": true,
+          "intent": "Rejects dynamic child registration for leaf nodes.",
+          "anchor": { "startLine": 234, "endLine": 234 }
+        }
+      ],
+      "errorHandling": [
+        {
+          "thrown": "Error(`${currState.id} - no child state exists with the id ${id}.`)",
+          "caught": null,
+          "action": "Stops transition path traversal immediately.",
+          "fallback": null,
+          "anchor": { "startLine": 132, "endLine": 132 }
+        },
+        {
+          "thrown": "new Error('StateNode.addChild: cannot add child to a leaf node')",
+          "caught": null,
+          "action": "Rejects the dynamic child operation.",
+          "fallback": null,
+          "anchor": { "startLine": 235, "endLine": 235 }
+        },
+        {
+          "thrown": "new Error(`StateNode.addChild: a child with id '${child.id}' already exists`)",
+          "caught": null,
+          "action": "Rejects duplicate child registration.",
+          "fallback": null,
+          "anchor": { "startLine": 247, "endLine": 247 }
+        }
+      ],
+      "invariants": [
+        {
+          "kind": "invariant",
+          "description": "A node with a parent is classified as a branch only when children and initial are both configured.",
+          "anchor": { "startLine": 51, "endLine": 60 }
+        },
+        {
+          "kind": "invariant",
+          "description": "A branch's configured initial child is selected during construction and normal entry.",
+          "anchor": { "startLine": 58, "endLine": 58 }
+        },
+        {
+          "kind": "ordering",
+          "description": "Transitions exit the previous child before setting and entering the next child.",
+          "anchor": { "startLine": 138, "endLine": 140 }
+        },
+        {
+          "kind": "invariant",
+          "description": "Events propagate only while the node is active and its previously captured child remains current.",
+          "anchor": { "startLine": 155, "endLine": 159 }
+        },
+        {
+          "kind": "postcondition",
+          "description": "Adding a child returns the same state node instance after registration.",
+          "anchor": { "startLine": 250, "endLine": 251 }
+        }
+      ],
+      "diagnosticNotes": [],
+      "assumptions": [
+        {
+          "kind": "caller",
+          "description": "Callers provide child identifiers that correspond to the node's configured or dynamically registered children.",
+          "anchor": { "startLine": 121, "endLine": 121 }
+        },
+        {
+          "kind": "caller",
+          "description": "Lifecycle hook implementations may transition during entry and are expected to preserve the resulting current child.",
+          "anchor": { "startLine": 175, "endLine": 185 }
+        },
+        {
+          "kind": "config",
+          "description": "Performance instrumentation behavior depends on the static trackPerformance flag and debug measurement setting.",
+          "anchor": { "startLine": 165, "endLine": 170 }
+        },
+        {
+          "kind": "schema",
+          "description": "Child constructors expose compatible static identifiers and hierarchy configuration through TLStateNodeConstructor.",
+          "anchor": { "startLine": 37, "endLine": 38 }
+        }
+      ],
+      "ambiguities": [
+        {
+          "question": "What concrete editor lifecycle guarantees surround calls to enter, exit, and handleEvent?",
+          "affects": "concurrency_model and caller assumptions",
+          "anchor": { "startLine": 150, "endLine": 205 },
+          "resolution": null
+        },
+        {
+          "question": "Which subclasses set trackPerformance and what interaction metrics consume the notifications?",
+          "affects": "side_effects and performance behavior",
+          "anchor": { "startLine": 83, "endLine": 84 },
+          "resolution": null
+        }
+      ],
+      "concurrencyModel": {
+        "kind": "sync",
+        "reentrant": false,
+        "ordering": "deterministic",
+        "notes": "All transitions, lifecycle hooks, event dispatch, and child registration execute synchronously; hooks may initiate nested transitions."
+      },
+      "stateModel": {
+        "states": ["inactive", "active"],
+        "initialState": "inactive",
+        "finalStates": [],
+        "transitions": [
+          {
+            "from": "inactive",
+            "to": "active",
+            "trigger": "enter(info, from)",
+            "guard": null,
+            "effect": "this._isActive.set(true)",
+            "anchor": { "startLine": 174, "endLine": 174 }
+          },
+          {
+            "from": "active",
+            "to": "inactive",
+            "trigger": "exit(info, to)",
+            "guard": null,
+            "effect": "this._isActive.set(false)",
+            "anchor": { "startLine": 200, "endLine": 200 }
+          },
+          {
+            "from": "active",
+            "to": "active",
+            "trigger": "transition(id: string, info: any = {})",
+            "guard": "nextChildState exists and prevChildState?.id !== nextChildState.id",
+            "effect": "prevChildState.exit(info, id); currState._current.set(nextChildState); nextChildState.enter(info, prevChildState?.id || 'initial')",
+            "anchor": { "startLine": 136, "endLine": 136 }
+          }
+        ]
+      },
+      "fileFingerprint": { "lineCount": 0, "declarationCount": 0, "maxNestingDepth": 0, "roughCyclomatic": 0 },
+      "reconstructionHints": { "namingStyle": "unknown", "returnStyle": "n/a", "commentStyle": "none", "dialect": "" },
+      "moduleContractTests": [
+        {
+          "testId": "transitions-to-existing-child",
+          "scenario": "A parent transitions to a valid child state.",
+          "given": ["parent.children = { child: childState }"],
+          "when": "parent.transition('child')",
+          "then": "parent.getCurrent() === childState && childState.getIsActive() === true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Valid transitions must activate and select the requested child."
+        },
+        {
+          "testId": "rejects-missing-child-transition",
+          "scenario": "A parent transitions to an unknown child identifier.",
+          "given": ["parent.children = {}"],
+          "when": "parent.transition('missing')",
+          "then": "throws Error(`${currState.id} - no child state exists with the id ${id}.`)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Invalid state paths must fail explicitly rather than silently changing state."
+        },
+        {
+          "testId": "enters-initial-child",
+          "scenario": "A branch node is entered without an onEnter transition.",
+          "given": ["node.initial = 'child'", "node.children = { child: childState }"],
+          "when": "node.enter(info, 'initial')",
+          "then": "node.getIsActive() === true && node.getCurrent() === childState && childState.getIsActive() === true",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Branch entry must activate its configured initial descendant."
+        },
+        {
+          "testId": "forwards-events-to-active-child",
+          "scenario": "An active node receives an event while its current child remains unchanged.",
+          "given": ["node.getIsActive() === true", "node.getCurrent() === childState"],
+          "when": "node.handleEvent(info)",
+          "then": "the node handler and childState.handleEvent(info) are invoked",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Events must propagate through the active state path."
+        },
+        {
+          "testId": "does-not-forward-after-handler-transition",
+          "scenario": "A node handler transitions away from the child that was current when dispatch began.",
+          "given": ["node.getIsActive() === true", "node.getCurrent() === childA"],
+          "when": "node.handleEvent(info)",
+          "then": "childA.handleEvent(info) is not invoked when node.getCurrent() !== childA",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Dispatch must avoid sending an event to a child exited during the parent handler."
+        },
+        {
+          "testId": "exits-current-child",
+          "scenario": "An active node exits.",
+          "given": ["node.getIsActive() === true", "node.getCurrent() === childState"],
+          "when": "node.exit(info, 'next')",
+          "then": "node.getIsActive() === false && childState.getIsActive() === false",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Exiting a node must deactivate its active descendant."
+        },
+        {
+          "testId": "rejects-child-on-leaf",
+          "scenario": "A child is added to a leaf node.",
+          "given": ["node.type === 'leaf'"],
+          "when": "node.addChild(childConstructor)",
+          "then": "throws Error('StateNode.addChild: cannot add child to a leaf node')",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Leaf nodes cannot be converted into containers through dynamic child registration."
+        },
+        {
+          "testId": "rejects-duplicate-child",
+          "scenario": "A child constructor creates an identifier already registered on the node.",
+          "given": ["node.children = { child: existingChild }", "childConstructor.id === 'child'"],
+          "when": "node.addChild(childConstructor)",
+          "then": "throws Error(`StateNode.addChild: a child with id 'child' already exists`)",
+          "targets": [],
+          "oracleKind": "unit-test",
+          "rationale": "Child identifiers must remain unique within a state node."
+        }
+      ],
+      "language": "typescript",
+      "moduleLayout": [
+        "imports from @tldraw/state",
+        "imports from @tldraw/utils",
+        "imports debugFlags",
+        "type-only import of Editor",
+        "imports event type definitions",
+        "TLStateNodeConstructor interface",
+        "StateNode abstract class"
+      ],
+      "moduleLevelCode": "import { Atom, Computed, atom, computed } from '@tldraw/state'\nimport { PerformanceTracker } from '@tldraw/utils'\nimport { debugFlags } from '../../utils/debug-flags'\nimport type { Editor } from '../Editor'\nimport {\n\tEVENT_NAME_MAP,\n\tTLCancelEventInfo,\n\tTLClickEventInfo,\n\tTLCompleteEventInfo,\n\tTLEventHandlers,\n\tTLEventInfo,\n\tTLInterruptEventInfo,\n\tTLKeyboardEventInfo,\n\tTLPinchEventInfo,\n\tTLPointerEventInfo,\n\tTLTickEventInfo,\n\tTLWheelEventInfo,\n} from '../types/event-types'",
+      "exports": [
+        { "name": "TLStateNodeConstructor", "kind": "own", "fromSpec": null, "exportedAs": null },
+        { "name": "StateNode", "kind": "own", "fromSpec": null, "exportedAs": null }
+      ],
+      "importSymbolMap": [
+        { "symbol": "Atom", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "Computed", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "atom", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "computed", "module": "@tldraw/state", "alias": null, "kind": "external" },
+        { "symbol": "PerformanceTracker", "module": "@tldraw/utils", "alias": null, "kind": "external" },
+        { "symbol": "debugFlags", "module": "../../utils/debug-flags", "alias": null, "kind": "internal" },
+        { "symbol": "Editor", "module": "../Editor", "alias": null, "kind": "internal" },
+        { "symbol": "EVENT_NAME_MAP", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLCancelEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLClickEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLCompleteEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLEventHandlers", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLInterruptEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLKeyboardEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLPinchEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLPointerEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLTickEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" },
+        { "symbol": "TLWheelEventInfo", "module": "../types/event-types", "alias": null, "kind": "internal" }
+      ],
+      "fileConstants": [],
+      "semanticFingerprint": ""
+    },
+    "units": [
+      {
+        "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+        "unitKind": "class",
+        "name": "StateNode",
+        "qualifiedName": "StateNode",
+        "parentUnitId": null,
+        "startLine": 30,
+        "endLine": 272,
+        "isBehavioral": true,
+        "source": "\n/** @public */\nexport abstract class StateNode implements Partial<TLEventHandlers> {\n\tperformanceTracker: PerformanceTracker\n\tconstructor(\n\t\tpublic editor: Editor,\n\t\tparent?: StateNode\n\t) {\n\t\tconst { id, children, initial, isLockable, useCoalescedEvents } = this\n\t\t\t.constructor as TLStateNodeConstructor\n\n\t\tthis.id = id\n\t\tthis._isActive = atom<boolean>('toolIsActive' + this.id, false)\n\t\tthis._current = atom<StateNode | undefined>('toolState' + this.id, undefined)\n\n\t\tthis._path = computed('toolPath' + this.id, () => {\n\t\t\tconst current = this.getCurrent()\n\t\t\treturn this.id + (current ? `.${current.getPath()}` : '')\n\t\t})\n\n\t\tthis.parent = parent ?? ({} as any)\n\n\t\tif (parent) {\n\t\t\tif (children && initial) {\n\t\t\t\tthis.type = 'branch'\n\t\t\t\tthis.initial = initial\n\t\t\t\tthis.children = Object.fromEntries(\n\t\t\t\t\tchildren().map((Ctor) => [Ctor.id, new Ctor(this.editor, this)])\n\t\t\t\t)\n\t\t\t\tthis._current.set(this.children[this.initial])\n\t\t\t} else {\n\t\t\t\tthis.type = 'leaf'\n\t\t\t}\n\t\t} else {\n\t\t\tthis.type = 'root'\n\n\t\t\tif (children && initial) {\n\t\t\t\tthis.initial = initial\n\t\t\t\tthis.children = Object.fromEntries(\n\t\t\t\t\tchildren().map((Ctor) => [Ctor.id, new Ctor(this.editor, this)])\n\t\t\t\t)\n\t\t\t\tthis._current.set(this.children[this.initial])\n\t\t\t}\n\t\t}\n\t\tthis.isLockable = isLockable\n\t\tthis.useCoalescedEvents = useCoalescedEvents\n\t\tthis.performanceTracker = new PerformanceTracker()\n\t}\n\n\tstatic id: string\n\tstatic initial?: string\n\tstatic children?: () => TLStateNodeConstructor[]\n\tstatic isLockable = true\n\tstatic useCoalescedEvents = false\n\t/** Set to `true` in subclasses to emit interaction-start/end performance events when this state is entered/exited. */\n\tstatic trackPerformance = false\n\n\tid: string\n\ttype: 'branch' | 'leaf' | 'root'\n\tshapeType?: string\n\tinitial?: string\n\tchildren?: Record<string, StateNode>\n\tisLockable: boolean\n\tuseCoalescedEvents: boolean\n\tparent: StateNode\n\n\t/**\n\t * This node's path of active state nodes\n\t *\n\t * @public\n\t */\n\tgetPath() {\n\t\treturn this._path.get()\n\t}\n\t_path: Computed<string>\n\n\t/**\n\t * This node's current active child node, if any.\n\t *\n\t * @public\n\t */\n\tgetCurrent() {\n\t\treturn this._current.get()\n\t}\n\tprivate _current: Atom<StateNode | undefined>\n\n\t/**\n\t * Whether this node is active.\n\t *\n\t * @public\n\t */\n\tgetIsActive() {\n\t\treturn this._isActive.get()\n\t}\n\tprivate _isActive: Atom<boolean>\n\n\t/**\n\t * Transition to a new active child state node.\n\t *\n\t * @example\n\t * ```ts\n\t * parentState.transition('childStateA')\n\t * parentState.transition('childStateB', { myData: 4 })\n\t *```\n\t *\n\t * @param id - The id of the child state node to transition to.\n\t * @param info - Any data to pass to the `onEnter` and `onExit` handlers.\n\t *\n\t * @public\n\t */\n\ttransition(id: string, info: any = {}) {\n\t\tconst path = id.split('.')\n\n\t\tlet currState = this as StateNode\n\n\t\tfor (let i = 0; i < path.length; i++) {\n\t\t\tconst id = path[i]\n\t\t\tconst prevChildState = currState.getCurrent()\n\t\t\tconst nextChildState = currState.children?.[id]\n\n\t\t\tif (!nextChildState) {\n\t\t\t\tthrow Error(`${currState.id} - no child state exists with the id ${id}.`)\n\t\t\t}\n\n\t\t\tif (prevChildState?.id !== nextChildState.id) {\n\t\t\t\t// The previous child is inactive when transitioning from a parent's onEnter (or from a\n\t\t\t\t// node that was already exited); exiting it again would fire a spurious onExit\n\t\t\t\tif (prevChildState?.getIsActive()) prevChildState.exit(info, id)\n\t\t\t\tcurrState._current.set(nextChildState)\n\t\t\t\tnextChildState.enter(info, prevChildState?.id || 'initial')\n\t\t\t\tif (!nextChildState.getIsActive()) break\n\t\t\t}\n\n\t\t\tcurrState = nextChildState\n\t\t}\n\n\t\treturn this\n\t}\n\n\thandleEvent(info: Exclude<TLEventInfo, TLPinchEventInfo>) {\n\t\tconst cbName = EVENT_NAME_MAP[info.name]\n\t\tconst currentActiveChild = this._current.__unsafe__getWithoutCapture()\n\n\t\tthis[cbName]?.(info as any)\n\t\tif (\n\t\t\tthis._isActive.__unsafe__getWithoutCapture() &&\n\t\t\tcurrentActiveChild &&\n\t\t\tcurrentActiveChild === this._current.__unsafe__getWithoutCapture()\n\t\t) {\n\t\t\tcurrentActiveChild.handleEvent(info)\n\t\t}\n\t}\n\n\t// todo: move this logic into transition\n\tenter(info: any, from: string) {\n\t\tconst track = (this.constructor as TLStateNodeConstructor).trackPerformance\n\t\tif (track) {\n\t\t\tif (debugFlags.measurePerformance.get()) {\n\t\t\t\tthis.performanceTracker.start(this.id)\n\t\t\t}\n\t\t\tthis.editor.performance._notifyInteractionStart(this.id, this.getPath())\n\t\t}\n\n\t\tconst currentBeforeEnter = this.getCurrent()\n\t\tthis._isActive.set(true)\n\t\tthis.onEnter?.(info, from)\n\n\t\t// If onEnter already transitioned to a child, entering the initial child on top of it would\n\t\t// leave that child active but orphaned\n\t\tif (\n\t\t\tthis.children &&\n\t\t\tthis.initial &&\n\t\t\tthis.getIsActive() &&\n\t\t\tthis.getCurrent() === currentBeforeEnter\n\t\t) {\n\t\t\tconst initial = this.children[this.initial]\n\t\t\tthis._current.set(initial)\n\t\t\tinitial.enter(info, from)\n\t\t}\n\t}\n\n\t// todo: move this logic into transition\n\texit(info: any, to: string) {\n\t\tconst track = (this.constructor as TLStateNodeConstructor).trackPerformance\n\t\tif (track) {\n\t\t\tif (debugFlags.measurePerformance.get() && this.performanceTracker.isStarted()) {\n\t\t\t\tthis.performanceTracker.stop()\n\t\t\t}\n\t\t\tthis.editor.performance._notifyInteractionEnd()\n\t\t}\n\n\t\tthis._isActive.set(false)\n\t\tthis.onExit?.(info, to)\n\n\t\tif (!this.getIsActive()) {\n\t\t\tthis.getCurrent()?.exit(info, to)\n\t\t}\n\t}\n\n\t/**\n\t * This is a hack / escape hatch that will tell the editor to\n\t * report a different state as active (in `getCurrentToolId()`) when\n\t * this state is active. This is usually used when a tool transitions\n\t * to a child of a different state for a certain interaction and then\n\t * returns to the original tool when that interaction completes; and\n\t * where we would want to show the original tool as active in the UI.\n\t *\n\t * @public\n\t */\n\t_currentToolIdMask = atom('curent tool id mask', undefined as string | undefined)\n\n\tgetCurrentToolIdMask() {\n\t\treturn this._currentToolIdMask.get()\n\t}\n\n\tsetCurrentToolIdMask(id: string | undefined) {\n\t\tthis._currentToolIdMask.set(id)\n\t}\n\n\t/**\n\t * Add a child node to this state node.\n\t *\n\t * @public\n\t */\n\taddChild(childConstructor: TLStateNodeConstructor): this {\n\t\tif (this.type === 'leaf') {\n\t\t\tthrow new Error('StateNode.addChild: cannot add child to a leaf node')\n\t\t}\n\n\t\t// Initialize children if it's undefined (for root nodes without static children)\n\t\tif (!this.children) {\n\t\t\tthis.children = {}\n\t\t}\n\n\t\tconst child = new childConstructor(this.editor, this)\n\n\t\t// Check if a child with this ID already exists\n\t\tif (this.children[child.id]) {\n\t\t\tthrow new Error(`StateNode.addChild: a child with id '${child.id}' already exists`)\n\t\t}\n\n\t\tthis.children[child.id] = child\n\t\treturn this",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+          "fileId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode",
+          "unitKind": "class",
+          "name": "StateNode",
+          "qualifiedName": "StateNode",
+          "parentUnitId": null,
+          "startLine": 30,
+          "endLine": 272,
+          "signature": "export abstract class StateNode implements Partial<TLEventHandlers>",
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": ["export", "abstract"],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": true,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": ["Partial<TLEventHandlers>"],
+          "members": [
+            {
+              "name": "performanceTracker",
+              "kind": "property",
+              "type": "PerformanceTracker",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "constructor",
+              "kind": "constructor",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "id",
+              "kind": "property",
+              "type": "string",
+              "default": null,
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "initial",
+              "kind": "property",
+              "type": "string | undefined",
+              "default": null,
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "children",
+              "kind": "property",
+              "type": "() => TLStateNodeConstructor[] | undefined",
+              "default": null,
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "isLockable",
+              "kind": "property",
+              "type": "boolean",
+              "default": "true",
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "useCoalescedEvents",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "trackPerformance",
+              "kind": "property",
+              "type": "boolean",
+              "default": "false",
+              "visibility": "public",
+              "static": true
+            },
+            {
+              "name": "id",
+              "kind": "property",
+              "type": "string",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "type",
+              "kind": "property",
+              "type": "'branch' | 'leaf' | 'root'",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "shapeType",
+              "kind": "property",
+              "type": "string | undefined",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "initial",
+              "kind": "property",
+              "type": "string | undefined",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "children",
+              "kind": "property",
+              "type": "Record<string, StateNode> | undefined",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "isLockable",
+              "kind": "property",
+              "type": "boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "useCoalescedEvents",
+              "kind": "property",
+              "type": "boolean",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "parent",
+              "kind": "property",
+              "type": "StateNode",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "_path",
+              "kind": "property",
+              "type": "Computed<string>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_current",
+              "kind": "property",
+              "type": "Atom<StateNode | undefined>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_isActive",
+              "kind": "property",
+              "type": "Atom<boolean>",
+              "default": null,
+              "visibility": "private",
+              "static": false
+            },
+            {
+              "name": "_currentToolIdMask",
+              "kind": "property",
+              "type": "Atom<string | undefined>",
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getPath",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getCurrent",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getIsActive",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "transition",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "handleEvent",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "enter",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "exit",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "getCurrentToolIdMask",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "setCurrentToolIdMask",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            },
+            {
+              "name": "addChild",
+              "kind": "method",
+              "type": null,
+              "default": null,
+              "visibility": "public",
+              "static": false
+            }
+          ],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "StateNode defines the abstract state-tree node shape used by editor tools, including node identity, hierarchy, active-child tracking, and configurable state behavior.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "37309967c06972a8d159ab7fa695411f6f147755e63d68c30daa9b85e9ad80c2"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.constructor#method:StateNode.constructor",
+        "unitKind": "method",
+        "name": "constructor",
+        "qualifiedName": "StateNode.constructor",
+        "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+        "startLine": 33,
+        "endLine": 76,
+        "isBehavioral": true,
+        "source": "\tperformanceTracker: PerformanceTracker\n\tconstructor(\n\t\tpublic editor: Editor,\n\t\tparent?: StateNode\n\t) {\n\t\tconst { id, children, initial, isLockable, useCoalescedEvents } = this\n\t\t\t.constructor as TLStateNodeConstructor\n\n\t\tthis.id = id\n\t\tthis._isActive = atom<boolean>('toolIsActive' + this.id, false)\n\t\tthis._current = atom<StateNode | undefined>('toolState' + this.id, undefined)\n\n\t\tthis._path = computed('toolPath' + this.id, () => {\n\t\t\tconst current = this.getCurrent()\n\t\t\treturn this.id + (current ? `.${current.getPath()}` : '')\n\t\t})\n\n\t\tthis.parent = parent ?? ({} as any)\n\n\t\tif (parent) {\n\t\t\tif (children && initial) {\n\t\t\t\tthis.type = 'branch'\n\t\t\t\tthis.initial = initial\n\t\t\t\tthis.children = Object.fromEntries(\n\t\t\t\t\tchildren().map((Ctor) => [Ctor.id, new Ctor(this.editor, this)])\n\t\t\t\t)\n\t\t\t\tthis._current.set(this.children[this.initial])\n\t\t\t} else {\n\t\t\t\tthis.type = 'leaf'\n\t\t\t}\n\t\t} else {\n\t\t\tthis.type = 'root'\n\n\t\t\tif (children && initial) {\n\t\t\t\tthis.initial = initial\n\t\t\t\tthis.children = Object.fromEntries(\n\t\t\t\t\tchildren().map((Ctor) => [Ctor.id, new Ctor(this.editor, this)])\n\t\t\t\t)\n\t\t\t\tthis._current.set(this.children[this.initial])\n\t\t\t}\n\t\t}\n\t\tthis.isLockable = isLockable\n\t\tthis.useCoalescedEvents = useCoalescedEvents\n\t\tthis.performanceTracker = new PerformanceTracker()",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.constructor#method:StateNode.constructor",
+          "fileId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.constructor",
+          "unitKind": "method",
+          "name": "constructor",
+          "qualifiedName": "StateNode.constructor",
+          "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+          "startLine": 33,
+          "endLine": 76,
+          "signature": "constructor(\n\t\tpublic editor: Editor,\n\t\tparent?: StateNode\n\t)",
+          "parameters": [
+            { "name": "editor", "type": "Editor", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "parent", "type": "StateNode", "default": null, "optional": true, "variadic": false, "order": 1 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "An Editor instance is provided.",
+            "The concrete StateNode constructor may provide static id, children, initial, isLockable, and useCoalescedEvents configuration."
+          ],
+          "postconditions": [
+            "editor references the provided editor.",
+            "parent references the provided parent, or an empty fallback object when no parent is provided.",
+            "id is copied from the concrete constructor configuration.",
+            "_isActive is initialized as a false atom named 'toolIsActive' plus the node id.",
+            "_current is initialized as an undefined atom named 'toolState' plus the node id.",
+            "_path is initialized as a computed value based on this node id and the current descendant path.",
+            "isLockable and useCoalescedEvents are assigned from the concrete constructor configuration.",
+            "performanceTracker is initialized with a new PerformanceTracker.",
+            "If children and initial are both configured, child instances are created with this editor and this node as their parent, stored by child id, and the configured initial child is selected."
+          ],
+          "invariants": [
+            "A node with no parent has type 'root'.",
+            "A node with a parent has type 'branch' only when both children and initial are configured; otherwise it has type 'leaf'.",
+            "Every child constructed by this unit receives the same editor and the newly constructed node as its parent.",
+            "The current child, when selected, is one of the entries created from the configured child constructors."
+          ],
+          "edgeCases": [
+            "When parent is omitted, parent is set to an empty fallback object and the node is classified as 'root'.",
+            "When a parent is provided without both children and initial configuration, no child instances are created and the node is classified as 'leaf'.",
+            "When children and initial are configured on a parentless node, the node is classified as 'root' and its configured initial child is selected.",
+            "When children and initial are configured on a node with a parent, the node is classified as 'branch' and its configured initial child is selected.",
+            "When the configured initial id does not match a constructed child id, the current child is set to undefined rather than being validated or replaced."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": [],
+            "reverts": [],
+            "onInvalidInput": "No explicit input validation is performed; failures from child construction, reactive primitive creation, or PerformanceTracker construction propagate.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "Initializes editor, parent, id, type, initial, children, isLockable, useCoalescedEvents, and performanceTracker on the new StateNode instance.",
+            "Initializes and updates the _isActive, _current, and _path reactive state holders.",
+            "Constructs and stores configured child StateNode instances in children."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "atom", "source": "reactive state utility", "kind": "external" },
+            { "name": "computed", "source": "reactive state utility", "kind": "external" },
+            { "name": "children", "source": "concrete StateNode constructor configuration", "kind": "internal" },
+            { "name": "Ctor", "source": "configured child StateNode constructors", "kind": "internal" },
+            { "name": "PerformanceTracker", "source": "performance tracking dependency", "kind": "external" }
+          ],
+          "symbolReferences": ["Editor", "StateNode", "TLStateNodeConstructor", "PerformanceTracker"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Initializes a state node with its editor, hierarchy role, reactive state holders, configuration flags, and performance tracker. When the node configuration declares children and an initial child, it constructs those children and selects the configured initial child.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": "toolIsActive",
+              "role": "Prefix used to name the node's active-state atom."
+            },
+            {
+              "kind": "format-string",
+              "value": "toolState",
+              "role": "Prefix used to name the node's current-child atom."
+            },
+            { "kind": "format-string", "value": "toolPath", "role": "Prefix used to name the node's computed path." },
+            { "kind": "enum-value", "value": "root", "role": "Type assigned to a node constructed without a parent." },
+            {
+              "kind": "enum-value",
+              "value": "branch",
+              "role": "Type assigned to a parented node with configured children and an initial child."
+            },
+            {
+              "kind": "enum-value",
+              "value": "leaf",
+              "role": "Type assigned to a parented node without both configured children and an initial child."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Construct the node without a parent.",
+              "then": "The node has type 'root', creates both child nodes with itself as their parent, and selects child 'a' as its current child.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            },
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "Construct the node with a parent.",
+              "then": "The node has type 'leaf' and does not create or select child nodes.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "e0e9a98bfe2853ceeae38ff757f20edc20e4b8e0c4afb83218280426fae7092c"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.transition#method:StateNode.transition",
+        "unitKind": "method",
+        "name": "transition",
+        "qualifiedName": "StateNode.transition",
+        "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+        "startLine": 113,
+        "endLine": 148,
+        "isBehavioral": true,
+        "source": "\t}\n\tprivate _current: Atom<StateNode | undefined>\n\n\t/**\n\t * Whether this node is active.\n\t *\n\t * @public\n\t */\n\tgetIsActive() {\n\t\treturn this._isActive.get()\n\t}\n\tprivate _isActive: Atom<boolean>\n\n\t/**\n\t * Transition to a new active child state node.\n\t *\n\t * @example\n\t * ```ts\n\t * parentState.transition('childStateA')\n\t * parentState.transition('childStateB', { myData: 4 })\n\t *```\n\t *\n\t * @param id - The id of the child state node to transition to.\n\t * @param info - Any data to pass to the `onEnter` and `onExit` handlers.\n\t *\n\t * @public\n\t */\n\ttransition(id: string, info: any = {}) {\n\t\tconst path = id.split('.')\n\n\t\tlet currState = this as StateNode\n\n\t\tfor (let i = 0; i < path.length; i++) {\n\t\t\tconst id = path[i]\n\t\t\tconst prevChildState = currState.getCurrent()\n\t\t\tconst nextChildState = currState.children?.[id]",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.transition#method:StateNode.transition",
+          "fileId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.transition",
+          "unitKind": "method",
+          "name": "transition",
+          "qualifiedName": "StateNode.transition",
+          "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+          "startLine": 113,
+          "endLine": 148,
+          "signature": "transition(id: string, info: any = {})",
+          "parameters": [
+            { "name": "id", "type": "string", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "info", "type": "any", "default": "{}", "optional": true, "variadic": false, "order": 1 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "id is a string representing a child-state path.",
+            "Each path segment intended for traversal identifies a child state of the current state node."
+          ],
+          "postconditions": [
+            "The active child-state hierarchy is transitioned according to the dot-separated segments in id.",
+            "The supplied transition info is available to the relevant enter and exit lifecycle handlers."
+          ],
+          "invariants": [
+            "Path segments are interpreted from left to right.",
+            "The transition operates relative to the StateNode on which it is invoked."
+          ],
+          "edgeCases": [
+            "A dotted id is split into multiple path segments and traversed as a nested child-state path.",
+            "When info is omitted, the method uses an empty object as the transition information."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": ["Updates the current-child state held by the traversed StateNode instances."],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getCurrent", "source": "StateNode", "kind": "internal" },
+            { "name": "exit", "source": "StateNode", "kind": "internal" },
+            { "name": "enter", "source": "StateNode", "kind": "internal" }
+          ],
+          "symbolReferences": ["StateNode"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Transitions this state node through the dot-separated child-state path identified by id. The supplied info object is passed to the transition lifecycle handlers.",
+          "specLiterals": [
+            {
+              "kind": "format-string",
+              "value": ".",
+              "role": "Delimiter separating nested child-state identifiers in the transition path."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "899bcf174b624c1016e2153df04ef1b37744c8853e6f857f3c197e0e3881058a"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.handleEvent#method:StateNode.handleEvent",
+        "unitKind": "method",
+        "name": "handleEvent",
+        "qualifiedName": "StateNode.handleEvent",
+        "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+        "startLine": 150,
+        "endLine": 161,
+        "isBehavioral": true,
+        "source": "\t\t\tif (!nextChildState) {\n\t\t\t\tthrow Error(`${currState.id} - no child state exists with the id ${id}.`)\n\t\t\t}\n\n\t\t\tif (prevChildState?.id !== nextChildState.id) {\n\t\t\t\t// The previous child is inactive when transitioning from a parent's onEnter (or from a\n\t\t\t\t// node that was already exited); exiting it again would fire a spurious onExit\n\t\t\t\tif (prevChildState?.getIsActive()) prevChildState.exit(info, id)\n\t\t\t\tcurrState._current.set(nextChildState)\n\t\t\t\tnextChildState.enter(info, prevChildState?.id || 'initial')\n\t\t\t\tif (!nextChildState.getIsActive()) break\n\t\t\t}",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.handleEvent#method:StateNode.handleEvent",
+          "fileId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.handleEvent",
+          "unitKind": "method",
+          "name": "handleEvent",
+          "qualifiedName": "StateNode.handleEvent",
+          "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+          "startLine": 150,
+          "endLine": 161,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [
+            "The referenced current and target child state identifiers are available to the handler.",
+            "The state node's child-state collection can resolve the requested target identifier."
+          ],
+          "postconditions": [
+            "When the target child differs from the previous child, the previous active child is exited before the target child is entered.",
+            "The current-child reference is updated to the target child before entering it.",
+            "The target child is entered with the previous child identifier, or \"initial\" when no previous child exists."
+          ],
+          "invariants": [
+            "A missing target child causes an error rather than entering or selecting an undefined child.",
+            "A previously selected child is exited only when it is currently active.",
+            "The target child is not re-entered when its identifier matches the previous child identifier."
+          ],
+          "edgeCases": [
+            "If no child exists for the requested identifier, an Error is thrown with the current state identifier and requested identifier.",
+            "If there is no previous child, the target child is entered with the source identifier \"initial\".",
+            "If the previous child exists but is inactive, it is not exited again.",
+            "If the previous and target child identifiers are equal, the child reference is not changed and no enter or exit is performed.",
+            "If the entered target child is inactive, processing stops after entry."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": {
+            "raises": ["Error"],
+            "reverts": [],
+            "onInvalidInput": "Throws when the requested child state cannot be found.",
+            "returnsOnError": null
+          },
+          "stateMutations": [
+            "The current child reference is updated to the resolved target child.",
+            "The previous active child may be exited.",
+            "The target child may be entered."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [
+            { "name": "getIsActive", "source": "StateNode child state", "kind": "internal" },
+            { "name": "exit", "source": "previous child StateNode", "kind": "internal" },
+            { "name": "_current.set", "source": "current child state reference", "kind": "internal" },
+            { "name": "enter", "source": "target child StateNode", "kind": "internal" },
+            { "name": "getIsActive", "source": "target child StateNode", "kind": "internal" }
+          ],
+          "symbolReferences": ["Error"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Handles a state event by resolving the target child state and updating the active child when the target differs from the current child. It exits the previously active child when necessary and enters the target child.",
+          "specLiterals": [
+            {
+              "kind": "error-message",
+              "value": "${currState.id} - no child state exists with the id ${id}.",
+              "role": "Error message thrown when the requested child state cannot be resolved."
+            },
+            {
+              "kind": "enum-value",
+              "value": "initial",
+              "role": "Fallback identifier supplied when entering a target child without a previous child."
+            }
+          ],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "188c5ba5bc568c5e6dc775a59e4b9d0ef1e49ee62822f75a904ce74586873d85"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.enter#method:StateNode.enter",
+        "unitKind": "method",
+        "name": "enter",
+        "qualifiedName": "StateNode.enter",
+        "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+        "startLine": 163,
+        "endLine": 187,
+        "isBehavioral": true,
+        "source": "\t\t\tcurrState = nextChildState\n\t\t}\n\n\t\treturn this\n\t}\n\n\thandleEvent(info: Exclude<TLEventInfo, TLPinchEventInfo>) {\n\t\tconst cbName = EVENT_NAME_MAP[info.name]\n\t\tconst currentActiveChild = this._current.__unsafe__getWithoutCapture()\n\n\t\tthis[cbName]?.(info as any)\n\t\tif (\n\t\t\tthis._isActive.__unsafe__getWithoutCapture() &&\n\t\t\tcurrentActiveChild &&\n\t\t\tcurrentActiveChild === this._current.__unsafe__getWithoutCapture()\n\t\t) {\n\t\t\tcurrentActiveChild.handleEvent(info)\n\t\t}\n\t}\n\n\t// todo: move this logic into transition\n\tenter(info: any, from: string) {\n\t\tconst track = (this.constructor as TLStateNodeConstructor).trackPerformance\n\t\tif (track) {\n\t\t\tif (debugFlags.measurePerformance.get()) {",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.enter#method:StateNode.enter",
+          "fileId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.enter",
+          "unitKind": "method",
+          "name": "enter",
+          "qualifiedName": "StateNode.enter",
+          "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+          "startLine": 163,
+          "endLine": 187,
+          "signature": "enter(info: any, from: string)",
+          "parameters": [
+            { "name": "info", "type": "any", "default": null, "optional": false, "variadic": false, "order": 0 },
+            { "name": "from", "type": "string", "default": null, "optional": false, "variadic": false, "order": 1 }
+          ],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [
+            "Performance instrumentation is considered only when the node constructor's trackPerformance setting is enabled.",
+            "When debugFlags.measurePerformance is disabled, the performance-measurement branch is not taken."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [{ "name": "debugFlags.measurePerformance.get", "source": "debugFlags", "kind": "external" }],
+          "symbolReferences": ["TLStateNodeConstructor", "debugFlags"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Enters this state node using the supplied event information and source-state identifier. When performance tracking is enabled, entry processing is subject to the configured performance instrumentation path.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "8033b67b3c10c433e85c90658f332e9a99e7c2a51f56b3e46cb7148a642bea4e"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.exit#method:StateNode.exit",
+        "unitKind": "method",
+        "name": "exit",
+        "qualifiedName": "StateNode.exit",
+        "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+        "startLine": 189,
+        "endLine": 205,
+        "isBehavioral": true,
+        "source": "\t\t\t}\n\t\t\tthis.editor.performance._notifyInteractionStart(this.id, this.getPath())\n\t\t}\n\n\t\tconst currentBeforeEnter = this.getCurrent()\n\t\tthis._isActive.set(true)\n\t\tthis.onEnter?.(info, from)\n\n\t\t// If onEnter already transitioned to a child, entering the initial child on top of it would\n\t\t// leave that child active but orphaned\n\t\tif (\n\t\t\tthis.children &&\n\t\t\tthis.initial &&\n\t\t\tthis.getIsActive() &&\n\t\t\tthis.getCurrent() === currentBeforeEnter\n\t\t) {\n\t\t\tconst initial = this.children[this.initial]",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.exit#method:StateNode.exit",
+          "fileId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.exit",
+          "unitKind": "method",
+          "name": "exit",
+          "qualifiedName": "StateNode.exit",
+          "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+          "startLine": 189,
+          "endLine": 205,
+          "signature": null,
+          "parameters": [],
+          "returnType": null,
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": null,
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": [],
+          "logicOutline": [],
+          "preconditions": [],
+          "postconditions": [],
+          "invariants": [],
+          "edgeCases": [],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": [],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Defines the operation used to exit a StateNode and complete its state transition lifecycle.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [],
+          "semanticFingerprint": "6ce0066f04b9384c12b6a193ba9cb5c23d59c82538d210de0a6879c8ed2f19b4"
+        }
+      },
+      {
+        "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.addChild#method:StateNode.addChild",
+        "unitKind": "method",
+        "name": "addChild",
+        "qualifiedName": "StateNode.addChild",
+        "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+        "startLine": 226,
+        "endLine": 252,
+        "isBehavioral": true,
+        "source": "\t\t}\n\t}\n\n\t/**\n\t * This is a hack / escape hatch that will tell the editor to\n\t * report a different state as active (in `getCurrentToolId()`) when\n\t * this state is active. This is usually used when a tool transitions\n\t * to a child of a different state for a certain interaction and then\n\t * returns to the original tool when that interaction completes; and\n\t * where we would want to show the original tool as active in the UI.\n\t *\n\t * @public\n\t */\n\t_currentToolIdMask = atom('curent tool id mask', undefined as string | undefined)\n\n\tgetCurrentToolIdMask() {\n\t\treturn this._currentToolIdMask.get()\n\t}\n\n\tsetCurrentToolIdMask(id: string | undefined) {\n\t\tthis._currentToolIdMask.set(id)\n\t}\n\n\t/**\n\t * Add a child node to this state node.\n\t *\n\t * @public",
+        "detail": {
+          "unitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.addChild#method:StateNode.addChild",
+          "fileId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode.addChild",
+          "unitKind": "method",
+          "name": "addChild",
+          "qualifiedName": "StateNode.addChild",
+          "parentUnitId": "packages/editor/src/lib/editor/tools/StateNode.ts__StateNode#class:StateNode",
+          "startLine": 226,
+          "endLine": 252,
+          "signature": "addChild<T extends StateNode>(child: T): T",
+          "parameters": [
+            { "name": "child", "type": "T", "default": null, "optional": false, "variadic": false, "order": 0 }
+          ],
+          "returnType": "T",
+          "decorators": [],
+          "modifiersApplied": [],
+          "mutability": null,
+          "visibility": "public",
+          "isAsync": false,
+          "isGenerator": false,
+          "isAbstract": false,
+          "isStatic": false,
+          "genericTypeParams": ["T extends StateNode"],
+          "logicOutline": [],
+          "preconditions": ["The child argument is a StateNode instance with a usable state-node identity."],
+          "postconditions": [
+            "The child is present in this node's child collection under its identity.",
+            "The method returns the same child instance supplied by the caller."
+          ],
+          "invariants": [
+            "Child lookup is keyed by the child's state-node identity.",
+            "Adding a child does not alter the child instance itself."
+          ],
+          "edgeCases": [
+            "Adding a child whose identity already exists replaces the existing entry for that identity.",
+            "The supplied child remains the returned value regardless of whether its identity was already present."
+          ],
+          "tieBreakingRules": [],
+          "errorPolicy": { "raises": [], "reverts": [], "onInvalidInput": null, "returnsOnError": null },
+          "stateMutations": [
+            "This node's child collection is updated with the supplied child, keyed by the child's identity."
+          ],
+          "eventsEmitted": [],
+          "complexity": null,
+          "calls": [],
+          "symbolReferences": ["StateNode"],
+          "baseTypes": [],
+          "implementsTypes": [],
+          "members": [],
+          "memberUnitIds": [],
+          "constants": [],
+          "ioFormatSpec": null,
+          "verbatimBlocks": [],
+          "exampleIoPairs": [],
+          "testReferences": [],
+          "summary": "Adds a child state node to this node's child collection, keyed by the child's identity, and returns the added child.",
+          "specLiterals": [],
+          "declaredConstants": [],
+          "specTests": [
+            {
+              "testId": "",
+              "scenario": "",
+              "given": [],
+              "when": "addChild is called with the child.",
+              "then": "The child can be found in the parent's child collection under its identity, and the returned value is the exact child instance supplied.",
+              "oracleKind": "unit-test",
+              "rationale": ""
+            }
+          ],
+          "semanticFingerprint": "94e7745d6df14f6ef809c62ba857e51beedd98f5a4ee0d86f96a802008b0b505"
+        }
+      }
+    ]
+  },
+  "out": ["packages/editor/src/lib/editor/types/event-types.ts", "packages/editor/src/lib/utils/debug-flags.ts"],
+  "in": [
+    "packages/editor/src/lib/test/TestEditor.ts",
+    "packages/editor/src/lib/test/InFrontOfTheCanvas.test.tsx",
+    "packages/editor/src/lib/editor/tools/StateNode.test.ts",
+    "packages/editor/src/lib/editor/tools/BaseBoxShapeTool/BaseBoxShapeTool.ts",
+    "packages/editor/src/lib/editor/tools/BaseBoxShapeTool/children/Pointing.ts",
+    "packages/editor/src/lib/editor/tools/BaseBoxShapeTool/children/Idle.ts",
+    "packages/editor/src/lib/editor/tools/RootState.ts",
+    "packages/editor/src/lib/editor/managers/InputsManager/InputsManager.test.ts",
+    "packages/editor/src/lib/editor/Editor.test.ts",
+    "packages/editor/src/lib/TldrawEditor.tsx"
+  ],
+  "externals": ["@tldraw/state", "@tldraw/utils"],
+  "impact": { "seeds": 7, "callers": 0, "impactedFiles": [] }
+}
